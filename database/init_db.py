@@ -12,6 +12,7 @@ from database.migrate import run_migrations
 
 
 def initialize_database() -> None:
+    """Load settings and apply all pending database migrations."""
     settings = Settings()
     run_migrations(settings)
 

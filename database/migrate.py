@@ -16,10 +16,12 @@ MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 
 
 def _migration_files() -> Iterable[Path]:
+    """Return migration SQL files in application order."""
     return sorted(MIGRATIONS_DIR.glob("*.sql"))
 
 
 def run_migrations(settings: Settings) -> None:
+    """Apply every migration under migrations/ that isn't already recorded as applied."""
     database = Database(DatabaseConfig(settings.database_url))
 
     with database.cursor() as cursor:

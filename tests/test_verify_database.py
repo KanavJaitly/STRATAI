@@ -29,5 +29,8 @@ def test_verify_database_schema():
         "match_teams",
         "team_event_stats",
         "migrations_applied",
+        "pipeline_runs",
+        "source_watermarks",
+        "data_quality_issues",
     }
     assert expected_tables.issubset(tables)

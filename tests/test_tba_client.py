@@ -114,6 +114,19 @@ def test_retry_on_transient_errors(monkeypatch, env_settings):
     assert mock_request.call_count == 2
 
 
+def test_retry_exhaustion_raises(monkeypatch, env_settings):
+    client = TBAClient(settings=env_settings)
+    retry_response = DummyResponse(503, [])
+    mock_request = Mock(return_value=retry_response)
+    monkeypatch.setattr(client, "_client", Mock(request=mock_request))
+    monkeypatch.setattr("data.clients.tba.time.sleep", lambda *_args, **_kwargs: None)
+
+    with pytest.raises(httpx.HTTPStatusError):
+        client.fetch_event_list(year=2025)
+
+    assert mock_request.call_count == client.max_retries
+
+
 def test_http_error_raises(monkeypatch, env_settings):
     client = TBAClient(settings=env_settings)
     mock_request = Mock(side_effect=httpx.HTTPStatusError("Error", request=httpx.Request("GET", "https://example.com"), response=DummyResponse(404, {})))

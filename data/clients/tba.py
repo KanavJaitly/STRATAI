@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass
 from datetime import date
@@ -10,6 +11,8 @@ import httpx
 from data.clients.schemas import EventSummary, Match, TeamInfo
 from data.clients.source_connector import SourceConnector
 from data.config import Settings
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -44,15 +47,28 @@ class TBAClient(SourceConnector):
                 return response.json()
             except (httpx.TimeoutException, httpx.ConnectError) as exc:
                 if attempt == self.max_retries:
+                    logger.warning("TBA request to %s failed after %d attempts: %s", url, attempt, exc)
                     raise
                 sleep_time = self.backoff_factor * (2 ** (attempt - 1))
+                logger.warning(
+                    "TBA request to %s failed (attempt %d/%d): %s. Retrying in %.1fs",
+                    url, attempt, self.max_retries, exc, sleep_time,
+                )
                 time.sleep(sleep_time)
             except httpx.HTTPStatusError as exc:
                 status_code = exc.response.status_code if exc.response is not None else None
                 if status_code is not None and self._is_transient_status(status_code):
                     if attempt == self.max_retries:
+                        logger.warning(
+                            "TBA request to %s failed after %d attempts (status %d)",
+                            url, attempt, status_code,
+                        )
                         raise
                     sleep_time = self.backoff_factor * (2 ** (attempt - 1))
+                    logger.warning(
+                        "TBA request to %s got status %d (attempt %d/%d). Retrying in %.1fs",
+                        url, status_code, attempt, self.max_retries, sleep_time,
+                    )
                     time.sleep(sleep_time)
                     continue
                 raise

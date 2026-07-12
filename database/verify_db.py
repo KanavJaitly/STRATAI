@@ -12,6 +12,7 @@ from database.connection import Database, DatabaseConfig
 
 
 def verify_database() -> None:
+    """Check that all expected tables exist in the configured database, raising if any are missing."""
     settings = Settings()
     database = Database(DatabaseConfig(settings.database_url))
 
@@ -29,6 +30,9 @@ def verify_database() -> None:
         "match_teams",
         "team_event_stats",
         "migrations_applied",
+        "pipeline_runs",
+        "source_watermarks",
+        "data_quality_issues",
     }
 
     missing = expected_tables - tables

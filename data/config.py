@@ -47,6 +47,3 @@ class Settings(BaseSettings):
         if normalized not in {"development", "staging", "production"}:
             raise ValueError("ENV must be development, staging, or production")
         return normalized
-
-    def dict(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        return super().dict(*args, **kwargs)
