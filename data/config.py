@@ -1,24 +1,45 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
-from pydantic import ConfigDict, Field, PostgresDsn, field_validator
+from dotenv import load_dotenv
+from pydantic import ConfigDict, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+ENV_FILE_CANDIDATES = (
+    Path(".env"),
+    PROJECT_ROOT / ".env",
+)
+
+
+def _ensure_env_loaded() -> None:
+    for env_file in ENV_FILE_CANDIDATES:
+        if env_file.exists():
+            load_dotenv(env_file)
+            break
 
 
 class Settings(BaseSettings):
     """Application settings for the StratAI data pipeline."""
 
-    database_url: PostgresDsn = Field(...)
-    tba_api_key: str = Field(...)
-    statbotics_api_key: str = Field(...)
-    env: str = Field("development")
+    database_url: PostgresDsn
+    tba_api_key: str
+    statbotics_api_key: str | None = None
+    tba_timeout: float = 10.0
+    tba_max_retries: int = 3
+    tba_backoff_factor: float = 0.5
+    env: str = "development"
 
     model_config = ConfigDict(
         case_sensitive=False,
-        env_file=".env",
-        env_file_encoding="utf-8",
     )
+
+    def __init__(self, **values: Any) -> None:
+        _ensure_env_loaded()
+        super().__init__(**values)
 
     @field_validator("env")
     def validate_env(cls, value: str) -> str:
