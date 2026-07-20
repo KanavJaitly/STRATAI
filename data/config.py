@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     tba_timeout: float = 10.0
     tba_max_retries: int = 3
     tba_backoff_factor: float = 0.5
+    statbotics_timeout: float = 10.0
+    statbotics_max_retries: int = 3
+    statbotics_backoff_factor: float = 0.5
     env: str = "development"
 
     model_config = ConfigDict(

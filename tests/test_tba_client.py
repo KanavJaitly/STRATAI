@@ -119,7 +119,7 @@ def test_retry_exhaustion_raises(monkeypatch, env_settings):
     retry_response = DummyResponse(503, [])
     mock_request = Mock(return_value=retry_response)
     monkeypatch.setattr(client, "_client", Mock(request=mock_request))
-    monkeypatch.setattr("data.clients.tba.time.sleep", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("data.clients.http_retry.time.sleep", lambda *_args, **_kwargs: None)
 
     with pytest.raises(httpx.HTTPStatusError):
         client.fetch_event_list(year=2025)
