@@ -52,7 +52,7 @@ def test_tba_client_initializes_http_client(monkeypatch, env_settings):
 
 def test_tba_client_request_urls(monkeypatch, env_settings):
     client = TBAClient(settings=env_settings)
-    dummy_event_list = DummyResponse(200, [{"key": "2025casj", "name": "Sacramento", "season": 2025}])
+    dummy_event_list = DummyResponse(200, [{"key": "2025casj", "name": "Sacramento", "year": 2025}])
     dummy_matches = DummyResponse(200, [{"key": "2025casj_qm1", "event_key": "2025casj"}])
     dummy_team = DummyResponse(200, {"key": "frc1114", "team_number": 1114})
     mock_request = Mock(side_effect=[dummy_event_list, dummy_matches, dummy_team])
@@ -69,36 +69,77 @@ def test_tba_client_request_urls(monkeypatch, env_settings):
 
 
 def test_fetch_event_list_parses_models(monkeypatch, env_settings):
+    # Field is genuinely named "year" in TBA's real API, not "season" -- this
+    # fixture must reflect the real wire shape, not just be internally
+    # self-consistent, or a wrong field name would pass silently.
     client = TBAClient(settings=env_settings)
-    event_data = [{"key": "2025casj", "name": "Sacramento", "season": 2025}]
+    event_data = [{
+        "key": "2025casj", "name": "Sacramento", "event_code": "casj", "year": 2025,
+        "start_date": "2025-03-14", "end_date": "2025-03-16",
+    }]
     mock_request = Mock(return_value=DummyResponse(200, event_data))
     monkeypatch.setattr(client, "_client", Mock(request=mock_request))
 
     events = client.fetch_event_list(year=2025)
 
-    assert events == [EventSummary.model_validate(event_data[0])]
+    assert len(events) == 1
+    event = events[0]
+    assert event.key == "2025casj"
+    assert event.name == "Sacramento"
+    assert event.season == 2025  # parsed from the raw "year" field
+    assert str(event.start_date) == "2025-03-14"
 
 
 def test_fetch_event_matches_parses_models(monkeypatch, env_settings):
+    # Real TBA match payloads nest scores/team rosters under "alliances", use
+    # "comp_level" (not "competition_level"), and "time" as a Unix timestamp
+    # (not "scheduled_time" as a string). This fixture reflects that shape.
     client = TBAClient(settings=env_settings)
-    match_data = [{"key": "2025casj_qm1", "event_key": "2025casj"}]
+    match_data = [{
+        "key": "2025casj_qm1",
+        "event_key": "2025casj",
+        "comp_level": "qm",
+        "match_number": 1,
+        "set_number": 1,
+        "time": 1710439200,
+        "alliances": {
+            "red": {"score": 112, "teams": ["frc1114", "frc254", "frc604"]},
+            "blue": {"score": 98, "teams": ["frc118", "frc330", "frc973"]},
+        },
+        "winning_alliance": "red",
+    }]
     mock_request = Mock(return_value=DummyResponse(200, match_data))
     monkeypatch.setattr(client, "_client", Mock(request=mock_request))
 
     matches = client.fetch_event_matches("2025casj")
 
-    assert matches == [Match.model_validate(match_data[0])]
+    assert len(matches) == 1
+    match = matches[0]
+    assert match.key == "2025casj_qm1"
+    assert match.competition_level == "qm"  # parsed from raw "comp_level"
+    assert match.scheduled_time == 1710439200  # parsed from raw "time"
+    assert match.alliances.red.score == 112
+    assert match.alliances.red.team_keys == ["frc1114", "frc254", "frc604"]
+    assert match.alliances.blue.score == 98
+    assert match.alliances.blue.team_keys == ["frc118", "frc330", "frc973"]
+    assert match.winning_alliance == "red"
 
 
 def test_fetch_team_info_parses_model(monkeypatch, env_settings):
     client = TBAClient(settings=env_settings)
-    team_data = {"key": "frc1114", "team_number": 1114}
+    team_data = {
+        "key": "frc1114", "team_number": 1114, "nickname": "Simbotics",
+        "city": "St. Catharines", "state_prov": "ON", "country": "Canada", "rookie_year": 2003,
+    }
     mock_request = Mock(return_value=DummyResponse(200, team_data))
     monkeypatch.setattr(client, "_client", Mock(request=mock_request))
 
     team = client.fetch_team_info(1114)
 
-    assert team == TeamInfo.model_validate(team_data)
+    assert team.key == "frc1114"
+    assert team.team_number == 1114
+    assert team.nickname == "Simbotics"
+    assert team.rookie_year == 2003
 
 
 def test_retry_on_transient_errors(monkeypatch, env_settings):

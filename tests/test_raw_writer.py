@@ -129,7 +129,7 @@ def test_write_inserts_new_payload_and_stores_metadata_unchanged(monkeypatch):
     result = writer.write(record)
 
     assert result is True
-    insert_query, insert_params = cursors[0].executed[0]
+    insert_query, insert_params = cursors[0].executed[1]  # [0] is the advisory-lock acquisition
     assert "INSERT INTO raw_source_payloads" in insert_query
     assert "ON CONFLICT (source, source_object_type, source_object_id, payload_checksum)" in insert_query
     assert insert_params[0] == "tba"
@@ -147,8 +147,8 @@ def test_write_demotes_prior_current_row_on_new_version(monkeypatch):
 
     writer.write(record)
 
-    assert len(cursors[0].executed) == 2
-    update_query, update_params = cursors[0].executed[1]
+    assert len(cursors[0].executed) == 3  # lock, insert, demotion update
+    update_query, update_params = cursors[0].executed[2]
     assert "SET is_current = FALSE" in update_query
     assert update_params == ("tba", "team", "frc1114", 42)
 
@@ -161,8 +161,8 @@ def test_write_duplicate_payload_is_not_reinserted(monkeypatch):
     result = writer.write(record)
 
     assert result is False
-    # The demotion UPDATE must never run for a no-op duplicate.
-    assert len(cursors[0].executed) == 1
+    # The demotion UPDATE must never run for a no-op duplicate (just the lock + insert attempt).
+    assert len(cursors[0].executed) == 2
 
 
 def test_write_default_fetch_timestamp_is_timezone_aware(monkeypatch):
@@ -171,7 +171,7 @@ def test_write_default_fetch_timestamp_is_timezone_aware(monkeypatch):
 
     writer.write(record)
 
-    _, insert_params = cursors[0].executed[0]
+    _, insert_params = cursors[0].executed[1]
     fetch_timestamp = insert_params[3]
     assert isinstance(fetch_timestamp, datetime)
     assert fetch_timestamp.tzinfo is not None
@@ -201,7 +201,7 @@ def test_write_handles_empty_dict_payload(monkeypatch):
     result = writer.write(record)
 
     assert result is True
-    assert cursors[0].executed[0][1][4].obj == {}
+    assert cursors[0].executed[1][1][4].obj == {}
 
 
 @pytest.mark.skip("Requires local PostgreSQL database and valid DATABASE_URL")
@@ -248,3 +248,116 @@ def test_raw_writer_end_to_end_against_real_database():
 
     with database.cursor() as cursor:
         cursor.execute("DELETE FROM raw_source_payloads WHERE source = %s", ("test_source",))
+
+
+@pytest.mark.skip("Requires local PostgreSQL database and valid DATABASE_URL")
+def test_concurrent_writes_of_different_new_versions_leave_exactly_one_current_row():
+    """Regression test for a real race found in Milestone 5 acceptance review.
+
+    Two threads writing two *different* new versions of the same object at the
+    same time must never leave more than one row marked is_current: each
+    write's checksum differs, so ON CONFLICT never fires for either, and
+    without serializing on the object's identity both demotion UPDATEs could
+    each miss the other's concurrently-inserted row.
+    """
+    import threading
+
+    settings = Settings()
+    run_migrations(settings)
+    database = Database(DatabaseConfig(settings.database_url))
+    writer = RawPayloadWriter(database=database)
+
+    with database.cursor() as cursor:
+        cursor.execute("DELETE FROM raw_source_payloads WHERE source = %s", ("race_test",))
+
+    barrier = threading.Barrier(2)
+    results: dict[str, bool] = {}
+
+    def write_version(label: str, value: int) -> None:
+        barrier.wait()
+        record = RawPayloadRecord(
+            source="race_test", source_object_type="team", source_object_id="9999", payload={"v": value}
+        )
+        results[label] = writer.write(record)
+
+    t1 = threading.Thread(target=write_version, args=("A", 100))
+    t2 = threading.Thread(target=write_version, args=("B", 200))
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+
+    assert results == {"A": True, "B": True}
+
+    with database.cursor() as cursor:
+        cursor.execute(
+            "SELECT is_current FROM raw_source_payloads WHERE source = %s AND source_object_id = %s",
+            ("race_test", "9999"),
+        )
+        rows = cursor.fetchall()
+
+    assert len(rows) == 2
+    assert sum(1 for row in rows if row[0]) == 1
+
+    with database.cursor() as cursor:
+        cursor.execute("DELETE FROM raw_source_payloads WHERE source = %s", ("race_test",))
+
+
+def test_write_many_stops_after_failure_and_preserves_earlier_commits(monkeypatch, caplog):
+    """Regression test found in the Phase 2 midpoint audit.
+
+    A failure partway through a batch must not roll back records already
+    committed earlier in the same call, must not attempt records after the
+    failure, and must log how much progress was made — since the exception
+    path has no way to return a partial count to the caller.
+    """
+
+    class RaisingCursor(DummyCursor):
+        def execute(self, query: str, params: tuple | None = None) -> None:
+            super().execute(query, params)
+            if "INSERT INTO raw_source_payloads" in query and params[2] == "boom":
+                raise RuntimeError("simulated write failure")
+
+    cursors_created: list[DummyCursor] = []
+
+    class FakeConnection:
+        def __init__(self) -> None:
+            self._call_count = 0
+
+        def cursor(self) -> DummyCursor:
+            self._call_count += 1
+            cursor = DummyCursor((self._call_count,)) if self._call_count == 1 else RaisingCursor((99,))
+            cursors_created.append(cursor)
+            return cursor
+
+        def commit(self) -> None:
+            pass
+
+        def rollback(self) -> None:
+            pass
+
+        def __enter__(self) -> "FakeConnection":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            pass
+
+    monkeypatch.setattr("database.connection.psycopg.connect", lambda *_a, **_kw: FakeConnection())
+    database = Database(DatabaseConfig("postgresql://user:pass@localhost:5432/testdb"))
+    writer = RawPayloadWriter(database=database)
+
+    records = [
+        RawPayloadRecord(source="tba", source_object_type="team", source_object_id="ok", payload={"v": 1}),
+        RawPayloadRecord(source="tba", source_object_type="team", source_object_id="boom", payload={"v": 2}),
+        RawPayloadRecord(source="tba", source_object_type="team", source_object_id="never_reached", payload={"v": 3}),
+    ]
+
+    with caplog.at_level("ERROR", logger="data.landing.raw_writer"):
+        with pytest.raises(RuntimeError, match="simulated write failure"):
+            writer.write_many(records)
+
+    # Only two cursors were ever created: the successful record and the failing
+    # one. The third record was never attempted.
+    assert len(cursors_created) == 2
+    assert "landing 1 record" in caplog.text
+    assert "boom" in caplog.text

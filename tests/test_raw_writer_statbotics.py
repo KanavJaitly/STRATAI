@@ -110,7 +110,7 @@ def test_statbotics_payload_lands_with_correct_metadata(monkeypatch):
     result = writer.write(record)
 
     assert result is True
-    _, insert_params = cursors[0].executed[0]
+    _, insert_params = cursors[0].executed[1]  # [0] is the advisory-lock acquisition
     assert insert_params[0] == "statbotics"
     assert insert_params[1] == "team_event"
     assert insert_params[2] == "1114_2025casj"
@@ -136,7 +136,7 @@ def test_statbotics_duplicate_payload_is_not_reinserted(monkeypatch):
     result = writer.write(record)
 
     assert result is False
-    assert len(cursors[0].executed) == 1  # no demotion UPDATE for a no-op duplicate
+    assert len(cursors[0].executed) == 2  # lock + insert attempt; no demotion UPDATE for a no-op duplicate
 
 
 def test_statbotics_changed_payload_creates_new_version(monkeypatch):
@@ -149,8 +149,8 @@ def test_statbotics_changed_payload_creates_new_version(monkeypatch):
     result = writer.write(record)
 
     assert result is True
-    assert len(cursors[0].executed) == 2
-    update_query, update_params = cursors[0].executed[1]
+    assert len(cursors[0].executed) == 3  # lock, insert, demotion update
+    update_query, update_params = cursors[0].executed[2]
     assert "SET is_current = FALSE" in update_query
     assert update_params == ("statbotics", "team_event", "1114_2025casj", 7)
 
@@ -170,8 +170,8 @@ def test_tba_and_statbotics_with_same_object_id_are_treated_independently(monkey
     assert writer.write(tba_record) is True
     assert writer.write(statbotics_record) is True
 
-    tba_insert_params = cursors[0].executed[0][1]
-    statbotics_insert_params = cursors[1].executed[0][1]
+    tba_insert_params = cursors[0].executed[1][1]  # [0] is the advisory-lock acquisition
+    statbotics_insert_params = cursors[1].executed[1][1]
     assert tba_insert_params[0] == "tba"
     assert statbotics_insert_params[0] == "statbotics"
     assert tba_insert_params[2] == statbotics_insert_params[2] == "9999"
@@ -204,7 +204,7 @@ def test_statbotics_client_fetch_result_lands_through_raw_payload_writer(monkeyp
     result = writer.write(record)
 
     assert result is True
-    _, insert_params = cursors[0].executed[0]
+    _, insert_params = cursors[0].executed[1]  # [0] is the advisory-lock acquisition
     assert insert_params[4].obj == raw_match_data[0]
     client.close()
 
