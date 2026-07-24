@@ -25,6 +25,14 @@ class EventSummary(BaseModel):
     season: int = Field(alias="year")
     start_date: date | None = None
     end_date: date | None = None
+    # Location fields are present on TBA's real event payloads (both the
+    # /events/{year} list and /event/{key} detail) and are carried by the
+    # canonical events table, so they are modelled here rather than silently
+    # dropped -- the Milestone 8 pipeline reconstructs the payload it lands
+    # from this model, and anything absent here cannot reach the canonical row.
+    city: str | None = None
+    state_prov: str | None = None
+    country: str | None = None
 
 
 class MatchAllianceResult(BaseModel):
