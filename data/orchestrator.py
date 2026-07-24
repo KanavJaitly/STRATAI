@@ -10,6 +10,11 @@ them and drives one end-to-end sync:
   * `WatermarkStore` persists per-source progress in `source_watermarks`, keyed
     on (source, object_type, scope_key) -- the unique index migration 0003
     already provides.
+  * `DataQualityRecorder` and `LineageStore` persist what the staging stage
+    found (`data_quality_issues`) and where every loaded row came from
+    (`canonical_lineage`). Issues are written *before* the load, so a run that
+    then fails still leaves its quality evidence behind; lineage is written
+    *after* it, since a lineage row asserts that a canonical row exists.
   * `sync_event` wires extraction -> landing -> staging -> serving for a single
     event.
 
@@ -44,8 +49,16 @@ from data.clients.statbotics import StatboticsClient
 from data.clients.tba import TBAClient
 from data.config import Settings
 from data.landing.raw_writer import RawPayloadWriter
+from data.lineage import LineageStore
 from data.pipeline import ExtractionResult, SkippedRecord, StagedBatch
 from data.serving.repository import CanonicalRepository
+from data.staging.quality import (
+    DataQualityRecorder,
+    QualityIssue,
+    build_quality_context,
+    issues_from_extraction_errors,
+    summarize,
+)
 from database.connection import Database, DatabaseConfig
 
 logger = logging.getLogger(__name__)
@@ -197,11 +210,18 @@ class SyncResult:
     watermarks: dict[str, int | None] = field(default_factory=dict)
     skipped: list[SkippedRecord] = field(default_factory=list)
     extraction_errors: list[str] = field(default_factory=list)
+    issues: list[QualityIssue] = field(default_factory=list)
+    lineage_recorded: int = 0
 
     @property
     def records_loaded(self) -> int:
         """Total canonical records written across every entity type."""
         return sum(self.loaded.values())
+
+    @property
+    def fatal_issues(self) -> list[QualityIssue]:
+        """Issues severe enough to have kept their record out of the canonical tables."""
+        return [issue for issue in self.issues if issue.is_fatal]
 
 
 def sync_event(
@@ -214,6 +234,8 @@ def sync_event(
     writer: RawPayloadWriter | None = None,
     recorder: PipelineRunRecorder | None = None,
     watermarks: WatermarkStore | None = None,
+    quality: DataQualityRecorder | None = None,
+    lineage: LineageStore | None = None,
     pipeline_name: str = DEFAULT_PIPELINE_NAME,
 ) -> SyncResult:
     """Run extraction -> landing -> staging -> serving for one event, end to end.
@@ -235,6 +257,8 @@ def sync_event(
     repository = repository or CanonicalRepository(database)
     recorder = recorder or PipelineRunRecorder(database)
     watermarks = watermarks or WatermarkStore(database)
+    quality = quality or DataQualityRecorder(database)
+    lineage = lineage or LineageStore(database)
 
     run_id = recorder.start(pipeline_name, source=pipeline.SOURCE_TBA, scope_key=event_key)
     logger.info("Pipeline run %d started: %s for event %s", run_id, pipeline_name, event_key)
@@ -243,15 +267,34 @@ def sync_event(
         extraction: ExtractionResult = pipeline.extract_event(event_key, tba=tba, statbotics=statbotics)
         landed = pipeline.land(writer, extraction.batches)
 
+        # Referential facts for the quality checks: what will exist canonically
+        # once this run loads, which is everything extracted now plus everything
+        # an earlier run already persisted.
+        context = build_quality_context(database, extraction)
+
         staged_batches: list[StagedBatch] = []
         for batch in extraction.batches:
             after_raw_id = watermarks.get(batch.source, batch.object_type, event_key)
             pending = pipeline.read_pending(
                 database, batch.source, batch.object_type, batch.object_ids, after_raw_id,
             )
-            staged_batches.append(pipeline.stage_batch(batch.source, batch.object_type, pending, after_raw_id))
+            staged_batches.append(pipeline.stage_batch(
+                batch.source, batch.object_type, pending, after_raw_id, context=context,
+            ))
+
+        issues = issues_from_extraction_errors(extraction.errors, event_key=event_key)
+        issues += [issue for batch in staged_batches for issue in batch.issues]
+        # Recorded before the load, so the findings survive even if loading then
+        # fails -- a failed run's quality evidence is exactly when it is wanted.
+        quality.record(issues, run_id)
 
         loaded = pipeline.load(repository, staged_batches)
+
+        # Lineage asserts that a canonical row exists and came from this
+        # payload, so it is only true once the load has succeeded.
+        lineage_recorded = lineage.record(
+            [entry for batch in staged_batches for entry in batch.lineage], run_id,
+        )
 
         # Single advance point, reached only once every stage above succeeded.
         for batch in staged_batches:
@@ -265,6 +308,8 @@ def sync_event(
             watermarks={f"{b.source}.{b.object_type}": b.watermark_id for b in staged_batches},
             skipped=[record for batch in staged_batches for record in batch.skipped],
             extraction_errors=extraction.errors,
+            issues=issues,
+            lineage_recorded=lineage_recorded,
         )
         recorder.succeed(
             run_id,
@@ -272,8 +317,10 @@ def sync_event(
             stage_counts=_stage_counts(result),
         )
         logger.info(
-            "Pipeline run %d succeeded: %d canonical record(s), %d skipped, %d extraction error(s)",
-            run_id, result.records_loaded, len(result.skipped), len(result.extraction_errors),
+            "Pipeline run %d succeeded: %d canonical record(s), %d skipped, "
+            "%d quality issue(s) (%d fatal), %d extraction error(s)",
+            run_id, result.records_loaded, len(result.skipped),
+            len(result.issues), len(result.fatal_issues), len(result.extraction_errors),
         )
         return result
     except Exception as exc:
@@ -293,6 +340,8 @@ def _stage_counts(result: SyncResult) -> dict[str, Any]:
             for record in result.skipped
         ],
         "extraction_errors": result.extraction_errors,
+        "quality_issues": summarize(result.issues),
+        "lineage_recorded": result.lineage_recorded,
     }
 
 
@@ -320,7 +369,9 @@ def main(argv: list[str] | None = None) -> int:
 
     print(
         f"run {result.run_id}: landed={result.landed} loaded={result.loaded} "
-        f"skipped={len(result.skipped)} extraction_errors={len(result.extraction_errors)}"
+        f"skipped={len(result.skipped)} issues={len(result.issues)} "
+        f"(fatal={len(result.fatal_issues)}) lineage={result.lineage_recorded} "
+        f"extraction_errors={len(result.extraction_errors)}"
     )
     return 0
 

@@ -33,6 +33,7 @@ def verify_database() -> None:
         "pipeline_runs",
         "source_watermarks",
         "data_quality_issues",
+        "canonical_lineage",
     }
 
     missing = expected_tables - tables

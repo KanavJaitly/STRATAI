@@ -9,11 +9,11 @@
 | Field | Current Value |
 |---|---|
 | **Active Phase** | Phase 2 — Data Pipeline |
-| **Active Milestone** | Milestone 9 — Data quality checks & audit tracing (next) |
-| **Last Completed** | Milestone 8 — Pipeline orchestration & incremental state (commit `0fdf200`, branch `milestone-8`) |
+| **Active Milestone** | Milestone 10 — Docs & validation harness (next) |
+| **Last Completed** | Milestone 9 — Data quality checks & audit tracing (commit `b96b579`, branch `milestone-9`) |
 | **Last Updated** | 2026-07-24 |
 | **Current Blocker** | None |
-| **Next Session Goal** | Start Milestone 9 |
+| **Next Session Goal** | Start Milestone 10 |
 
 ---
 
@@ -27,7 +27,7 @@
 | **Migrations** | Raw SQL in `database/migrations/*.sql` | applied in sorted order by `database/migrate.py`, tracked in `migrations_applied`. **No Alembic.** |
 | **Validation** | Pydantic v2 | staging + source schemas |
 | **HTTP client** | httpx | TBA / Statbotics clients |
-| **Testing** | pytest | 135 passed / 4 skipped as of M8 |
+| **Testing** | pytest | 172 passed / 4 skipped as of M9 |
 
 ---
 
@@ -43,8 +43,8 @@
 | 6. Staging normalizer & validation | ✅ Done | `StagingTeam/Event/Match`; strips `frc` prefix → `team_number` int |
 | 7. Canonical schema + repository load | ✅ Done | see decisions below (merged PR #1) |
 | 8. Pipeline orchestration & incremental state | ✅ Done | `data/pipeline.py` stages + `data/orchestrator.py` driver; watermark = highest promoted `raw_source_payloads.id`; `0006` adds `scope_key`/`stage_counts` |
-| 9. Data quality checks & audit tracing | ⬜ Next | `data_quality_issues` table already exists from `0003` |
-| 10. Docs & validation harness | ⬜ Not Started | |
+| 9. Data quality checks & audit tracing | ✅ Done | `data/staging/quality.py` checks + `data/lineage.py` provenance; `0007` adds `raw_payload_id`/`field` to `data_quality_issues` and creates `canonical_lineage` |
+| 10. Docs & validation harness | ⬜ Next | |
 
 **Status Key:** ⬜ Not Started &nbsp; 🟡 In Progress &nbsp; 🔵 In Review &nbsp; ✅ Done
 
@@ -64,11 +64,19 @@
 | 2026-07-24 | **Roster backfill in extraction** | TBA's event team list and match schedule are separate endpoints with no guarantee they agree; a rostered team with no `teams` row fails the whole load on the `match_teams` FK. Missing teams are fetched individually before landing. Confirmed with Kanav. |
 | 2026-07-24 | **Additive client methods** (no M3/M5 signature changes) | `TBAClient.fetch_event` (single event, vs. downloading a whole season) and `fetch_event_teams` (one request, vs. ~40 `fetch_team_info` calls). Plus `city`/`state_prov`/`country` on `EventSummary` — see tech debt below. |
 | 2026-07-24 | **Watermarks scoped per event, including for teams** | A team attending two events is tracked independently under each, so one event's run can never advance another's progress. Cost is one idempotent re-upsert of that team per event. |
+| 2026-07-24 | **Lineage as a separate `canonical_lineage` table**, not a `source_payload_id` column on the canonical tables | Keeps the `0001`/`0005` schema and the M7 repository completely untouched, and makes lineage an append-only *history* (every payload version an entity was built from, plus the run that promoted each) instead of a last-writer pointer that can't represent multi-source entities. Confirmed with Kanav. |
+| 2026-07-24 | **Severity is the reject/allow policy** — `error`/`critical` reject, `warning` records and loads | Errors are records that are meaningless or unloadable (negative score, W/L/T contradicting its own total, end date before start, reference that won't exist). Everything judgemental is a warning: a plausibility rule that discards real data is worse than no rule, since FRC scoring changes every season and today's generous ceiling will eventually be exceeded by a real match. Confirmed with Kanav. |
+| 2026-07-24 | **One rejection mechanism, not two** | A fatal quality issue takes the identical path in `stage_batch` that an M8 validation failure takes: skipped, watermark held short of it, retried next run. M9 changes to M8 are additive only (default-empty `StagedBatch.issues`/`.lineage`, optional `context` param, optional `sync_event` collaborators). Confirmed with Kanav. |
+| 2026-07-24 | **`ON DELETE CASCADE` on `data_quality_issues`** (incl. redefining `0003`'s run FK) | Once issues and lineage reference runs and raw payloads, deleting either — which integration teardown does — fails on a foreign-key violation. Expressing the cleanup in the schema beat editing M8's test teardown, and it's semantically right: an issue is a subordinate record of the run and payload it describes. Lineage's run FK is `SET NULL` instead, since provenance stays true even if the run record is gone. Confirmed with Kanav. |
+| 2026-07-24 | **Issues written before the load, lineage after** | A failed run's quality evidence is exactly when it's wanted, so issues must not depend on the load succeeding; a lineage row asserts a canonical row exists, so it must. |
+| 2026-07-24 | **One `data_quality_issues` row per detection**, not per distinct problem | A payload that stays invalid is re-detected every run (the watermark deliberately holds short of it). Collapsing detections would lose the answer to "how long has this been broken", which is what the `resolved`/`resolved_at` columns exist to support. |
+| 2026-07-24 | **Rejected: checking `epa_total` against `epa_auto + epa_teleop + epa_endgame`** | Statbotics doesn't document those as summing exactly, so any tolerance would be invented statistics generating false alarms about real data. |
 
 ---
 
 ## 🐛 Known Issues / Tech Debt
 
+- [ ] **Sentinel event keys must agree with their payload year** (surfaced by M9): the staging layer derives a match's season from its *event key*, so a `9997…` key with `"year": 2025` yields season-9997 matches and trips plausibility warnings. M9's integration fixtures use `2025zzzqual` for this reason; M7/M8's `9998`/`9999` fixtures intentionally accept the resulting warnings.
 - [ ] **Clients discard the raw response body** (surfaced by M8): they return validated Pydantic models, so the landing layer stores `model_dump(mode="json", by_alias=True)` — faithful for modelled fields, but a field no model declares is invisible to both the canonical row and the landing checksum, so a change confined to it is never detected as a new version. Widening a model fixes it per field (this is why `EventSummary` gained its location fields in M8); exposing raw response bodies from the clients would fix it generally. Documented in `data/pipeline.py`'s module docstring.
 - [ ] **Statbotics extraction is N requests per event** (one per team) — the API exposes team-event metrics only per `(team, event)`. Fine for one event; will want revisiting for a full-season backfill.
 - [ ] **Pre-existing config test bug** (not from M7): `tests/test_config.py::test_settings_allows_missing_statbotics_api_key` fails when a `.env` exists at project root (created by `cp .env.example .env`). Cause: `config.py` `load_dotenv(override=False)` + leaked `DATABASE_URL` in `os.environ` shadows the test's temp `.env`. Passes in a fresh clone. Fix touches M1 config/test code — deferred, needs Kanav's call (options: `override=True`, or have the test clear the env var).
@@ -90,4 +98,5 @@
 | Date | Worked On | What Was Built / Decided | Next Step |
 |---|---|---|---|
 | 2026-07-23 | Milestone 7 (Sven's first solo milestone) | Local env from scratch (Postgres 18, venv, deps); baseline 102 tests green; M7 built — `0005_canonical.sql` re-key, `CanonicalRepository` upsert loaders, `StagingTeamEventStats`; 113 pass; committed `4086f59`, PR #1 merged to `main` | Milestone 8 |
-| 2026-07-24 | Milestone 8 | Confirmed `pipeline_runs`/`source_watermarks` came from `0003`, not M2. Built `data/pipeline.py` (4 stages) + `data/orchestrator.py` (`PipelineRunRecorder`, `WatermarkStore`, `sync_event`, CLI); `0006` applied; additive `TBAClient.fetch_event`/`fetch_event_teams`. 18 new tests, all M8 integration tests run for real against local Postgres (no skips); suite 135 pass / 4 skip / 1 deselected. Committed `0fdf200` on `milestone-8` | Milestone 9 — data quality checks & audit tracing |
+| 2026-07-24 | Milestone 8 | Confirmed `pipeline_runs`/`source_watermarks` came from `0003`, not M2. Built `data/pipeline.py` (4 stages) + `data/orchestrator.py` (`PipelineRunRecorder`, `WatermarkStore`, `sync_event`, CLI); `0006` applied; additive `TBAClient.fetch_event`/`fetch_event_teams`. 18 new tests, all M8 integration tests run for real against local Postgres (no skips); suite 135 pass / 4 skip / 1 deselected. Committed `0fdf200` on `milestone-8`, PR #3 merged to `main` | Milestone 9 — data quality checks & audit tracing |
+| 2026-07-24 | Milestone 9 | Confirmed `data_quality_issues` existed from `0003` but lacked a raw-payload reference and `field`, and that no canonical table carried lineage. Built `data/staging/quality.py` (plausibility + referential checks, severity as reject/allow policy) and `data/lineage.py` (`canonical_lineage` provenance history, `trace_to_payload`); `0007` applied; wired into `stage_batch` reusing M8's single rejection path. 37 new tests, all M9 integration tests run for real; suite 172 pass / 4 skip / 1 deselected, M8's 18 untouched. Committed `b96b579` on `milestone-9` | Milestone 10 — docs & validation harness |

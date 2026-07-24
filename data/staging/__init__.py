@@ -6,6 +6,13 @@ from data.staging.normalizer import (
     normalize_team,
     normalize_team_event_stats,
 )
+from data.staging.quality import (
+    DataQualityRecorder,
+    QualityContext,
+    QualityIssue,
+    build_quality_context,
+    check_entity,
+)
 from data.staging.schemas import (
     StagingEvent,
     StagingMatch,
@@ -28,4 +35,9 @@ __all__ = [
     "normalize_match",
     "normalize_team",
     "normalize_team_event_stats",
+    "QualityIssue",
+    "QualityContext",
+    "DataQualityRecorder",
+    "check_entity",
+    "build_quality_context",
 ]
