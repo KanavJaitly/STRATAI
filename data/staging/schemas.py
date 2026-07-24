@@ -35,6 +35,34 @@ class StagingEvent(BaseModel):
     country: str | None = None
 
 
+class StagingTeamEventStats(BaseModel):
+    """Canonical representation of one team's performance at one event.
+
+    Keyed by (team_number, event_key) so it joins directly against StagingTeam
+    and StagingEvent regardless of source. Populated from Statbotics's EPA-based
+    team-event metrics (see StatboticsTeamEventMetrics), which landed in the raw
+    layer in Milestone 5; this is the first staging entity that does NOT derive
+    from The Blue Alliance.
+
+    `matches_played` is derived (wins + losses + ties) rather than sourced --
+    Statbotics reports the win/loss/tie breakdown but no explicit game count,
+    and the derived total is only meaningful when all three are present, so it
+    is left None if any component is missing rather than silently undercounting.
+    """
+
+    team_number: int
+    event_key: str
+    season: int
+    epa_total: float | None = None
+    epa_auto: float | None = None
+    epa_teleop: float | None = None
+    epa_endgame: float | None = None
+    wins: int | None = None
+    losses: int | None = None
+    ties: int | None = None
+    matches_played: int | None = None
+
+
 class StagingMatch(BaseModel):
     """Canonical representation of a single FRC match, independent of source.
 

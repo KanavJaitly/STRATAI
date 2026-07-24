@@ -7,7 +7,13 @@ from typing import Any, Callable
 from pydantic import BaseModel
 from pydantic import ValidationError as PydanticValidationError
 
-from data.staging.schemas import StagingEvent, StagingMatch, StagingTeam
+from data.clients.schemas import StatboticsTeamEventMetrics
+from data.staging.schemas import (
+    StagingEvent,
+    StagingMatch,
+    StagingTeam,
+    StagingTeamEventStats,
+)
 from data.staging.validator import (
     PayloadValidationError,
     ValidationIssue,
@@ -188,9 +194,64 @@ def normalize_tba_team(payload: dict[str, Any]) -> StagingTeam:
     )
 
 
+def normalize_statbotics_team_event_stats(payload: dict[str, Any]) -> StagingTeamEventStats:
+    """Validate and normalize a raw Statbotics team-event payload into a canonical StagingTeamEventStats.
+
+    Unlike the TBA normalizers, there is no hand-written validator for this
+    source (the validator module targets TBA payload shapes); the
+    StatboticsTeamEventMetrics model is the validation boundary, so a malformed
+    payload surfaces as a PayloadValidationError here just as the TBA path does.
+    """
+    try:
+        metrics = StatboticsTeamEventMetrics.model_validate(payload)
+    except PydanticValidationError as exc:
+        issues = [
+            ValidationIssue(
+                entity_type="team_event_stats",
+                field=".".join(str(part) for part in error["loc"]) or "<unknown>",
+                message=error["msg"],
+                source_object_id=payload.get("event") if isinstance(payload, dict) else None,
+            )
+            for error in exc.errors()
+        ]
+        raise PayloadValidationError(issues) from exc
+
+    source_object_id = f"{metrics.team}_{metrics.event}"
+    if not _EVENT_KEY_SEASON_PATTERN.match(metrics.event):
+        raise PayloadValidationError([
+            ValidationIssue(
+                "team_event_stats", "event",
+                f"Expected an event key starting with a 4-digit season, got {metrics.event!r}",
+                source_object_id,
+            )
+        ])
+
+    # Derived, not sourced: Statbotics reports the W/L/T breakdown but no game
+    # count. Only meaningful when all three are present (see StagingTeamEventStats).
+    matches_played: int | None = None
+    if metrics.wins is not None and metrics.losses is not None and metrics.ties is not None:
+        matches_played = metrics.wins + metrics.losses + metrics.ties
+
+    return _build_or_raise(
+        "team_event_stats", StagingTeamEventStats, source_object_id,
+        team_number=metrics.team,
+        event_key=metrics.event,
+        season=_season_from_event_key(metrics.event),
+        epa_total=metrics.epa_total,
+        epa_auto=metrics.epa_auto,
+        epa_teleop=metrics.epa_teleop,
+        epa_endgame=metrics.epa_endgame,
+        wins=metrics.wins,
+        losses=metrics.losses,
+        ties=metrics.ties,
+        matches_played=matches_played,
+    )
+
+
 EventNormalizerFunc = Callable[[dict[str, Any]], StagingEvent]
 MatchNormalizerFunc = Callable[[dict[str, Any]], StagingMatch]
 TeamNormalizerFunc = Callable[[dict[str, Any]], StagingTeam]
+TeamEventStatsNormalizerFunc = Callable[[dict[str, Any]], StagingTeamEventStats]
 
 # Registries keyed by source name. Adding a new source (Statbotics,
 # ScoutRadioz, ...) that exposes one of these concepts means writing one
@@ -199,6 +260,9 @@ TeamNormalizerFunc = Callable[[dict[str, Any]], StagingTeam]
 _EVENT_NORMALIZERS: dict[str, EventNormalizerFunc] = {"tba": normalize_tba_event}
 _MATCH_NORMALIZERS: dict[str, MatchNormalizerFunc] = {"tba": normalize_tba_match}
 _TEAM_NORMALIZERS: dict[str, TeamNormalizerFunc] = {"tba": normalize_tba_team}
+_TEAM_EVENT_STATS_NORMALIZERS: dict[str, TeamEventStatsNormalizerFunc] = {
+    "statbotics": normalize_statbotics_team_event_stats,
+}
 
 
 def _dispatch(registry: dict[str, Callable[[dict[str, Any]], Any]], source: str, entity_type: str, payload: dict[str, Any]) -> Any:
@@ -222,3 +286,8 @@ def normalize_match(source: str, payload: dict[str, Any]) -> StagingMatch:
 def normalize_team(source: str, payload: dict[str, Any]) -> StagingTeam:
     """Normalize a raw team payload from any registered source into a StagingTeam."""
     return _dispatch(_TEAM_NORMALIZERS, source, "team", payload)
+
+
+def normalize_team_event_stats(source: str, payload: dict[str, Any]) -> StagingTeamEventStats:
+    """Normalize a raw team-event-stats payload from any registered source into a StagingTeamEventStats."""
+    return _dispatch(_TEAM_EVENT_STATS_NORMALIZERS, source, "team_event_stats", payload)
