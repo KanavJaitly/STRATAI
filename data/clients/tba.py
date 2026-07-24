@@ -48,6 +48,25 @@ class TBAClient(SourceConnector):
         data = self._request("GET", f"/events/{year}")
         return [EventSummary.model_validate(item) for item in data]
 
+    def fetch_event(self, event_key: str) -> EventSummary:
+        """Fetch a single event by key.
+
+        fetch_event_list only exposes a whole season at once; syncing one event
+        would otherwise mean downloading every event of that year and filtering
+        client-side.
+        """
+        data = self._request("GET", f"/event/{event_key}")
+        return EventSummary.model_validate(data)
+
+    def fetch_event_teams(self, event_key: str) -> list[TeamInfo]:
+        """Fetch every team attending an event.
+
+        One request for the full roster, versus one fetch_team_info call per
+        team (~40 requests for a typical regional).
+        """
+        data = self._request("GET", f"/event/{event_key}/teams")
+        return [TeamInfo.model_validate(item) for item in (data or [])]
+
     def fetch_event_matches(self, event_key: str) -> list[Match]:
         """Fetch all matches for an event."""
         data = self._request("GET", f"/event/{event_key}/matches")
