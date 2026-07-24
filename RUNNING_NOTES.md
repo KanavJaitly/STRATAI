@@ -9,11 +9,11 @@
 | Field | Current Value |
 |---|---|
 | **Active Phase** | Phase 2 — Data Pipeline |
-| **Active Milestone** | Milestone 8 — Pipeline orchestration & incremental state (next) |
-| **Last Completed** | Milestone 7 — Canonical schema + repository load (merged to `main`, PR #1) |
-| **Last Updated** | 2026-07-23 |
+| **Active Milestone** | Milestone 9 — Data quality checks & audit tracing (next) |
+| **Last Completed** | Milestone 8 — Pipeline orchestration & incremental state (commit `0fdf200`, branch `milestone-8`) |
+| **Last Updated** | 2026-07-24 |
 | **Current Blocker** | None |
-| **Next Session Goal** | Start Milestone 8 |
+| **Next Session Goal** | Start Milestone 9 |
 
 ---
 
@@ -27,7 +27,7 @@
 | **Migrations** | Raw SQL in `database/migrations/*.sql` | applied in sorted order by `database/migrate.py`, tracked in `migrations_applied`. **No Alembic.** |
 | **Validation** | Pydantic v2 | staging + source schemas |
 | **HTTP client** | httpx | TBA / Statbotics clients |
-| **Testing** | pytest | 113 passed / 9 skipped as of M7 |
+| **Testing** | pytest | 135 passed / 4 skipped as of M8 |
 
 ---
 
@@ -36,14 +36,14 @@
 | Milestone | Status | Notes |
 |---|---|---|
 | 1. Scaffold & config | ✅ Done | |
-| 2. DB connection & initial schema | ✅ Done | `0001_initial.sql` created all canonical tables + `match_teams` |
+| 2. DB connection & initial schema | ✅ Done | `0001_initial.sql` created the canonical tables + `match_teams`. **Correction (verified 2026-07-24):** it did *not* create `pipeline_runs` / `source_watermarks` / `data_quality_issues` — those came later in `0003_pipeline_observability.sql`, despite the plan crediting them to M2. |
 | 3. Source connector + TBA client | ✅ Done | |
 | 4. Landing raw ingestion writer | ✅ Done | |
 | 5. Statbotics connector + landing | ✅ Done | `StatboticsTeamEventMetrics` lands EPA / W-L-T |
 | 6. Staging normalizer & validation | ✅ Done | `StagingTeam/Event/Match`; strips `frc` prefix → `team_number` int |
 | 7. Canonical schema + repository load | ✅ Done | see decisions below (merged PR #1) |
-| 8. Pipeline orchestration & incremental state | ⬜ Next | extraction → landing → staging → serving, one runnable flow |
-| 9. Data quality checks & audit tracing | ⬜ Not Started | |
+| 8. Pipeline orchestration & incremental state | ✅ Done | `data/pipeline.py` stages + `data/orchestrator.py` driver; watermark = highest promoted `raw_source_payloads.id`; `0006` adds `scope_key`/`stage_counts` |
+| 9. Data quality checks & audit tracing | ⬜ Next | `data_quality_issues` table already exists from `0003` |
 | 10. Docs & validation harness | ⬜ Not Started | |
 
 **Status Key:** ⬜ Not Started &nbsp; 🟡 In Progress &nbsp; 🔵 In Review &nbsp; ✅ Done
@@ -57,11 +57,20 @@
 | 2026-07-23 | **Re-keyed canonical layer to `team_number`** (`0005_canonical.sql`) | `0001` had keyed teams on `team_key` TEXT (`"frc1114"`), but M6 staging strips the prefix to `team_number` INT. Tables were empty, so drop-and-recreate lost no data. Confirmed with Kanav. `events`/`matches` left untouched (already compatibly keyed). |
 | 2026-07-23 | **Kept `match_teams` junction** (not `int[]` arrays) | True FK integrity on roster membership — arrays can't enforce it. Junction already existed in `0001`. |
 | 2026-07-23 | **`team_event_stats` sourced from Statbotics (M5)** | Added `StagingTeamEventStats` + `normalize_statbotics_team_event_stats` so the M7 loader is exercised end-to-end, not just against hand-built rows. `epa_endgame` nullable (Statbotics may not provide it). |
+| 2026-07-24 | **Watermark = highest promoted `raw_source_payloads.id`**, per `(source, object_type, event)` | Landing already dedups identical payloads, so an unchanged object lands no new row and nothing sits above the watermark — a re-sync's staging/serving stages are true no-ops, not deduplicated work. No new schema needed; `0003`'s UNIQUE `(source, object_type, scope_key)` was already the right key. Confirmed with Kanav. |
+| 2026-07-24 | **`0006_pipeline_run_scope.sql`: nullable `scope_key` + `stage_counts` JSONB on `pipeline_runs`** | `0003` gave `pipeline_runs` no scope column, so runs against different events were indistinguishable and unreconcilable against watermarks. Purely additive, rollback is `DROP COLUMN`. Confirmed with Kanav. |
+| 2026-07-24 | **Watermarks advance at exactly one point** — after serving succeeds | Guarantees no failure leaves a corrupt watermark. Safe to repeat a partially-completed run because every canonical write is an upsert. A failed run is recorded as `failed` and the exception re-raised, never swallowed. |
+| 2026-07-24 | **Contiguous-prefix watermark advance on validation failure** | An invalid payload is skipped + recorded, and the watermark stops short of it, so it is retried on later runs instead of permanently skipped — one bad record never blocks an event's good records. Tradeoff: a permanently-malformed record is re-read every run (idempotent, cheap). Confirmed with Kanav. |
+| 2026-07-24 | **Roster backfill in extraction** | TBA's event team list and match schedule are separate endpoints with no guarantee they agree; a rostered team with no `teams` row fails the whole load on the `match_teams` FK. Missing teams are fetched individually before landing. Confirmed with Kanav. |
+| 2026-07-24 | **Additive client methods** (no M3/M5 signature changes) | `TBAClient.fetch_event` (single event, vs. downloading a whole season) and `fetch_event_teams` (one request, vs. ~40 `fetch_team_info` calls). Plus `city`/`state_prov`/`country` on `EventSummary` — see tech debt below. |
+| 2026-07-24 | **Watermarks scoped per event, including for teams** | A team attending two events is tracked independently under each, so one event's run can never advance another's progress. Cost is one idempotent re-upsert of that team per event. |
 
 ---
 
 ## 🐛 Known Issues / Tech Debt
 
+- [ ] **Clients discard the raw response body** (surfaced by M8): they return validated Pydantic models, so the landing layer stores `model_dump(mode="json", by_alias=True)` — faithful for modelled fields, but a field no model declares is invisible to both the canonical row and the landing checksum, so a change confined to it is never detected as a new version. Widening a model fixes it per field (this is why `EventSummary` gained its location fields in M8); exposing raw response bodies from the clients would fix it generally. Documented in `data/pipeline.py`'s module docstring.
+- [ ] **Statbotics extraction is N requests per event** (one per team) — the API exposes team-event metrics only per `(team, event)`. Fine for one event; will want revisiting for a full-season backfill.
 - [ ] **Pre-existing config test bug** (not from M7): `tests/test_config.py::test_settings_allows_missing_statbotics_api_key` fails when a `.env` exists at project root (created by `cp .env.example .env`). Cause: `config.py` `load_dotenv(override=False)` + leaked `DATABASE_URL` in `os.environ` shadows the test's temp `.env`. Passes in a fresh clone. Fix touches M1 config/test code — deferred, needs Kanav's call (options: `override=True`, or have the test clear the env var).
 
 ---
@@ -81,3 +90,4 @@
 | Date | Worked On | What Was Built / Decided | Next Step |
 |---|---|---|---|
 | 2026-07-23 | Milestone 7 (Sven's first solo milestone) | Local env from scratch (Postgres 18, venv, deps); baseline 102 tests green; M7 built — `0005_canonical.sql` re-key, `CanonicalRepository` upsert loaders, `StagingTeamEventStats`; 113 pass; committed `4086f59`, PR #1 merged to `main` | Milestone 8 |
+| 2026-07-24 | Milestone 8 | Confirmed `pipeline_runs`/`source_watermarks` came from `0003`, not M2. Built `data/pipeline.py` (4 stages) + `data/orchestrator.py` (`PipelineRunRecorder`, `WatermarkStore`, `sync_event`, CLI); `0006` applied; additive `TBAClient.fetch_event`/`fetch_event_teams`. 18 new tests, all M8 integration tests run for real against local Postgres (no skips); suite 135 pass / 4 skip / 1 deselected. Committed `0fdf200` on `milestone-8` | Milestone 9 — data quality checks & audit tracing |
