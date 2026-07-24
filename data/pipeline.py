@@ -6,10 +6,17 @@ testable functions:
     extraction  -> land -> stage (read_pending + stage_batch) -> load
     (source API)   (raw)   (validate/normalize)                 (canonical)
 
-It deliberately knows nothing about run bookkeeping or watermark persistence --
-`data.orchestrator` owns that and drives these stages. Keeping the dependency
-one-directional means a stage can be exercised in isolation without any
-pipeline_runs / source_watermarks state existing.
+The staging stage also quality-screens what it normalizes (see
+data.staging.quality) and pairs each accepted entity with the raw payload it
+came from (see data.lineage), so records that would be meaningless or
+unloadable are rejected before serving and everything that is loaded stays
+traceable to its source.
+
+It deliberately knows nothing about run bookkeeping, watermark persistence, or
+where issues and lineage are written -- `data.orchestrator` owns that and drives
+these stages. Keeping the dependency one-directional means a stage can be
+exercised in isolation without any pipeline_runs / source_watermarks state
+existing.
 
 Incremental processing is built on `raw_source_payloads.id`. The landing layer
 already deduplicates identical payloads, so an unchanged object lands no new
@@ -42,6 +49,7 @@ from pydantic import BaseModel
 from data.clients.statbotics import StatboticsClient
 from data.clients.tba import TBAClient
 from data.landing.raw_writer import RawPayloadRecord, RawPayloadWriter
+from data.lineage import LineageEntry, entity_key_of
 from data.serving.repository import CanonicalRepository
 from data.staging import (
     PayloadValidationError,
@@ -54,6 +62,7 @@ from data.staging import (
     normalize_team,
     normalize_team_event_stats,
 )
+from data.staging.quality import QualityContext, QualityIssue, check_entity, issues_from_validation_error
 from database.connection import Database
 
 logger = logging.getLogger(__name__)
@@ -145,11 +154,15 @@ class StagedBatch:
     """Validated staging entities for one (source, object_type), with its new watermark.
 
     `watermark_id` is the highest raw id whose *entire preceding run* of
-    payloads normalized cleanly -- the contiguous good prefix, not the maximum
-    id seen. Entities after a validation failure are still loaded (canonical
-    writes are upserts, so re-processing them is harmless), but the watermark
-    stops short of the failure so the bad payload is retried on the next run
-    instead of being skipped permanently.
+    payloads was accepted cleanly -- the contiguous good prefix, not the maximum
+    id seen. Entities after a rejection are still loaded (canonical writes are
+    upserts, so re-processing them is harmless), but the watermark stops short
+    of the rejection so the bad payload is retried on the next run instead of
+    being skipped permanently.
+
+    `issues` holds every quality finding for this batch, including warnings on
+    entities that were accepted; `lineage` pairs each accepted entity with the
+    raw payload it came from, for the audit trail.
     """
 
     source: str
@@ -157,6 +170,8 @@ class StagedBatch:
     entities: list[Any] = field(default_factory=list)
     watermark_id: int | None = None
     skipped: list[SkippedRecord] = field(default_factory=list)
+    issues: list[QualityIssue] = field(default_factory=list)
+    lineage: list[LineageEntry] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -373,15 +388,27 @@ def stage_batch(
     object_type: str,
     pending: Sequence[PendingPayload],
     after_raw_id: int,
+    *,
+    context: QualityContext | None = None,
 ) -> StagedBatch:
-    """Validate and normalize pending raw payloads into canonical staging entities.
+    """Validate, normalize, and quality-screen pending raw payloads into staging entities.
 
-    A payload that fails validation is skipped and recorded rather than raised:
-    one malformed record must not stop an event's remaining good records from
-    reaching the canonical tables. The returned watermark therefore only covers
-    the contiguous prefix of cleanly-normalized ids, so a skipped payload is
-    reprocessed on the next run (and superseded automatically if the source
-    later corrects it, since the correction lands as the new `is_current` row).
+    Two kinds of rejection flow through one mechanism. A payload that fails
+    structural validation cannot be normalized at all; a payload that normalizes
+    but trips a fatal quality check (a negative score, a reference that will not
+    exist) is a record that would be meaningless or unloadable. Both are skipped
+    with the finding recorded, and both hold the watermark short of themselves,
+    so neither reaches the serving layer and both are retried next run --
+    superseded automatically if the source later corrects them, since a
+    correction lands as the new `is_current` row.
+
+    One malformed record must not stop an event's remaining good records, so
+    staging continues past a rejection; only the watermark stops there.
+
+    `context` supplies the referential facts (which teams and events will exist)
+    that quality checks need. Omitted, the referential checks are skipped and
+    only self-contained plausibility checks run, which is what makes this safe
+    to call without a database.
     """
     normalizer = _STAGING_DISPATCH[object_type]
     staged = StagedBatch(source=source, object_type=object_type, watermark_id=after_raw_id or None)
@@ -389,15 +416,40 @@ def stage_batch(
 
     for item in pending:
         try:
-            staged.entities.append(normalizer(source, item.payload))
+            entity = normalizer(source, item.payload)
         except PayloadValidationError as exc:
             prefix_intact = False
             staged.skipped.append(SkippedRecord(item.raw_id, item.source_object_id, str(exc)))
+            staged.issues.extend(issues_from_validation_error(
+                exc, source=source, object_type=object_type,
+                object_id=item.source_object_id, raw_payload_id=item.raw_id,
+            ))
             logger.warning(
                 "Skipping invalid %s.%s payload %s (raw id %d): %s",
                 source, object_type, item.source_object_id, item.raw_id, exc,
             )
             continue
+
+        issues = check_entity(entity, source=source, raw_payload_id=item.raw_id, context=context)
+        staged.issues.extend(issues)
+        fatal = [issue for issue in issues if issue.is_fatal]
+        if fatal:
+            prefix_intact = False
+            reason = "; ".join(f"{issue.field}: {issue.description}" for issue in fatal)
+            staged.skipped.append(SkippedRecord(item.raw_id, item.source_object_id, reason))
+            logger.warning(
+                "Rejecting %s.%s payload %s (raw id %d) on quality checks: %s",
+                source, object_type, item.source_object_id, item.raw_id, reason,
+            )
+            continue
+
+        staged.entities.append(entity)
+        staged.lineage.append(LineageEntry(
+            entity_type=object_type,
+            entity_key=entity_key_of(entity),
+            raw_payload_id=item.raw_id,
+            source=source,
+        ))
         if prefix_intact:
             staged.watermark_id = item.raw_id
 
