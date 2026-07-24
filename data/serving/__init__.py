@@ -1,3 +1,5 @@
 """Serving layer for canonical analytics models."""
 
-__all__ = []
+from data.serving.repository import CanonicalRepository
+
+__all__ = ["CanonicalRepository"]
