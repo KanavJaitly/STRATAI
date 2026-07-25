@@ -201,6 +201,8 @@ def normalize_statbotics_team_event_stats(payload: dict[str, Any]) -> StagingTea
     source (the validator module targets TBA payload shapes); the
     StatboticsTeamEventMetrics model is the validation boundary, so a malformed
     payload surfaces as a PayloadValidationError here just as the TBA path does.
+    That model also flattens Statbotics's nested `epa`/`record` structure, so
+    this function works in flat fields and accepts either shape.
     """
     try:
         metrics = StatboticsTeamEventMetrics.model_validate(payload)
@@ -226,10 +228,18 @@ def normalize_statbotics_team_event_stats(payload: dict[str, Any]) -> StagingTea
             )
         ])
 
-    # Derived, not sourced: Statbotics reports the W/L/T breakdown but no game
-    # count. Only meaningful when all three are present (see StagingTeamEventStats).
-    matches_played: int | None = None
-    if metrics.wins is not None and metrics.losses is not None and metrics.ties is not None:
+    # Statbotics does report a played-match count (record.total.count in the v3
+    # payload, flattened to `count` by StatboticsTeamEventMetrics), contrary to
+    # what this pipeline assumed while the client was pointed at an unresolvable
+    # host and no real response had ever been seen. Prefer the sourced count and
+    # fall back to summing the W/L/T breakdown, which is only meaningful when all
+    # three components are present.
+    #
+    # Preferring the sourced value also gives the data-quality layer something
+    # real to check: while matches_played was always derived from W/L/T, the
+    # quality rule comparing the two could never fire.
+    matches_played = metrics.count
+    if matches_played is None and None not in (metrics.wins, metrics.losses, metrics.ties):
         matches_played = metrics.wins + metrics.losses + metrics.ties
 
     return _build_or_raise(

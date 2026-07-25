@@ -28,9 +28,10 @@ consume is complete, deduplicated, validated, traceable to its source, and safe 
 re-sync at any time.
 
 Sources: [The Blue Alliance](https://www.thebluealliance.com/apidocs) (events, matches,
-teams) and [Statbotics](https://www.statbotics.io/) (EPA-based team-event metrics; see
-[§9](#9-known-issues-and-limitations) — this half does not currently work against the
-live API).
+teams) and [Statbotics](https://www.statbotics.io/) (EPA-based team-event metrics — the
+client is correct as of 2026-07-25, but no EPA data has yet reached the canonical tables
+because Statbotics's API is returning 500s; see
+[§9.1](#91-statbotics-client-fixed-live-confirmation-still-pending-their-outage)).
 
 ---
 
@@ -443,7 +444,7 @@ run 108: landed={...} loaded={...} skipped=0 issues=42 (fatal=0) lineage=136 ext
 
 **Expect the Statbotics warnings.** `team_event=0`, `team_event_stats: 0`, and one
 `extraction_failure` warning per team are the current normal state — see
-[§9.1](#91-statbotics-does-not-work-against-the-live-api). The TBA half of the pipeline is
+[§9.1](#91-statbotics-client-fixed-live-confirmation-still-pending-their-outage). The TBA half of the pipeline is
 fully working. Add `--no-statbotics` to skip those calls entirely and silence the noise.
 
 Run it again and it should report all zeros — that is the idempotence guarantee from
@@ -547,28 +548,52 @@ Migrations are plain SQL applied in filename order and recorded in `migrations_a
 
 ## 9. Known issues and limitations
 
-### 9.1 Statbotics does not work against the live API
+### 9.1 Statbotics client fixed; live confirmation still pending their outage
 
-**The Statbotics half of the pipeline has never successfully run against the real API.**
-`StatboticsClient.base_url` is `https://api.statbotics.org/v3`, and that host **does not
-resolve at all**. The real service appears to be at `api.statbotics.io` (its root
-responds `{"Hello":"World"}`), but every `/v3/*` path there returned HTTP 500 when
-checked, so the correct paths and response field names remain unconfirmed.
+**Fixed on 2026-07-25.** The client was pointed at `api.statbotics.org`, a host that
+**does not resolve at all**, so every lookup failed with a DNS error and
+`team_event_stats` was never populated. Two things were wrong and both are corrected:
 
-`data/clients/statbotics.py` has warned since it was written that its endpoints and field
-names were a best-effort guess never verified against a live response. That guess appears
-to be wrong in at least the hostname.
+| | Before | Now |
+|---|---|---|
+| Base URL | `https://api.statbotics.org/v3` (no such host) | `https://api.statbotics.io/v3` |
+| Paths | `/team_event/{team}/{event}`, `/matches?event=` | unchanged — these were already right |
+| Response shape | flat `epa_total`, `epa_auto`, `wins`, … | nested `epa.total_points`, `epa.breakdown.auto_points`, `record.total.wins`, … flattened by `StatboticsTeamEventMetrics` |
 
-Consequences:
+The nesting is absorbed in the response models (`data/clients/schemas.py`), so the client,
+the staging normalizer, and `team_event_stats` all still work in flat fields — one place
+knows the source's structure.
 
-- `team_event_stats` is **always empty** after a real run, and `epa_*` data is unavailable
-- Every real run logs one `extraction_failure` warning per attending team
-- All Statbotics tests pass because they are mocked — they verify the client's behaviour
-  against the shape we *assume*, not the shape the API actually returns
+**What is still unverified.** Statbotics's API was returning HTTP 500 for every
+`/v3/*` endpoint throughout the fix — from their own infrastructure (`Google Frontend`,
+`x-cloud-trace-context`), with their root path flapping between 200 and 500. So the
+corrected shape is derived from Statbotics's published response serializer, **not captured
+from a live response**, and `team_event_stats` is **still empty after a real run**:
 
-The pipeline's graceful degradation is working exactly as designed here: 42 failed
-Statbotics lookups did not prevent 136 TBA records from loading. Fixing the base URL and
-verifying the real response shape is a code change outside Milestone 10's scope.
+```text
+run 248: ... loaded={'teams': 0, 'events': 0, 'matches': 0, 'team_event_stats': 0} extraction_errors=42
+WARNING data.pipeline: Statbotics metrics unavailable for team 987 at 2024casj:
+  Server error '500 Internal Server Error' for url 'https://api.statbotics.io/v3/team_event/987/2024casj'
+```
+
+That the failure changed from `[Errno -2] Name or service not known` to an HTTP 500 from
+`api.statbotics.io` is itself the evidence the client now reaches the real service.
+
+**To confirm once their API recovers:** run
+`venv/bin/python -m data.orchestrator 2024casj` and check that `team_event_stats` gains a
+row per attending team. If the live shape differs from what was inferred,
+`tests/test_statbotics_client.py::test_model_matches_recorded_statbotics_response` is the
+test that should fail — re-record
+`tests/fixtures/statbotics_team_event_2024casj.json` from the real response (its
+`_fixture_provenance` block explains how).
+
+What *is* proven: the real nested shape flows end to end. The integration tests in
+`tests/test_pipeline.py` and `tests/test_data_quality.py` feed nested Statbotics payloads
+through landing, staging, and serving against a real database and assert the resulting
+`team_event_stats` rows, including `matches_played`.
+
+The pipeline's graceful degradation held throughout: 42 failed Statbotics lookups never
+prevented the 136 TBA records from loading.
 
 ### 9.2 Known failing config test
 

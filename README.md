@@ -54,7 +54,7 @@ venv/bin/python -m pytest -q --deselect tests/test_config.py::test_settings_allo
 The deselected test is a known pre-existing failure that triggers whenever a `.env` file
 exists; see [docs/data_pipeline.md §9.2](docs/data_pipeline.md#92-known-failing-config-test).
 Statbotics data is also currently unavailable against the live API —
-[§9.1](docs/data_pipeline.md#91-statbotics-does-not-work-against-the-live-api) explains
+[§9.1](docs/data_pipeline.md#91-statbotics-client-fixed-live-confirmation-still-pending-their-outage) explains
 why and what still works.
 
 ## Stack
