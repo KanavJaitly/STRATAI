@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from datetime import date
 
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class EventSummary(BaseModel):
@@ -90,7 +92,18 @@ class TeamInfo(BaseModel):
 
 
 class StatboticsMatchStats(BaseModel):
-    """Minimal Statbotics EPA-based match statistics model."""
+    """Minimal Statbotics EPA-based match prediction model.
+
+    Statbotics's real /matches payload nests predictions under a `pred` object
+    (`pred.winner`, `pred.red_win_prob`, `pred.red_score`, `pred.blue_score`)
+    and actual outcomes under a parallel `result` object. This model flattens
+    the prediction fields and ignores the rest; actual scores already reach the
+    canonical layer from TBA, which is the authority on what happened.
+
+    Not currently consumed by the pipeline -- StatboticsClient.fetch_event_match_stats
+    is implemented but not wired into any flow -- but the shape is corrected here
+    so it cannot mislead whoever wires it up.
+    """
 
     key: str
     event: str
@@ -99,13 +112,52 @@ class StatboticsMatchStats(BaseModel):
     red_score_pred: float | None = None
     blue_score_pred: float | None = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def _flatten_prediction_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict) or not isinstance(data.get("pred"), dict):
+            return data
+
+        pred = data["pred"]
+        flat = {key: value for key, value in data.items() if key != "pred"}
+        for field_name, source_key in (
+            ("predicted_winner", "winner"),
+            ("red_win_prob", "red_win_prob"),
+            ("red_score_pred", "red_score"),
+            ("blue_score_pred", "blue_score"),
+        ):
+            flat.setdefault(field_name, pred.get(source_key))
+        return flat
+
 
 class StatboticsTeamEventMetrics(BaseModel):
-    """Minimal Statbotics EPA-based team-event performance metrics model.
+    """Statbotics EPA-based team-event performance metrics, flattened.
 
-    Field names intentionally mirror the team_event_stats table columns from
-    the database schema, since this is the data those columns exist to hold
-    once a later staging milestone starts populating them.
+    The attribute names mirror the team_event_stats columns, but Statbotics's
+    real /team_event/{team}/{event} payload is deeply nested:
+
+        {"team": 254, "event": "2024casj", "year": 2024, ...,
+         "epa": {"total_points": 61.4, "unitless": ..., "norm": ...,
+                 "breakdown": {"auto_points": ..., "teleop_points": ...,
+                               "endgame_points": ..., ...},
+                 "stats": {"start": ..., "mean": ..., "max": ...}},
+         "record": {"total": {"wins": 8, "losses": 2, "ties": 0, "count": 10, ...},
+                    "qual": {...}, "elim": {...}}}
+
+    Flattening happens here rather than in the client or the staging normalizer
+    so that exactly one place knows the source's nesting: the connector, the
+    staging normalizer, and the canonical table all continue to work in flat
+    fields. The `epa.breakdown` keys used below (`auto_points`, `teleop_points`,
+    `endgame_points`) are stable across the 2024-2026 seasons in Statbotics's
+    per-year key mapping, unlike the game-specific breakdown keys beside them.
+
+    An already-flat payload is accepted unchanged, which keeps hand-built test
+    fixtures and any payload landed by an earlier version of this code valid.
+
+    `count` is the number of matches Statbotics counted, taken from
+    record.total.count. Earlier versions of this pipeline believed no such count
+    existed and derived it by summing the W/L/T breakdown; see
+    normalize_statbotics_team_event_stats.
     """
 
     team: int
@@ -117,3 +169,30 @@ class StatboticsTeamEventMetrics(BaseModel):
     wins: int | None = None
     losses: int | None = None
     ties: int | None = None
+    count: int | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _flatten_nested_payload(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        epa, record = data.get("epa"), data.get("record")
+        if not isinstance(epa, dict) and not isinstance(record, dict):
+            return data  # already flat
+
+        flat = {key: value for key, value in data.items() if key not in ("epa", "record")}
+
+        if isinstance(epa, dict):
+            flat.setdefault("epa_total", epa.get("total_points"))
+            breakdown = epa.get("breakdown")
+            if isinstance(breakdown, dict):
+                flat.setdefault("epa_auto", breakdown.get("auto_points"))
+                flat.setdefault("epa_teleop", breakdown.get("teleop_points"))
+                flat.setdefault("epa_endgame", breakdown.get("endgame_points"))
+
+        if isinstance(record, dict) and isinstance(record.get("total"), dict):
+            total = record["total"]
+            for field_name in ("wins", "losses", "ties", "count"):
+                flat.setdefault(field_name, total.get(field_name))
+
+        return flat

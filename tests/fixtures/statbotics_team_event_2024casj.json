@@ -1,0 +1,86 @@
+{
+  "_fixture_provenance": {
+    "status": "SOURCE-DERIVED, NOT CAPTURED",
+    "recorded_at": "2026-07-25",
+    "endpoint": "GET https://api.statbotics.io/v3/team_event/254/2024casj",
+    "how_this_was_built": "Constructed from Statbotics's own response serializer (TeamEvent.to_dict in backend/src/db/models/team_event.py, plus the 2024 breakdown key mapping in backend/src/breakdown.py) at github.com/avgupta456/statbotics@master. It was NOT captured from a live response: every api.statbotics.io/v3/* endpoint was returning HTTP 500 from Statbotics's own infrastructure when the client was fixed, so no real response could be recorded.",
+    "structure_confidence": "high - field names and nesting come directly from the serializer",
+    "value_confidence": "low - the numbers are plausible placeholders, not real 2024casj data",
+    "TODO": "Re-record against a real response once api.statbotics.io recovers: curl 'https://api.statbotics.io/v3/team_event/254/2024casj' and replace everything below (keeping this provenance block, updated). If the real shape differs, tests/test_statbotics_client.py::test_model_matches_recorded_statbotics_response will fail, which is the point of this fixture."
+  },
+  "team": 254,
+  "year": 2024,
+  "event": "2024casj",
+  "time": 1710374400,
+  "team_name": "The Cheesy Poofs",
+  "event_name": "Silicon Valley Regional",
+  "country": "USA",
+  "state": "CA",
+  "district": null,
+  "type": "regional",
+  "week": 3,
+  "status": "Completed",
+  "first_event": true,
+  "epa": {
+    "total_points": 61.42,
+    "unitless": 1743.0,
+    "norm": 1859.0,
+    "breakdown": {
+      "total_points": 61.42,
+      "auto_points": 18.31,
+      "teleop_points": 34.07,
+      "endgame_points": 9.04,
+      "melody_rp": 0.71,
+      "ensemble_rp": 0.63,
+      "tiebreaker_points": 41.2,
+      "auto_leave_points": 1.94,
+      "auto_note_points": 16.37,
+      "teleop_note_points": 34.07,
+      "speaker_points": 22.6,
+      "amplified_notes": 8.1,
+      "endgame_park_points": 0.4,
+      "endgame_on_stage_points": 6.9,
+      "endgame_harmony_points": 1.2,
+      "endgame_trap_points": 0.3,
+      "endgame_spotlight_points": 0.24,
+      "rp_1": 0.71,
+      "rp_2": 0.63,
+      "total_note_points": 50.44
+    },
+    "stats": {
+      "start": 52.18,
+      "pre_elim": 60.11,
+      "mean": 58.44,
+      "max": 63.9
+    }
+  },
+  "record": {
+    "qual": {
+      "wins": 9,
+      "losses": 3,
+      "ties": 0,
+      "count": 12,
+      "winrate": 0.75,
+      "rps": 27,
+      "rps_per_match": 2.25,
+      "rank": 4,
+      "num_teams": 42
+    },
+    "elim": {
+      "wins": 4,
+      "losses": 2,
+      "ties": 0,
+      "count": 6,
+      "winrate": 0.6667,
+      "alliance": "1",
+      "is_captain": true
+    },
+    "total": {
+      "wins": 13,
+      "losses": 5,
+      "ties": 0,
+      "count": 18,
+      "winrate": 0.7222
+    }
+  }
+}
