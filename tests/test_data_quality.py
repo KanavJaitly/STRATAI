@@ -415,8 +415,25 @@ def _run(database: Database, **kwargs: Any):
     return sync_event(S_EVENT, database=database, **kwargs)
 
 
+def _belongs_to_sentinel_event(object_id: str | None) -> bool:
+    """Is this issue about one of this module's sentinel objects?
+
+    data_quality_issues is a shared, append-only table: a developer who has synced a real
+    event (which the quickstart tells them to do) leaves genuine issue rows behind, and
+    earlier milestones' sentinel data can too. Filtering by object_type alone would pick
+    those up, so every assertion here is scoped to this module's own object ids --
+    the event key itself, anything derived from it (match keys, "<team>_<event>"), and
+    the sentinel team numbers.
+    """
+    if object_id is None:
+        return False
+    return object_id == S_EVENT or S_EVENT in object_id or object_id in {str(n) for n in S_TEAMS}
+
+
 def _issues(database: Database, **filters: Any) -> list[dict[str, Any]]:
-    return DataQualityRecorder(database).open_issues(**filters)
+    """Unresolved issues for this module's sentinel event only."""
+    rows = DataQualityRecorder(database).open_issues(**filters)
+    return [row for row in rows if _belongs_to_sentinel_event(row["object_id"])]
 
 
 def _issue_for(database: Database, object_type: str, field: str) -> dict[str, Any]:
