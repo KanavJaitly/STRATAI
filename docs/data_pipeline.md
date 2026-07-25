@@ -458,15 +458,15 @@ venv/bin/python -m data.orchestrator 2024casj
 ### 7.8 Run the tests
 
 ```bash
-venv/bin/python -m pytest -q --deselect tests/test_config.py::test_settings_allows_missing_statbotics_api_key
+venv/bin/python -m pytest -q
 ```
 
-Expected: **all tests pass, 4 skipped, 1 deselected.** The deselected test is a known
-pre-existing failure — see [§9.2](#92-known-failing-config-test). Without the
-`--deselect` you will see exactly one failure, and it is not something you broke.
+Expected: **all tests pass, 3 skipped.** No `--deselect` flag is needed — earlier versions
+of this document told you to skip one config test, which was fixed on 2026-07-25
+([§9.2](#92-known-failing-config-test)).
 
-The 4 skips are integration tests that self-skip without a reachable database, plus one
-permanently-skipped legacy test ([§9.4](#94-permanently-skipped-schema-test)).
+The 3 skips are integration tests that self-skip when no database is reachable via
+`DATABASE_URL`; with a working database they run.
 
 ---
 
@@ -595,20 +595,28 @@ through landing, staging, and serving against a real database and assert the res
 The pipeline's graceful degradation held throughout: 42 failed Statbotics lookups never
 prevented the 136 TBA records from loading.
 
-### 9.2 Known failing config test
+### 9.2 Known failing config test — RESOLVED 2026-07-25
 
-```
-tests/test_config.py::test_settings_allows_missing_statbotics_api_key
-```
+`tests/test_config.py::test_settings_allows_missing_statbotics_api_key` used to fail in any
+full-suite run, and was worked around with `--deselect` from Milestone 7 through 10. **It
+now passes; no deselect flag is needed anywhere.** Recorded here because old commands and
+CI snippets carrying that `--deselect` will still be circulating.
 
-Fails whenever a `.env` file exists at the project root — which it will, since the
-quickstart tells you to create one. `data/config.py` calls `load_dotenv` without
-`override=True` and a leaked `DATABASE_URL` in `os.environ` shadows the test's temporary
-`.env`. It passes in a fresh clone with no `.env`.
+The cause was test isolation, not configuration. `Settings()` calls `load_dotenv`, which
+mutates `os.environ` for the whole process and never undoes it, so the project's real
+`.env` values leak into every later `Settings()` in the same session — and in a full-suite
+run that leak happens during *collection*, because several modules evaluate
+`pytest.mark.skipif(not _database_available(), ...)` at import time. The test cleared only
+`STATBOTICS_API_KEY`, so the leaked `DATABASE_URL` shadowed its temporary `.env`.
+`load_dotenv`'s refusal to override a real environment variable is correct behaviour and
+was never the bug; its two sibling tests passed only because they happened to clear all
+four variables by hand.
 
-This predates Milestone 7 and is deliberately left unfixed pending a decision on the fix
-(`override=True` versus having the test clear the environment variable). Deselect it as
-shown in [§7.8](#78-run-the-tests). **It is not something you broke.**
+Fixed with an autouse fixture in `tests/test_config.py` that clears every Settings-backed
+variable before each test, driven by `Settings.model_fields` so a newly added setting
+cannot silently reintroduce the leak. Production config behaviour is unchanged —
+deliberately: making `.env` override real environment variables would let a stale file in a
+deployed image point a real run at the wrong database.
 
 ### 9.3 Landed payloads are the model projection, not the raw body
 
@@ -620,14 +628,20 @@ a new payload version. Widening a model fixes it per field (this is why `EventSu
 gained its location fields); exposing raw response bodies from the clients would fix it
 generally.
 
-### 9.4 Permanently skipped schema test
+### 9.4 Permanently skipped schema test — RESOLVED 2026-07-25 (deleted)
 
-`tests/test_verify_database.py::test_verify_database_schema` uses an unconditional
-`@pytest.mark.skip`, not `skipif`, so it never runs even with a working database — and its
-expected-table set predates `canonical_lineage`. It duplicates `database/verify_db.py`.
-`tests/test_docs_contract.py` supersedes it with real column, key, and cascade assertions
-that self-skip only when no database is reachable. The legacy test is left untouched
-because it is Milestone 2 code.
+`tests/test_verify_database.py` used an unconditional `@pytest.mark.skip`, so it never ran
+even with a working database, and its expected-table list predated `canonical_lineage`.
+**It has been deleted**, because everything it was meant to assert is now covered more
+thoroughly and in both directions:
+
+| What it checked | Where that lives now |
+|---|---|
+| migrations apply | `test_docs_contract.py`'s `database` fixture; `test_migrations.py` |
+| its 10 expected tables are a *subset* of `pg_tables` | `test_documented_tables_and_actual_tables_are_the_same_set` — bidirectional equality over all 11 tables, so an undocumented new table also fails |
+| its own hardcoded table list | `test_verify_db_expected_tables_match_the_documented_set`, which calls `verify_database()` for real |
+
+`database/verify_db.py` itself is unchanged and still the canonical expected-table list.
 
 ### 9.5 Other limitations
 
