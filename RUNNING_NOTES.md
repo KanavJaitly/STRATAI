@@ -8,12 +8,12 @@
 
 | Field | Current Value |
 |---|---|
-| **Active Phase** | Phase 2 — Data Pipeline |
-| **Active Milestone** | Milestone 10 — Docs & validation harness (next) |
-| **Last Completed** | Milestone 9 — Data quality checks & audit tracing (commit `b96b579`, branch `milestone-9`) |
+| **Active Phase** | Phase 2 — Data Pipeline ✅ **COMPLETE** (Milestones 1–10) |
+| **Active Milestone** | Phase 3 — Metrics & analytics (not started) |
+| **Last Completed** | Milestone 10 — Docs & validation harness (commit `892aff4`, branch `milestone-10`) |
 | **Last Updated** | 2026-07-24 |
-| **Current Blocker** | None |
-| **Next Session Goal** | Start Milestone 10 |
+| **Current Blocker** | None for Phase 2. Carried forward: Statbotics base URL is wrong (see Known Issues) — blocks all `team_event_stats` / EPA data |
+| **Next Session Goal** | Fix the Statbotics base URL, then scope Phase 3 |
 
 ---
 
@@ -27,7 +27,7 @@
 | **Migrations** | Raw SQL in `database/migrations/*.sql` | applied in sorted order by `database/migrate.py`, tracked in `migrations_applied`. **No Alembic.** |
 | **Validation** | Pydantic v2 | staging + source schemas |
 | **HTTP client** | httpx | TBA / Statbotics clients |
-| **Testing** | pytest | 172 passed / 4 skipped as of M9 |
+| **Testing** | pytest | 219 passed / 4 skipped as of M10 |
 
 ---
 
@@ -44,7 +44,7 @@
 | 7. Canonical schema + repository load | ✅ Done | see decisions below (merged PR #1) |
 | 8. Pipeline orchestration & incremental state | ✅ Done | `data/pipeline.py` stages + `data/orchestrator.py` driver; watermark = highest promoted `raw_source_payloads.id`; `0006` adds `scope_key`/`stage_counts` |
 | 9. Data quality checks & audit tracing | ✅ Done | `data/staging/quality.py` checks + `data/lineage.py` provenance; `0007` adds `raw_payload_id`/`field` to `data_quality_issues` and creates `canonical_lineage` |
-| 10. Docs & validation harness | ⬜ Next | |
+| 10. Docs & validation harness | ✅ Done | `docs/data_pipeline.md` + `tests/test_docs_contract.py` (47 contract tests); README/CLAUDE.md corrected |
 
 **Status Key:** ⬜ Not Started &nbsp; 🟡 In Progress &nbsp; 🔵 In Review &nbsp; ✅ Done
 
@@ -71,11 +71,17 @@
 | 2026-07-24 | **Issues written before the load, lineage after** | A failed run's quality evidence is exactly when it's wanted, so issues must not depend on the load succeeding; a lineage row asserts a canonical row exists, so it must. |
 | 2026-07-24 | **One `data_quality_issues` row per detection**, not per distinct problem | A payload that stays invalid is re-detected every run (the watermark deliberately holds short of it). Collapsing detections would lose the answer to "how long has this been broken", which is what the `resolved`/`resolved_at` columns exist to support. |
 | 2026-07-24 | **Rejected: checking `epa_total` against `epa_auto + epa_teleop + epa_endgame`** | Statbotics doesn't document those as summing exactly, so any tolerance would be invented statistics generating false alarms about real data. |
+| 2026-07-24 | **`docs/data_pipeline.md` is the Phase 2 reference; README stays short and points to it** | The old README's `.venv\Scripts\python.exe` quickstart could not work in this repo (Linux, `venv/`), so every documented command failed as written. Confirmed with Kanav. |
+| 2026-07-24 | **Docs↔schema drift is enforced by test, in both directions** | `tests/test_docs_contract.py` fails if a table exists but is undocumented, or documented but absent — plus columns, PKs, FKs, cascades, unique indexes, check constraints, migration numbering, config defaults, and the object-type/severity/issue-type/plausibility vocabularies. Docs that can silently rot are worse than no docs. |
+| 2026-07-24 | **Five reserved columns documented as "not populated", not dropped** | `raw_source_payloads.season/.event_key/.match_key/.schema_version` and `events.event_type` (plus `data_quality_issues.resolved/resolved_at`) are retained deliberately; the docs mark them so nobody builds on them. Confirmed with Kanav. |
+| 2026-07-24 | **`createdb -U postgres -h localhost stratai`**, not bare `createdb` | A bare `createdb` connects as the OS user and fails with `role "<user>" does not exist`. Found by running the documented command instead of assuming it. |
+| 2026-07-24 | **Audit-table assertions must scope by `object_id`** | Two M9 tests counted `data_quality_issues` by `object_type` alone and broke once real `2024casj` rows existed. Fixed in the `_issues()` test helper (approved test-only change). `data_quality_issues` and `canonical_lineage` are shared append-only tables; any test asserting on them must namespace itself. |
 
 ---
 
 ## 🐛 Known Issues / Tech Debt
 
+- [ ] **🔴 Statbotics base URL is wrong — EPA data unavailable** (found in M10): `StatboticsClient.base_url` is `https://api.statbotics.org/v3`, and that host does not resolve. The real service appears to be `api.statbotics.io` (root responds 200), but `/v3/*` paths there returned HTTP 500 when probed, so correct paths and response fields are unconfirmed. `team_event_stats` is always empty after a real run and every run logs one `extraction_failure` warning per team. Statbotics tests pass only because they are mocked. **Highest-priority fix before Phase 3 metrics work**, since EPA is a primary input. See `docs/data_pipeline.md` §9.1.
 - [ ] **Sentinel event keys must agree with their payload year** (surfaced by M9): the staging layer derives a match's season from its *event key*, so a `9997…` key with `"year": 2025` yields season-9997 matches and trips plausibility warnings. M9's integration fixtures use `2025zzzqual` for this reason; M7/M8's `9998`/`9999` fixtures intentionally accept the resulting warnings.
 - [ ] **Clients discard the raw response body** (surfaced by M8): they return validated Pydantic models, so the landing layer stores `model_dump(mode="json", by_alias=True)` — faithful for modelled fields, but a field no model declares is invisible to both the canonical row and the landing checksum, so a change confined to it is never detected as a new version. Widening a model fixes it per field (this is why `EventSummary` gained its location fields in M8); exposing raw response bodies from the clients would fix it generally. Documented in `data/pipeline.py`'s module docstring.
 - [ ] **Statbotics extraction is N requests per event** (one per team) — the API exposes team-event metrics only per `(team, event)`. Fine for one event; will want revisiting for a full-season backfill.
@@ -99,4 +105,5 @@
 |---|---|---|---|
 | 2026-07-23 | Milestone 7 (Sven's first solo milestone) | Local env from scratch (Postgres 18, venv, deps); baseline 102 tests green; M7 built — `0005_canonical.sql` re-key, `CanonicalRepository` upsert loaders, `StagingTeamEventStats`; 113 pass; committed `4086f59`, PR #1 merged to `main` | Milestone 8 |
 | 2026-07-24 | Milestone 8 | Confirmed `pipeline_runs`/`source_watermarks` came from `0003`, not M2. Built `data/pipeline.py` (4 stages) + `data/orchestrator.py` (`PipelineRunRecorder`, `WatermarkStore`, `sync_event`, CLI); `0006` applied; additive `TBAClient.fetch_event`/`fetch_event_teams`. 18 new tests, all M8 integration tests run for real against local Postgres (no skips); suite 135 pass / 4 skip / 1 deselected. Committed `0fdf200` on `milestone-8`, PR #3 merged to `main` | Milestone 9 — data quality checks & audit tracing |
-| 2026-07-24 | Milestone 9 | Confirmed `data_quality_issues` existed from `0003` but lacked a raw-payload reference and `field`, and that no canonical table carried lineage. Built `data/staging/quality.py` (plausibility + referential checks, severity as reject/allow policy) and `data/lineage.py` (`canonical_lineage` provenance history, `trace_to_payload`); `0007` applied; wired into `stage_batch` reusing M8's single rejection path. 37 new tests, all M9 integration tests run for real; suite 172 pass / 4 skip / 1 deselected, M8's 18 untouched. Committed `b96b579` on `milestone-9` | Milestone 10 — docs & validation harness |
+| 2026-07-24 | Milestone 9 | Confirmed `data_quality_issues` existed from `0003` but lacked a raw-payload reference and `field`, and that no canonical table carried lineage. Built `data/staging/quality.py` (plausibility + referential checks, severity as reject/allow policy) and `data/lineage.py` (`canonical_lineage` provenance history, `trace_to_payload`); `0007` applied; wired into `stage_batch` reusing M8's single rejection path. 37 new tests, all M9 integration tests run for real; suite 172 pass / 4 skip / 1 deselected, M8's 18 untouched. Committed `b96b579` on `milestone-9`, PR #4 merged to `main` | Milestone 10 — docs & validation harness |
+| 2026-07-24 | Milestone 10 (Phase 2 complete) | Verified true schema against migrations + live DB; wrote `docs/data_pipeline.md` (architecture, schema, watermarks, quality/lineage, verified quickstart, known issues, extension guides); added 47 contract tests incl. first real coverage of `TBAClient.fetch_event`/`fetch_event_teams`; rewrote README, updated CLAUDE.md. Ran the CLI against real `2024casj` (136 records loaded, re-run all zeros). Flagged the Statbotics base-URL bug and the permanently-skipped M2 schema test. Suite 219 pass / 4 skip / 1 deselected. Committed `892aff4` on `milestone-10` | Fix Statbotics base URL, then scope Phase 3 |

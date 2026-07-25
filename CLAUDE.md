@@ -136,15 +136,27 @@ Predictions should:
 ## Current Development Phase
 
 Current Phase:
-Phase 2 – Data Pipeline
+Phase 2 – Data Pipeline (complete, Milestones 1-10)
 
-Current Tasks:
+Phase 2 delivered:
 
-* Integrate The Blue Alliance API.
-* Integrate Statbotics API.
-* Store raw data in PostgreSQL.
-* Design reusable API clients.
-* Prepare data for later metric calculations.
+* The Blue Alliance and Statbotics API clients with retry handling.
+* Landing layer storing raw payloads, versioned and deduplicated.
+* Staging layer with validation, normalization, and data quality checks.
+* Serving layer loading the canonical tables via idempotent upserts.
+* Pipeline orchestration with durable incremental state (watermarks).
+* Data quality issue tracking and canonical-to-raw lineage.
+* Documentation and a contract test suite.
+
+See docs/data_pipeline.md for the architecture, schema, and quickstart, and
+RUNNING_NOTES.md for milestone status and the design decision log.
+
+Known open issue carried into the next phase: the Statbotics client's base URL
+host does not resolve, so team_event_stats is empty after a real run. See
+docs/data_pipeline.md section 9.1.
+
+Next Phase:
+Phase 3 – Metrics and analytics (not started).
 
 ---
 
