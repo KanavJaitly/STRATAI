@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 
 from data.clients.schemas import EventSummary, Match, StatboticsTeamEventMetrics, TeamInfo
+from data.clients.source_connector import SourceResponse
 from data.config import Settings
 from data.lineage import LineageEntry, LineageStore, entity_key_of
 from data.orchestrator import sync_event
@@ -314,8 +315,8 @@ def raw_match(**overrides: Any) -> dict[str, Any]:
         "key": S_MATCH, "event_key": S_EVENT, "comp_level": "qm",
         "set_number": 1, "match_number": 1, "time": 1700000000,
         "alliances": {
-            "red": {"score": 100, "teams": S_TEAM_KEYS[:3]},
-            "blue": {"score": 90, "teams": S_TEAM_KEYS[3:]},
+            "red": {"score": 100, "team_keys": S_TEAM_KEYS[:3]},
+            "blue": {"score": 90, "team_keys": S_TEAM_KEYS[3:]},
         },
         "winning_alliance": "red",
     }
@@ -335,33 +336,38 @@ class FakeTBAClient:
         self.teams = teams if teams is not None else raw_teams()
         self.team_info_fails = team_info_fails
 
-    def fetch_event(self, event_key: str) -> EventSummary:
-        return EventSummary.model_validate(raw_event())
+    def fetch_event(self, event_key: str) -> SourceResponse[EventSummary]:
+        payload = raw_event()
+        return SourceResponse(payload, EventSummary.model_validate(payload))
 
-    def fetch_event_matches(self, event_key: str) -> list[Match]:
-        return [Match.model_validate(payload) for payload in self.matches]
+    def fetch_event_matches(self, event_key: str) -> list[SourceResponse[Match]]:
+        return [SourceResponse(p, Match.model_validate(p)) for p in self.matches]
 
-    def fetch_event_teams(self, event_key: str) -> list[TeamInfo]:
-        return [TeamInfo.model_validate(payload) for payload in self.teams]
+    def fetch_event_teams(self, event_key: str) -> list[SourceResponse[TeamInfo]]:
+        return [SourceResponse(p, TeamInfo.model_validate(p)) for p in self.teams]
 
-    def fetch_team_info(self, team_number: int) -> TeamInfo:
+    def fetch_team_info(self, team_number: int) -> SourceResponse[TeamInfo]:
         if self.team_info_fails:
             raise RuntimeError(f"simulated TBA outage for team {team_number}")
-        return TeamInfo.model_validate({"key": f"frc{team_number}", "team_number": team_number})
+        payload = {"key": f"frc{team_number}", "team_number": team_number}
+        return SourceResponse(payload, TeamInfo.model_validate(payload))
 
 
 class FakeStatboticsClient:
-    def fetch_team_event_metrics(self, team_number: int, event_key: str) -> StatboticsTeamEventMetrics:
+    def fetch_team_event_metrics(
+        self, team_number: int, event_key: str
+    ) -> SourceResponse[StatboticsTeamEventMetrics]:
         # Statbotics's real nested response shape, so this integration path
         # proves a genuine payload reaches team_event_stats.
-        return StatboticsTeamEventMetrics.model_validate({
+        payload = {
             "team": team_number, "year": 2025, "event": event_key,
             "epa": {
                 "total_points": 50.0,
                 "breakdown": {"auto_points": 10.0, "teleop_points": 30.0, "endgame_points": 10.0},
             },
             "record": {"total": {"wins": 8, "losses": 2, "ties": 0, "count": 10}},
-        })
+        }
+        return SourceResponse(payload, StatboticsTeamEventMetrics.model_validate(payload))
 
 
 def _database_available() -> bool:
@@ -479,7 +485,7 @@ def test_invalid_payload_records_issues_referencing_the_offending_raw_row(databa
     # A team twice on one alliance: structurally valid to the client model,
     # rejected by the staging validator.
     bad = raw_match()
-    bad["alliances"]["red"]["teams"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
+    bad["alliances"]["red"]["team_keys"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
     result = _run(database, tba=FakeTBAClient(matches=[bad]))
 
     issues = _issues(database, object_type="match")
@@ -510,8 +516,8 @@ def test_fatal_quality_issue_keeps_the_record_out_of_the_canonical_tables(databa
     # A negative score passes every structural check and only fails on quality:
     # this is the path that exists solely because of Milestone 9.
     negative = raw_match(alliances={
-        "red": {"score": -5, "teams": S_TEAM_KEYS[:3]},
-        "blue": {"score": 90, "teams": S_TEAM_KEYS[3:]},
+        "red": {"score": -5, "team_keys": S_TEAM_KEYS[:3]},
+        "blue": {"score": 90, "team_keys": S_TEAM_KEYS[3:]},
     })
     result = _run(database, tba=FakeTBAClient(matches=[negative]))
 
@@ -568,8 +574,8 @@ def test_missing_reference_is_rejected_cleanly_instead_of_crashing_the_load(data
 def test_warning_is_recorded_but_the_record_still_loads(database):
     # A declared winner who was outscored: suspicious, not disqualifying.
     inconsistent = raw_match(alliances={
-        "red": {"score": 80, "teams": S_TEAM_KEYS[:3]},
-        "blue": {"score": 90, "teams": S_TEAM_KEYS[3:]},
+        "red": {"score": 80, "team_keys": S_TEAM_KEYS[:3]},
+        "blue": {"score": 90, "team_keys": S_TEAM_KEYS[3:]},
     }, winning_alliance="red")
     result = _run(database, tba=FakeTBAClient(matches=[inconsistent]))
 
@@ -606,7 +612,7 @@ def test_canonical_rows_trace_back_to_their_raw_payloads(database):
     assert traced is not None
     raw_id, payload = traced
     assert payload["key"] == S_MATCH
-    assert payload["alliances"]["red"]["teams"] == S_TEAM_KEYS[:3]
+    assert payload["alliances"]["red"]["team_keys"] == S_TEAM_KEYS[:3]
     assert raw_id == _scalar(
         database,
         "SELECT id FROM raw_source_payloads WHERE source_object_id = %s AND is_current",
@@ -622,8 +628,8 @@ def test_canonical_rows_trace_back_to_their_raw_payloads(database):
 def test_lineage_keeps_the_history_of_every_payload_version(database):
     _run(database)
     corrected = raw_match(alliances={
-        "red": {"score": 111, "teams": S_TEAM_KEYS[:3]},
-        "blue": {"score": 90, "teams": S_TEAM_KEYS[3:]},
+        "red": {"score": 111, "team_keys": S_TEAM_KEYS[:3]},
+        "blue": {"score": 90, "team_keys": S_TEAM_KEYS[3:]},
     })
     second = _run(database, tba=FakeTBAClient(matches=[corrected]))
 
@@ -659,7 +665,7 @@ def test_lineage_recording_is_idempotent(database):
 @requires_db
 def test_a_persistently_bad_payload_is_re_detected_on_every_run(database):
     bad = raw_match()
-    bad["alliances"]["red"]["teams"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
+    bad["alliances"]["red"]["team_keys"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
 
     first = _run(database, tba=FakeTBAClient(matches=[bad]))
     second = _run(database, tba=FakeTBAClient(matches=[bad]))
@@ -676,7 +682,7 @@ def test_a_persistently_bad_payload_is_re_detected_on_every_run(database):
 @requires_db
 def test_run_summary_records_the_quality_and_lineage_counts(database):
     bad = raw_match()
-    bad["alliances"]["red"]["teams"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
+    bad["alliances"]["red"]["team_keys"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
     result = _run(database, tba=FakeTBAClient(matches=[bad]))
 
     stage_counts = _scalar(database, "SELECT stage_counts FROM pipeline_runs WHERE id = %s", (result.run_id,))
@@ -692,7 +698,7 @@ def test_issues_and_lineage_are_cleaned_up_with_their_run_and_payload(database):
     # milestones' test teardown) delete a run or a raw payload without hitting a
     # foreign-key violation.
     bad = raw_match()
-    bad["alliances"]["red"]["teams"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
+    bad["alliances"]["red"]["team_keys"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
     result = _run(database, tba=FakeTBAClient(matches=[bad]))
     assert _issues(database, object_type="match")
 
@@ -714,7 +720,7 @@ def test_issues_and_lineage_are_cleaned_up_with_their_run_and_payload(database):
 @requires_db
 def test_open_issues_filters_by_object_and_severity(database):
     bad = raw_match()
-    bad["alliances"]["red"]["teams"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
+    bad["alliances"]["red"]["team_keys"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
     _run(database, tba=FakeTBAClient(matches=[bad], teams=raw_teams()[:5], team_info_fails=True))
 
     assert all(row["severity"] == SEVERITY_ERROR for row in _issues(database, severity=SEVERITY_ERROR))

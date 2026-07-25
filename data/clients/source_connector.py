@@ -1,6 +1,38 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, TypeVar
+
+T = TypeVar("T")
+
+
+@dataclass(frozen=True)
+class SourceResponse(Generic[T]):
+    """One source object, as both its untouched wire body and its validated model.
+
+    Connectors return this instead of a bare model so the two are never confused:
+
+      * `raw` is exactly what the API sent for this object -- every field,
+        including ones no client model declares. This is what the landing layer
+        stores and checksums, so a change in *any* field is detected as a new
+        payload version and nothing is lost before it is persisted.
+      * `parsed` is the validated model: typed access for control flow, with
+        source-specific shapes normalized (Statbotics's nested `epa`/`record`
+        objects are flattened by the model's own validator, for instance).
+
+    Both come from the same response; `parsed` is a view of `raw`, never a
+    replacement for it. Returning only the model is what previously let the
+    pipeline land a lossy projection: any field the model did not declare was
+    dropped before landing and was therefore invisible to change detection too.
+
+    For list endpoints, connectors return one SourceResponse per *item* rather
+    than one for the whole array, because the landing layer deduplicates per
+    object and each object needs its own raw body.
+    """
+
+    raw: Any
+    parsed: T
 
 
 class SourceConnector(ABC):

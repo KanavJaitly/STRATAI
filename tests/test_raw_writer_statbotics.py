@@ -187,18 +187,22 @@ def test_statbotics_client_fetch_result_lands_through_raw_payload_writer(monkeyp
     mock_request = Mock(return_value=DummyHttpResponse(200, raw_match_data))
     monkeypatch.setattr(client, "_client", Mock(request=mock_request))
 
-    parsed = client.fetch_event_match_stats("2025casj")
-    assert parsed[0].key == "2025casj_qm1"
+    responses = client.fetch_event_match_stats("2025casj")
+    assert responses[0].parsed.key == "2025casj_qm1"
 
     writer, cursors = _writer_with_dummy_connect(monkeypatch, fetchone_results=[(1,)])
     # The raw dict (exactly as returned by the source) is what gets landed,
     # not a re-serialization of the parsed model, per the Milestone 4
-    # requirement to store payloads unmodified.
+    # requirement to store payloads unmodified. Since 2026-07-25 the connector
+    # hands that raw body back explicitly as SourceResponse.raw, so this is now
+    # the pipeline's actual behaviour rather than something a caller must
+    # remember to do.
+    assert responses[0].raw == raw_match_data[0]
     record = RawPayloadRecord(
         source=StatboticsClient.source_name,
         source_object_type="match",
-        source_object_id=parsed[0].key,
-        payload=raw_match_data[0],
+        source_object_id=responses[0].parsed.key,
+        payload=responses[0].raw,
     )
 
     result = writer.write(record)
