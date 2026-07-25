@@ -80,10 +80,12 @@ def test_fetch_event_list_parses_models(monkeypatch, env_settings):
     mock_request = Mock(return_value=DummyResponse(200, event_data))
     monkeypatch.setattr(client, "_client", Mock(request=mock_request))
 
-    events = client.fetch_event_list(year=2025)
+    responses = client.fetch_event_list(year=2025)
 
-    assert len(events) == 1
-    event = events[0]
+    assert len(responses) == 1
+    # The untouched wire body rides along beside the parsed model.
+    assert responses[0].raw == event_data[0]
+    event = responses[0].parsed
     assert event.key == "2025casj"
     assert event.name == "Sacramento"
     assert event.season == 2025  # parsed from the raw "year" field
@@ -92,8 +94,10 @@ def test_fetch_event_list_parses_models(monkeypatch, env_settings):
 
 def test_fetch_event_matches_parses_models(monkeypatch, env_settings):
     # Real TBA match payloads nest scores/team rosters under "alliances", use
-    # "comp_level" (not "competition_level"), and "time" as a Unix timestamp
-    # (not "scheduled_time" as a string). This fixture reflects that shape.
+    # "comp_level" (not "competition_level"), "time" as a Unix timestamp (not
+    # "scheduled_time" as a string), and the roster field is "team_keys" -- this
+    # fixture said "teams" until 2026-07-25, which is the model's alias, not
+    # anything TBA sends. See tests/test_raw_body_preservation.py.
     client = TBAClient(settings=env_settings)
     match_data = [{
         "key": "2025casj_qm1",
@@ -103,18 +107,19 @@ def test_fetch_event_matches_parses_models(monkeypatch, env_settings):
         "set_number": 1,
         "time": 1710439200,
         "alliances": {
-            "red": {"score": 112, "teams": ["frc1114", "frc254", "frc604"]},
-            "blue": {"score": 98, "teams": ["frc118", "frc330", "frc973"]},
+            "red": {"score": 112, "team_keys": ["frc1114", "frc254", "frc604"]},
+            "blue": {"score": 98, "team_keys": ["frc118", "frc330", "frc973"]},
         },
         "winning_alliance": "red",
     }]
     mock_request = Mock(return_value=DummyResponse(200, match_data))
     monkeypatch.setattr(client, "_client", Mock(request=mock_request))
 
-    matches = client.fetch_event_matches("2025casj")
+    responses = client.fetch_event_matches("2025casj")
 
-    assert len(matches) == 1
-    match = matches[0]
+    assert len(responses) == 1
+    assert responses[0].raw == match_data[0]
+    match = responses[0].parsed
     assert match.key == "2025casj_qm1"
     assert match.competition_level == "qm"  # parsed from raw "comp_level"
     assert match.scheduled_time == 1710439200  # parsed from raw "time"
@@ -134,8 +139,10 @@ def test_fetch_team_info_parses_model(monkeypatch, env_settings):
     mock_request = Mock(return_value=DummyResponse(200, team_data))
     monkeypatch.setattr(client, "_client", Mock(request=mock_request))
 
-    team = client.fetch_team_info(1114)
+    response = client.fetch_team_info(1114)
 
+    assert response.raw == team_data
+    team = response.parsed
     assert team.key == "frc1114"
     assert team.team_number == 1114
     assert team.nickname == "Simbotics"

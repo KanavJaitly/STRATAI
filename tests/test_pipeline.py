@@ -6,6 +6,7 @@ import pytest
 
 from data import pipeline
 from data.clients.schemas import EventSummary, Match, StatboticsTeamEventMetrics, TeamInfo
+from data.clients.source_connector import SourceResponse
 from data.config import Settings
 from data.orchestrator import PipelineRunRecorder, WatermarkStore, sync_event
 from data.pipeline import PendingPayload
@@ -46,8 +47,8 @@ def raw_match(**overrides: Any) -> dict[str, Any]:
         "key": S_MATCH, "event_key": S_EVENT, "comp_level": "qm",
         "set_number": 1, "match_number": 1, "time": 1700000000,
         "alliances": {
-            "red": {"score": 100, "teams": S_TEAM_KEYS[:3]},
-            "blue": {"score": 90, "teams": S_TEAM_KEYS[3:]},
+            "red": {"score": 100, "team_keys": S_TEAM_KEYS[:3]},
+            "blue": {"score": 90, "team_keys": S_TEAM_KEYS[3:]},
         },
         "winning_alliance": "red",
     }
@@ -97,21 +98,22 @@ class FakeTBAClient:
         self.teams = teams if teams is not None else raw_teams()
         self.team_info_calls: list[int] = []
 
-    def fetch_event(self, event_key: str) -> EventSummary:
-        return EventSummary.model_validate(self.event)
+    def fetch_event(self, event_key: str) -> SourceResponse[EventSummary]:
+        return SourceResponse(self.event, EventSummary.model_validate(self.event))
 
-    def fetch_event_matches(self, event_key: str) -> list[Match]:
-        return [Match.model_validate(payload) for payload in self.matches]
+    def fetch_event_matches(self, event_key: str) -> list[SourceResponse[Match]]:
+        return [SourceResponse(p, Match.model_validate(p)) for p in self.matches]
 
-    def fetch_event_teams(self, event_key: str) -> list[TeamInfo]:
-        return [TeamInfo.model_validate(payload) for payload in self.teams]
+    def fetch_event_teams(self, event_key: str) -> list[SourceResponse[TeamInfo]]:
+        return [SourceResponse(p, TeamInfo.model_validate(p)) for p in self.teams]
 
-    def fetch_team_info(self, team_number: int) -> TeamInfo:
+    def fetch_team_info(self, team_number: int) -> SourceResponse[TeamInfo]:
         self.team_info_calls.append(team_number)
-        return TeamInfo.model_validate({
+        payload = {
             "key": f"frc{team_number}", "team_number": team_number,
             "nickname": f"Backfilled {team_number}",
-        })
+        }
+        return SourceResponse(payload, TeamInfo.model_validate(payload))
 
 
 class FakeStatboticsClient:
@@ -121,11 +123,14 @@ class FakeStatboticsClient:
         self.fail_for = fail_for or set()
         self.calls: list[tuple[int, str]] = []
 
-    def fetch_team_event_metrics(self, team_number: int, event_key: str) -> StatboticsTeamEventMetrics:
+    def fetch_team_event_metrics(
+        self, team_number: int, event_key: str
+    ) -> SourceResponse[StatboticsTeamEventMetrics]:
         self.calls.append((team_number, event_key))
         if team_number in self.fail_for:
             raise RuntimeError(f"simulated Statbotics 404 for team {team_number}")
-        return StatboticsTeamEventMetrics.model_validate(raw_team_event(team_number))
+        payload = raw_team_event(team_number)
+        return SourceResponse(payload, StatboticsTeamEventMetrics.model_validate(payload))
 
 
 def batch_by_type(batches, object_type: str):
@@ -165,7 +170,7 @@ def test_extract_event_lands_payloads_in_source_wire_shape():
     match_payload = batch_by_type(result.batches, "match").records[0].payload
     assert match_payload["comp_level"] == "qm"
     assert match_payload["time"] == 1700000000
-    assert match_payload["alliances"]["red"]["teams"] == S_TEAM_KEYS[:3]
+    assert match_payload["alliances"]["red"]["team_keys"] == S_TEAM_KEYS[:3]
 
     # And each round-tripped payload actually normalizes.
     assert pipeline.normalize_event("tba", event_payload).season == 9998
@@ -185,7 +190,7 @@ def test_extract_event_backfills_teams_missing_from_the_event_team_list():
 
 def test_extract_event_records_backfill_failure_without_aborting():
     class NoTeamLookupTBAClient(FakeTBAClient):
-        def fetch_team_info(self, team_number: int) -> TeamInfo:
+        def fetch_team_info(self, team_number: int) -> SourceResponse[TeamInfo]:
             raise RuntimeError("simulated team lookup failure")
 
     result = pipeline.extract_event(S_EVENT, tba=NoTeamLookupTBAClient(teams=raw_teams()[:5]))
@@ -231,7 +236,7 @@ def test_stage_batch_stops_watermark_at_first_invalid_payload_but_keeps_loading(
     # A duplicate team on one alliance passes the client model but fails the
     # staging validator -- a realistically-malformed payload, not a synthetic one.
     invalid = raw_match(key=f"{S_EVENT}_qm2", match_number=2)
-    invalid["alliances"]["red"]["teams"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
+    invalid["alliances"]["red"]["team_keys"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
     pending = [
         PendingPayload(21, S_MATCH, raw_match()),
         PendingPayload(22, f"{S_EVENT}_qm2", invalid),
@@ -421,8 +426,8 @@ def test_changed_payload_advances_watermark_and_updates_canonical_row(database):
 
     # A corrected score: a genuinely different payload for the same match.
     corrected = FakeTBAClient(matches=[raw_match(alliances={
-        "red": {"score": 111, "teams": S_TEAM_KEYS[:3]},
-        "blue": {"score": 90, "teams": S_TEAM_KEYS[3:]},
+        "red": {"score": 111, "team_keys": S_TEAM_KEYS[:3]},
+        "blue": {"score": 90, "team_keys": S_TEAM_KEYS[3:]},
     })])
     second = _run(database, tba=corrected)
 
@@ -495,7 +500,7 @@ def test_failure_before_landing_leaves_a_failed_run_and_no_raw_rows(database):
 @requires_db
 def test_invalid_payload_is_skipped_and_retried_while_good_records_load(database):
     bad = raw_match(key=f"{S_EVENT}_qm1", match_number=1)
-    bad["alliances"]["red"]["teams"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
+    bad["alliances"]["red"]["team_keys"] = [S_TEAM_KEYS[0], S_TEAM_KEYS[0], S_TEAM_KEYS[2]]
     good = raw_match(key=f"{S_EVENT}_qm2", match_number=2)
     tba = FakeTBAClient(matches=[bad, good])
 

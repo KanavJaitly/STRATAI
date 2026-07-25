@@ -222,9 +222,11 @@ def test_fetch_event_requests_the_documented_single_event_url(monkeypatch, env_s
     request = Mock(return_value=DummyResponse(200, body))
     monkeypatch.setattr(client, "_client", Mock(request=request))
 
-    event = client.fetch_event("2025casj")
+    response = client.fetch_event("2025casj")
 
     assert request.call_args_list[0][0][1].endswith("/event/2025casj")
+    assert response.raw == body          # untouched wire body rides along
+    event = response.parsed
     assert isinstance(event, EventSummary)
     assert (event.key, event.season, event.state_prov) == ("2025casj", 2025, "CA")
 
@@ -238,11 +240,12 @@ def test_fetch_event_teams_requests_the_documented_roster_url(monkeypatch, env_s
     request = Mock(return_value=DummyResponse(200, body))
     monkeypatch.setattr(client, "_client", Mock(request=request))
 
-    teams = client.fetch_event_teams("2025casj")
+    responses = client.fetch_event_teams("2025casj")
 
     assert request.call_args_list[0][0][1].endswith("/event/2025casj/teams")
-    assert [team.team_number for team in teams] == [1114, 254]
-    assert all(isinstance(team, TeamInfo) for team in teams)
+    assert [r.raw for r in responses] == body
+    assert [r.parsed.team_number for r in responses] == [1114, 254]
+    assert all(isinstance(r.parsed, TeamInfo) for r in responses)
 
 
 def test_fetch_event_teams_handles_an_empty_roster(monkeypatch, env_settings: Settings):

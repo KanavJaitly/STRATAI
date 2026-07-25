@@ -180,10 +180,12 @@ def test_fetch_event_match_stats_flattens_the_nested_prediction_object(monkeypat
     mock_request = Mock(return_value=DummyResponse(200, [real_match_payload()]))
     monkeypatch.setattr(client, "_client", Mock(request=mock_request))
 
-    stats = client.fetch_event_match_stats("2025casj")
+    responses = client.fetch_event_match_stats("2025casj")
 
-    assert len(stats) == 1
-    match = stats[0]
+    assert len(responses) == 1
+    # raw keeps the nested `pred` object exactly as sent; parsed is flattened.
+    assert responses[0].raw["pred"]["winner"] == "red"
+    match = responses[0].parsed
     assert match.key == "2025casj_qm1"
     assert match.event == "2025casj"
     assert match.predicted_winner == "red"       # <- pred.winner
@@ -197,8 +199,13 @@ def test_fetch_team_event_metrics_flattens_the_nested_epa_and_record(monkeypatch
     mock_request = Mock(return_value=DummyResponse(200, real_team_event_payload()))
     monkeypatch.setattr(client, "_client", Mock(request=mock_request))
 
-    metrics = client.fetch_team_event_metrics(1114, "2025casj")
+    response = client.fetch_team_event_metrics(1114, "2025casj")
 
+    # The nested body is preserved for landing...
+    assert response.raw["epa"]["breakdown"]["auto_points"] == 10.1
+    assert response.raw["record"]["total"]["count"] == 14
+    # ...while parsed exposes it flattened.
+    metrics = response.parsed
     assert (metrics.team, metrics.event) == (1114, "2025casj")
     assert metrics.epa_total == 45.2      # <- epa.total_points
     assert metrics.epa_auto == 10.1       # <- epa.breakdown.auto_points

@@ -26,15 +26,18 @@ raw id already promoted into the canonical tables" a complete description of
 what has been processed, which is exactly what the orchestrator stores as a
 watermark.
 
-Known limitation: the source clients return validated Pydantic models rather
-than the untouched response body, so what this module lands is the model's
-faithful round-trip (`model_dump(mode="json", by_alias=True)`, which restores
-the source's real wire field names) and not the byte-exact original. A field no
-client model declares is therefore invisible to both the canonical layer and
-the landing checksum, so a change confined to such a field will not be detected
-as a new version. Widening a model (as Milestone 8 did for EventSummary's
-location fields) is enough to fix that per field; exposing raw response bodies
-from the clients would fix it generally and is left as deliberate tech debt.
+What lands is the **untouched response body**. Connectors return a
+`SourceResponse` carrying both `raw` (exactly what the API sent) and `parsed`
+(the validated model); this module lands `raw` and uses `parsed` only for
+control flow. Every field the source sends is therefore persisted and included
+in the landing checksum, so a change in any field -- including ones no client
+model declares -- is detected as a new payload version.
+
+This replaced landing `model_dump(mode="json", by_alias=True)`, a projection
+through the client models that silently dropped every undeclared field before
+landing (TBA match payloads lost `score_breakdown` entirely, roughly 11x the
+data) and left those fields invisible to change detection. Capturing a new
+field no longer requires widening a model first.
 """
 
 from __future__ import annotations
@@ -43,8 +46,6 @@ import logging
 import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Sequence
-
-from pydantic import BaseModel
 
 from data.clients.statbotics import StatboticsClient
 from data.clients.tba import TBAClient
@@ -63,6 +64,7 @@ from data.staging import (
     normalize_team_event_stats,
 )
 from data.staging.quality import QualityContext, QualityIssue, check_entity, issues_from_validation_error
+from data.staging.validator import tba_alliance_team_keys
 from database.connection import Database
 
 logger = logging.getLogger(__name__)
@@ -179,18 +181,6 @@ class StagedBatch:
 # ---------------------------------------------------------------------------
 
 
-def _as_payload(model: BaseModel) -> dict[str, Any]:
-    """Render a client model back into its source's wire shape.
-
-    `by_alias` restores the source's real field names (TBA's "year",
-    "comp_level", "time", nested "alliances") that the client models rename for
-    internal use, and `mode="json"` keeps the result JSON-serializable for both
-    the JSONB column and the landing checksum. The staging validators and
-    normalizers expect exactly these source-shaped keys.
-    """
-    return model.model_dump(mode="json", by_alias=True)
-
-
 def _team_number_from_key(team_key: str) -> int | None:
     match = _TBA_TEAM_KEY_DIGITS.match(team_key)
     return int(match.group(1)) if match else None
@@ -203,7 +193,7 @@ def _roster_team_keys(match_payloads: Iterable[dict[str, Any]]) -> list[str]:
         alliances = payload.get("alliances") or {}
         for color in ("red", "blue"):
             alliance = alliances.get(color) or {}
-            for team_key in alliance.get("teams") or []:
+            for team_key in tba_alliance_team_keys(alliance) or []:
                 if isinstance(team_key, str):
                     seen.setdefault(team_key, None)
     return list(seen)
@@ -241,7 +231,7 @@ def _backfill_roster_teams(
             errors.append(f"Unparseable team key on a match roster: {team_key!r}")
             continue
         try:
-            team_payloads.append(_as_payload(tba.fetch_team_info(team_number)))
+            team_payloads.append(tba.fetch_team_info(team_number).raw)
         except Exception as exc:
             errors.append(f"Roster backfill failed for {team_key}: {exc}")
             logger.warning("Roster backfill failed for %s: %s", team_key, exc)
@@ -260,10 +250,14 @@ def extract_event(
     achieved downstream (the landing layer discards unchanged payloads and the
     staging read-back only sees what is new). Passing `statbotics=None` runs a
     TBA-only sync, which leaves team_event_stats untouched.
+
+    Every batch carries the sources' untouched response bodies (`SourceResponse.raw`),
+    so nothing is dropped before landing; the parsed models are used only where
+    typed access is needed, such as reading a team number to look up its metrics.
     """
-    event_payload = _as_payload(tba.fetch_event(event_key))
-    match_payloads = [_as_payload(match) for match in tba.fetch_event_matches(event_key)]
-    team_payloads = [_as_payload(team) for team in tba.fetch_event_teams(event_key)]
+    event_payload = tba.fetch_event(event_key).raw
+    match_payloads = [response.raw for response in tba.fetch_event_matches(event_key)]
+    team_payloads = [response.raw for response in tba.fetch_event_teams(event_key)]
 
     errors: list[str] = []
     _backfill_roster_teams(tba, team_payloads, match_payloads, errors)
@@ -286,6 +280,7 @@ def extract_event(
         batches.append(_extract_statbotics_team_events(
             statbotics, event_key, team_payloads, errors,
         ))
+
 
     logger.info(
         "Extracted event %s: %s",
@@ -314,14 +309,16 @@ def _extract_statbotics_team_events(
         if team_number is None:
             continue
         try:
-            metrics = statbotics.fetch_team_event_metrics(team_number, event_key)
+            response = statbotics.fetch_team_event_metrics(team_number, event_key)
         except Exception as exc:
             errors.append(f"Statbotics metrics unavailable for team {team_number} at {event_key}: {exc}")
             logger.warning("Statbotics metrics unavailable for team %s at %s: %s", team_number, event_key, exc)
             continue
+        # Lands Statbotics's nested body as sent; the staging normalizer flattens
+        # it through the same model validator the client used.
         batch.records.append(RawPayloadRecord(
             SOURCE_STATBOTICS, OBJECT_TYPE_TEAM_EVENT,
-            f"{team_number}_{event_key}", _as_payload(metrics),
+            f"{team_number}_{event_key}", response.raw,
         ))
     return batch
 
