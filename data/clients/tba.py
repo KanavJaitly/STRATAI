@@ -8,7 +8,7 @@ import httpx
 
 from data.clients.http_retry import request_with_retries
 from data.clients.schemas import EventSummary, Match, TeamInfo
-from data.clients.source_connector import SourceConnector
+from data.clients.source_connector import SourceConnector, SourceResponse
 from data.config import Settings
 
 
@@ -40,15 +40,15 @@ class TBAClient(SourceConnector):
             max_retries=self.max_retries, backoff_factor=self.backoff_factor, params=params,
         )
 
-    def fetch_event_list(self, year: int | None = None) -> list[EventSummary]:
+    def fetch_event_list(self, year: int | None = None) -> list[SourceResponse[EventSummary]]:
         """Fetch a list of events for the specified year or current season."""
         if year is None:
             year = date.today().year
 
         data = self._request("GET", f"/events/{year}")
-        return [EventSummary.model_validate(item) for item in data]
+        return [SourceResponse(item, EventSummary.model_validate(item)) for item in (data or [])]
 
-    def fetch_event(self, event_key: str) -> EventSummary:
+    def fetch_event(self, event_key: str) -> SourceResponse[EventSummary]:
         """Fetch a single event by key.
 
         fetch_event_list only exposes a whole season at once; syncing one event
@@ -56,26 +56,26 @@ class TBAClient(SourceConnector):
         client-side.
         """
         data = self._request("GET", f"/event/{event_key}")
-        return EventSummary.model_validate(data)
+        return SourceResponse(data, EventSummary.model_validate(data))
 
-    def fetch_event_teams(self, event_key: str) -> list[TeamInfo]:
+    def fetch_event_teams(self, event_key: str) -> list[SourceResponse[TeamInfo]]:
         """Fetch every team attending an event.
 
         One request for the full roster, versus one fetch_team_info call per
         team (~40 requests for a typical regional).
         """
         data = self._request("GET", f"/event/{event_key}/teams")
-        return [TeamInfo.model_validate(item) for item in (data or [])]
+        return [SourceResponse(item, TeamInfo.model_validate(item)) for item in (data or [])]
 
-    def fetch_event_matches(self, event_key: str) -> list[Match]:
+    def fetch_event_matches(self, event_key: str) -> list[SourceResponse[Match]]:
         """Fetch all matches for an event."""
         data = self._request("GET", f"/event/{event_key}/matches")
-        return [Match.model_validate(item) for item in data]
+        return [SourceResponse(item, Match.model_validate(item)) for item in (data or [])]
 
-    def fetch_team_info(self, team_number: int) -> TeamInfo:
+    def fetch_team_info(self, team_number: int) -> SourceResponse[TeamInfo]:
         """Fetch team information by team number."""
         data = self._request("GET", f"/team/frc{team_number}")
-        return TeamInfo.model_validate(data)
+        return SourceResponse(data, TeamInfo.model_validate(data))
 
     def close(self) -> None:
         """Close the underlying HTTP client."""

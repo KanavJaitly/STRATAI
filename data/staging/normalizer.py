@@ -17,6 +17,7 @@ from data.staging.schemas import (
 from data.staging.validator import (
     PayloadValidationError,
     ValidationIssue,
+    tba_alliance_team_keys,
     validate_event,
     validate_match,
     validate_team,
@@ -172,8 +173,8 @@ def normalize_tba_match(payload: dict[str, Any]) -> StagingMatch:
         match_number=payload.get("match_number"),
         set_number=payload.get("set_number"),
         scheduled_time=_unix_to_datetime(payload.get("time")),
-        red_teams=[_parse_team_number(k) for k in red.get("teams", [])],
-        blue_teams=[_parse_team_number(k) for k in blue.get("teams", [])],
+        red_teams=[_parse_team_number(k) for k in tba_alliance_team_keys(red)],
+        blue_teams=[_parse_team_number(k) for k in tba_alliance_team_keys(blue)],
         red_score=red_score,
         blue_score=blue_score,
         winning_alliance=_derive_winning_alliance(payload.get("winning_alliance") or None, red_score, blue_score),

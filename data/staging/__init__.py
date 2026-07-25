@@ -19,7 +19,14 @@ from data.staging.schemas import (
     StagingTeam,
     StagingTeamEventStats,
 )
-from data.staging.validator import PayloadValidationError, ValidationIssue, validate_event, validate_match, validate_team
+from data.staging.validator import (
+    PayloadValidationError,
+    ValidationIssue,
+    tba_alliance_team_keys,
+    validate_event,
+    validate_match,
+    validate_team,
+)
 
 __all__ = [
     "StagingEvent",
@@ -31,6 +38,7 @@ __all__ = [
     "validate_event",
     "validate_match",
     "validate_team",
+    "tba_alliance_team_keys",
     "normalize_event",
     "normalize_match",
     "normalize_team",
