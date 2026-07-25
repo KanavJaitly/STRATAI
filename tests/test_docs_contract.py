@@ -88,11 +88,20 @@ def test_docs_cover_every_documented_section(docs_text: str):
         assert heading in docs_text, f"docs missing section: {heading}"
 
 
-def test_docs_document_the_known_failing_config_test(docs_text: str):
-    # A new developer's first test run shows this failure; the docs must explain it
-    # rather than leave them guessing.
-    assert "test_settings_allows_missing_statbotics_api_key" in docs_text
-    assert "--deselect" in docs_text
+def test_docs_do_not_tell_developers_to_deselect_anything(docs_text: str):
+    # Inverted on 2026-07-25: this used to assert the docs explained a mandatory
+    # --deselect for a config test that failed in every full-suite run. That test
+    # was an isolation bug and is fixed, so the whole suite must now be runnable
+    # as a plain `pytest`. If a deselect ever creeps back into the quickstart,
+    # something is being papered over instead of fixed.
+    # Checks the documented *command*, not the surrounding prose -- which may well
+    # mention --deselect in order to tell readers they no longer need it.
+    quickstart = docs_text.split("### 7.8 Run the tests")[1].split("---")[0]
+    commands = re.findall(r"```bash\n(.*?)```", quickstart, flags=re.DOTALL)
+    assert commands, "§7.8 documents no runnable test command"
+    assert any("pytest" in command for command in commands)
+    for command in commands:
+        assert "--deselect" not in command, f"quickstart still deselects a test: {command.strip()!r}"
 
 
 def test_docs_reference_only_module_paths_that_exist(docs_text: str):
