@@ -44,10 +44,12 @@ class StagingTeamEventStats(BaseModel):
     layer in Milestone 5; this is the first staging entity that does NOT derive
     from The Blue Alliance.
 
-    `matches_played` is derived (wins + losses + ties) rather than sourced --
-    Statbotics reports the win/loss/tie breakdown but no explicit game count,
-    and the derived total is only meaningful when all three are present, so it
-    is left None if any component is missing rather than silently undercounting.
+    `matches_played` is taken from Statbotics's own played-match count
+    (record.total.count) when present, falling back to wins + losses + ties.
+    The fallback exists because the count was believed not to be available at
+    all while the Statbotics client was pointed at an unresolvable host; it is
+    only meaningful when all three components are present, so matches_played is
+    left None if any is missing rather than silently undercounting.
     """
 
     team_number: int

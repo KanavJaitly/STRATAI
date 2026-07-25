@@ -21,12 +21,23 @@ class StatboticsClient(SourceConnector):
     without requiring code changes; when no key is configured, requests are
     simply sent unauthenticated.
 
-    Endpoint paths, query parameter names, and response field names below are
-    a best-effort match to Statbotics's public architecture (FastAPI service,
-    TBA-derived Matches/TeamEvents entities, no documented auth requirement)
-    but have not been verified against a live response, since this connector
-    was built and tested entirely against mocked HTTP responses. Confirm
-    these against a real request before relying on this in production.
+    The base URL was wrong until 2026-07-25: it pointed at api.statbotics.org,
+    a host that does not resolve at all, so every Statbotics lookup failed with
+    a DNS error and team_event_stats was never populated. The real service is
+    api.statbotics.io, whose FastAPI app self-identifies as the "API V3 Router".
+
+    Endpoint paths below (/team_event/{team}/{event} and /matches?event=) are
+    confirmed against Statbotics's published route definitions. The response
+    shape is deeply nested -- EPA under `epa`/`epa.breakdown`, the match record
+    under `record.total` -- and the flattening lives in the response models (see
+    data/clients/schemas.py) so this client and everything downstream keep
+    working in flat fields.
+
+    Still unverified against a live response: at the time of the fix every
+    api.statbotics.io/v3/* endpoint was returning HTTP 500 from Statbotics's own
+    infrastructure, so the shape below is derived from their source rather than
+    captured from a real request. Re-verify once their API recovers; see
+    tests/fixtures/statbotics_team_event_2024casj.json.
 
     For landing-layer integration: a team-event metrics record has no single
     natural string identifier the way a TBA match or team does, so callers
@@ -37,7 +48,7 @@ class StatboticsClient(SourceConnector):
     timeout: float | None = None
     max_retries: int | None = None
     backoff_factor: float | None = None
-    base_url: str = "https://api.statbotics.org/v3"
+    base_url: str = "https://api.statbotics.io/v3"
     source_name: ClassVar[str] = "statbotics"
 
     def __post_init__(self) -> None:

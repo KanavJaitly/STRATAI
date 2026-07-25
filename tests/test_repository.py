@@ -224,6 +224,7 @@ def test_load_batch_stops_after_failure_and_preserves_earlier_records(monkeypatc
 # ===========================================================================
 
 def test_normalize_statbotics_team_event_stats_derives_matches_played():
+    # No sourced count in this payload, so the W/L/T fallback is used.
     stats = normalize_team_event_stats("statbotics", {
         "team": 1114, "event": "2024casj",
         "epa_total": 55.5, "epa_auto": 15.0, "epa_teleop": 30.0, "epa_endgame": 10.5,
@@ -233,6 +234,41 @@ def test_normalize_statbotics_team_event_stats_derives_matches_played():
     assert stats.team_number == 1114
     assert stats.season == 2024  # derived from the event key
     assert stats.matches_played == 11  # 8 + 2 + 1
+
+
+def test_normalize_statbotics_prefers_the_sourced_match_count():
+    # Statbotics does report a played-match count; prefer it over the derived sum.
+    # The two disagree here only to prove which one wins.
+    stats = normalize_team_event_stats("statbotics", {
+        "team": 1114, "event": "2024casj", "epa_total": 55.5,
+        "wins": 8, "losses": 2, "ties": 1, "count": 12,
+    })
+    assert stats.matches_played == 12
+
+
+def test_normalize_statbotics_reads_the_real_nested_payload_shape():
+    # Statbotics's actual /team_event response nests EPA under epa/epa.breakdown
+    # and the record under record.total. The whole chain -- flattening model,
+    # normalizer, staging entity -- must survive that shape.
+    stats = normalize_team_event_stats("statbotics", {
+        "team": 254, "year": 2024, "event": "2024casj", "team_name": "The Cheesy Poofs",
+        "epa": {
+            "total_points": 61.42,
+            "breakdown": {"auto_points": 18.31, "teleop_points": 34.07, "endgame_points": 9.04},
+            "stats": {"mean": 58.44},
+        },
+        "record": {
+            "qual": {"wins": 9, "losses": 3, "ties": 0, "count": 12},
+            "total": {"wins": 13, "losses": 5, "ties": 0, "count": 18},
+        },
+    })
+
+    assert isinstance(stats, StagingTeamEventStats)
+    assert (stats.team_number, stats.event_key, stats.season) == (254, "2024casj", 2024)
+    assert stats.epa_total == 61.42
+    assert (stats.epa_auto, stats.epa_teleop, stats.epa_endgame) == (18.31, 34.07, 9.04)
+    assert (stats.wins, stats.losses, stats.ties) == (13, 5, 0)  # total, not qual
+    assert stats.matches_played == 18
 
 
 def test_normalize_statbotics_team_event_stats_omits_matches_played_when_incomplete():

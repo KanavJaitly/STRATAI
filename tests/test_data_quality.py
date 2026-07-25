@@ -352,9 +352,15 @@ class FakeTBAClient:
 
 class FakeStatboticsClient:
     def fetch_team_event_metrics(self, team_number: int, event_key: str) -> StatboticsTeamEventMetrics:
+        # Statbotics's real nested response shape, so this integration path
+        # proves a genuine payload reaches team_event_stats.
         return StatboticsTeamEventMetrics.model_validate({
-            "team": team_number, "event": event_key, "epa_total": 50.0,
-            "wins": 8, "losses": 2, "ties": 0,
+            "team": team_number, "year": 2025, "event": event_key,
+            "epa": {
+                "total_points": 50.0,
+                "breakdown": {"auto_points": 10.0, "teleop_points": 30.0, "endgame_points": 10.0},
+            },
+            "record": {"total": {"wins": 8, "losses": 2, "ties": 0, "count": 10}},
         })
 
 
