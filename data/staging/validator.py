@@ -41,6 +41,29 @@ _VALID_RAW_WINNING_ALLIANCES = ("", "red", "blue")
 _STRICT_ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
+def tba_alliance_team_keys(alliance: Any) -> Any:
+    """Return a TBA alliance's roster field, accepting both names it appears under.
+
+    TBA's real field is `team_keys`. It is read here with a `teams` fallback
+    because both forms exist in the landing layer: raw response bodies use
+    `team_keys`, while payloads landed before raw bodies were preserved were
+    projections through MatchAllianceResult, which renamed the field to its
+    alias `teams` on the way out. Reading only `teams` against a raw body
+    silently yields an empty roster -- a real score with nobody on the field --
+    and empty alliances are legitimately not flagged by the quality layer
+    (an unplayed playoff match has no roster yet), so the whole match_teams
+    junction would be pruned while the run reported success.
+
+    Returns the value unconverted, including non-list values, so each caller's
+    own type checking still applies.
+    """
+    if not isinstance(alliance, dict):
+        return []
+    if "team_keys" in alliance:
+        return alliance["team_keys"]
+    return alliance.get("teams", [])
+
+
 def _is_iso_date_string(value: Any) -> bool:
     """Check a date string against TBA's actual "YYYY-MM-DD" format exactly.
 
@@ -145,7 +168,7 @@ def validate_tba_match_payload(payload: Any) -> list[ValidationIssue]:
                 score = alliance.get("score")
                 if score is not None and (not isinstance(score, int) or isinstance(score, bool)):
                     issues.append(ValidationIssue("match", f"alliances.{color}.score", f"Expected an integer, got {score!r}", key))
-                team_keys = alliance.get("teams", [])
+                team_keys = tba_alliance_team_keys(alliance)
                 if not isinstance(team_keys, list):
                     issues.append(ValidationIssue("match", f"alliances.{color}.teams", f"Expected a list, got {type(team_keys).__name__}", key))
                     continue

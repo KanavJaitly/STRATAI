@@ -52,7 +52,7 @@ from data.staging.schemas import (
     StagingTeam,
     StagingTeamEventStats,
 )
-from data.staging.validator import PayloadValidationError
+from data.staging.validator import PayloadValidationError, tba_alliance_team_keys
 from database.connection import Database
 
 logger = logging.getLogger(__name__)
@@ -493,7 +493,7 @@ def _roster_numbers(match_payload: dict[str, Any]) -> set[int]:
     alliances = match_payload.get("alliances") or {}
     for color in ("red", "blue"):
         alliance = alliances.get(color) or {}
-        for team_key in alliance.get("teams") or []:
+        for team_key in tba_alliance_team_keys(alliance) or []:
             match = _TBA_TEAM_KEY_DIGITS.match(team_key) if isinstance(team_key, str) else None
             if match is not None:
                 numbers.add(int(match.group(1)))

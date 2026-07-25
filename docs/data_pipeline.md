@@ -54,8 +54,9 @@ because Statbotics's API is returning 500s; see
 Each layer has one job, and the boundaries are deliberate:
 
 **Extraction** (`data/clients/`) talks HTTP and nothing else. Each connector validates
-responses into Pydantic models and knows its own API's shape; no connector knows about
-the database.
+responses into Pydantic models and returns them *alongside the untouched response body*
+(`SourceResponse`), so the layers below get typed access without anything being discarded.
+Each knows its own API's shape; no connector knows about the database.
 
 **Landing** (`data/landing/raw_writer.py`) stores raw payloads before any
 interpretation, so the original data always survives a change in how we interpret it.
@@ -77,7 +78,7 @@ loading is idempotent by construction.
 | Module | Responsibility |
 |---|---|
 | `data/config.py` | `Settings` — env/`.env` resolution, timeouts, retries |
-| `data/clients/source_connector.py` | `SourceConnector` ABC: `source_name` + `close()` |
+| `data/clients/source_connector.py` | `SourceConnector` ABC (`source_name`, `close()`) and `SourceResponse` (raw + parsed) |
 | `data/clients/http_retry.py` | Shared retry/backoff for transient HTTP failures |
 | `data/clients/schemas.py` | Source-shaped response models (`EventSummary`, `Match`, `TeamInfo`, `Statbotics*`) |
 | `data/clients/tba.py` | `TBAClient` — `fetch_event`, `fetch_event_list`, `fetch_event_matches`, `fetch_event_teams`, `fetch_team_info` |
@@ -119,9 +120,10 @@ What one `sync_event("2024casj")` actually does, in order:
      with no `teams` row would fail the entire load on a foreign key.
    - For each attending team, `GET /v3/team_event/{team}/{event}` from Statbotics. A
      failure here is **non-fatal** — recorded as a warning, and the TBA data still loads.
-   - Client models are rendered back to their source wire shape
-     (`model_dump(mode="json", by_alias=True)`) so the landed payload uses the source's
-     real field names (`year`, `comp_level`, `time`, nested `alliances`).
+   - Each connector returns `SourceResponse(raw, parsed)`. The pipeline lands `raw` —
+     the source's untouched response body, every field included — and uses `parsed`
+     only for control flow (reading a team number to look up its metrics, for
+     instance). See [§9.3](#93-what-lands-is-the-untouched-response-body).
 
 2. **Land** — `pipeline.land` → `RawPayloadWriter.write_many`
    Each payload is checksummed and inserted into `raw_source_payloads`. Unchanged
@@ -618,15 +620,46 @@ cannot silently reintroduce the leak. Production config behaviour is unchanged �
 deliberately: making `.env` override real environment variables would let a stale file in a
 deployed image point a real run at the wrong database.
 
-### 9.3 Landed payloads are the model projection, not the raw body
+### 9.3 What lands is the untouched response body — RESOLVED 2026-07-25
 
-The source clients validate responses into Pydantic models and discard the original body,
-so what lands is `model_dump(mode="json", by_alias=True)` — faithful for every field a
-client model declares, but a field no model declares is invisible to both the canonical
-tables and the dedup checksum. A change confined to such a field will not be detected as
-a new payload version. Widening a model fixes it per field (this is why `EventSummary`
-gained its location fields); exposing raw response bodies from the clients would fix it
-generally.
+Until 2026-07-25 the clients validated responses into Pydantic models and discarded the
+original body, so what landed was `model_dump(mode="json", by_alias=True)` — a projection
+that dropped every field no model declared, making those fields invisible to the canonical
+tables *and* to the dedup checksum, so a change confined to one was never detected as a new
+version.
+
+Connectors now return `SourceResponse(raw, parsed)`:
+
+- **`raw`** — exactly what the API sent. This is what the landing layer stores and
+  checksums, so nothing is lost and any change is detected.
+- **`parsed`** — the validated model, for typed control flow. Source-specific shapes are
+  normalized here (Statbotics's nested `epa`/`record` objects are flattened by the model's
+  own validator), but this is a *view* of `raw`, never a replacement for it.
+
+Capturing a new field no longer requires widening a model first. Real fields recovered for
+`2024casj` that had been discarded: match `score_breakdown` (the per-match scoring detail
+Phase 3's defense and feeding ratings need), `videos`, `actual_time`, `predicted_time`,
+event `event_type` and `week`, team legal `name` and geo fields.
+
+**Storage:** raw bodies are ~8.9× the projection as JSON text (303 KiB vs 34 KiB per
+event), but JSONB compresses on disk — measured 140 kB vs 46 kB for one event, ~3×. A full
+season is single-digit MB either way.
+
+**One-time re-land:** the checksum *algorithm* is unchanged; only its input became the raw
+body. The first run after this change therefore lands one new version of every
+already-stored object (136 for `2024casj`, so `raw_source_payloads` went 136 → 272) and
+re-upserts the canonical rows once. Both payload versions are retained, since the landing
+layer never rewrites history. Subsequent runs are no-ops again — verified: the second run
+reported `landed={...: 0}` and `loaded={...: 0}`.
+
+**The roster trap this exposed.** TBA's real alliance roster field is `team_keys`. The old
+projection renamed it to `MatchAllianceResult`'s alias `teams`, and staging read only that
+name — so reading a raw body with the old code produced an *empty* roster beside a real
+score, silently, because the quality layer deliberately does not flag an empty alliance (an
+unplayed playoff match has none). Every `match_teams` row would have been pruned while the
+run reported success. `tba_alliance_team_keys` now reads `team_keys` with a `teams`
+fallback, so both the raw bodies and the projections already in the landing layer work.
+`tests/test_raw_body_preservation.py` guards this against a real captured payload.
 
 ### 9.4 Permanently skipped schema test — RESOLVED 2026-07-25 (deleted)
 
