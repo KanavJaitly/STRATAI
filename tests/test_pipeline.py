@@ -56,10 +56,24 @@ def raw_match(**overrides: Any) -> dict[str, Any]:
 
 
 def raw_team_event(team_number: int) -> dict[str, Any]:
+    """Statbotics's real nested /team_event shape.
+
+    Nested exactly as their response serializer emits it. The flat shape this
+    fixture used originally was invented, and mocking it is what let a wrong
+    client contract survive undetected; landing the real shape here means the
+    end-to-end test proves a genuine Statbotics payload reaches team_event_stats.
+    """
     return {
-        "team": team_number, "event": S_EVENT, "epa_total": 50.0,
-        "epa_auto": 10.0, "epa_teleop": 30.0, "epa_endgame": 10.0,
-        "wins": 8, "losses": 2, "ties": 0,
+        "team": team_number, "year": 9998, "event": S_EVENT,
+        "epa": {
+            "total_points": 50.0,
+            "breakdown": {"auto_points": 10.0, "teleop_points": 30.0, "endgame_points": 10.0},
+            "stats": {"mean": 48.0},
+        },
+        "record": {
+            "qual": {"wins": 6, "losses": 2, "ties": 0, "count": 8},
+            "total": {"wins": 8, "losses": 2, "ties": 0, "count": 10},
+        },
     }
 
 
