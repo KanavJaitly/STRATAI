@@ -8,9 +8,9 @@
 
 | Field | Current Value |
 |---|---|
-| **Active Phase** | Phase 2 — Data Pipeline ✅ **COMPLETE** (Milestones 1–10) |
+| **Active Phase** | Phase 2 — Data Pipeline ✅ **COMPLETE** (Milestones 1–10, validated against real results 2026-07-25) |
 | **Active Milestone** | Phase 3 — Metrics & analytics (not started) |
-| **Last Completed** | Milestone 10 — Docs & validation harness (commit `892aff4`, branch `milestone-10`) |
+| **Last Completed** | Full-2024-season sync + manual spot-check validation (commit `6c05ad4`, branch `phase2-validation`) |
 | **Last Updated** | 2026-07-25 |
 | **Current Blocker** | Statbotics client fixed (`e6a08cf`); EPA data still not flowing — their API is returning 500s. Not ours to fix; re-verify when it recovers |
 | **Next Session Goal** | Re-verify Statbotics against a live response when their API recovers, then scope Phase 3 |
@@ -47,6 +47,33 @@
 | 10. Docs & validation harness | ✅ Done | `docs/data_pipeline.md` + `tests/test_docs_contract.py` (47 contract tests); README/CLAUDE.md corrected |
 
 **Status Key:** ⬜ Not Started &nbsp; 🟡 In Progress &nbsp; 🔵 In Review &nbsp; ✅ Done
+
+---
+
+## ✅ Phase 2 Done-Criterion Validation (2026-07-25)
+
+Phase 2's done criterion — *"manually spot-checked against known real results"* — is **satisfied**.
+The full 2024 season was synced and the stored data compared by hand against
+thebluealliance.com using `scripts/spot_check.py`. **Zero discrepancies:** every score,
+winner, and roster matched exactly.
+
+Coverage was deliberately chosen to hit every match type and every edge case the
+canonical model has to represent:
+
+| Checked | Why this case | Result |
+|---|---|---|
+| `2024mil_sf13m1` | Double elimination, **113–113 tie** broken on tech fouls with red awarded the win — the hardest winner-attribution case in the schema | Scores, winner, and both rosters exact |
+| Both `2024cmptx` Einstein finals | Championship finals; rosters drawn from division winners, so it also verifies cross-event load ordering | Exact |
+| Team **2056**, full 2024 season | Six events — verifies per-team history and event structure across the whole season, not just one event | All records and event structure correct |
+| `2024casj` qm1 / qm30 / qm53 | Ordinary qualification matches, including an **88–5 blowout** (wide score margin) | Exact |
+
+The comparison is human-run by design: `scripts/spot_check.py` prints canonical rows in
+TBA's own layout and deliberately emits **no pass/fail verdict**, because an automated
+comparison would re-implement the pipeline's normalization and agree with it by
+construction. See `docs/data_pipeline.md` §8.3.
+
+Not covered by this validation: `team_event_stats` (EPA), which is still empty — see the
+open Statbotics item under Known Issues.
 
 ---
 
@@ -117,3 +144,4 @@
 | 2026-07-24 | Milestone 10 (Phase 2 complete) | Verified true schema against migrations + live DB; wrote `docs/data_pipeline.md` (architecture, schema, watermarks, quality/lineage, verified quickstart, known issues, extension guides); added 47 contract tests incl. first real coverage of `TBAClient.fetch_event`/`fetch_event_teams`; rewrote README, updated CLAUDE.md. Ran the CLI against real `2024casj` (136 records loaded, re-run all zeros). Flagged the Statbotics base-URL bug and the permanently-skipped M2 schema test. Suite 219 pass / 4 skip / 1 deselected. Committed `892aff4` on `milestone-10`, PR #5 merged to `main` | Fix Statbotics base URL, then scope Phase 3 |
 | 2026-07-25 | Statbotics client fix (not a milestone) | Diagnosed two bugs: unresolvable host (`.org` → `.io`) and a wholly wrong response shape (nested `epa`/`record`, not flat). Fixed the URL, absorbed the nesting via `model_validator` in the client models, switched `matches_played` to the sourced count, re-mocked all Statbotics tests to the real shape, added a source-derived response fixture with a model test, and updated the M8/M9 integration fakes to nested payloads. Suite 225 pass / 4 skip / 1 deselected. Live verification **pending their outage** — `team_event_stats` still 0. Committed `e6a08cf` on `fix-statbotics` | Re-verify against a live Statbotics response, then Phase 3 |
 | 2026-07-25 | Test hygiene (not a milestone) | Fixed the long-deselected config test — cause was `load_dotenv` polluting `os.environ` plus collection-time `Settings()` calls, so the fix was an autouse isolation fixture in `tests/test_config.py`, not a change to production config. Deleted the permanently-skipped, stale `tests/test_verify_database.py` (superseded by the M10 contract tests). Updated the docs/README quickstart to a plain `pytest` and inverted the contract test that used to *require* a documented `--deselect`. **Suite now 226 pass / 3 skip / 0 deselected / 0 failed** — first time the full suite is green with no flags. Committed on `fix-test-hygiene` | Re-verify Statbotics live, then Phase 3 |
+| 2026-07-25 | Full-season sync + Phase 2 validation (not a milestone) | Added `sync_season` (official events only, chronological, failure-isolated, Statbotics probed once then circuit-broken) and `scripts/spot_check.py`, a read-only report that prints canonical rows in TBA's layout. Synced the full 2024 season and **manually spot-checked the stored data against thebluealliance.com with zero discrepancies**, covering every match type: `2024mil_sf13m1` (113–113 tiebreak, red wins on tech fouls, rosters exact), both `2024cmptx` Einstein finals, team 2056's complete six-event 2024 season (all records and event structure correct), and `2024casj` qm1/qm30/qm53 (ordinary quals incl. an 88–5 blowout). Every score, winner, and roster matched exactly — **Phase 2's "manually spot-checked against known real results" done criterion is satisfied.** Committed `6c05ad4` on `phase2-validation` | Re-verify Statbotics live, then Phase 3 |
