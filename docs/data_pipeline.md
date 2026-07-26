@@ -481,16 +481,92 @@ venv/bin/python -m data.orchestrator --help
 ```
 
 ```text
-usage: orchestrator.py [-h] [--no-statbotics] event_key
+usage: orchestrator.py [-h] [--season YEAR] [--no-statbotics]
+                       [--delay SECONDS]
+                       [event_key]
 
 positional arguments:
   event_key        TBA event key, e.g. 2025casj
 
 options:
+  --season YEAR    Sync every official event of a season in chronological
+                   order, e.g. --season 2024. Offseason and preseason events
+                   are excluded.
   --no-statbotics  Skip Statbotics EPA metrics (TBA data only).
+  --delay SECONDS  Pause between events in a season sync (default 0.5).
+                   Ignored for a single event.
 ```
 
-### 8.2 Inspecting a run
+Give exactly one of `event_key` or `--season`.
+
+### 8.2 Syncing a whole season
+
+```bash
+venv/bin/python -m data.orchestrator --season 2024
+```
+
+`sync_season` is a thin wrapper over `sync_event`. Each event remains an
+independent sync with its own `pipeline_runs` row and its own watermarks, so a
+season sync is exactly 190 single-event syncs with three added policies:
+
+* **Scope.** Only *official* events are synced — TBA `event_type` 0–5
+  (regional, district, district championship and its divisions, championship
+  divisions, championship finals). Offseason (99) and preseason (100) are
+  excluded: they run modified rules with ad-hoc rosters, so their results are
+  not comparable and would distort any season-level metric. For 2024 that is
+  190 of 324 events. The filter reads `event_type` off the **raw response
+  body**, because it is not a field on `EventSummary`.
+* **Order.** Chronological by `start_date`, so every event loads after the ones
+  it depends on — championship divisions before the championship finals whose
+  roster is drawn from them.
+* **Failure isolation.** One failing event does not end the season. `sync_event`
+  has already written its `failed` run row by the time it re-raises, so the
+  wrapper collects the error and continues; failures are listed in the summary.
+
+**Statbotics is probed once, then circuit-broken.** Extraction requests
+Statbotics once per team per event, which is ~8,100 calls across a 2024 season.
+When the service is down each of those burns the client's full retry ladder
+(measured at ~1.7s, worse with read timeouts), turning a ~12-minute season sync
+into a multi-hour one that produces no rows and floods `data_quality_issues`
+with thousands of identical extraction failures. So a season sync makes one real
+`team_event/{team}/{event}` call first; if it fails, Statbotics is skipped for
+the whole run and the reason is reported:
+
+```text
+statbotics SKIPPED for the whole season: probe for team 1574 at 2024isde1
+failed: ReadTimeout: The read operation timed out
+```
+
+This is production behaviour, not a test convenience: a dead *supplementary*
+source should be skipped, not retried thousands of times. Nothing but
+`team_event_stats` depends on it.
+
+### 8.3 Spot-checking stored data against TBA
+
+`scripts/spot_check.py` is a read-only report for comparing what the pipeline
+stored against thebluealliance.com by eye. It prints no verdict on purpose — an
+automated comparison would re-implement the pipeline's own normalization and
+agree with it by construction.
+
+```bash
+venv/bin/python -m scripts.spot_check --preset            # curated 2024 results
+venv/bin/python -m scripts.spot_check --season-summary 2024
+venv/bin/python -m scripts.spot_check --event 2024casj
+venv/bin/python -m scripts.spot_check --match 2024cmptx_f1m1 --verbose
+venv/bin/python -m scripts.spot_check --team 1114 --season 2024
+```
+
+Each match line is laid out the way TBA's match table reads:
+
+```text
+  qm1        red  30 -  27 blue   RED     red: 841, 8546, 253    blue: 6884, 5104, 6918
+```
+
+`--verbose` adds the `raw_source_payloads.id` behind each row via
+`canonical_lineage`, so a suspicious value can be traced to the exact stored
+response body that produced it.
+
+### 8.4 Inspecting a run
 
 ```sql
 -- most recent runs
@@ -520,7 +596,7 @@ ORDER BY l.raw_payload_id;
 `DataQualityRecorder.open_issues(object_type=..., object_id=..., severity=...)` is the
 Python equivalent of the third query.
 
-### 8.3 Re-syncing and back-filling
+### 8.5 Re-syncing and back-filling
 
 Re-running `sync_event` for an event is always safe and cheap. To **force** a full
 reprocess of an event without discarding raw history, reset its watermarks — the raw rows
@@ -530,7 +606,7 @@ stay, and every current payload is re-promoted through staging:
 DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 ```
 
-### 8.4 Migrations
+### 8.6 Migrations
 
 | File | What it does |
 |---|---|
