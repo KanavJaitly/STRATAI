@@ -39,8 +39,9 @@ from __future__ import annotations
 
 import argparse
 import logging
+import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Iterable, Sequence
 
 from psycopg.types.json import Jsonb
 
@@ -64,6 +65,21 @@ from database.connection import Database, DatabaseConfig
 logger = logging.getLogger(__name__)
 
 DEFAULT_PIPELINE_NAME = "event_sync"
+
+# TBA's numeric event types for *official* competition. Offseason (99) and
+# preseason (100) events are deliberately excluded from a season sync: they run
+# modified rules with mixed, ad-hoc rosters, so their results are not comparable
+# to official play and would distort any season-level metric computed over them.
+# The numbers, in order: Regional, District, District Championship,
+# Championship Division, Championship Finals, District Championship Division.
+OFFICIAL_EVENT_TYPES = frozenset({0, 1, 2, 3, 4, 5})
+
+# Pause between events in a season sync. A season sync issues only ~3 TBA
+# requests per event, so this is not needed to stay inside any advertised rate
+# limit (TBA publishes none, and sends no X-RateLimit headers); it is cheap
+# insurance against looking like a hostile client over a several-hundred-request
+# run. At 190 events it costs about 95 seconds.
+DEFAULT_EVENT_DELAY_SECONDS = 0.5
 
 
 @dataclass
@@ -345,15 +361,241 @@ def _stage_counts(result: SyncResult) -> dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Season sync
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class SeasonResult:
+    """Outcome of syncing a whole season, event by event.
+
+    Holds the successful `SyncResult`s and, separately, the events that raised.
+    A season sync deliberately does not fail as a whole when one event does:
+    with ~190 events, one unavailable event must not discard the other 189.
+    """
+
+    year: int
+    event_keys: list[str] = field(default_factory=list)
+    results: list[SyncResult] = field(default_factory=list)
+    failures: list[tuple[str, str]] = field(default_factory=list)
+    statbotics_skipped_reason: str | None = None
+    elapsed_seconds: float = 0.0
+
+    @property
+    def events_succeeded(self) -> int:
+        return len(self.results)
+
+    @property
+    def events_failed(self) -> int:
+        return len(self.failures)
+
+    @property
+    def landed(self) -> dict[str, int]:
+        """New raw payload rows per "source.object_type", summed over every event."""
+        return _sum_counts(result.landed for result in self.results)
+
+    @property
+    def loaded(self) -> dict[str, int]:
+        """Canonical rows written per entity type, summed over every event."""
+        return _sum_counts(result.loaded for result in self.results)
+
+    @property
+    def issues(self) -> list[QualityIssue]:
+        return [issue for result in self.results for issue in result.issues]
+
+    @property
+    def skipped(self) -> list[SkippedRecord]:
+        return [record for result in self.results for record in result.skipped]
+
+    @property
+    def extraction_errors(self) -> list[str]:
+        return [error for result in self.results for error in result.extraction_errors]
+
+    @property
+    def records_loaded(self) -> int:
+        return sum(result.records_loaded for result in self.results)
+
+
+def _sum_counts(dicts: Iterable[dict[str, int]]) -> dict[str, int]:
+    totals: dict[str, int] = {}
+    for counts in dicts:
+        for key, value in counts.items():
+            totals[key] = totals.get(key, 0) + value
+    return totals
+
+
+def official_event_keys(tba: TBAClient, year: int) -> list[str]:
+    """Return every official event key for a season, in chronological order.
+
+    Filters on the raw response body rather than the parsed model: `event_type`
+    is not a field on `EventSummary`, but it is present on every event payload
+    TBA sends, and since connectors hand back the untouched body there is no
+    need to widen the model just to read it.
+
+    Chronological order matters for more than tidiness. Championship divisions
+    must load before the Championship Finals, whose roster is drawn from them,
+    and district championships after their districts -- ordering by start_date
+    puts every event after the ones it depends on.
+    """
+    responses = tba.fetch_event_list(year)
+    official = [
+        response for response in responses
+        if isinstance(response.raw, dict) and response.raw.get("event_type") in OFFICIAL_EVENT_TYPES
+    ]
+    official.sort(key=lambda response: (response.raw.get("start_date") or "", response.parsed.key))
+    logger.info(
+        "Season %d: %d official event(s) of %d total", year, len(official), len(responses),
+    )
+    return [response.parsed.key for response in official]
+
+
+def statbotics_probe_failure(
+    statbotics: StatboticsClient, tba: TBAClient, event_key: str
+) -> str | None:
+    """Check that Statbotics answers at all; return None if it does, else why not.
+
+    Statbotics is a *supplementary* source: it enriches team_event_stats and
+    nothing else depends on it. Extraction requests it once per team per event,
+    so across a season that is thousands of calls -- and when the service is
+    down, every one of them burns the client's full retry ladder before failing.
+    Measured against a real outage that is ~1.7s each, which turns a 20-minute
+    season sync into a 4-hour one that produces no rows and floods
+    data_quality_issues with thousands of identical extraction failures.
+
+    So a season sync probes once and, on failure, skips Statbotics for the whole
+    run. This is deliberately a *probe*, not a health endpoint: it calls the
+    exact endpoint extraction uses, with a real team from a real event, so a
+    pass means the thing we are about to do thousands of times actually works.
+    """
+    try:
+        teams = tba.fetch_event_teams(event_key)
+    except Exception as exc:
+        return f"could not read a probe team from {event_key}: {type(exc).__name__}: {exc}"
+
+    team_numbers = [
+        response.parsed.team_number for response in teams if response.parsed.team_number is not None
+    ]
+    if not team_numbers:
+        return f"{event_key} lists no teams, so Statbotics could not be probed"
+
+    probe_team = team_numbers[0]
+    try:
+        statbotics.fetch_team_event_metrics(probe_team, event_key)
+    except Exception as exc:
+        return f"probe for team {probe_team} at {event_key} failed: {type(exc).__name__}: {exc}"
+    return None
+
+
+def sync_season(
+    year: int,
+    *,
+    database: Database,
+    tba: TBAClient,
+    statbotics: StatboticsClient | None = None,
+    event_keys: Sequence[str] | None = None,
+    delay_seconds: float = DEFAULT_EVENT_DELAY_SECONDS,
+    pipeline_name: str = DEFAULT_PIPELINE_NAME,
+) -> SeasonResult:
+    """Sync every official event of a season, one at a time, in chronological order.
+
+    A thin wrapper over `sync_event`: it enumerates the season, decides once
+    whether Statbotics is usable, and owns the policy that one failing event
+    must not abort the rest. Each event remains an independent sync with its own
+    pipeline_runs row and its own watermarks -- watermarks are scoped per
+    (source, object_type, event), so no event's progress can be advanced by
+    another's, and re-running a season is a no-op event by event exactly as
+    re-running a single event is.
+
+    `event_keys` overrides enumeration, for syncing a chosen subset in season
+    order without hitting the event-list endpoint.
+
+    Failures are collected, not raised. `sync_event` has already recorded the
+    failed run in pipeline_runs by the time it re-raises, so continuing here
+    loses no audit trail -- it just declines to let one event end the season.
+    """
+    started = time.monotonic()
+    keys = list(event_keys) if event_keys is not None else official_event_keys(tba, year)
+    season = SeasonResult(year=year, event_keys=keys)
+
+    if statbotics is not None and keys:
+        reason = statbotics_probe_failure(statbotics, tba, keys[0])
+        if reason is not None:
+            season.statbotics_skipped_reason = reason
+            statbotics = None
+            logger.warning(
+                "Statbotics unavailable, skipping it for the whole season: %s. "
+                "team_event_stats will not be populated by this run.", reason,
+            )
+
+    # Shared collaborators, built once rather than per event. Each is a thin
+    # dataclass over `database`, so this is tidiness rather than a real cost.
+    collaborators: dict[str, Any] = {
+        "writer": RawPayloadWriter(database),
+        "repository": CanonicalRepository(database),
+        "recorder": PipelineRunRecorder(database),
+        "watermarks": WatermarkStore(database),
+        "quality": DataQualityRecorder(database),
+        "lineage": LineageStore(database),
+    }
+
+    for index, event_key in enumerate(keys, start=1):
+        if index > 1 and delay_seconds > 0:
+            time.sleep(delay_seconds)
+        try:
+            result = sync_event(
+                event_key,
+                database=database,
+                tba=tba,
+                statbotics=statbotics,
+                pipeline_name=pipeline_name,
+                **collaborators,
+            )
+        except Exception as exc:
+            season.failures.append((event_key, f"{type(exc).__name__}: {exc}"))
+            logger.error("[%d/%d] %s FAILED: %s", index, len(keys), event_key, exc)
+            continue
+
+        season.results.append(result)
+        logger.info(
+            "[%d/%d] %s: landed=%s loaded=%s skipped=%d issues=%d (fatal=%d)",
+            index, len(keys), event_key, result.landed, result.loaded,
+            len(result.skipped), len(result.issues), len(result.fatal_issues),
+        )
+
+    season.elapsed_seconds = time.monotonic() - started
+    logger.info(
+        "Season %d complete in %.1fs: %d event(s) succeeded, %d failed, %d canonical record(s)",
+        year, season.elapsed_seconds, season.events_succeeded, season.events_failed,
+        season.records_loaded,
+    )
+    return season
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Command-line entry point: sync one event end to end."""
-    parser = argparse.ArgumentParser(description="Run the StratAI ingestion pipeline for one event.")
-    parser.add_argument("event_key", help="TBA event key, e.g. 2025casj")
+    """Command-line entry point: sync one event, or a whole season, end to end."""
+    parser = argparse.ArgumentParser(
+        description="Run the StratAI ingestion pipeline for one event or a whole season.",
+    )
+    parser.add_argument("event_key", nargs="?", help="TBA event key, e.g. 2025casj")
+    parser.add_argument(
+        "--season", type=int, metavar="YEAR",
+        help="Sync every official event of a season in chronological order, e.g. --season 2024. "
+             "Offseason and preseason events are excluded.",
+    )
     parser.add_argument(
         "--no-statbotics", action="store_true",
         help="Skip Statbotics EPA metrics (TBA data only).",
     )
+    parser.add_argument(
+        "--delay", type=float, default=DEFAULT_EVENT_DELAY_SECONDS, metavar="SECONDS",
+        help=f"Pause between events in a season sync (default {DEFAULT_EVENT_DELAY_SECONDS}). "
+             "Ignored for a single event.",
+    )
     args = parser.parse_args(argv)
+
+    if (args.event_key is None) == (args.season is None):
+        parser.error("give either an event_key or --season YEAR, not both and not neither")
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     settings = Settings()
@@ -362,6 +604,13 @@ def main(argv: list[str] | None = None) -> int:
     statbotics = None if args.no_statbotics else StatboticsClient(settings=settings)
     try:
         with TBAClient(settings=settings) as tba:
+            if args.season is not None:
+                season = sync_season(
+                    args.season, database=database, tba=tba, statbotics=statbotics,
+                    delay_seconds=args.delay,
+                )
+                _print_season_summary(season)
+                return 0
             result = sync_event(args.event_key, database=database, tba=tba, statbotics=statbotics)
     finally:
         if statbotics is not None:
@@ -374,6 +623,24 @@ def main(argv: list[str] | None = None) -> int:
         f"extraction_errors={len(result.extraction_errors)}"
     )
     return 0
+
+
+def _print_season_summary(season: SeasonResult) -> None:
+    """Print a season sync's totals, including what failed and what was skipped."""
+    print(
+        f"season {season.year}: {season.events_succeeded}/{len(season.event_keys)} event(s) "
+        f"succeeded in {season.elapsed_seconds:.1f}s"
+    )
+    print(f"  landed={season.landed}")
+    print(f"  loaded={season.loaded}  (total {season.records_loaded})")
+    print(f"  skipped={len(season.skipped)}  extraction_errors={len(season.extraction_errors)}")
+    print(f"  quality_issues={summarize(season.issues)}")
+    if season.statbotics_skipped_reason:
+        print(f"  statbotics SKIPPED for the whole season: {season.statbotics_skipped_reason}")
+    if season.failures:
+        print(f"  {len(season.failures)} event(s) FAILED:")
+        for event_key, error in season.failures:
+            print(f"    {event_key}: {error}")
 
 
 if __name__ == "__main__":
