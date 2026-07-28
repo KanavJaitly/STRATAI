@@ -673,6 +673,25 @@ through landing, staging, and serving against a real database and assert the res
 The pipeline's graceful degradation held throughout: 42 failed Statbotics lookups never
 prevented the 136 TBA records from loading.
 
+**New evidence (2026-07-28 audit): `epa_total` may be an oversimplification, not just an
+unconfirmed field name.** `api.statbotics.io` still returns HTTP 500 on every `/v3/*`
+endpoint (`curl https://api.statbotics.io/v3/team_event/254/2024casj` → `{}`, HTTP 500), so
+the live REST shape remains unverified. Its OpenAPI schema (`/openapi.json`, reachable even
+while the data endpoints 500) confirms the endpoint *paths* but declares the response as
+`additionalProperties: true` with no field-level schema, so it cannot confirm or refute the
+nesting either. However, Statbotics's own archived bulk data
+(`avgupta456/statbotics-csvs`, `v2/team_events.csv`) shows EPA is tracked as a **time series
+per event**, not one number: `epa_start`, `epa_pre_playoffs`, `epa_end`, `epa_mean`,
+`epa_max` (and the same five suffixes for the auto/teleop/endgame breakdowns). This is a
+bulk-export format, not necessarily identical to the REST API's JSON keys, so it does not
+prove the live shape is wrong — but it is concrete evidence that "one epa_total value"
+is a real modeling question, not just a naming one: `StagingTeamEventStats.epa_total`
+does not currently say which of start/pre_playoffs/end/mean/max (or a live-computed
+"current" value) it represents. **When the live API recovers, confirm not just the field
+names but which underlying value `epa_total` should be** — most likely `epa_end` (EPA as of
+the end of that specific event) is the intended semantic for a *team-event* metric, but this
+has not been confirmed against a real response and should not be assumed.
+
 ### 9.2 Known failing config test — RESOLVED 2026-07-25
 
 `tests/test_config.py::test_settings_allows_missing_statbotics_api_key` used to fail in any

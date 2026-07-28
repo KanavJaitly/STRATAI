@@ -580,3 +580,60 @@ def test_sync_without_statbotics_leaves_team_event_stats_untouched(database):
     assert result.loaded == {"teams": 6, "events": 1, "matches": 1, "team_event_stats": 0}
     assert _scalar(database, "SELECT COUNT(*) FROM team_event_stats WHERE event_key = %s", (S_EVENT,)) == 0
     assert set(_watermarks(database)) == {("tba", "event"), ("tba", "team"), ("tba", "match")}
+
+
+@requires_db
+def test_event_sync_lock_serializes_same_event_but_not_different_events(database):
+    """Regression test found in the Phase 2 full-pipeline audit.
+
+    Forcing two transactions to insert overlapping-but-different match
+    rosters for the same match_key, then both prune before either commits,
+    reproducibly hung: Postgres's row lock on the (match_key, team_number)
+    unique key makes one writer block on the other, and a genuine lock-order
+    cycle would surface as a deadlock error that aborts the whole run. Two
+    concurrent sync_event calls for the same event are exactly this shape --
+    "real-time updates must sync during an event as matches are played" makes
+    an overlapping live-sync poll a realistic scenario, not a hypothetical one.
+
+    _event_sync_lock closes this by holding a session-scoped advisory lock,
+    keyed on event_key, for the whole sync_event call. This test verifies both
+    halves of that fix: the same event_key fully serializes (no interleaving),
+    while different event_keys never wait on each other (no scalability
+    regression from over-serializing an unrelated event's sync).
+    """
+    import threading
+    import time
+
+    from data.orchestrator import _event_sync_lock
+
+    order: list[str] = []
+
+    def hold(label: str, event_key: str, seconds: float) -> None:
+        with _event_sync_lock(database, event_key):
+            order.append(f"{label}-acquired")
+            time.sleep(seconds)
+            order.append(f"{label}-released")
+
+    # Same event_key: B must wait for A to fully release before acquiring.
+    t1 = threading.Thread(target=hold, args=("A", S_EVENT, 0.4))
+    t2 = threading.Thread(target=hold, args=("B", S_EVENT, 0.05))
+    t1.start()
+    time.sleep(0.1)  # ensure A acquires first
+    t2.start()
+    t1.join()
+    t2.join()
+    assert order == ["A-acquired", "A-released", "B-acquired", "B-released"]
+
+    # Different event_keys: both proceed concurrently, not queued.
+    order.clear()
+    started = time.monotonic()
+    threads = [
+        threading.Thread(target=hold, args=(f"E{i}", f"{S_EVENT}_other_{i}", 0.3))
+        for i in range(3)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    elapsed = time.monotonic() - started
+    assert elapsed < 0.6, f"unrelated events should not serialize on each other's lock, took {elapsed:.2f}s"

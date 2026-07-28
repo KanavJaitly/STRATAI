@@ -38,8 +38,10 @@ be re-upserted once per event, which is idempotent and cheap.
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Sequence
 
@@ -240,6 +242,40 @@ class SyncResult:
         return [issue for issue in self.issues if issue.is_fatal]
 
 
+@contextmanager
+def _event_sync_lock(database: Database, event_key: str):
+    """Serialize sync_event calls for the same event_key.
+
+    Found by direct reproduction, not speculation: two concurrent syncs of the
+    same event with overlapping-but-different match rosters (e.g. TBA corrects
+    a schedule mid-event while a previous poll is still finishing) do not
+    silently corrupt match_teams -- Postgres's own row lock on the
+    (match_key, team_number) unique key prevents that -- but they can block
+    each other indefinitely on those row locks, and forcing the two
+    transactions' insert/delete steps to interleave (rather than relying on
+    thread-scheduling luck) reproduced exactly that hang. A genuine lock-order
+    cycle between two such runs would surface as a Postgres deadlock error
+    that aborts the whole run instead of just waiting.
+
+    A session-scoped advisory lock -- held on one dedicated connection for the
+    entire sync_event call, not just one of its internal transactions -- makes
+    two overlapping syncs of the same event queue cleanly one after the other
+    instead of fighting over row locks. This matters specifically because
+    "real-time updates must sync during an event as matches are played" is a
+    stated goal: a live-sync scheduler firing before the previous poll of the
+    same event finished is exactly the scenario this closes off.
+    """
+    lock_key = json.dumps(["sync_event", event_key])
+    with database.connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT pg_advisory_lock(hashtextextended(%s, 0))", (lock_key,))
+        try:
+            yield
+        finally:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_unlock(hashtextextended(%s, 0))", (lock_key,))
+
+
 def sync_event(
     event_key: str,
     *,
@@ -276,73 +312,74 @@ def sync_event(
     quality = quality or DataQualityRecorder(database)
     lineage = lineage or LineageStore(database)
 
-    run_id = recorder.start(pipeline_name, source=pipeline.SOURCE_TBA, scope_key=event_key)
-    logger.info("Pipeline run %d started: %s for event %s", run_id, pipeline_name, event_key)
+    with _event_sync_lock(database, event_key):
+        run_id = recorder.start(pipeline_name, source=pipeline.SOURCE_TBA, scope_key=event_key)
+        logger.info("Pipeline run %d started: %s for event %s", run_id, pipeline_name, event_key)
 
-    try:
-        extraction: ExtractionResult = pipeline.extract_event(event_key, tba=tba, statbotics=statbotics)
-        landed = pipeline.land(writer, extraction.batches)
+        try:
+            extraction: ExtractionResult = pipeline.extract_event(event_key, tba=tba, statbotics=statbotics)
+            landed = pipeline.land(writer, extraction.batches)
 
-        # Referential facts for the quality checks: what will exist canonically
-        # once this run loads, which is everything extracted now plus everything
-        # an earlier run already persisted.
-        context = build_quality_context(database, extraction)
+            # Referential facts for the quality checks: what will exist canonically
+            # once this run loads, which is everything extracted now plus everything
+            # an earlier run already persisted.
+            context = build_quality_context(database, extraction)
 
-        staged_batches: list[StagedBatch] = []
-        for batch in extraction.batches:
-            after_raw_id = watermarks.get(batch.source, batch.object_type, event_key)
-            pending = pipeline.read_pending(
-                database, batch.source, batch.object_type, batch.object_ids, after_raw_id,
+            staged_batches: list[StagedBatch] = []
+            for batch in extraction.batches:
+                after_raw_id = watermarks.get(batch.source, batch.object_type, event_key)
+                pending = pipeline.read_pending(
+                    database, batch.source, batch.object_type, batch.object_ids, after_raw_id,
+                )
+                staged_batches.append(pipeline.stage_batch(
+                    batch.source, batch.object_type, pending, after_raw_id, context=context,
+                ))
+
+            issues = issues_from_extraction_errors(extraction.errors, event_key=event_key)
+            issues += [issue for batch in staged_batches for issue in batch.issues]
+            # Recorded before the load, so the findings survive even if loading then
+            # fails -- a failed run's quality evidence is exactly when it is wanted.
+            quality.record(issues, run_id)
+
+            loaded = pipeline.load(repository, staged_batches)
+
+            # Lineage asserts that a canonical row exists and came from this
+            # payload, so it is only true once the load has succeeded.
+            lineage_recorded = lineage.record(
+                [entry for batch in staged_batches for entry in batch.lineage], run_id,
             )
-            staged_batches.append(pipeline.stage_batch(
-                batch.source, batch.object_type, pending, after_raw_id, context=context,
-            ))
 
-        issues = issues_from_extraction_errors(extraction.errors, event_key=event_key)
-        issues += [issue for batch in staged_batches for issue in batch.issues]
-        # Recorded before the load, so the findings survive even if loading then
-        # fails -- a failed run's quality evidence is exactly when it is wanted.
-        quality.record(issues, run_id)
+            # Single advance point, reached only once every stage above succeeded.
+            for batch in staged_batches:
+                watermarks.advance(batch.source, batch.object_type, event_key, batch.watermark_id)
 
-        loaded = pipeline.load(repository, staged_batches)
-
-        # Lineage asserts that a canonical row exists and came from this
-        # payload, so it is only true once the load has succeeded.
-        lineage_recorded = lineage.record(
-            [entry for batch in staged_batches for entry in batch.lineage], run_id,
-        )
-
-        # Single advance point, reached only once every stage above succeeded.
-        for batch in staged_batches:
-            watermarks.advance(batch.source, batch.object_type, event_key, batch.watermark_id)
-
-        result = SyncResult(
-            run_id=run_id,
-            event_key=event_key,
-            landed=landed,
-            loaded=loaded,
-            watermarks={f"{b.source}.{b.object_type}": b.watermark_id for b in staged_batches},
-            skipped=[record for batch in staged_batches for record in batch.skipped],
-            extraction_errors=extraction.errors,
-            issues=issues,
-            lineage_recorded=lineage_recorded,
-        )
-        recorder.succeed(
-            run_id,
-            records_processed=result.records_loaded,
-            stage_counts=_stage_counts(result),
-        )
-        logger.info(
-            "Pipeline run %d succeeded: %d canonical record(s), %d skipped, "
-            "%d quality issue(s) (%d fatal), %d extraction error(s)",
-            run_id, result.records_loaded, len(result.skipped),
-            len(result.issues), len(result.fatal_issues), len(result.extraction_errors),
-        )
-        return result
-    except Exception as exc:
-        recorder.fail(run_id, f"{type(exc).__name__}: {exc}")
-        logger.error("Pipeline run %d failed for event %s: %s", run_id, event_key, exc)
-        raise
+            result = SyncResult(
+                run_id=run_id,
+                event_key=event_key,
+                landed=landed,
+                loaded=loaded,
+                watermarks={f"{b.source}.{b.object_type}": b.watermark_id for b in staged_batches},
+                skipped=[record for batch in staged_batches for record in batch.skipped],
+                extraction_errors=extraction.errors,
+                issues=issues,
+                lineage_recorded=lineage_recorded,
+            )
+            recorder.succeed(
+                run_id,
+                records_processed=result.records_loaded,
+                stage_counts=_stage_counts(result),
+            )
+            logger.info(
+                "Pipeline run %d succeeded: %d canonical record(s), %d skipped, "
+                "%d quality issue(s) (%d fatal), %d extraction error(s)",
+                run_id, result.records_loaded, len(result.skipped),
+                len(result.issues), len(result.fatal_issues), len(result.extraction_errors),
+            )
+            return result
+        except Exception as exc:
+            recorder.fail(run_id, f"{type(exc).__name__}: {exc}")
+            logger.error("Pipeline run %d failed for event %s: %s", run_id, event_key, exc)
+            raise
 
 
 def _stage_counts(result: SyncResult) -> dict[str, Any]:
