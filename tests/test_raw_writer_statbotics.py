@@ -214,45 +214,136 @@ def test_statbotics_client_fetch_result_lands_through_raw_payload_writer(monkeyp
 
 
 # --- real-database integration check (matches the project's established convention) ---
+#
+# Auto-skips when no PostgreSQL is reachable via the configured DATABASE_URL.
+#
+# This test runs against the *real* configured database, and `raw_source_payloads`
+# is the parent of two ON DELETE CASCADE foreign keys (`canonical_lineage` and
+# `data_quality_issues`, both from 0007). Its cleanup must therefore be scoped by
+# `source_object_id` as well as `source`: an earlier version deleted by `source`
+# alone, which -- since every real row is either 'tba' or 'statbotics' -- matched
+# the entire landing layer and would have cascaded away all lineage and every
+# quality issue. The sentinel id below cannot be produced by real ingestion, and
+# `_cleanup` is the only place in this module that issues a DELETE.
 
-@pytest.mark.skip("Requires local PostgreSQL database and valid DATABASE_URL")
+
+def _database_available() -> bool:
+    try:
+        import psycopg
+
+        with psycopg.connect(str(Settings().database_url), connect_timeout=3):
+            return True
+    except Exception:
+        return False
+
+
+requires_db = pytest.mark.skipif(
+    not _database_available(),
+    reason="Requires a reachable PostgreSQL database via DATABASE_URL",
+)
+
+# Namespaced so integration runs never touch real ingested payloads. "frc9999" on
+# its own is a validly-formatted TBA team key and could collide with real data.
+_S_OBJECT_ID = "frc9999zzztest"
+
+
+def _cleanup(database: Database) -> None:
+    with database.cursor() as cursor:
+        cursor.execute(
+            "DELETE FROM raw_source_payloads WHERE source IN (%s, %s) AND source_object_id = %s",
+            ("tba", "statbotics", _S_OBJECT_ID),
+        )
+
+
+@requires_db
 def test_statbotics_and_tba_coexist_against_real_database():
     settings = Settings()
     run_migrations(settings)
     database = Database(DatabaseConfig(settings.database_url))
     writer = RawPayloadWriter(database=database)
 
-    with database.cursor() as cursor:
-        cursor.execute("DELETE FROM raw_source_payloads WHERE source IN (%s, %s)", ("tba", "statbotics"))
-
-    tba_record = RawPayloadRecord(source="tba", source_object_type="team", source_object_id="frc9999", payload={"v": 1})
-    statbotics_v1 = RawPayloadRecord(
-        source="statbotics", source_object_type="team", source_object_id="frc9999", payload={"v": 1}
-    )
-    statbotics_v2 = RawPayloadRecord(
-        source="statbotics", source_object_type="team", source_object_id="frc9999", payload={"v": 2}
-    )
-
-    assert writer.write(tba_record) is True
-    assert writer.write(statbotics_v1) is True
-    assert writer.write(statbotics_v1) is False  # duplicate, same source
-    assert writer.write(statbotics_v2) is True  # new version, same source
-
-    with database.cursor() as cursor:
-        cursor.execute(
-            "SELECT source, is_current FROM raw_source_payloads "
-            "WHERE source_object_id = %s ORDER BY source, id",
-            ("frc9999",),
+    _cleanup(database)
+    try:
+        tba_record = RawPayloadRecord(
+            source="tba", source_object_type="team", source_object_id=_S_OBJECT_ID, payload={"v": 1}
         )
-        rows = cursor.fetchall()
+        statbotics_v1 = RawPayloadRecord(
+            source="statbotics", source_object_type="team", source_object_id=_S_OBJECT_ID, payload={"v": 1}
+        )
+        statbotics_v2 = RawPayloadRecord(
+            source="statbotics", source_object_type="team", source_object_id=_S_OBJECT_ID, payload={"v": 2}
+        )
 
-    # tba: 1 row (still current). statbotics: 2 rows (v1 demoted, v2 current).
-    tba_rows = [r for r in rows if r[0] == "tba"]
-    statbotics_rows = [r for r in rows if r[0] == "statbotics"]
-    assert len(tba_rows) == 1 and tba_rows[0][1] is True
-    assert len(statbotics_rows) == 2
-    assert statbotics_rows[0][1] is False
-    assert statbotics_rows[1][1] is True
+        assert writer.write(tba_record) is True
+        assert writer.write(statbotics_v1) is True
+        assert writer.write(statbotics_v1) is False  # duplicate, same source
+        assert writer.write(statbotics_v2) is True  # new version, same source
 
-    with database.cursor() as cursor:
-        cursor.execute("DELETE FROM raw_source_payloads WHERE source IN (%s, %s)", ("tba", "statbotics"))
+        with database.cursor() as cursor:
+            cursor.execute(
+                "SELECT source, is_current FROM raw_source_payloads "
+                "WHERE source_object_id = %s ORDER BY source, id",
+                (_S_OBJECT_ID,),
+            )
+            rows = cursor.fetchall()
+
+        # tba: 1 row (still current). statbotics: 2 rows (v1 demoted, v2 current).
+        tba_rows = [r for r in rows if r[0] == "tba"]
+        statbotics_rows = [r for r in rows if r[0] == "statbotics"]
+        assert len(tba_rows) == 1 and tba_rows[0][1] is True
+        assert len(statbotics_rows) == 2
+        assert statbotics_rows[0][1] is False
+        assert statbotics_rows[1][1] is True
+    finally:
+        _cleanup(database)
+
+
+@requires_db
+def test_integration_cleanup_deletes_only_its_own_sentinel():
+    """`_cleanup` must remove its sentinel and nothing else.
+
+    Guards the specific defect this file used to carry: a teardown scoped by
+    `source` alone matched every row in `raw_source_payloads` -- since every real
+    row is either 'tba' or 'statbotics' -- and would have cascade-deleted the
+    whole `canonical_lineage` and `data_quality_issues` history along with it.
+    Asserting on the cascade targets directly is the point: a future rewrite that
+    widens the DELETE fails here rather than in production data.
+    """
+    settings = Settings()
+    run_migrations(settings)
+    database = Database(DatabaseConfig(settings.database_url))
+    writer = RawPayloadWriter(database=database)
+
+    def counts() -> tuple[int, int, int]:
+        with database.cursor() as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) FROM raw_source_payloads WHERE source_object_id <> %s",
+                (_S_OBJECT_ID,),
+            )
+            payloads = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM canonical_lineage")
+            lineage = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM data_quality_issues")
+            issues = cursor.fetchone()[0]
+        return payloads, lineage, issues
+
+    _cleanup(database)
+    before = counts()
+    try:
+        assert writer.write(
+            RawPayloadRecord(
+                source="statbotics", source_object_type="team", source_object_id=_S_OBJECT_ID, payload={"v": 1}
+            )
+        ) is True
+
+        _cleanup(database)
+
+        with database.cursor() as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) FROM raw_source_payloads WHERE source_object_id = %s",
+                (_S_OBJECT_ID,),
+            )
+            assert cursor.fetchone()[0] == 0  # sentinel removed
+        assert counts() == before  # everything else, and both cascade targets, untouched
+    finally:
+        _cleanup(database)
