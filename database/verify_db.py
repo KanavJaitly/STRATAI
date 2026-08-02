@@ -34,6 +34,8 @@ def verify_database() -> None:
         "source_watermarks",
         "data_quality_issues",
         "canonical_lineage",
+        "scouting_observations",
+        "team_metrics",
     }
 
     missing = expected_tables - tables
