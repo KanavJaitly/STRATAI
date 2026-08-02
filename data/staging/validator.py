@@ -47,7 +47,32 @@ _VALID_RAW_WINNING_ALLIANCES = ("", "red", "blue")
 # NULL score and a NULL winner). Anything else negative is genuine corruption
 # and is rejected by data.staging.quality.
 TBA_UNPLAYED_ALLIANCE_SCORE = -1
+# TBA's second unplayed-match sentinel, and the one this module has to know
+# about: an alliance whose roster has not been assigned yet is published as
+# ["frc0", "frc0", "frc0"]. There is no FRC team 0 -- team numbers start at 1 --
+# so this is a placeholder meaning "roster not assigned", never an identity.
+#
+# It matters here specifically because the roster rules below are the only
+# checks in this module that read a team key *as an identity* rather than as a
+# string: three frc0s look exactly like the same team entered three times, and
+# frc0 on both alliances looks exactly like one robot playing itself. Both are
+# real corruption for a real team and must stay rejected -- so the sentinel is
+# excluded from those two comparisons only, and nothing else about the rules
+# changes. Interpreting it (into an empty roster) is the normalizer's job,
+# exactly as with the score sentinel above.
+TBA_UNASSIGNED_TEAM_KEY = "frc0"
 _STRICT_ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def is_unassigned_team_key(team_key: Any) -> bool:
+    """Is this TBA team key the "roster not assigned yet" placeholder, not a team?
+
+    Deliberately an exact match on `frc0` rather than "parses to team number 0":
+    the sentinel is a specific literal TBA publishes, and treating every
+    zero-valued spelling as unassigned would quietly extend this to inputs that
+    have never been observed and are more likely corruption than a placeholder.
+    """
+    return team_key == TBA_UNASSIGNED_TEAM_KEY
 
 
 def tba_alliance_team_keys(alliance: Any) -> Any:
@@ -181,19 +206,24 @@ def validate_tba_match_payload(payload: Any) -> list[ValidationIssue]:
                 if not isinstance(team_keys, list):
                     issues.append(ValidationIssue("match", f"alliances.{color}.teams", f"Expected a list, got {type(team_keys).__name__}", key))
                     continue
-                valid_team_keys = []
+                # Split well-formed keys into real teams and unassigned-roster
+                # placeholders. Only the former are identities, so only the
+                # former take part in the duplicate and overlap rules below --
+                # frc0 is structurally a valid key (it matches the pattern), it
+                # just does not name anybody.
+                assigned_team_keys = []
                 for team_key in team_keys:
                     if not isinstance(team_key, str) or not _TBA_TEAM_KEY_PATTERN.match(team_key):
                         issues.append(ValidationIssue(
                             "match", f"alliances.{color}.teams", f"Expected team keys like 'frc1114', got {team_key!r}", key,
                         ))
-                    else:
-                        valid_team_keys.append(team_key)
-                if len(valid_team_keys) != len(set(valid_team_keys)):
+                    elif not is_unassigned_team_key(team_key):
+                        assigned_team_keys.append(team_key)
+                if len(assigned_team_keys) != len(set(assigned_team_keys)):
                     issues.append(ValidationIssue(
-                        "match", f"alliances.{color}.teams", f"A team cannot appear twice on the same alliance: {valid_team_keys!r}", key,
+                        "match", f"alliances.{color}.teams", f"A team cannot appear twice on the same alliance: {assigned_team_keys!r}", key,
                     ))
-                teams_by_color[color] = valid_team_keys
+                teams_by_color[color] = assigned_team_keys
 
             overlap = set(teams_by_color.get("red", [])) & set(teams_by_color.get("blue", []))
             if overlap:

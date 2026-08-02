@@ -55,6 +55,7 @@ from data.staging.schemas import (
 from data.staging.validator import (
     TBA_UNPLAYED_ALLIANCE_SCORE,
     PayloadValidationError,
+    is_unassigned_team_key,
     tba_alliance_team_keys,
 )
 from database.connection import Database
@@ -552,12 +553,20 @@ def build_quality_context(database: Database, extraction: Any) -> QualityContext
 
 
 def _roster_numbers(match_payload: dict[str, Any]) -> set[int]:
-    """Team numbers on either alliance of a raw match payload ('frc1114' -> 1114)."""
+    """Team numbers on either alliance of a raw match payload ('frc1114' -> 1114).
+
+    Excludes TBA's unassigned-roster placeholder (frc0), which the normalizer
+    drops from the roster entirely. Including it would put team 0 into the set
+    of references to resolve and send a lookup for a team that cannot exist --
+    work whose answer no check would ever consult.
+    """
     numbers: set[int] = set()
     alliances = match_payload.get("alliances") or {}
     for color in ("red", "blue"):
         alliance = alliances.get(color) or {}
         for team_key in tba_alliance_team_keys(alliance) or []:
+            if is_unassigned_team_key(team_key):
+                continue
             match = _TBA_TEAM_KEY_DIGITS.match(team_key) if isinstance(team_key, str) else None
             if match is not None:
                 numbers.add(int(match.group(1)))

@@ -201,14 +201,20 @@ fetched.
 - `season`, `competition_level` (canonical vocabulary: `qualification`, `eighthfinal`,
   `quarterfinal`, `semifinal`, `final`), `set_number`, `match_number`, `scheduled_time`,
   `score_red`, `score_blue`, `winning_alliance` (`red`/`blue`/`tie`/NULL)
-- **A scheduled but not-yet-played match is a normal, fully-loaded row** with a real
-  roster and `scheduled_time`, and `score_red` / `score_blue` / `winning_alliance` all
-  NULL. `score_red IS NULL` is the reliable test for "no result yet"; the two scores are
+- **A scheduled but not-yet-played match is a normal, fully-loaded row** with its
+  `scheduled_time` and `score_red` / `score_blue` / `winning_alliance` all NULL.
+  `score_red IS NULL` is the reliable test for "no result yet"; the two scores are
   always both NULL or both set, never one of each. TBA marks an unplayed match with a
   score of **-1** on both alliances, which the normalizer resolves to NULL — that
   sentinel never reaches this table, so nothing downstream needs to know about it.
   **Anything aggregating results must exclude these rows explicitly** — during a live
   event most of the schedule is unplayed.
+- An unplayed match normally carries its real roster, but **not always**: if the roster has
+  not been assigned yet, TBA publishes it as `["frc0","frc0","frc0"]` and the match loads
+  with **no `match_teams` rows at all** (see
+  [§9.7](#97-tbas-frc0-unassigned-roster-placeholder--resolved-2026-08-01)). An empty
+  roster is a legitimate state, so anything joining `matches` to `match_teams` must not
+  assume six rows per match.
 
 #### `match_teams`
 
@@ -832,15 +838,14 @@ thoroughly and in both directions:
   genuine rows behind — a run of `2024casj` alone adds one `extraction_failure` warning
   per attending team, per run. Counting by `object_type` picks those up and the assertion
   fails for reasons unrelated to the test.
-- **TBA's `frc0` roster placeholder pins a watermark permanently (open).** Distinct from
-  the `-1` score sentinel and *not* fixed by it: TBA sometimes publishes an unplayed
-  match's roster as `["frc0","frc0","frc0"]` on both alliances. The structural validator
-  rejects that (a team twice on one alliance, and the same team on both), so the payload
-  is permanently invalid, the watermark holds one id below it forever, and every re-sync
-  re-logs the same three `validation_failure` errors. Observed on `2024mdsev_qm73` and
-  `_qm74`, whose match watermark sits at 19024 against a newest payload id of 19041.
-  Needs its own fix — `frc0` should be recognized as "roster not assigned yet", not as a
-  team.
+- **TBA's `frc0` roster placeholder** is resolved to an empty roster — see
+  [§9.7](#97-tbas-frc0-unassigned-roster-placeholder--resolved-2026-08-01).
+- **A fully one-sided unassigned roster is not flagged (open, unobserved).** One alliance
+  all-`frc0` and the other a real three-team roster would load with one empty alliance and
+  no finding at all, since an empty alliance is already legitimate (see §9.7). TBA has
+  never been observed publishing that shape — every real case has both alliances
+  unassigned — so no rule was invented for it. Worth revisiting only if it is actually
+  seen.
 - **Only single-event sync exists.** There is no whole-season or multi-event driver yet;
   `TBAClient.fetch_event_list` and `StatboticsClient.fetch_event_match_stats` are
   implemented but not yet wired into any flow.
@@ -884,6 +889,67 @@ a categorical column like `source` that every real row also matches. Cleaning up
 uses `test_source` and `race_test` for exactly that reason. This is the delete-side
 counterpart of the assertion-side rule in [§9.5](#95-other-limitations) about scoping
 audit-table assertions by object id.
+
+### 9.7 TBA's `frc0` unassigned-roster placeholder — RESOLVED 2026-08-01
+
+TBA has **two** unplayed-match sentinels, not one. The `-1` score sentinel — fixed earlier
+the same day, and described in [§4](#4-schema-reference) (`matches`) and
+[§6.2](#62-severity-is-policy) — is this one's sibling. They share a symptom and a
+principle but nothing else: `-1` was rejected by the quality layer, `frc0` a whole layer
+earlier by structural validation, so the `-1` fix did not touch it.
+
+When a match's roster has not been assigned yet, TBA publishes it as
+`["frc0","frc0","frc0"]` on **both** alliances. There is no FRC team 0 — team numbers start
+at 1 — so it is a placeholder meaning "roster not assigned". The structural validator read
+it as a team identity, and against a real team both of its roster rules were correct to
+fire:
+
+| Rule | What it saw |
+|---|---|
+| A team cannot appear twice on one alliance | `frc0` three times, on each alliance |
+| A team cannot be on both alliances | `frc0` on red and blue |
+
+So the payload was rejected before normalization, never reached the canonical tables, and —
+because TBA is not going to reissue a completed event's schedule — could never become valid.
+The contiguous-prefix watermark therefore held one id below it **permanently**: `2024mdsev`
+sat at 19024 against a newest payload id of 19041, re-reading, re-rejecting and re-logging
+17 payloads on every single run. A fourth symptom compounded it: roster backfill also read
+`frc0` as a team, fetched `/api/v3/team/frc0`, got a 404, and recorded a fresh
+`extraction_failure` warning each run.
+
+**Fix: the placeholder is recognized as a sentinel and resolved into an empty roster**, at
+the point the raw payload is interpreted — the same principle as `-1`, applied to a
+different field. An absent score becomes `NULL`; an absent roster becomes *no*
+`match_teams` rows. Not a roster of team 0: team 0 has no `teams` row, so keeping it would
+only trade a validation rejection for a `missing_reference` one, and it would assert
+downstream that some robot played. An empty alliance was already a legitimate canonical
+state — the quality layer deliberately does not flag one, since playoff brackets are
+published before alliances are selected.
+
+`TBA_UNASSIGNED_TEAM_KEY` / `is_unassigned_team_key()` live in `data/staging/validator.py`
+beside `TBA_UNPLAYED_ALLIANCE_SCORE`, and four call sites consult them deliberately:
+
+| Site | Behaviour |
+|---|---|
+| `validator.validate_tba_match_payload` | placeholder excluded from the duplicate/overlap **identity sets only** |
+| `normalizer._alliance_roster` | placeholder dropped, so the roster is `[]` |
+| `pipeline._roster_team_keys` | placeholder never backfilled, so no 404 and no warning |
+| `quality._roster_numbers` | placeholder never enters the referential lookup |
+
+It is **not** filtered inside `tba_alliance_team_keys`, which is documented to return the
+roster field unconverted. Hiding the sentinel in the shared accessor would make it
+invisible to any future check that needs to see it, exactly as `-1` stays visible to
+`_check_unplayed_sentinel`.
+
+**The duplicate and overlap rules are unchanged for real teams**, which is the point of the
+narrow exclusion: `["frc1114","frc1114","frc0"]` is still rejected, and `frc1114` on both
+alliances is still rejected. A partially-assigned roster is not special-cased either —
+`["frc1114","frc0","frc0"]` normalizes to a one-team alliance, which the existing
+plausibility rule already flags as a warning.
+
+Verified on the real event: `2024mdsev` went from 88 to **90** canonical matches, `qm73` and
+`qm74` load with NULL scores, NULL winner and no roster rows, the watermark advanced
+19024 → **19041**, `skipped=0 issues=0 extraction_errors=0`, and a second run is all zeros.
 
 ---
 
