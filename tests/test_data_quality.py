@@ -77,6 +77,18 @@ def staging_match(**overrides: Any) -> StagingMatch:
     })
 
 
+def raw_match_payload(*, red_score: Any, blue_score: Any, **overrides: Any) -> dict[str, Any]:
+    """A raw TBA match payload, for the checks that must read pre-normalization state."""
+    return {
+        "key": S_MATCH, "event_key": S_EVENT, "comp_level": "qm", "match_number": 1,
+        "alliances": {
+            "red": {"score": red_score, "team_keys": S_TEAM_KEYS[:3]},
+            "blue": {"score": blue_score, "team_keys": S_TEAM_KEYS[3:]},
+        },
+        **overrides,
+    }
+
+
 def staging_stats(**overrides: Any) -> StagingTeamEventStats:
     return StagingTeamEventStats(**{
         "team_number": S_TEAMS[0], "event_key": S_EVENT, "season": 2025,
@@ -164,6 +176,45 @@ def test_partially_filled_alliance_is_a_warning_but_an_empty_one_is_not():
     # An unplayed playoff match has no roster yet -- a normal state, not a defect.
     empty = check_entity(staging_match(red_teams=[], blue_teams=[]), source="tba", context=FULL_CONTEXT)
     assert empty == []
+
+
+def test_unplayed_match_is_valid_and_is_not_flagged_at_all():
+    # TBA's -1 sentinel is resolved to NULL scores by the normalizer, so what
+    # reaches this layer is simply a match with no result yet -- a normal state
+    # (and the state of most of a live event's schedule), not a defect. It must
+    # produce no issue of any severity, or a live sync would log a finding for
+    # every unplayed match on the board.
+    unplayed_raw = raw_match_payload(red_score=-1, blue_score=-1, winning_alliance="")
+    match = staging_match(red_score=None, blue_score=None, winning_alliance=None)
+    assert check_entity(match, source="tba", context=FULL_CONTEXT, raw_payload=unplayed_raw) == []
+
+
+def test_one_sided_unplayed_sentinel_is_a_warning_not_a_rejection():
+    # A match cannot be half-played. The normalizer reads the whole match as
+    # unplayed (both scores NULL); the anomaly is recorded here rather than
+    # vanishing. A warning, not an error: the row is still a real scheduled
+    # match, and "unplayed" vs "the other alliance scored zero" is an
+    # interpretation, not a certainty.
+    half_raw = raw_match_payload(red_score=-1, blue_score=30, winning_alliance="")
+    match = staging_match(red_score=None, blue_score=None, winning_alliance=None)
+
+    issue = only(check_entity(match, source="tba", context=FULL_CONTEXT, raw_payload=half_raw), "red_score")
+    assert (issue.issue_type, issue.severity, issue.is_fatal) == (ISSUE_INCONSISTENT_VALUES, SEVERITY_WARNING, False)
+    assert "30" in issue.description
+
+
+def test_the_negative_score_rejection_still_catches_genuine_corruption():
+    # The sentinel is handled upstream precisely so this rule can stay fatal.
+    # -1 is TBA saying "no result yet"; -5 is a score that cannot exist.
+    issue = only(check_entity(staging_match(red_score=-5), source="tba", context=FULL_CONTEXT), "red_score")
+    assert (issue.issue_type, issue.severity, issue.is_fatal) == (ISSUE_OUT_OF_RANGE, SEVERITY_ERROR, True)
+
+
+def test_without_a_raw_payload_the_sentinel_check_is_skipped():
+    # Same contract as `context`: a fact the caller did not supply is never
+    # guessed at. check_entity stays callable with the entity alone.
+    match = staging_match(red_score=None, blue_score=None, winning_alliance=None)
+    assert check_entity(match, source="tba", context=FULL_CONTEXT) == []
 
 
 def test_roster_team_that_will_not_exist_is_fatal():
@@ -677,6 +728,98 @@ def test_a_persistently_bad_payload_is_re_detected_on_every_run(database):
     assert len(detections) == 2
     assert {row["pipeline_run_id"] for row in detections} == {first.run_id, second.run_id}
     assert len({row["raw_payload_id"] for row in detections}) == 1  # same offending payload
+
+
+@requires_db
+def test_an_unplayed_match_loads_as_unplayed_and_never_pins_the_watermark(database):
+    """The whole -1 sentinel cluster, end to end.
+
+    Before the fix this match was rejected as a "negative score", its raw
+    payload pinned the watermark one id below itself forever, and every re-sync
+    logged the same two out_of_range errors again. It also normalized to a
+    fabricated "tie", which only stayed out of the database because the
+    rejection happened first.
+    """
+    unplayed_key = f"{S_EVENT}_qm2"
+    unplayed = raw_match(
+        key=unplayed_key, match_number=2,
+        # Exactly TBA's unplayed shape, as observed in the real 2024gagwi
+        # payloads: -1 on both alliances, empty winner, no result timestamps.
+        alliances={
+            "red": {"score": -1, "team_keys": S_TEAM_KEYS[:3]},
+            "blue": {"score": -1, "team_keys": S_TEAM_KEYS[3:]},
+        },
+        winning_alliance="", actual_time=None, score_breakdown=None,
+    )
+    first = _run(database, tba=FakeTBAClient(matches=[raw_match(), unplayed]))
+
+    # Loaded, not rejected -- and as unplayed, not as a tie.
+    assert first.loaded["matches"] == 2
+    assert first.fatal_issues == []
+    with database.cursor() as cursor:
+        cursor.execute(
+            "SELECT score_red, score_blue, winning_alliance FROM matches WHERE match_key = %s",
+            (unplayed_key,),
+        )
+        assert cursor.fetchone() == (None, None, None)
+
+    # A scheduled match still carries its real roster.
+    assert _scalar(
+        database, "SELECT COUNT(*) FROM match_teams WHERE match_key = %s", (unplayed_key,),
+    ) == 6
+
+    # Valid, so not flagged at all: a live sync must not log a finding for
+    # every not-yet-played match on the schedule.
+    assert _issues(database, object_type="match") == []
+
+    # The watermark reached the newest match payload instead of stopping below
+    # the unplayed one -- the payload is permanently valid, so there is nothing
+    # to retry.
+    watermark = _scalar(
+        database,
+        "SELECT watermark_value FROM source_watermarks "
+        "WHERE source = 'tba' AND object_type = 'match' AND scope_key = %s",
+        (S_EVENT,),
+    )
+    newest_match_payload = _scalar(
+        database,
+        "SELECT MAX(id) FROM raw_source_payloads "
+        "WHERE source_object_type = 'match' AND source_object_id LIKE %s",
+        (f"{S_EVENT}%",),
+    )
+    assert int(watermark) == newest_match_payload
+
+    # Re-syncing is a true no-op: nothing re-landed, nothing re-loaded, and --
+    # unlike a permanently-invalid payload -- no issue re-recorded.
+    second = _run(database, tba=FakeTBAClient(matches=[raw_match(), unplayed]))
+    assert second.landed["tba.match"] == 0
+    assert second.loaded["matches"] == 0
+    assert _issues(database, object_type="match") == []
+
+
+@requires_db
+def test_a_half_played_match_is_warned_about_but_still_loads(database):
+    # One alliance sentinel, one real score. Incoherent, so the match is read
+    # as unplayed rather than stored as an uninterpretable NULL/90 row -- but
+    # the anomaly is recorded instead of vanishing.
+    half = raw_match(alliances={
+        "red": {"score": -1, "team_keys": S_TEAM_KEYS[:3]},
+        "blue": {"score": 90, "team_keys": S_TEAM_KEYS[3:]},
+    }, winning_alliance="")
+    result = _run(database, tba=FakeTBAClient(matches=[half]))
+
+    issue = _issue_for(database, "match", "red_score")
+    assert (issue["issue_type"], issue["severity"]) == (ISSUE_INCONSISTENT_VALUES, SEVERITY_WARNING)
+    assert issue["pipeline_run_id"] == result.run_id
+
+    # Warning, not rejection: the record still loads, with both scores NULL.
+    assert result.loaded["matches"] == 1
+    with database.cursor() as cursor:
+        cursor.execute(
+            "SELECT score_red, score_blue, winning_alliance FROM matches WHERE match_key = %s",
+            (S_MATCH,),
+        )
+        assert cursor.fetchone() == (None, None, None)
 
 
 @requires_db

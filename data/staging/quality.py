@@ -52,7 +52,11 @@ from data.staging.schemas import (
     StagingTeam,
     StagingTeamEventStats,
 )
-from data.staging.validator import PayloadValidationError, tba_alliance_team_keys
+from data.staging.validator import (
+    TBA_UNPLAYED_ALLIANCE_SCORE,
+    PayloadValidationError,
+    tba_alliance_team_keys,
+)
 from database.connection import Database
 
 logger = logging.getLogger(__name__)
@@ -199,6 +203,7 @@ def check_entity(
     source: str,
     raw_payload_id: int | None = None,
     context: QualityContext | None = None,
+    raw_payload: dict[str, Any] | None = None,
 ) -> list[QualityIssue]:
     """Run every applicable quality check against one normalized staging entity.
 
@@ -206,13 +211,19 @@ def check_entity(
     self-contained plausibility checks run; referential checks are skipped
     rather than guessed at, so calling this without a context can never produce
     a false 'missing reference' rejection.
+
+    `raw_payload` is optional on the same terms and for the same reason: a few
+    anomalies are only visible *before* normalization resolves them, so the
+    normalized entity cannot carry the evidence. Currently one check needs it
+    (a one-sided unplayed sentinel on a match). Omitted, that check is skipped
+    rather than guessed at, exactly as the referential ones are.
     """
     if isinstance(entity, StagingTeam):
         return _check_team(entity, source, raw_payload_id)
     if isinstance(entity, StagingEvent):
         return _check_event(entity, source, raw_payload_id)
     if isinstance(entity, StagingMatch):
-        return _check_match(entity, source, raw_payload_id, context)
+        return _check_match(entity, source, raw_payload_id, context, raw_payload)
     if isinstance(entity, StagingTeamEventStats):
         return _check_team_event_stats(entity, source, raw_payload_id, context)
     raise TypeError(f"No quality checks defined for {type(entity).__name__}")
@@ -283,11 +294,19 @@ def _check_match(
     source: str,
     raw_payload_id: int | None,
     context: QualityContext | None,
+    raw_payload: dict[str, Any] | None = None,
 ) -> list[QualityIssue]:
     build = _issue_builder(source, "match", match.match_key, raw_payload_id)
     issues = _season_issues(match.season, build)
 
     for field_name, score in (("red_score", match.red_score), ("blue_score", match.blue_score)):
+        # A None score means the match has not been played yet -- a normal,
+        # valid state (and the state of most of the schedule during a live
+        # event), so there is nothing to check and nothing to flag. TBA's -1
+        # sentinel for exactly that condition is resolved to None by the
+        # normalizer before it ever reaches here, which is why the negative
+        # check below can stay fatal: anything still negative at this point is
+        # genuine corruption, not an unplayed match.
         if score is None:
             continue
         if score < 0:
@@ -302,6 +321,9 @@ def _check_match(
                 f"{MAX_PLAUSIBLE_ALLIANCE_SCORE}",
             ))
 
+    if raw_payload is not None:
+        issues.extend(_check_unplayed_sentinel(raw_payload, build))
+
     issues.extend(_check_match_outcome(match, build))
     issues.extend(_check_match_roster(match, build, context))
 
@@ -315,6 +337,48 @@ def _check_match(
         ))
 
     return issues
+
+
+def _check_unplayed_sentinel(raw_payload: dict[str, Any], build) -> list[QualityIssue]:
+    """Flag a raw match where only ONE alliance carries TBA's unplayed sentinel.
+
+    An unplayed match carries -1 on both alliances and is entirely normal --
+    it is not flagged at all. One alliance sentinel and one real score is a
+    different thing: a match half-played, which cannot be true. The normalizer
+    resolves it by treating the whole match as unplayed (both scores NULL),
+    which is the safest reading but does discard a posted score, so the anomaly
+    is recorded here rather than disappearing silently.
+
+    A warning, not an error, per this module's severity policy: the record is
+    still meaningful and loadable as a scheduled match with a real roster, and
+    the judgement being made -- that a one-sided sentinel means "unplayed"
+    rather than "the other alliance scored zero" -- is an interpretation, not a
+    certainty. Rejecting the match would discard a real, correctly-scheduled
+    row over it.
+
+    Reads the raw payload rather than the entity because normalization has
+    deliberately erased the asymmetry by this point; nothing on StagingMatch
+    can distinguish this from an ordinary unplayed match.
+    """
+    alliances = raw_payload.get("alliances") or {}
+    scores = {}
+    for color, field_name in (("red", "red_score"), ("blue", "blue_score")):
+        alliance = alliances.get(color)
+        if isinstance(alliance, dict):
+            scores[field_name] = alliance.get("score")
+
+    sentinels = [name for name, score in scores.items() if score == TBA_UNPLAYED_ALLIANCE_SCORE]
+    if len(sentinels) != 1 or len(scores) != 2:
+        return []
+
+    unplayed_field = sentinels[0]
+    scored_field = next(name for name in scores if name != unplayed_field)
+    return [build(
+        ISSUE_INCONSISTENT_VALUES, SEVERITY_WARNING, unplayed_field,
+        f"{unplayed_field} is TBA's unplayed sentinel ({TBA_UNPLAYED_ALLIANCE_SCORE}) but "
+        f"{scored_field} is {scores[scored_field]}; a match cannot be half-played, so both "
+        f"scores were recorded as unplayed (NULL)",
+    )]
 
 
 def _check_match_outcome(match: StagingMatch, build) -> list[QualityIssue]:
