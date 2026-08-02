@@ -479,12 +479,27 @@ venv/bin/python -m data.orchestrator 2024casj
 venv/bin/python -m pytest -q
 ```
 
-Expected: **all tests pass, 3 skipped.** No `--deselect` flag is needed — earlier versions
-of this document told you to skip one config test, which was fixed on 2026-07-25
-([§9.2](#92-known-failing-config-test--resolved-2026-07-25)).
+Expected, with a working database: **all tests pass, 0 skipped.** No `--deselect` flag is
+needed — earlier versions of this document told you to skip one config test, which was
+fixed on 2026-07-25 ([§9.2](#92-known-failing-config-test--resolved-2026-07-25)).
 
-The 3 skips are integration tests that self-skip when no database is reachable via
-`DATABASE_URL`; with a working database they run.
+Every test in the suite is now either pure-unit or an integration test guarded by the
+conditional `requires_db` marker:
+
+```python
+requires_db = pytest.mark.skipif(
+    not _database_available(),
+    reason="Requires a reachable PostgreSQL database via DATABASE_URL",
+)
+```
+
+So the skip count tells you about your environment, not about the suite: **0 skipped**
+means the database is reachable and the integration tests really ran, and a non-zero count
+means `DATABASE_URL` does not point at a live PostgreSQL. Nothing is skipped
+unconditionally any more — until 2026-08-01 three tests used a bare `@pytest.mark.skip`
+that never ran even with a working database, while this section wrongly described them as
+self-skipping. One of those three carried a teardown that would have deleted the entire
+landing layer; see [§9.6](#96-destructive-integration-teardown--resolved-2026-08-01).
 
 ---
 
@@ -829,6 +844,46 @@ thoroughly and in both directions:
 - **Only single-event sync exists.** There is no whole-season or multi-event driver yet;
   `TBAClient.fetch_event_list` and `StatboticsClient.fetch_event_match_stats` are
   implemented but not yet wired into any flow.
+
+### 9.6 Destructive integration teardown — RESOLVED 2026-08-01
+
+`tests/test_raw_writer_statbotics.py::test_statbotics_and_tba_coexist_against_real_database`
+used this as both its setup and its teardown, against the real configured `DATABASE_URL`:
+
+```sql
+DELETE FROM raw_source_payloads WHERE source IN ('tba', 'statbotics');
+```
+
+`source` is not a namespace. Every real landing row carries one of those two values — they
+are the only ones any connector can emit, since `source_name` is a `ClassVar` fixed to
+`"tba"` or `"statbotics"` — so the predicate matched **the entire table** (20,863 rows when
+this was found), and `0007`'s two `ON DELETE CASCADE` foreign keys extended that to all
+20,861 `canonical_lineage` rows and every `data_quality_issues` row. `Database.cursor()`
+commits on context exit, so it would have been committed and irreversible. The canonical
+tables have no FK to landing and would have survived — as 100K+ rows with no provenance,
+against watermarks pointing at payload ids that no longer existed.
+
+It had never fired only because of a stale unconditional `@pytest.mark.skip` whose stated
+reason ("Requires local PostgreSQL database and valid `DATABASE_URL`") had long since
+stopped being true — and because [§7.8](#78-run-the-tests) described that skip as
+*conditional*, a reader trusting these docs and tidying the marker would have triggered it.
+
+Fixed by scoping the delete, not by leaving it skipped:
+
+| Change | Why |
+|---|---|
+| Sentinel `frc9999` → `frc9999zzztest` | `frc9999` is a validly-formatted TBA team key and could collide with real data; the new value follows the `9999zzztest` convention used elsewhere |
+| One `_cleanup()` helper, `try/finally`, predicate `AND source_object_id = %s` | The delete can no longer match a row it did not itself write; it is the only `DELETE` in the module |
+| `@pytest.mark.skip` → `@requires_db` (all three affected tests) | A skip marker is not a safety mechanism — it hides the statement behind a reason that eventually stops being true |
+| New `test_integration_cleanup_deletes_only_its_own_sentinel` | Asserts both cascade targets are unchanged across a real `_cleanup()`, so a future rewrite that re-widens the delete fails in the suite, not in production data |
+
+**The rule this generalizes to:** integration teardown must be scoped by the *identity*
+columns of the rows the test wrote (`source_object_id`, `event_key`, `match_key`), never by
+a categorical column like `source` that every real row also matches. Cleaning up by
+`source` alone is safe only for a value production can never produce — `tests/test_raw_writer.py`
+uses `test_source` and `race_test` for exactly that reason. This is the delete-side
+counterpart of the assertion-side rule in [§9.5](#95-other-limitations) about scoping
+audit-table assertions by object id.
 
 ---
 
