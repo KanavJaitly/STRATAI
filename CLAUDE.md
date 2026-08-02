@@ -146,14 +146,19 @@ Phase 2 delivered:
 * Serving layer loading the canonical tables via idempotent upserts.
 * Pipeline orchestration with durable incremental state (watermarks).
 * Data quality issue tracking and canonical-to-raw lineage.
+* Single-event, whole-season, and automated live-event sync drivers.
 * Documentation and a contract test suite.
 
 See docs/data_pipeline.md for the architecture, schema, and quickstart, and
 RUNNING_NOTES.md for milestone status and the design decision log.
 
-Known open issue carried into the next phase: the Statbotics client's base URL
-host does not resolve, so team_event_stats is empty after a real run. See
-docs/data_pipeline.md section 9.1.
+Both Phase 2 done-criteria are satisfied: the stored data was manually
+spot-checked against real TBA results (2026-07-25), and live-event polling runs
+without manual triggering (2026-08-01, `python -m data.orchestrator --watch`).
+
+No open blockers. The Statbotics base-URL issue previously recorded here was
+fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
+team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
 Next Phase:
 Phase 3 – Metrics and analytics (not started).
