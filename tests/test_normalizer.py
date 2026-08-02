@@ -165,6 +165,91 @@ def test_normalize_tba_match_distinguishes_tie_from_not_yet_played():
     assert normalize_tba_match(tie_payload).winning_alliance == "tie"
 
 
+# --- TBA's -1 unplayed-match sentinel ---------------------------------------
+#
+# TBA publishes a scheduled-but-unplayed match with score -1 on both alliances.
+# Read verbatim, the two -1s compare equal and the match is recorded as a *tie
+# that never happened*. Every not-yet-played match in a live event's schedule
+# carries this, so these are the tests standing between the pipeline and a
+# schedule's worth of fabricated ties.
+
+def test_unplayed_match_normalizes_to_null_scores_and_no_winner():
+    unplayed = dict(
+        VALID_MATCH_PAYLOAD,
+        alliances={
+            "red": {"score": -1, "team_keys": ["frc1114", "frc254", "frc604"]},
+            "blue": {"score": -1, "team_keys": ["frc118", "frc330", "frc973"]},
+        },
+        winning_alliance="",
+    )
+    match = normalize_tba_match(unplayed)
+
+    assert match.red_score is None
+    assert match.blue_score is None
+    # The whole point: NOT "tie". Two sentinels are equal to each other, which
+    # is exactly why comparing them without resolving them first is unsafe.
+    assert match.winning_alliance is None
+    # Still a real, loadable record -- the schedule and roster are known.
+    assert match.red_teams == [1114, 254, 604]
+    assert match.blue_teams == [118, 330, 973]
+    assert match.scheduled_time is not None
+
+
+def test_half_sentinel_match_nulls_both_scores():
+    # A match cannot be half-played. Storing NULL/30 would be uninterpretable
+    # downstream, so the whole match is read as unplayed; the quality layer
+    # records the anomaly as a warning rather than losing it silently.
+    half = dict(
+        VALID_MATCH_PAYLOAD,
+        alliances={
+            "red": {"score": -1, "teams": ["frc1114"]},
+            "blue": {"score": 30, "teams": ["frc254"]},
+        },
+        winning_alliance="",
+    )
+    match = normalize_tba_match(half)
+
+    assert match.red_score is None
+    assert match.blue_score is None
+    assert match.winning_alliance is None
+
+
+def test_genuine_scores_are_untouched_by_sentinel_handling():
+    played = normalize_tba_match(VALID_MATCH_PAYLOAD)
+    assert (played.red_score, played.blue_score, played.winning_alliance) == (112, 98, "red")
+
+    # 0-0 is a real, legitimate result (both alliances no-showed or were DQ'd),
+    # and must not be confused with "no result yet".
+    scoreless = dict(
+        VALID_MATCH_PAYLOAD,
+        alliances={
+            "red": {"score": 0, "teams": ["frc1114"]},
+            "blue": {"score": 0, "teams": ["frc254"]},
+        },
+        winning_alliance="",
+    )
+    match = normalize_tba_match(scoreless)
+    assert (match.red_score, match.blue_score) == (0, 0)
+    assert match.winning_alliance == "tie"  # a genuine 0-0 tie, unlike -1/-1
+
+
+def test_a_missing_score_is_not_treated_as_the_unplayed_sentinel():
+    # Distinct condition from -1, deliberately left as it was: an absent score
+    # does not cause the other alliance's real score to be discarded.
+    partial = dict(
+        VALID_MATCH_PAYLOAD,
+        alliances={
+            "red": {"score": 45, "teams": ["frc1114"]},
+            "blue": {"teams": ["frc254"]},
+        },
+        winning_alliance="",
+    )
+    match = normalize_tba_match(partial)
+    assert match.red_score == 45
+    assert match.blue_score is None
+    assert match.winning_alliance is None
+
+
 def test_normalize_tba_match_strips_team_key_prefix_and_derives_season():
     match = normalize_tba_match(VALID_MATCH_PAYLOAD)
     assert all(isinstance(t, int) for t in match.red_teams + match.blue_teams)
