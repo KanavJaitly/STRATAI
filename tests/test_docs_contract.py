@@ -421,6 +421,31 @@ def test_every_migration_on_disk_is_recorded_as_applied(database):
     ("canonical_lineage", {"entity_type": "text", "entity_key": "text",
                            "raw_payload_id": "bigint", "pipeline_run_id": "bigint",
                            "source": "text"}),
+    # Phase 3 M2 (0008). Every column below is a field of a model in
+    # data/metrics/schemas.py except scouting_observations.id and .raw_payload_id.
+    ("scouting_observations", {"id": "bigint", "match_key": "text", "event_key": "text",
+                               "team_number": "integer", "scout_identifier": "text",
+                               "defense_rating": "integer", "feeding_rating": "integer",
+                               "notes": "text", "source": "text",
+                               "submitted_at": "timestamp with time zone",
+                               "raw_payload_id": "bigint"}),
+    ("team_metrics", {"team_number": "integer", "event_key": "text", "season": "integer",
+                      "computed_at": "timestamp with time zone",
+                      "matches_scheduled": "integer", "matches_used": "integer",
+                      "average_score": "double precision", "score_stddev": "double precision",
+                      "consistency_rating": "double precision",
+                      "reliability_score": "double precision",
+                      "good_day_count": "integer", "average_day_count": "integer",
+                      "bad_day_count": "integer",
+                      "defense_score": "double precision",
+                      "defense_observation_count": "integer",
+                      "defense_agreement": "double precision",
+                      "defense_insufficient_data": "boolean",
+                      "feeding_score": "double precision",
+                      "feeding_observation_count": "integer",
+                      "feeding_agreement": "double precision",
+                      "feeding_insufficient_data": "boolean",
+                      "contributing_sources": "ARRAY"}),
 ])
 def test_documented_columns_exist_with_the_documented_types(database, table, expected):
     actual = _columns(database, table)
@@ -449,6 +474,10 @@ def test_reserved_columns_documented_as_unpopulated_still_exist(database):
     ("matches", "PRIMARY KEY (match_key)"),
     ("team_event_stats", "PRIMARY KEY (team_number, event_key)"),
     ("raw_source_payloads", "PRIMARY KEY (id)"),
+    # team_metrics mirrors team_event_stats' keying exactly; scouting_observations
+    # needs a surrogate because its natural key is the four-column unique index.
+    ("team_metrics", "PRIMARY KEY (team_number, event_key)"),
+    ("scouting_observations", "PRIMARY KEY (id)"),
 ])
 def test_documented_primary_keys(database, table, expected_pk):
     assert any(expected_pk in defn for defn in _constraint_defs(database, table)), (
@@ -463,6 +492,12 @@ def test_documented_primary_keys(database, table, expected_pk):
     ("match_teams", "team_number", "teams(team_number)"),
     ("team_event_stats", "team_number", "teams(team_number)"),
     ("team_event_stats", "event_key", "events(event_key)"),
+    ("scouting_observations", "match_key", "matches(match_key)"),
+    ("scouting_observations", "team_number", "teams(team_number)"),
+    ("scouting_observations", "event_key", "events(event_key)"),
+    ("scouting_observations", "raw_payload_id", "raw_source_payloads(id)"),
+    ("team_metrics", "team_number", "teams(team_number)"),
+    ("team_metrics", "event_key", "events(event_key)"),
 ])
 def test_documented_foreign_keys(database, table, column, target):
     expected = f"FOREIGN KEY ({column}) REFERENCES {target}"
@@ -486,12 +521,38 @@ def test_documented_cascade_rules(database):
 
 
 @requires_db
+def test_scouting_observations_survive_a_raw_payload_deletion(database):
+    # The single most consequential rule in 0008, and the one place it deliberately
+    # follows canonical_lineage's *pipeline_run_id* precedent rather than its
+    # raw_payload_id one. A scouting observation is the only irreplaceable data in
+    # the system -- everything else is re-fetchable from TBA or Statbotics. If this
+    # FK ever became CASCADE, purging a raw payload (which integration teardown
+    # does routinely) would silently destroy human-collected scouting data.
+    observation_fks = [
+        d for d in _constraint_defs(database, "scouting_observations") if "FOREIGN KEY" in d
+    ]
+    raw_payload_fk = [d for d in observation_fks if "raw_payload_id" in d]
+    assert raw_payload_fk, "scouting_observations is missing its raw_payload_id FK"
+    assert all("ON DELETE SET NULL" in d for d in raw_payload_fk)
+    assert not any("ON DELETE CASCADE" in d for d in raw_payload_fk)
+
+    # The three canonical references must not cascade either: deleting a scouted
+    # match should fail loudly rather than take the observations with it.
+    for column in ("match_key", "team_number", "event_key"):
+        for defn in (d for d in observation_fks if f"({column})" in d):
+            assert "ON DELETE" not in defn, (
+                f"scouting_observations.{column} FK must have no ON DELETE action: {defn}"
+            )
+
+
+@requires_db
 def test_documented_unique_indexes(database):
     for table, columns in (
         ("raw_source_payloads", "(source, source_object_type, source_object_id, payload_checksum)"),
         ("source_watermarks", "(source, object_type, scope_key)"),
         ("canonical_lineage", "(entity_type, entity_key, raw_payload_id)"),
         ("match_teams", "(match_key, team_number)"),
+        ("scouting_observations", "(match_key, team_number, scout_identifier, source)"),
     ):
         assert any("UNIQUE INDEX" in defn and columns in defn for defn in _index_defs(database, table)), (
             f"{table} is missing documented unique index on {columns}"
@@ -515,6 +576,30 @@ def test_documented_check_constraints(database):
         "alliance_color" in defn and "'red'" in defn and "'blue'" in defn
         for defn in _constraint_defs(database, "match_teams")
     )
+
+    # 0008's CHECKs are transcriptions of the pydantic model_validators in
+    # data/metrics/schemas.py, so the database refuses exactly what the models do.
+    observation_checks = _constraint_defs(database, "scouting_observations")
+    assert any("defense_rating" in d and "feeding_rating" in d and "IS NOT NULL" in d
+               for d in observation_checks), "missing at-least-one-rating CHECK"
+
+    metrics_checks = _constraint_defs(database, "team_metrics")
+    # The two that enforce "directly measured, NOT inferred from point output".
+    assert any("defense_score" in d and "defense_insufficient_data" in d for d in metrics_checks)
+    assert any("feeding_score" in d and "feeding_insufficient_data" in d for d in metrics_checks)
+    assert any("matches_used" in d and "matches_scheduled" in d for d in metrics_checks)
+
+
+@requires_db
+def test_team_metrics_has_no_redundant_team_number_index(database):
+    # The PK (team_number, event_key) already covers team_number on its leading
+    # column -- the reasoning 0005 records when it declines to create one for
+    # team_event_stats, whose keying team_metrics mirrors. Documented in §4.1.
+    defs = _index_defs(database, "team_metrics")
+    assert any("(event_key)" in defn for defn in defs), "team_metrics is missing its event_key index"
+    assert not any(
+        "(team_number)" in defn for defn in defs
+    ), "team_metrics has a team_number index made redundant by its primary key"
 
 
 @requires_db
