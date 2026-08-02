@@ -201,6 +201,14 @@ fetched.
 - `season`, `competition_level` (canonical vocabulary: `qualification`, `eighthfinal`,
   `quarterfinal`, `semifinal`, `final`), `set_number`, `match_number`, `scheduled_time`,
   `score_red`, `score_blue`, `winning_alliance` (`red`/`blue`/`tie`/NULL)
+- **A scheduled but not-yet-played match is a normal, fully-loaded row** with a real
+  roster and `scheduled_time`, and `score_red` / `score_blue` / `winning_alliance` all
+  NULL. `score_red IS NULL` is the reliable test for "no result yet"; the two scores are
+  always both NULL or both set, never one of each. TBA marks an unplayed match with a
+  score of **-1** on both alliances, which the normalizer resolves to NULL — that
+  sentinel never reaches this table, so nothing downstream needs to know about it.
+  **Anything aggregating results must exclude these rows explicitly** — during a live
+  event most of the schedule is unplayed.
 
 #### `match_teams`
 
@@ -327,7 +335,15 @@ deliberately only one rejection mechanism.
 | Severity | Effect | Checks |
 |---|---|---|
 | `error` / `critical` | **Record rejected — never reaches the canonical tables** | structural validation failure; negative alliance score; negative wins/losses/ties; `matches_played` contradicting `wins+losses+ties`; event ending before it starts; `team_number <= 0`; roster or stats referencing a team/event that will not exist |
-| `warning` | Recorded, record still loads | season outside 1992–next year; `team_number` above 100 000; alliance size ≠ 3 (when non-empty); a declared winner who was strictly outscored; alliance score above 1 000; `scheduled_time` more than 730 days out or before 1992; implausible `rookie_year`; `epa_total` below −50; extraction failures |
+| `warning` | Recorded, record still loads | season outside 1992–next year; `team_number` above 100 000; alliance size ≠ 3 (when non-empty); a declared winner who was strictly outscored; alliance score above 1 000; TBA's unplayed sentinel on only *one* alliance; `scheduled_time` more than 730 days out or before 1992; implausible `rookie_year`; `epa_total` below −50; extraction failures |
+
+"Negative alliance score" above means a score that is genuinely impossible. It does **not**
+mean TBA's `-1` unplayed-match sentinel, which the normalizer resolves to NULL before the
+quality layer ever sees it (see [§4](#4-schema-reference), `matches`). An unplayed match is
+**valid and is not flagged at all** — it must not be, since during a live event most of the
+schedule is unplayed. Resolving the sentinel upstream is what lets this rejection stay
+fatal: relaxing it instead would have loaded every unplayed match as a **fabricated tie**,
+because the two `-1`s compare equal.
 
 Everything judgemental is a warning **on purpose**. FRC scoring rules change every
 season, so a plausibility ceiling that looks generous today will eventually be exceeded
@@ -801,6 +817,15 @@ thoroughly and in both directions:
   genuine rows behind — a run of `2024casj` alone adds one `extraction_failure` warning
   per attending team, per run. Counting by `object_type` picks those up and the assertion
   fails for reasons unrelated to the test.
+- **TBA's `frc0` roster placeholder pins a watermark permanently (open).** Distinct from
+  the `-1` score sentinel and *not* fixed by it: TBA sometimes publishes an unplayed
+  match's roster as `["frc0","frc0","frc0"]` on both alliances. The structural validator
+  rejects that (a team twice on one alliance, and the same team on both), so the payload
+  is permanently invalid, the watermark holds one id below it forever, and every re-sync
+  re-logs the same three `validation_failure` errors. Observed on `2024mdsev_qm73` and
+  `_qm74`, whose match watermark sits at 19024 against a newest payload id of 19041.
+  Needs its own fix — `frc0` should be recognized as "roster not assigned yet", not as a
+  team.
 - **Only single-event sync exists.** There is no whole-season or multi-event driver yet;
   `TBAClient.fetch_event_list` and `StatboticsClient.fetch_event_match_stats` are
   implemented but not yet wired into any flow.

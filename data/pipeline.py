@@ -427,7 +427,10 @@ def stage_batch(
             )
             continue
 
-        issues = check_entity(entity, source=source, raw_payload_id=item.raw_id, context=context)
+        issues = check_entity(
+            entity, source=source, raw_payload_id=item.raw_id,
+            context=context, raw_payload=item.payload,
+        )
         staged.issues.extend(issues)
         fatal = [issue for issue in issues if issue.is_fatal]
         if fatal:

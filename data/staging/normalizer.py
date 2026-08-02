@@ -15,6 +15,7 @@ from data.staging.schemas import (
     StagingTeamEventStats,
 )
 from data.staging.validator import (
+    TBA_UNPLAYED_ALLIANCE_SCORE,
     PayloadValidationError,
     ValidationIssue,
     tba_alliance_team_keys,
@@ -119,6 +120,37 @@ def _unix_to_datetime(timestamp: int | None) -> datetime | None:
     return datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
 
+def _alliance_scores(red: dict[str, Any], blue: dict[str, Any]) -> tuple[int | None, int | None]:
+    """Read both alliance scores, resolving TBA's unplayed-match sentinel to None.
+
+    TBA publishes a scheduled-but-unplayed match with score -1 on both
+    alliances. Read verbatim that is not merely wrong but actively dangerous:
+    two -1s compare equal, so the match would be recorded as a *tie* that never
+    happened. Every not-yet-played match in a live event's schedule carries it,
+    so this is the normal state during an event, not an edge case.
+
+    The sentinel is therefore resolved here, at the point the raw payload is
+    interpreted, rather than by loosening the quality layer's negative-score
+    rejection -- that rule still has real work to do against a genuinely corrupt
+    score, and relaxing it would let the fabricated tie straight through.
+
+    A sentinel on *either* alliance nulls *both*: a half-played match is
+    incoherent, and a NULL/30 row is uninterpretable downstream. Collapsing
+    keeps the invariant that red_score and blue_score are either both known or
+    both unknown, which is what makes "score IS NULL" a reliable test for
+    "not played yet". The anomaly itself is not swallowed -- the quality layer
+    flags a one-sided sentinel as a warning (see data.staging.quality).
+
+    A payload that simply omits `score` is left alone: that is a different
+    condition from the sentinel and is not treated as an unplayed match here.
+    """
+    red_raw = red.get("score")
+    blue_raw = blue.get("score")
+    if TBA_UNPLAYED_ALLIANCE_SCORE in (red_raw, blue_raw):
+        return None, None
+    return red_raw, blue_raw
+
+
 def _derive_winning_alliance(raw_winning_alliance: str | None, red_score: int | None, blue_score: int | None) -> str | None:
     """Determine the canonical winner, resolving TBA's ambiguous empty-string convention.
 
@@ -127,6 +159,12 @@ def _derive_winning_alliance(raw_winning_alliance: str | None, red_score: int | 
     both scores are present, derive the outcome directly from them (also
     covers the case where TBA's field is stale relative to posted scores).
     Only when neither gives an answer is the match considered undecided.
+
+    Note that the empty string is not TBA's only "not yet played" signal: the
+    score field carries a second, independent sentinel (-1). This function
+    relies on that one having already been resolved to None by
+    _alliance_scores -- given the raw -1s it would compare them as equal and
+    fabricate a tie for a match nobody has played.
     """
     if raw_winning_alliance in ("red", "blue"):
         return raw_winning_alliance
@@ -161,8 +199,7 @@ def normalize_tba_match(payload: dict[str, Any]) -> StagingMatch:
     alliances = payload.get("alliances") or {}
     red = alliances.get("red") or {}
     blue = alliances.get("blue") or {}
-    red_score = red.get("score")
-    blue_score = blue.get("score")
+    red_score, blue_score = _alliance_scores(red, blue)
 
     return _build_or_raise(
         "match", StagingMatch, payload.get("key"),
