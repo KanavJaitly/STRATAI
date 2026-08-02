@@ -3,8 +3,10 @@ from __future__ import annotations
 import pytest
 
 from data.staging.validator import (
+    TBA_UNASSIGNED_TEAM_KEY,
     PayloadValidationError,
     ValidationIssue,
+    is_unassigned_team_key,
     validate_event,
     validate_match,
     validate_team,
@@ -143,6 +145,83 @@ def test_validate_tba_match_payload_rejects_team_on_both_alliances():
     }
     issues = validate_tba_match_payload(payload)
     assert any(issue.field == "alliances" for issue in issues)
+
+
+# --- TBA's frc0 unassigned-roster placeholder ------------------------------
+#
+# TBA publishes a roster that has not been assigned yet as ["frc0","frc0","frc0"]
+# on both alliances (real: 2024mdsev_qm73/_qm74). To the two rules above that is
+# indistinguishable from the same team entered three times and then again on the
+# opposing alliance, so those matches were rejected outright and their payloads
+# pinned the event's watermark forever. frc0 is a placeholder, not a team.
+#
+# The rules themselves must not weaken: these tests exist as much to pin what
+# still gets rejected as to pin what now passes.
+
+def test_is_unassigned_team_key_matches_only_the_placeholder():
+    assert is_unassigned_team_key(TBA_UNASSIGNED_TEAM_KEY)
+    assert is_unassigned_team_key("frc0")
+    # A real team, a differently-spelled zero, and non-strings are all not it.
+    assert not is_unassigned_team_key("frc1114")
+    assert not is_unassigned_team_key("frc00")
+    assert not is_unassigned_team_key("frc0b")
+    assert not is_unassigned_team_key(0)
+    assert not is_unassigned_team_key(None)
+
+
+def test_validate_tba_match_payload_accepts_an_unassigned_roster_on_both_alliances():
+    # The exact shape of the real 2024mdsev_qm73 payload.
+    payload = {
+        "key": "2024mdsev_qm73", "event_key": "2024mdsev",
+        "alliances": {
+            "red": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+            "blue": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+        },
+        "winning_alliance": "",
+    }
+    assert validate_tba_match_payload(payload) == []
+
+
+def test_validate_tba_match_payload_still_rejects_a_real_duplicate_beside_the_placeholder():
+    # The placeholder is excluded from the identity comparison; the real team
+    # entered twice is still corruption and must still be caught.
+    payload = {
+        "key": "2025casj_qm1", "event_key": "2025casj",
+        "alliances": {"red": {"teams": ["frc1114", "frc1114", "frc0"]}, "blue": {"teams": []}},
+    }
+    issues = validate_tba_match_payload(payload)
+    assert any(issue.field == "alliances.red.teams" for issue in issues)
+    # Reported against the real team, without the placeholder muddying it.
+    assert "frc0" not in issues[0].message
+
+
+def test_validate_tba_match_payload_still_rejects_a_real_team_on_both_alliances_beside_the_placeholder():
+    payload = {
+        "key": "2025casj_qm1", "event_key": "2025casj",
+        "alliances": {
+            "red": {"teams": ["frc1114", "frc0", "frc0"]},
+            "blue": {"teams": ["frc1114", "frc0", "frc0"]},
+        },
+    }
+    issues = validate_tba_match_payload(payload)
+    overlap = [issue for issue in issues if issue.field == "alliances"]
+    assert len(overlap) == 1
+    # frc0 on both alliances is not an overlap; frc1114 on both alliances is.
+    assert "frc1114" in overlap[0].message
+    assert "frc0" not in overlap[0].message
+
+
+def test_validate_tba_match_payload_accepts_a_partially_assigned_roster():
+    # Structurally fine -- an under-filled alliance is a plausibility question,
+    # which the quality layer answers with a warning, not a rejection.
+    payload = {
+        "key": "2025casj_qm1", "event_key": "2025casj",
+        "alliances": {
+            "red": {"teams": ["frc1114", "frc0", "frc0"]},
+            "blue": {"teams": ["frc254", "frc604", "frc973"]},
+        },
+    }
+    assert validate_tba_match_payload(payload) == []
 
 
 def test_validate_tba_match_payload_rejects_match_key_not_matching_event_key():

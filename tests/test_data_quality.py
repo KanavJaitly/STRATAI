@@ -15,8 +15,10 @@ from data.staging import (
     StagingMatch,
     StagingTeam,
     StagingTeamEventStats,
+    normalize_match,
 )
 from data.staging.quality import (
+    _roster_numbers,
     ISSUE_EXTRACTION_FAILURE,
     ISSUE_IMPLAUSIBLE_VALUE,
     ISSUE_INCONSISTENT_VALUES,
@@ -208,6 +210,57 @@ def test_the_negative_score_rejection_still_catches_genuine_corruption():
     # -1 is TBA saying "no result yet"; -5 is a score that cannot exist.
     issue = only(check_entity(staging_match(red_score=-5), source="tba", context=FULL_CONTEXT), "red_score")
     assert (issue.issue_type, issue.severity, issue.is_fatal) == (ISSUE_OUT_OF_RANGE, SEVERITY_ERROR, True)
+
+
+def test_an_unassigned_roster_reaches_this_layer_as_an_empty_one_and_is_not_flagged():
+    # frc0 is dropped by the normalizer, so what arrives here is a match with no
+    # roster -- already a legitimate state under the rule above. Asserted end to
+    # end from the raw payload so the two layers are pinned together: nothing
+    # about the frc0 fix may start producing a finding for an ordinary unplayed
+    # match, of which a live event's board is mostly made.
+    unassigned_raw = raw_match_payload(
+        red_score=-1, blue_score=-1, winning_alliance="",
+        alliances={
+            "red": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+            "blue": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+        },
+    )
+    match = normalize_match("tba", unassigned_raw)
+    assert (match.red_teams, match.blue_teams) == ([], [])
+    assert check_entity(match, source="tba", context=FULL_CONTEXT, raw_payload=unassigned_raw) == []
+
+
+def test_a_partially_assigned_roster_still_trips_the_alliance_size_warning():
+    # No new rule was written for the partial case: dropping the placeholders
+    # leaves a short alliance, which the existing plausibility rule already
+    # answers -- a warning, so the match still loads.
+    partial_raw = raw_match_payload(
+        red_score=80, blue_score=70, winning_alliance="red",
+        alliances={
+            "red": {"score": 80, "team_keys": [S_TEAM_KEYS[0], "frc0", "frc0"]},
+            "blue": {"score": 70, "team_keys": S_TEAM_KEYS[3:]},
+        },
+    )
+    match = normalize_match("tba", partial_raw)
+    assert match.red_teams == [S_TEAMS[0]]
+
+    issue = only(check_entity(match, source="tba", context=FULL_CONTEXT, raw_payload=partial_raw), "red_teams")
+    assert (issue.issue_type, issue.severity, issue.is_fatal) == (ISSUE_IMPLAUSIBLE_VALUE, SEVERITY_WARNING, False)
+
+
+def test_the_referential_context_never_looks_up_team_zero():
+    # Team 0 has no teams row and never will. Left in the referenced set it
+    # would send a lookup whose answer no check consults -- and, had frc0 been
+    # kept on the roster instead of dropped, would have turned this fix into a
+    # missing_reference rejection rather than a load.
+    unassigned_raw = raw_match_payload(
+        red_score=-1, blue_score=-1,
+        alliances={
+            "red": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+            "blue": {"score": -1, "team_keys": S_TEAM_KEYS[3:]},
+        },
+    )
+    assert _roster_numbers(unassigned_raw) == set(S_TEAMS[3:])
 
 
 def test_without_a_raw_payload_the_sentinel_check_is_skipped():
@@ -795,6 +848,134 @@ def test_an_unplayed_match_loads_as_unplayed_and_never_pins_the_watermark(databa
     assert second.landed["tba.match"] == 0
     assert second.loaded["matches"] == 0
     assert _issues(database, object_type="match") == []
+
+
+@requires_db
+def test_an_unassigned_roster_loads_as_unplayed_and_never_pins_the_watermark(database):
+    """The whole frc0 sentinel cluster, end to end.
+
+    The sibling of the -1 test above, and the same symptom reached by a
+    different route: before this fix the payload was rejected by *structural
+    validation* (three frc0s read as the same team three times, and again on the
+    opposing alliance), so it never reached the quality layer at all. It could
+    never become valid -- TBA is not going to reissue a completed event's
+    schedule -- so the watermark held one id below it forever and every re-sync
+    re-logged the same three validation_failure errors plus a failed backfill of
+    team frc0.
+    """
+    unassigned_key = f"{S_EVENT}_qm2"
+    unassigned = raw_match(
+        key=unassigned_key, match_number=2,
+        # Exactly the shape of the real 2024mdsev_qm73/_qm74 payloads: both
+        # sentinels at once, unassigned rosters and unplayed scores.
+        alliances={
+            "red": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+            "blue": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+        },
+        winning_alliance="", actual_time=None, score_breakdown=None,
+    )
+    tba = FakeTBAClient(matches=[raw_match(), unassigned])
+    first = _run(database, tba=tba)
+
+    # Loaded, not rejected -- and as unplayed, not as a tie.
+    assert first.loaded["matches"] == 2
+    assert first.fatal_issues == []
+    with database.cursor() as cursor:
+        cursor.execute(
+            "SELECT score_red, score_blue, winning_alliance FROM matches WHERE match_key = %s",
+            (unassigned_key,),
+        )
+        assert cursor.fetchone() == (None, None, None)
+
+    # The roster is absent, not a placeholder: no match_teams rows at all, and
+    # team 0 nowhere in the canonical tables.
+    assert _scalar(
+        database, "SELECT COUNT(*) FROM match_teams WHERE match_key = %s", (unassigned_key,),
+    ) == 0
+    assert _scalar(database, "SELECT COUNT(*) FROM teams WHERE team_number = 0") == 0
+    # The played match in the same batch still carries its full real roster.
+    assert _scalar(
+        database, "SELECT COUNT(*) FROM match_teams WHERE match_key = %s", (S_MATCH,),
+    ) == 6
+
+    # Valid, so not flagged at all -- and frc0 was never looked up, so no
+    # extraction_failure warning for a team that cannot exist.
+    assert _issues(database, object_type="match") == []
+    assert _issues(database, object_type="extraction") == []
+
+    # The watermark reached the newest match payload instead of stopping below
+    # the unassigned one.
+    watermark = _scalar(
+        database,
+        "SELECT watermark_value FROM source_watermarks "
+        "WHERE source = 'tba' AND object_type = 'match' AND scope_key = %s",
+        (S_EVENT,),
+    )
+    newest_match_payload = _scalar(
+        database,
+        "SELECT MAX(id) FROM raw_source_payloads "
+        "WHERE source_object_type = 'match' AND source_object_id LIKE %s",
+        (f"{S_EVENT}%",),
+    )
+    assert int(watermark) == newest_match_payload
+
+    # Re-syncing is a true no-op: nothing re-landed, nothing re-loaded, and no
+    # issue re-recorded on either the match or the extraction path.
+    second = _run(database, tba=FakeTBAClient(matches=[raw_match(), unassigned]))
+    assert second.landed["tba.match"] == 0
+    assert second.loaded["matches"] == 0
+    assert _issues(database, object_type="match") == []
+    assert _issues(database, object_type="extraction") == []
+
+
+@requires_db
+def test_a_genuine_duplicate_roster_is_still_rejected_and_still_pins_the_watermark(database):
+    """The other half of the frc0 fix: real corruption must be unaffected.
+
+    A real team entered three times is not a placeholder, and treating it as one
+    would load a match asserting one robot occupied three stations. This pins
+    the behaviour the fix deliberately did not change -- including that such a
+    payload still holds the watermark short of itself, which is the correct
+    response to a record that might yet be corrected at source.
+    """
+    corrupt_key = f"{S_EVENT}_qm2"
+    corrupt = raw_match(
+        key=corrupt_key, match_number=2,
+        alliances={
+            # Real team, three times -- corruption, not an unassigned roster.
+            "red": {"score": 100, "team_keys": [S_TEAM_KEYS[0]] * 3},
+            "blue": {"score": 90, "team_keys": S_TEAM_KEYS[3:]},
+        },
+    )
+    result = _run(database, tba=FakeTBAClient(matches=[raw_match(), corrupt]))
+
+    rejections = [row for row in _issues(database, object_type="match")
+                  if row["object_id"] == corrupt_key]
+    assert rejections, "a real duplicate roster must still be rejected"
+    assert {row["issue_type"] for row in rejections} == {ISSUE_VALIDATION_FAILURE}
+    assert {row["severity"] for row in rejections} == {SEVERITY_ERROR}
+    assert any("cannot appear twice" in row["description"] for row in rejections)
+
+    # Never reached the canonical tables; the healthy match in the same batch did.
+    assert _scalar(
+        database, "SELECT COUNT(*) FROM matches WHERE match_key = %s", (corrupt_key,),
+    ) == 0
+    assert result.loaded["matches"] == 1
+
+    # And the watermark still holds short of it, so a corrected payload would be
+    # picked up on a later run.
+    watermark = _scalar(
+        database,
+        "SELECT watermark_value FROM source_watermarks "
+        "WHERE source = 'tba' AND object_type = 'match' AND scope_key = %s",
+        (S_EVENT,),
+    )
+    corrupt_payload_id = _scalar(
+        database,
+        "SELECT id FROM raw_source_payloads WHERE source_object_id = %s AND is_current",
+        (corrupt_key,),
+    )
+    assert int(watermark) < corrupt_payload_id
 
 
 @requires_db

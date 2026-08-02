@@ -18,6 +18,7 @@ from data.staging.validator import (
     TBA_UNPLAYED_ALLIANCE_SCORE,
     PayloadValidationError,
     ValidationIssue,
+    is_unassigned_team_key,
     tba_alliance_team_keys,
     validate_event,
     validate_match,
@@ -151,6 +152,34 @@ def _alliance_scores(red: dict[str, Any], blue: dict[str, Any]) -> tuple[int | N
     return red_raw, blue_raw
 
 
+def _alliance_roster(alliance: dict[str, Any]) -> list[int]:
+    """Read one alliance's roster, dropping TBA's unassigned-roster placeholder.
+
+    TBA publishes a roster that has not been assigned yet as
+    ["frc0", "frc0", "frc0"] (both alliances of an unplayed match, e.g. the real
+    2024mdsev_qm73). frc0 is a placeholder, not a team, so it is resolved here
+    the same way and for the same reason the -1 score sentinel is: the raw
+    payload's "this is absent" marker becomes an actual absence at the point the
+    payload is interpreted.
+
+    An absent roster is an *empty* roster -- no match_teams rows -- not a roster
+    of team 0. Team 0 has no teams row to reference, so keeping it would only
+    trade a validation rejection for a missing-reference one, and it would
+    assert to everything downstream that some robot played this match. An empty
+    alliance is already a legitimate canonical state (an unplayed playoff match
+    has no roster yet, and the quality layer deliberately does not flag one).
+
+    A partially-assigned roster is not special-cased: dropping the placeholders
+    from ["frc1114", "frc0", "frc0"] leaves a one-team alliance, which the
+    quality layer already flags as an implausible alliance size.
+    """
+    return [
+        _parse_team_number(team_key)
+        for team_key in tba_alliance_team_keys(alliance)
+        if not is_unassigned_team_key(team_key)
+    ]
+
+
 def _derive_winning_alliance(raw_winning_alliance: str | None, red_score: int | None, blue_score: int | None) -> str | None:
     """Determine the canonical winner, resolving TBA's ambiguous empty-string convention.
 
@@ -210,8 +239,8 @@ def normalize_tba_match(payload: dict[str, Any]) -> StagingMatch:
         match_number=payload.get("match_number"),
         set_number=payload.get("set_number"),
         scheduled_time=_unix_to_datetime(payload.get("time")),
-        red_teams=[_parse_team_number(k) for k in tba_alliance_team_keys(red)],
-        blue_teams=[_parse_team_number(k) for k in tba_alliance_team_keys(blue)],
+        red_teams=_alliance_roster(red),
+        blue_teams=_alliance_roster(blue),
         red_score=red_score,
         blue_score=blue_score,
         winning_alliance=_derive_winning_alliance(payload.get("winning_alliance") or None, red_score, blue_score),

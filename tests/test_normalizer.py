@@ -250,6 +250,70 @@ def test_a_missing_score_is_not_treated_as_the_unplayed_sentinel():
     assert match.winning_alliance is None
 
 
+# --- TBA's frc0 unassigned-roster placeholder ------------------------------
+#
+# The sibling of the -1 sentinel above, and the same principle applied to a
+# different field: the raw payload's marker for "this is absent" becomes an
+# actual absence at the point the payload is interpreted. -1 score -> NULL
+# score; frc0 roster -> empty roster. What differs is where each was being
+# caught -- -1 reached the quality layer, frc0 never got past structural
+# validation.
+
+def test_unassigned_roster_normalizes_to_an_empty_roster():
+    # The exact shape of the real 2024mdsev_qm73 payload, which carries both
+    # sentinels at once: unassigned rosters and unplayed scores.
+    unassigned = dict(
+        VALID_MATCH_PAYLOAD,
+        alliances={
+            "red": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+            "blue": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+        },
+        winning_alliance="",
+    )
+    match = normalize_tba_match(unassigned)
+
+    # Empty, NOT [0, 0, 0]: team 0 does not exist, so a roster naming it would
+    # both assert that some robot played and fail the match_teams foreign key.
+    assert match.red_teams == []
+    assert match.blue_teams == []
+    # And the match itself still loads, as unplayed rather than as a tie.
+    assert (match.red_score, match.blue_score, match.winning_alliance) == (None, None, None)
+    assert match.match_key == VALID_MATCH_PAYLOAD["key"]
+    assert match.season == 2025
+
+
+def test_a_partially_assigned_roster_keeps_its_real_teams():
+    # Not special-cased: the placeholders drop out and a short alliance is left,
+    # which the quality layer flags as an implausible size (a warning -- the
+    # match is still loadable and its scores still meaningful).
+    partial = dict(
+        VALID_MATCH_PAYLOAD,
+        alliances={
+            "red": {"score": 80, "team_keys": ["frc1114", "frc0", "frc0"]},
+            "blue": {"score": 70, "team_keys": ["frc254", "frc604", "frc973"]},
+        },
+        winning_alliance="red",
+    )
+    match = normalize_tba_match(partial)
+
+    assert match.red_teams == [1114]
+    assert match.blue_teams == [254, 604, 973]
+    assert (match.red_score, match.blue_score, match.winning_alliance) == (80, 70, "red")
+
+
+def test_a_real_roster_is_untouched_by_placeholder_handling():
+    # The guard against over-reaching: nothing about an ordinary roster changes.
+    match = normalize_tba_match(dict(
+        VALID_MATCH_PAYLOAD,
+        alliances={
+            "red": {"score": 100, "team_keys": ["frc1114", "frc254", "frc604"]},
+            "blue": {"score": 90, "team_keys": ["frc118", "frc330", "frc973"]},
+        },
+    ))
+    assert match.red_teams == [1114, 254, 604]
+    assert match.blue_teams == [118, 330, 973]
+
+
 def test_normalize_tba_match_strips_team_key_prefix_and_derives_season():
     match = normalize_tba_match(VALID_MATCH_PAYLOAD)
     assert all(isinstance(t, int) for t in match.red_teams + match.blue_teams)
