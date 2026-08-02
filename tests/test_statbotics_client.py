@@ -248,25 +248,28 @@ def test_partial_nesting_does_not_raise():
 def test_model_matches_recorded_statbotics_response():
     """Validate against the recorded response fixture.
 
-    The fixture is SOURCE-DERIVED, not captured -- api.statbotics.io/v3 was
-    returning HTTP 500 for every endpoint when this client was fixed, so no live
-    response could be recorded. Its structure comes from Statbotics's own
-    response serializer, so this test guards the field names and nesting even
-    though the numbers are placeholders. Re-record it against a real response
-    once their API recovers; see the fixture's _fixture_provenance block.
+    The fixture is CAPTURED -- a verbatim live api.statbotics.io response
+    recorded 2026-08-01, once their API recovered from the outage that had made
+    every /v3/* endpoint return HTTP 500. It replaced a source-derived stand-in
+    built from Statbotics's published response serializer, and confirmed that
+    stand-in's shape was right: all 61 leaf paths matched exactly.
+
+    It records team 1678 rather than 254 because team 254 never attended
+    2024casj -- see the fixture's _fixture_provenance block.
     """
     payload = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
-    assert payload["_fixture_provenance"]["status"] == "SOURCE-DERIVED, NOT CAPTURED"
+    assert payload["_fixture_provenance"]["status"] == "CAPTURED FROM LIVE API"
 
     metrics = StatboticsTeamEventMetrics.model_validate(payload)
 
-    assert (metrics.team, metrics.event) == (254, "2024casj")
-    assert metrics.epa_total == 61.42
-    assert metrics.epa_auto == 18.31
-    assert metrics.epa_teleop == 34.07
-    assert metrics.epa_endgame == 9.04
-    assert (metrics.wins, metrics.losses, metrics.ties) == (13, 5, 0)
-    assert metrics.count == 18
+    assert (metrics.team, metrics.event) == (1678, "2024casj")
+    assert metrics.epa_total == 49.22
+    assert metrics.epa_auto == 19.59
+    assert metrics.epa_teleop == 22.99
+    assert metrics.epa_endgame == 6.63
+    # A real event can produce ties, which the previous invented numbers did not.
+    assert (metrics.wins, metrics.losses, metrics.ties) == (14, 2, 1)
+    assert metrics.count == 17
     # The extra keys Statbotics sends (year, team_name, epa.stats, record.qual,
     # the game-specific breakdown) are ignored rather than causing a failure.
     assert not hasattr(metrics, "year")
