@@ -17,6 +17,9 @@ them and drives one end-to-end sync:
     *after* it, since a lineage row asserts that a canonical row exists.
   * `sync_event` wires extraction -> landing -> staging -> serving for a single
     event.
+  * `sync_season` and `watch_event` are thin wrappers over it: one sweeps a
+    whole season once, the other re-runs a single event on an interval so a
+    live competition stays fresh without anyone re-triggering it.
 
 The idempotence guarantee: a watermark is the highest `raw_source_payloads.id`
 already promoted into the canonical tables for that (source, object_type,
@@ -40,10 +43,13 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import re
+import signal
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Sequence
+from datetime import date, datetime, timedelta, timezone
+from typing import Any, Callable, Iterable, Sequence
 
 from psycopg.types.json import Jsonb
 
@@ -609,10 +615,518 @@ def sync_season(
     return season
 
 
+# ---------------------------------------------------------------------------
+# Live event watch
+# ---------------------------------------------------------------------------
+
+# One poll costs exactly three TBA requests (event, matches, teams), so 120s is
+# ~90 requests/hour. FRC qualification cycles run roughly 7-8 minutes, which
+# makes this 3-4 polls per match -- responsive without being noisy. TBA
+# publishes no rate limit and returns no X-RateLimit headers, so the budget here
+# is politeness rather than a documented ceiling.
+DEFAULT_WATCH_INTERVAL_SECONDS = 120.0
+DEFAULT_WATCH_MAX_INTERVAL_SECONDS = 600.0
+
+# Statbotics is one request *per team*, so a 40-team regional costs ~40 requests
+# per poll -- 1,200/hour at the TBA cadence. It therefore runs on its own much
+# slower clock (~80 requests/hour), and every poll in between is TBA-only.
+DEFAULT_STATBOTICS_INTERVAL_SECONDS = 1800.0
+
+# Back off only after several consecutive idle polls, not the first one. A
+# 7-minute match cycle produces 2-3 no-op polls during perfectly normal play,
+# and backing off immediately would slow detection exactly when the event is
+# live. Overnight the interval still walks up to the maximum.
+DEFAULT_IDLE_POLLS_BEFORE_BACKOFF = 3
+WATCH_BACKOFF_FACTOR = 1.5
+
+# Extra polls after the event first looks complete, to catch the score
+# corrections TBA posts in the minutes after finals.
+DEFAULT_SETTLE_POLLS = 2
+
+# Consecutive failures tolerated before the watch gives up. Venue wifi drops and
+# TBA blips must not end a watch, but a mistyped event key 404s forever, and
+# with backoff this is over an hour of continuous failure before exiting.
+DEFAULT_MAX_FAILURES = 20
+
+# `events.end_date` is a *local* calendar date, so a venue west of UTC is still
+# playing finals when UTC has already rolled over -- 7pm Saturday in Houston is
+# Sunday 00:00 UTC. One day of grace covers every FRC timezone.
+DEFAULT_CALENDAR_GRACE_DAYS = 1
+
+# The wait between polls is slept in slices this long, so a Ctrl-C is noticed
+# within about a second instead of at the end of a 10-minute interval.
+_WATCH_SLEEP_SLICE_SECONDS = 1.0
+
+_DURATION_UNITS = {"s": 1.0, "m": 60.0, "h": 3600.0, "d": 86400.0}
+_DURATION_PATTERN = re.compile(r"^(\d+(?:\.\d+)?)\s*([smhd]?)$", re.IGNORECASE)
+
+
+@dataclass(frozen=True)
+class EventProgress:
+    """How far along one event is, read from the canonical tables.
+
+    Every field comes from data the poll that just ran has already loaded, so
+    determining whether an event is over costs no extra API requests.
+    """
+
+    event_key: str
+    end_date: date | None
+    matches_total: int
+    matches_played: int
+    finals_total: int
+    finals_played: int
+
+    @property
+    def finals_complete(self) -> bool:
+        """True once a finals bracket exists and none of it is still unplayed."""
+        return self.finals_total > 0 and self.finals_played == self.finals_total
+
+    @property
+    def matches_unplayed(self) -> int:
+        return self.matches_total - self.matches_played
+
+
+def event_progress(database: Database, event_key: str) -> EventProgress | None:
+    """Summarize an event's canonical state, or None if it has not been loaded yet.
+
+    Read-only, one query, and deliberately expressed against the canonical
+    columns rather than the raw payloads: `score_red IS NULL` is the documented
+    reliable test for "not played yet" (the normalizer has already resolved
+    TBA's -1 sentinel), so this asks the question in the vocabulary the rest of
+    the project uses.
+    """
+    with database.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT e.end_date,
+                   count(m.match_key),
+                   count(m.match_key) FILTER (WHERE m.score_red IS NOT NULL),
+                   count(m.match_key) FILTER (WHERE m.competition_level = 'final'),
+                   count(m.match_key) FILTER (
+                       WHERE m.competition_level = 'final' AND m.score_red IS NOT NULL
+                   )
+            FROM events e
+            LEFT JOIN matches m ON m.event_key = e.event_key
+            WHERE e.event_key = %s
+            GROUP BY e.end_date
+            """,
+            (event_key,),
+        )
+        row = cursor.fetchone()
+
+    if row is None:
+        return None
+    return EventProgress(
+        event_key=event_key,
+        end_date=row[0],
+        matches_total=int(row[1]),
+        matches_played=int(row[2]),
+        finals_total=int(row[3]),
+        finals_played=int(row[4]),
+    )
+
+
+def completion_reason(
+    progress: EventProgress | None,
+    *,
+    today: date,
+    calendar_grace_days: int = DEFAULT_CALENDAR_GRACE_DAYS,
+) -> str | None:
+    """Return why the event is over, or None if it is still running.
+
+    The primary signal is the finals bracket: an event is done when a finals
+    match exists and none is still unplayed. Checked against the full 2024
+    season, all 190 official events have a played final and *none* has an
+    unplayed one, so the signal is neither premature (it waits out a
+    double-elimination f1m2/f1m3) nor unreachable (an unneeded f1m3 is not
+    published in advance).
+
+    The obvious alternative -- "every scheduled match has a result" -- was
+    rejected on the same evidence. Two of those 190 finished events
+    (`2024gagwi`, `2024mdsev`) permanently hold unplayed matches, because TBA's
+    -1/frc0 sentinel rows load with NULL scores and TBA never reissues a
+    finished event's schedule. A watch keyed on that condition would never stop
+    for them. It also false-positives mid-event, in the gap between the last
+    qualification match and the playoff bracket being published.
+
+    The calendar is the fallback, for an event that never produces finals at all
+    (cancelled, abandoned, or an offseason format). See
+    DEFAULT_CALENDAR_GRACE_DAYS for why the grace cannot be zero.
+    """
+    if progress is None:
+        return None
+
+    if progress.finals_complete:
+        return (
+            f"finals complete - {progress.matches_played}/{progress.matches_total} matches, "
+            f"{progress.finals_played}/{progress.finals_total} finals played"
+        )
+
+    if progress.end_date is not None:
+        expiry = progress.end_date + timedelta(days=calendar_grace_days)
+        if today > expiry:
+            return (
+                f"event ended {progress.end_date.isoformat()} and no finals were published "
+                f"({calendar_grace_days}-day grace expired {expiry.isoformat()})"
+            )
+
+    return None
+
+
+@dataclass
+class WatchResult:
+    """Outcome of one live-event watch, aggregated over every poll.
+
+    Holds running totals rather than each poll's `SyncResult`: a watch runs for
+    days at a two-minute cadence, so retaining every result (and every quality
+    issue inside it) would grow without bound to duplicate what `pipeline_runs`
+    already records durably, one row per poll.
+    """
+
+    event_key: str
+    polls: int = 0
+    successes: int = 0
+    failures: int = 0
+    landed: dict[str, int] = field(default_factory=dict)
+    loaded: dict[str, int] = field(default_factory=dict)
+    matches_newly_played: int = 0
+    progress: EventProgress | None = None
+    stop_reason: str = ""
+    last_error: str | None = None
+    statbotics_skipped_reason: str | None = None
+    statbotics_polls: int = 0
+    interrupted: bool = False
+    stopped_on_failures: bool = False
+    elapsed_seconds: float = 0.0
+
+    @property
+    def records_loaded(self) -> int:
+        """Total canonical records written across every poll."""
+        return sum(self.loaded.values())
+
+
+def _utc_today() -> date:
+    return datetime.now(timezone.utc).date()
+
+
+@contextmanager
+def _graceful_stop():
+    """Install SIGINT/SIGTERM handlers that request a stop instead of aborting.
+
+    Yields a one-key dict the loop polls. The first signal asks the watch to
+    stop at the next safe point; the handler then restores the previous
+    disposition, so a second Ctrl-C aborts immediately the way an impatient
+    operator expects.
+
+    Interrupting between polls is always safe: `sync_event` is transactional,
+    advances watermarks at exactly one point after serving succeeds, and holds
+    its advisory lock for the whole call, so there is no half-written state to
+    leave behind. A poll already in flight is therefore allowed to finish rather
+    than being torn down mid-run.
+
+    Handlers are restored on the way out, so importing and calling `watch_event`
+    from a larger program does not permanently change that program's signal
+    handling. Signal handlers can only be installed on the main thread; off it,
+    this degrades to a no-op rather than failing the watch.
+    """
+    state = {"stop": False}
+    previous: dict[int, Any] = {}
+
+    def handle(signum: int, frame: Any) -> None:
+        state["stop"] = True
+        logger.warning(
+            "Signal %s received: finishing the current poll, then stopping. "
+            "Send it again to abort immediately.",
+            signal.Signals(signum).name,
+        )
+        if signum in previous:
+            signal.signal(signum, previous[signum])
+
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            previous[sig] = signal.signal(sig, handle)
+        except (ValueError, OSError):  # not the main thread, or unsupported
+            logger.debug("Could not install a handler for %s; skipping", sig)
+
+    try:
+        yield state
+    finally:
+        for sig, handler in previous.items():
+            try:
+                signal.signal(sig, handler)
+            except (ValueError, OSError):
+                pass
+
+
+def _wait_between_polls(
+    seconds: float,
+    *,
+    sleep: Callable[[float], None],
+    clock: Callable[[], float],
+    interrupt: dict[str, bool],
+) -> bool:
+    """Sleep for `seconds`, in slices, returning False if a stop was requested.
+
+    Slicing is what makes Ctrl-C feel immediate: the wait between polls can be
+    ten minutes, and an operator packing up at the end of an event should not
+    have to wait it out.
+    """
+    deadline = clock() + seconds
+    while not interrupt["stop"]:
+        remaining = deadline - clock()
+        if remaining <= 0:
+            return True
+        sleep(min(remaining, _WATCH_SLEEP_SLICE_SECONDS))
+    return False
+
+
+def watch_event(
+    event_key: str,
+    *,
+    database: Database,
+    tba: TBAClient,
+    statbotics: StatboticsClient | None = None,
+    interval_seconds: float = DEFAULT_WATCH_INTERVAL_SECONDS,
+    max_interval_seconds: float = DEFAULT_WATCH_MAX_INTERVAL_SECONDS,
+    statbotics_interval_seconds: float = DEFAULT_STATBOTICS_INTERVAL_SECONDS,
+    idle_polls_before_backoff: int = DEFAULT_IDLE_POLLS_BEFORE_BACKOFF,
+    settle_polls: int = DEFAULT_SETTLE_POLLS,
+    max_failures: int = DEFAULT_MAX_FAILURES,
+    max_duration_seconds: float | None = None,
+    calendar_grace_days: int = DEFAULT_CALENDAR_GRACE_DAYS,
+    pipeline_name: str = DEFAULT_PIPELINE_NAME,
+    sync: Callable[..., SyncResult] = sync_event,
+    progress: Callable[[Database, str], EventProgress | None] = event_progress,
+    sleep: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.monotonic,
+    today: Callable[[], date] = _utc_today,
+) -> WatchResult:
+    """Keep one event's data fresh by re-running `sync_event` until the event ends.
+
+    This is the automated half of "real-time updates must sync during an event
+    as matches are played": start it once when the event opens and it needs no
+    further triggering.
+
+    A thin wrapper, exactly like `sync_season`. It reimplements no sync logic --
+    every poll is an ordinary `sync_event` call with ordinary semantics (its own
+    `pipeline_runs` row, its own watermarks, its own advisory lock) -- and owns
+    only four policies of its own:
+
+    * **Cadence.** Poll every `interval_seconds`. An unchanged poll is already a
+      near no-op by construction: the landing layer discards identical payloads,
+      so nothing sits above the watermark and the staging and serving stages do
+      no work at all. Only the three HTTP fetches actually cost anything. After
+      `idle_polls_before_backoff` consecutive polls that land nothing, the
+      interval grows by `WATCH_BACKOFF_FACTOR` up to `max_interval_seconds`, and
+      snaps back the moment anything lands.
+    * **Statbotics on its own clock**, because it costs one request per team
+      rather than three per event. It is probed once up front and circuit-broken
+      for the whole watch if it is down -- the same reasoning, and the same
+      helper, `sync_season` uses: 40 failing lookups per poll, each burning the
+      client's full retry ladder, would turn a two-minute cadence into minutes
+      of nothing but timeouts.
+    * **Failure isolation.** TBA being briefly unreachable mid-event is normal
+      at a venue. A failed poll is logged, counted, and followed by a backed-off
+      retry; `sync_event` has already recorded the failed run and its quality
+      evidence by the time it re-raises, so nothing is lost by carrying on. Only
+      `max_failures` *consecutive* failures end the watch, and that exit is
+      reported as a failure so a mistyped event key does not loop forever.
+    * **Knowing when to stop.** See `completion_reason`. After completion is
+      first seen the watch keeps polling `settle_polls` more times, then exits.
+
+    `sync`, `progress`, `sleep`, `clock`, and `today` are injection points for
+    tests, each defaulting to the real implementation; nothing else in the
+    project passes them.
+    """
+    started = clock()
+    result = WatchResult(event_key=event_key)
+
+    if statbotics is not None:
+        reason = statbotics_probe_failure(statbotics, tba, event_key)
+        if reason is not None:
+            result.statbotics_skipped_reason = reason
+            statbotics = None
+            logger.warning(
+                "Statbotics unavailable, skipping it for this whole watch: %s. "
+                "team_event_stats will not be updated; re-run a plain sync afterwards.", reason,
+            )
+
+    # Built once and shared by every poll, as in sync_season.
+    collaborators: dict[str, Any] = {
+        "writer": RawPayloadWriter(database),
+        "repository": CanonicalRepository(database),
+        "recorder": PipelineRunRecorder(database),
+        "watermarks": WatermarkStore(database),
+        "quality": DataQualityRecorder(database),
+        "lineage": LineageStore(database),
+    }
+
+    logger.info(
+        "Watching %s: polling every %.0fs (idle backoff to %.0fs), statbotics every %s",
+        event_key, interval_seconds, max_interval_seconds,
+        f"{statbotics_interval_seconds:.0f}s" if statbotics is not None else "never",
+    )
+
+    wait_seconds = interval_seconds
+    idle_polls = 0
+    consecutive_failures = 0
+    settling: int | None = None
+    last_played: int | None = None
+    statbotics_due_at = started
+
+    with _graceful_stop() as interrupt:
+        while True:
+            if interrupt["stop"]:
+                result.stop_reason = "interrupted"
+                result.interrupted = True
+                break
+
+            elapsed = clock() - started
+            if max_duration_seconds is not None and elapsed >= max_duration_seconds:
+                result.stop_reason = f"max duration reached ({max_duration_seconds:.0f}s)"
+                break
+
+            result.polls += 1
+            use_statbotics = statbotics is not None and clock() >= statbotics_due_at
+            if use_statbotics:
+                statbotics_due_at = clock() + statbotics_interval_seconds
+                result.statbotics_polls += 1
+
+            try:
+                sync_result = sync(
+                    event_key,
+                    database=database,
+                    tba=tba,
+                    statbotics=statbotics if use_statbotics else None,
+                    pipeline_name=pipeline_name,
+                    **collaborators,
+                )
+            except Exception as exc:
+                consecutive_failures += 1
+                result.failures += 1
+                result.last_error = f"{type(exc).__name__}: {exc}"
+                logger.error(
+                    "poll %d FAILED (%d/%d consecutive): %s",
+                    result.polls, consecutive_failures, max_failures, result.last_error,
+                )
+                if consecutive_failures >= max_failures:
+                    result.stop_reason = (
+                        f"{consecutive_failures} consecutive failures, last: {result.last_error}"
+                    )
+                    result.stopped_on_failures = True
+                    break
+                wait_seconds = min(wait_seconds * WATCH_BACKOFF_FACTOR, max_interval_seconds)
+                logger.info("Retrying %s in %.0fs", event_key, wait_seconds)
+                if not _wait_between_polls(
+                    wait_seconds, sleep=sleep, clock=clock, interrupt=interrupt,
+                ):
+                    result.stop_reason = "interrupted"
+                    result.interrupted = True
+                    break
+                continue
+
+            consecutive_failures = 0
+            result.successes += 1
+            result.landed = _sum_counts([result.landed, sync_result.landed])
+            result.loaded = _sum_counts([result.loaded, sync_result.loaded])
+            landed_now = sum(sync_result.landed.values())
+
+            current = progress(database, event_key)
+            result.progress = current
+            newly_played = 0
+            if current is not None:
+                if last_played is not None:
+                    newly_played = max(current.matches_played - last_played, 0)
+                    result.matches_newly_played += newly_played
+                last_played = current.matches_played
+
+            if landed_now:
+                idle_polls = 0
+                wait_seconds = interval_seconds
+            else:
+                idle_polls += 1
+                if idle_polls >= idle_polls_before_backoff:
+                    wait_seconds = min(wait_seconds * WATCH_BACKOFF_FACTOR, max_interval_seconds)
+
+            logger.info(
+                "poll %d: %s | %s | next in %.0fs",
+                result.polls,
+                f"landed={sync_result.landed} loaded={sync_result.loaded}" if landed_now
+                else "nothing new",
+                _progress_line(current, newly_played),
+                wait_seconds,
+            )
+
+            reason = completion_reason(
+                current, today=today(), calendar_grace_days=calendar_grace_days,
+            )
+            if reason is None:
+                # A new finals match appearing (or a score being retracted) puts
+                # the event back in progress; the settle countdown restarts.
+                settling = None
+            else:
+                if settling is None:
+                    settling = settle_polls
+                    logger.info(
+                        "Event %s looks complete (%s); %d settle poll(s) before stopping",
+                        event_key, reason, settle_polls,
+                    )
+                if settling <= 0:
+                    result.stop_reason = reason
+                    break
+                settling -= 1
+
+            if not _wait_between_polls(
+                wait_seconds, sleep=sleep, clock=clock, interrupt=interrupt,
+            ):
+                result.stop_reason = "interrupted"
+                result.interrupted = True
+                break
+
+    result.elapsed_seconds = clock() - started
+    logger.info(
+        "Watch of %s stopped after %d poll(s) in %.1fs: %s",
+        event_key, result.polls, result.elapsed_seconds, result.stop_reason,
+    )
+    return result
+
+
+def _progress_line(progress: EventProgress | None, newly_played: int) -> str:
+    """Render the human-facing 'how far along is this event' half of a poll log."""
+    if progress is None:
+        return "event not loaded yet"
+    line = f"matches {progress.matches_played}/{progress.matches_total} played"
+    if newly_played:
+        line += f" (+{newly_played} new)"
+    if progress.finals_total:
+        line += f", finals {progress.finals_played}/{progress.finals_total}"
+    return line
+
+
+def parse_duration(value: str) -> float:
+    """Parse a duration such as '90', '30m', '8h', or '2d' into seconds.
+
+    A bare number is seconds. Units exist because the one duration this CLI
+    takes is a multi-hour runaway guard, where '8' meaning eight seconds would
+    be a silent foot-gun.
+    """
+    match = _DURATION_PATTERN.match(value.strip())
+    if match is None:
+        raise argparse.ArgumentTypeError(
+            f"invalid duration {value!r}: use seconds, or a number with s/m/h/d (e.g. 8h)"
+        )
+    amount, unit = match.groups()
+    seconds = float(amount) * _DURATION_UNITS[(unit or "s").lower()]
+    if seconds <= 0:
+        raise argparse.ArgumentTypeError(f"duration must be positive, got {value!r}")
+    return seconds
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Command-line entry point: sync one event, or a whole season, end to end."""
+    """Command-line entry point: sync one event, a whole season, or watch a live event."""
     parser = argparse.ArgumentParser(
-        description="Run the StratAI ingestion pipeline for one event or a whole season.",
+        description="Run the StratAI ingestion pipeline for one event, a whole season, "
+                    "or continuously for one live event.",
     )
     parser.add_argument("event_key", nargs="?", help="TBA event key, e.g. 2025casj")
     parser.add_argument(
@@ -629,10 +1143,47 @@ def main(argv: list[str] | None = None) -> int:
         help=f"Pause between events in a season sync (default {DEFAULT_EVENT_DELAY_SECONDS}). "
              "Ignored for a single event.",
     )
+    parser.add_argument(
+        "--watch", metavar="EVENT_KEY",
+        help="Keep one event fresh during live play: re-sync it on an interval until the "
+             "event is over, e.g. --watch 2025casj. Stops on its own once the finals are "
+             "complete; Ctrl-C stops it cleanly at any time.",
+    )
+    watch_group = parser.add_argument_group("watch options (used with --watch)")
+    watch_group.add_argument(
+        "--interval", type=float, default=DEFAULT_WATCH_INTERVAL_SECONDS, metavar="SECONDS",
+        help=f"Seconds between polls (default {DEFAULT_WATCH_INTERVAL_SECONDS:.0f}).",
+    )
+    watch_group.add_argument(
+        "--max-interval", type=float, default=DEFAULT_WATCH_MAX_INTERVAL_SECONDS, metavar="SECONDS",
+        help=f"Ceiling the interval backs off to while nothing is changing "
+             f"(default {DEFAULT_WATCH_MAX_INTERVAL_SECONDS:.0f}).",
+    )
+    watch_group.add_argument(
+        "--statbotics-interval", type=float, default=DEFAULT_STATBOTICS_INTERVAL_SECONDS,
+        metavar="SECONDS",
+        help=f"Seconds between Statbotics refreshes, which cost one request per team "
+             f"(default {DEFAULT_STATBOTICS_INTERVAL_SECONDS:.0f}).",
+    )
+    watch_group.add_argument(
+        "--settle-polls", type=int, default=DEFAULT_SETTLE_POLLS, metavar="N",
+        help=f"Extra polls after the event first looks complete, to catch post-finals score "
+             f"corrections (default {DEFAULT_SETTLE_POLLS}).",
+    )
+    watch_group.add_argument(
+        "--max-failures", type=int, default=DEFAULT_MAX_FAILURES, metavar="N",
+        help=f"Consecutive failed polls before giving up (default {DEFAULT_MAX_FAILURES}).",
+    )
+    watch_group.add_argument(
+        "--max-duration", type=parse_duration, default=None, metavar="DURATION",
+        help="Optional runaway guard, e.g. 8h or 90m. Off by default: the finals and "
+             "calendar stop conditions already end the watch.",
+    )
     args = parser.parse_args(argv)
 
-    if (args.event_key is None) == (args.season is None):
-        parser.error("give either an event_key or --season YEAR, not both and not neither")
+    modes = [args.event_key is not None, args.season is not None, args.watch is not None]
+    if sum(modes) != 1:
+        parser.error("give exactly one of an event_key, --season YEAR, or --watch EVENT_KEY")
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     settings = Settings()
@@ -648,6 +1199,20 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 _print_season_summary(season)
                 return 0
+            if args.watch is not None:
+                watch = watch_event(
+                    args.watch, database=database, tba=tba, statbotics=statbotics,
+                    interval_seconds=args.interval,
+                    max_interval_seconds=args.max_interval,
+                    statbotics_interval_seconds=args.statbotics_interval,
+                    settle_polls=args.settle_polls,
+                    max_failures=args.max_failures,
+                    max_duration_seconds=args.max_duration,
+                )
+                _print_watch_summary(watch)
+                # Only a watch that gave up on repeated failures is an error; a
+                # completed event and a Ctrl-C are both successful outcomes.
+                return 1 if watch.stopped_on_failures else 0
             result = sync_event(args.event_key, database=database, tba=tba, statbotics=statbotics)
     finally:
         if statbotics is not None:
@@ -678,6 +1243,29 @@ def _print_season_summary(season: SeasonResult) -> None:
         print(f"  {len(season.failures)} event(s) FAILED:")
         for event_key, error in season.failures:
             print(f"    {event_key}: {error}")
+
+
+def _print_watch_summary(watch: WatchResult) -> None:
+    """Print a watch's totals and why it stopped."""
+    print(
+        f"watch {watch.event_key}: {watch.polls} poll(s) in {watch.elapsed_seconds:.1f}s "
+        f"({watch.successes} ok, {watch.failures} failed)"
+    )
+    print(f"  landed={watch.landed}")
+    print(f"  loaded={watch.loaded}  (total {watch.records_loaded})")
+    if watch.progress is not None:
+        print(
+            f"  matches={watch.progress.matches_played}/{watch.progress.matches_total} played "
+            f"(+{watch.matches_newly_played} while watching), "
+            f"finals={watch.progress.finals_played}/{watch.progress.finals_total}"
+        )
+    if watch.statbotics_skipped_reason:
+        print(f"  statbotics SKIPPED for the whole watch: {watch.statbotics_skipped_reason}")
+    elif watch.statbotics_polls:
+        print(f"  statbotics refreshed on {watch.statbotics_polls} of {watch.polls} poll(s)")
+    print(f"  stopped: {watch.stop_reason}")
+    if watch.last_error and not watch.stopped_on_failures:
+        print(f"  last error seen (recovered): {watch.last_error}")
 
 
 if __name__ == "__main__":
