@@ -204,7 +204,40 @@ def test_write_handles_empty_dict_payload(monkeypatch):
     assert cursors[0].executed[1][1][4].obj == {}
 
 
-@pytest.mark.skip("Requires local PostgreSQL database and valid DATABASE_URL")
+# ===========================================================================
+# Integration tests: real dedup/versioning behaviour against the actual schema.
+# Auto-skips when no PostgreSQL is reachable via the configured DATABASE_URL.
+#
+# Both tests below run against the *real* configured database and clean up by
+# `source`. That is safe here only because `test_source` and `race_test` are
+# values no connector can ever emit -- `source_name` is a ClassVar fixed to
+# "tba" (data/clients/tba.py) or "statbotics" (data/clients/statbotics.py), so
+# these deletes cannot match an ingested row. Cleaning up by `source` alone is
+# NOT safe for a real source name: `raw_source_payloads` is the parent of two
+# ON DELETE CASCADE foreign keys (0007), and every real row carries one of the
+# two real sources, so such a delete takes the whole landing layer plus all
+# lineage and quality issues with it. See tests/test_raw_writer_statbotics.py,
+# where that had to be scoped by `source_object_id` instead.
+# ===========================================================================
+
+
+def _database_available() -> bool:
+    try:
+        import psycopg
+
+        with psycopg.connect(str(Settings().database_url), connect_timeout=3):
+            return True
+    except Exception:
+        return False
+
+
+requires_db = pytest.mark.skipif(
+    not _database_available(),
+    reason="Requires a reachable PostgreSQL database via DATABASE_URL",
+)
+
+
+@requires_db
 def test_raw_writer_end_to_end_against_real_database():
     """Integration check: real dedup/versioning behavior against the actual schema."""
     settings = Settings()
@@ -250,7 +283,7 @@ def test_raw_writer_end_to_end_against_real_database():
         cursor.execute("DELETE FROM raw_source_payloads WHERE source = %s", ("test_source",))
 
 
-@pytest.mark.skip("Requires local PostgreSQL database and valid DATABASE_URL")
+@requires_db
 def test_concurrent_writes_of_different_new_versions_leave_exactly_one_current_row():
     """Regression test for a real race found in Milestone 5 acceptance review.
 
