@@ -28,10 +28,9 @@ consume is complete, deduplicated, validated, traceable to its source, and safe 
 re-sync at any time.
 
 Sources: [The Blue Alliance](https://www.thebluealliance.com/apidocs) (events, matches,
-teams) and [Statbotics](https://www.statbotics.io/) (EPA-based team-event metrics — the
-client is correct as of 2026-07-25, but no EPA data has yet reached the canonical tables
-because Statbotics's API is returning 500s; see
-[§9.1](#91-statbotics-client-fixed-live-confirmation-still-pending-their-outage)).
+teams) and [Statbotics](https://www.statbotics.io/) (EPA-based team-event metrics — flowing
+into the canonical tables and confirmed against a live response on 2026-08-01; see
+[§9.1](#91-statbotics-epa-confirmed-live-resolved-2026-08-01)).
 
 ---
 
@@ -123,7 +122,7 @@ What one `sync_event("2024casj")` actually does, in order:
    - Each connector returns `SourceResponse(raw, parsed)`. The pipeline lands `raw` —
      the source's untouched response body, every field included — and uses `parsed`
      only for control flow (reading a team number to look up its metrics, for
-     instance). See [§9.3](#93-what-lands-is-the-untouched-response-body).
+     instance). See [§9.3](#93-what-lands-is-the-untouched-response-body--resolved-2026-07-25).
 
 2. **Land** — `pipeline.land` → `RawPayloadWriter.write_many`
    Each payload is checksummed and inserted into `raw_source_payloads`. Unchanged
@@ -163,7 +162,7 @@ What one `sync_event("2024casj")` actually does, in order:
 
 ## 4. Schema reference
 
-11 tables. Migrations are listed in [§8.4](#84-migrations).
+11 tables. Migrations are listed in [§8.6](#86-migrations).
 
 #### `raw_source_payloads`
 
@@ -433,7 +432,8 @@ venv/bin/python database/verify_db.py
 venv/bin/python -m data.orchestrator 2024casj
 ```
 
-Real output from this repository (abbreviated):
+Real output from this repository (abbreviated) — **captured 2026-07-24, during the
+Statbotics outage**, which is why every Statbotics count is zero:
 
 ```text
 INFO data.pipeline: Extracted event 2024casj: event=1, team=42, match=93, team_event=0
@@ -444,10 +444,10 @@ INFO data.lineage: Recorded lineage for 136 canonical entity version(s) in run 1
 run 108: landed={...} loaded={...} skipped=0 issues=42 (fatal=0) lineage=136 extraction_errors=42
 ```
 
-**Expect the Statbotics warnings.** `team_event=0`, `team_event_stats: 0`, and one
-`extraction_failure` warning per team are the current normal state — see
-[§9.1](#91-statbotics-client-fixed-live-confirmation-still-pending-their-outage). The TBA half of the pipeline is
-fully working. Add `--no-statbotics` to skip those calls entirely and silence the noise.
+**Those zeros are no longer what to expect.** Statbotics recovered on 2026-08-01
+([§9.1](#91-statbotics-epa-confirmed-live-resolved-2026-08-01)), so a run today should
+populate `team_event=42` and `team_event_stats: 42` for this event and emit no
+`extraction_failure` warnings. Add `--no-statbotics` to skip those calls entirely.
 
 Run it again and it should report all zeros — that is the idempotence guarantee from
 [§5](#5-incremental-state) working:
@@ -465,7 +465,7 @@ venv/bin/python -m pytest -q
 
 Expected: **all tests pass, 3 skipped.** No `--deselect` flag is needed — earlier versions
 of this document told you to skip one config test, which was fixed on 2026-07-25
-([§9.2](#92-known-failing-config-test)).
+([§9.2](#92-known-failing-config-test--resolved-2026-07-25)).
 
 The 3 skips are integration tests that self-skip when no database is reachable via
 `DATABASE_URL`; with a working database they run.
@@ -626,11 +626,17 @@ Migrations are plain SQL applied in filename order and recorded in `migrations_a
 
 ## 9. Known issues and limitations
 
-### 9.1 Statbotics client fixed; live confirmation still pending their outage
+### 9.1 Statbotics EPA confirmed live (RESOLVED 2026-08-01)
 
-**Fixed on 2026-07-25.** The client was pointed at `api.statbotics.org`, a host that
-**does not resolve at all**, so every lookup failed with a DNS error and
-`team_event_stats` was never populated. Two things were wrong and both are corrected:
+**Resolved.** EPA data now reaches the canonical tables. Statbotics's API recovered from
+the outage that had returned HTTP 500 on every `/v3/*` endpoint, and a real sync loaded
+**75 `team_event_stats` rows for `2024new`**, every lookup 200 OK. Spot-checked against the
+live API, team 254's stored row matches field for field: `epa_total` 55.07, `epa_auto`
+15.99, `epa_teleop` 32.48, `epa_endgame` 6.6, 14-1-0, 15 played.
+
+**The 2026-07-25 fix was correct and needed no revision.** The client had been pointed at
+`api.statbotics.org`, a host that does not resolve at all, so every lookup failed with a DNS
+error and `team_event_stats` was never populated. Two things were wrong; both were fixed:
 
 | | Before | Now |
 |---|---|---|
@@ -638,59 +644,65 @@ Migrations are plain SQL applied in filename order and recorded in `migrations_a
 | Paths | `/team_event/{team}/{event}`, `/matches?event=` | unchanged — these were already right |
 | Response shape | flat `epa_total`, `epa_auto`, `wins`, … | nested `epa.total_points`, `epa.breakdown.auto_points`, `record.total.wins`, … flattened by `StatboticsTeamEventMetrics` |
 
+Because no live response could be captured during the outage, that nested shape was
+inferred from Statbotics's published response serializer. **The capture on 2026-08-01
+confirmed the inference exactly: all 61 leaf paths matched, with no key added, removed,
+renamed or re-nested and no type changed.** No production code changed as a result.
+`tests/fixtures/statbotics_team_event_2024casj.json` is now a verbatim live capture,
+labelled `CAPTURED FROM LIVE API`, and
+`tests/test_statbotics_client.py::test_model_matches_recorded_statbotics_response` validates
+the client model against it.
+
 The nesting is absorbed in the response models (`data/clients/schemas.py`), so the client,
-the staging normalizer, and `team_event_stats` all still work in flat fields — one place
-knows the source's structure.
+the staging normalizer, and `team_event_stats` all work in flat fields — one place knows the
+source's structure.
 
-**What is still unverified.** Statbotics's API was returning HTTP 500 for every
-`/v3/*` endpoint throughout the fix — from their own infrastructure (`Google Frontend`,
-`x-cloud-trace-context`), with their root path flapping between 200 and 500. So the
-corrected shape is derived from Statbotics's published response serializer, **not captured
-from a live response**, and `team_event_stats` is **still empty after a real run**:
+#### Statbotics returns HTTP 500, not 404, for a team-event that does not exist
 
-```text
-run 248: ... loaded={'teams': 0, 'events': 0, 'matches': 0, 'team_event_stats': 0} extraction_errors=42
-WARNING data.pipeline: Statbotics metrics unavailable for team 987 at 2024casj:
-  Server error '500 Internal Server Error' for url 'https://api.statbotics.io/v3/team_event/987/2024casj'
+This is a trap worth knowing, and it made the outage look broader than it was. Asking for a
+team at an event it never attended does not 404 — it returns **HTTP 500 with a `{}` body**,
+indistinguishable at a glance from the infrastructure outage:
+
+```console
+$ curl -s -o /dev/null -w '%{http_code}\n' https://api.statbotics.io/v3/team_event/254/2024casj
+500     # team 254 never attended 2024casj — still 500s today, with their API perfectly healthy
 ```
 
-That the failure changed from `[Errno -2] Name or service not known` to an HTTP 500 from
-`api.statbotics.io` is itself the evidence the client now reaches the real service.
+**So a health check must use a pairing you know is valid**, or a healthy API will look
+broken forever. Two verified-good pairings:
 
-**To confirm once their API recovers:** run
-`venv/bin/python -m data.orchestrator 2024casj` and check that `team_event_stats` gains a
-row per attending team. If the live shape differs from what was inferred,
-`tests/test_statbotics_client.py::test_model_matches_recorded_statbotics_response` is the
-test that should fail — re-record
-`tests/fixtures/statbotics_team_event_2024casj.json` from the real response (its
-`_fixture_provenance` block explains how).
+```bash
+# Is Statbotics up? 254 did attend 2024new (Newton Division).
+curl -s -o /dev/null -w '%{http_code}\n' https://api.statbotics.io/v3/team_event/254/2024new   # -> 200
 
-What *is* proven: the real nested shape flows end to end. The integration tests in
-`tests/test_pipeline.py` and `tests/test_data_quality.py` feed nested Statbotics payloads
-through landing, staging, and serving against a real database and assert the resulting
-`team_event_stats` rows, including `matches_played`.
+# The pairing recorded in the test fixture: 1678 did attend 2024casj.
+curl -s -o /dev/null -w '%{http_code}\n' https://api.statbotics.io/v3/team_event/1678/2024casj # -> 200
+```
 
-The pipeline's graceful degradation held throughout: 42 failed Statbotics lookups never
-prevented the 136 TBA records from loading.
+Confirm a team's real event list before trusting any such pairing —
+`curl 'https://api.statbotics.io/v3/team_events?team=254&year=2024'` lists them. Note that
+1678/**2024new** is *not* valid (1678 was in Archimedes, not Newton) even though
+1678/2024casj and 254/2024new both are. An endpoint-level check that avoids the problem
+entirely is `curl https://api.statbotics.io/v3/event/2024casj`, which needs no team.
 
-**New evidence (2026-07-28 audit): `epa_total` may be an oversimplification, not just an
-unconfirmed field name.** `api.statbotics.io` still returns HTTP 500 on every `/v3/*`
-endpoint (`curl https://api.statbotics.io/v3/team_event/254/2024casj` → `{}`, HTTP 500), so
-the live REST shape remains unverified. Its OpenAPI schema (`/openapi.json`, reachable even
-while the data endpoints 500) confirms the endpoint *paths* but declares the response as
-`additionalProperties: true` with no field-level schema, so it cannot confirm or refute the
-nesting either. However, Statbotics's own archived bulk data
-(`avgupta456/statbotics-csvs`, `v2/team_events.csv`) shows EPA is tracked as a **time series
-per event**, not one number: `epa_start`, `epa_pre_playoffs`, `epa_end`, `epa_mean`,
-`epa_max` (and the same five suffixes for the auto/teleop/endgame breakdowns). This is a
-bulk-export format, not necessarily identical to the REST API's JSON keys, so it does not
-prove the live shape is wrong — but it is concrete evidence that "one epa_total value"
-is a real modeling question, not just a naming one: `StagingTeamEventStats.epa_total`
-does not currently say which of start/pre_playoffs/end/mean/max (or a live-computed
-"current" value) it represents. **When the live API recovers, confirm not just the field
-names but which underlying value `epa_total` should be** — most likely `epa_end` (EPA as of
-the end of that specific event) is the intended semantic for a *team-event* metric, but this
-has not been confirmed against a real response and should not be assumed.
+Earlier revisions of this document told readers to run
+`curl https://api.statbotics.io/v3/team_event/254/2024casj` to decide whether the outage was
+over. That command can never return 200, and is corrected above.
+
+#### What `epa_total` holds: EPA at the end of the event
+
+The 2026-07-28 audit found Statbotics's archived bulk CSVs (`avgupta456/statbotics-csvs`,
+`v2/team_events.csv`) track EPA as a **time series per event** — `epa_start`,
+`epa_pre_playoffs`, `epa_end`, `epa_mean`, `epa_max` — and flagged that
+`StagingTeamEventStats.epa_total` did not say which of them it held. The live API settles it:
+`epa.stats` exposes only `start`, `pre_elim`, `mean` and `max` — there is **no `end` key** —
+and top-level `epa.total_points` differs from all four for **42 of 42** teams at 2024casj.
+
+`epa.total_points` is therefore the end-of-event value, which is the correct semantic for a
+*team-event* metric. The existing mapping was already right; nothing changed.
+
+The pipeline's graceful degradation held throughout the outage: 42 failed Statbotics lookups
+never prevented the 136 TBA records from loading.
 
 ### 9.2 Known failing config test — RESOLVED 2026-07-25
 
@@ -821,6 +833,6 @@ rejection/retry machinery.
 ### Adding a migration
 
 Create `database/migrations/0008_<name>.sql`, keeping it additive where possible, and run
-`database/migrate.py`. Then update [§8.4](#84-migrations) and the schema reference in
+`database/migrate.py`. Then update [§8.6](#86-migrations) and the schema reference in
 [§4](#4-schema-reference) — `tests/test_docs_contract.py` fails if a table exists in the
 database but is not documented here, or vice versa.
