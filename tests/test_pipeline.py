@@ -188,6 +188,27 @@ def test_extract_event_backfills_teams_missing_from_the_event_team_list():
     assert result.errors == []
 
 
+def test_extract_event_never_backfills_the_unassigned_roster_placeholder():
+    # frc0 is TBA's "roster not assigned yet" marker, not a team, so looking it
+    # up can only 404. Before this was excluded, every run of an affected event
+    # fetched /team/frc0, failed, and recorded a fresh extraction_failure
+    # warning for a team that does not exist and never will.
+    unassigned = raw_match(alliances={
+        "red": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+        "blue": {"score": -1, "team_keys": ["frc0", "frc0", "frc0"]},
+    })
+    tba = FakeTBAClient(matches=[raw_match(), unassigned])
+    result = pipeline.extract_event(S_EVENT, tba=tba)
+
+    assert tba.team_info_calls == []
+    assert result.errors == []
+    # A genuinely missing real team is still backfilled -- the exclusion is the
+    # placeholder alone, not roster backfill in general.
+    tba = FakeTBAClient(matches=[raw_match(), unassigned], teams=raw_teams()[:5])
+    pipeline.extract_event(S_EVENT, tba=tba)
+    assert tba.team_info_calls == [998006]
+
+
 def test_extract_event_records_backfill_failure_without_aborting():
     class NoTeamLookupTBAClient(FakeTBAClient):
         def fetch_team_info(self, team_number: int) -> SourceResponse[TeamInfo]:

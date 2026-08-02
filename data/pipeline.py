@@ -64,7 +64,7 @@ from data.staging import (
     normalize_team_event_stats,
 )
 from data.staging.quality import QualityContext, QualityIssue, check_entity, issues_from_validation_error
-from data.staging.validator import tba_alliance_team_keys
+from data.staging.validator import is_unassigned_team_key, tba_alliance_team_keys
 from database.connection import Database
 
 logger = logging.getLogger(__name__)
@@ -187,14 +187,20 @@ def _team_number_from_key(team_key: str) -> int | None:
 
 
 def _roster_team_keys(match_payloads: Iterable[dict[str, Any]]) -> list[str]:
-    """Collect every team key appearing on any alliance, deduplicated, in order."""
+    """Collect every real team key appearing on any alliance, deduplicated, in order.
+
+    TBA's unassigned-roster placeholder (frc0) is excluded: it names no team, so
+    backfilling it can only ever 404. Left in, it did exactly that on every
+    single run of an affected event, recording a fresh extraction_failure
+    warning each time for a team that does not exist and never will.
+    """
     seen: dict[str, None] = {}
     for payload in match_payloads:
         alliances = payload.get("alliances") or {}
         for color in ("red", "blue"):
             alliance = alliances.get(color) or {}
             for team_key in tba_alliance_team_keys(alliance) or []:
-                if isinstance(team_key, str):
+                if isinstance(team_key, str) and not is_unassigned_team_key(team_key):
                     seen.setdefault(team_key, None)
     return list(seen)
 
