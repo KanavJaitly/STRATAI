@@ -85,6 +85,15 @@ class StagingMatch(BaseModel):
     `winning_alliance` is one of "red", "blue", "tie", or None (not yet
     played) -- collapsing TBA's ambiguous empty-string convention (which
     conflates "not played" and "tie") into a single unambiguous enum.
+
+    `red_score` / `blue_score` are None for a match that has not been played
+    yet, and are always both None or both set -- never one of each. TBA marks
+    an unplayed match with a score of -1 on both alliances; the normalizer
+    resolves that sentinel to None rather than storing it, so a consumer can
+    treat "score IS NULL" as a reliable test for "no result yet" and does not
+    have to know about -1 at all. A scheduled unplayed match is a valid,
+    fully-loaded record with a real roster and scheduled_time; anything
+    computing over results must filter these out explicitly.
     """
 
     match_key: str

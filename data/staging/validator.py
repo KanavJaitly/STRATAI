@@ -38,6 +38,15 @@ _TBA_EVENT_KEY_PATTERN = re.compile(r"^\d{4}")
 # would fail validation on real, legitimate TBA data, not just malformed input.
 _TBA_TEAM_KEY_PATTERN = re.compile(r"^frc\d+[a-zA-Z]?$")
 _VALID_RAW_WINNING_ALLIANCES = ("", "red", "blue")
+# TBA publishes a scheduled-but-not-yet-played match with score -1 on both
+# alliances, alongside winning_alliance "", actual_time null, and a null
+# score_breakdown. It is a sentinel meaning "no result yet", NOT a score: a
+# real FRC alliance score is never negative. Deliberately not rejected by this
+# module -- structurally it is a perfectly valid integer, and interpreting it
+# is the normalizer's job (see data.staging.normalizer, which maps it to a
+# NULL score and a NULL winner). Anything else negative is genuine corruption
+# and is rejected by data.staging.quality.
+TBA_UNPLAYED_ALLIANCE_SCORE = -1
 _STRICT_ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
