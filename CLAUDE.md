@@ -136,6 +136,18 @@ Predictions should:
 ## Current Development Phase
 
 Current Phase:
+Phase 3 – Metrics and analytics (underway)
+
+Phase 3 progress:
+
+* Milestone 1 (Kanav): canonical metric models in data/metrics/schemas.py —
+  ScoringProfile, DefenseFeedingProfile, ScoutingObservation, TeamMetrics.
+* Milestone 2 (Sven, 2026-08-02): database schema for metrics and scouting
+  observations — 0008_metrics_schema.sql creates scouting_observations and
+  team_metrics. Schema only; no computation logic, and nothing writes either
+  table yet. See docs/data_pipeline.md section 4.1.
+* Milestone 3 onward (computation) not started.
+
 Phase 2 – Data Pipeline (complete, Milestones 1-10)
 
 Phase 2 delivered:
@@ -160,8 +172,10 @@ No open blockers. The Statbotics base-URL issue previously recorded here was
 fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
 team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
-Next Phase:
-Phase 3 – Metrics and analytics (not started).
+Next Milestone:
+Phase 3 Milestone 3 onward – the computation milestones (statistics functions,
+match-history retrieval, scouting validation/normalization, aggregation policy,
+metrics computation pipeline).
 
 ---
 

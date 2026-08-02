@@ -23,7 +23,10 @@ against the migration files, the code, and a live run.
 
 Phase 2 ingests FRC competition data from external sources into a PostgreSQL database
 shaped for later metrics and ML work. It does **not** compute metrics, predictions, or
-pick lists — that is Phase 3 onward. What it guarantees is that the data those phases
+pick lists — that is Phase 3 onward. Phase 3 has since added two **empty** tables to the
+same database (`scouting_observations`, `team_metrics`, via `0008`); no pipeline described
+in this document reads or writes them, and they are covered only in
+[§4.1](#41-phase-3-metrics-tables-schema-only). What it guarantees is that the data those phases
 consume is complete, deduplicated, validated, traceable to its source, and safe to
 re-sync at any time.
 
@@ -162,7 +165,13 @@ What one `sync_event("2024casj")` actually does, in order:
 
 ## 4. Schema reference
 
-11 tables. Migrations are listed in [§8.6](#86-migrations).
+13 tables. Migrations are listed in [§8.6](#86-migrations).
+
+The last two — `scouting_observations` and `team_metrics` — are **Phase 3 tables, created
+empty by `0008` and not written by anything yet**. They are documented here because this
+is the schema reference and the contract tests require every table in the database to
+appear in it, not because the Phase 2 pipeline touches them. See
+[§4.1](#41-phase-3-metrics-tables-schema-only).
 
 #### `raw_source_payloads`
 
@@ -286,6 +295,121 @@ Audit trail from a canonical row back to the raw payload it was built from (`000
 
 Created by `database/migrate.py` (not by a migration file). **PK** `migration_file`,
 plus `applied_at`.
+
+### 4.1 Phase 3 metrics tables (schema only)
+
+Created by `0008_metrics_schema.sql`. **Both are empty and nothing writes them yet** — the
+statistics functions, the scouting validator/normalizer, the aggregation policy, and the
+metrics computation pipeline are later Phase 3 milestones. The tables exist now so that
+the storage shape is fixed before any of that logic is written, for the same reason
+Milestone 1 fixed the model shape first.
+
+Every column in both tables is a field of a model in `data/metrics/schemas.py`, under its
+own name, with two marked exceptions. The `CHECK` constraints are transcriptions of that
+module's pydantic `model_validator`s rather than new policy, so a row those models would
+refuse to construct cannot be stored either.
+
+#### `scouting_observations`
+
+One scout's (or ScoutRadioz's) direct assessment of one team in one match —
+`ScoutingObservation`, one row per model instance. **This is the source of truth for
+defense and feeding**; there is deliberately no path anywhere from match scores to a
+defense or feeding number.
+
+- **PK** `id` (BIGSERIAL — *not* a model field; a surrogate key, since the natural key is
+  the composite below, as with `match_teams` and `canonical_lineage`)
+- **Unique** `(match_key, team_number, scout_identifier, source)` — one scout rates one
+  team in one match once per source; a resubmission updates that row rather than adding a
+  second opinion
+- **FKs** → `matches(match_key)`, → `teams(team_number)`, → `events(event_key)`, all with
+  **no ON DELETE action** (matching `match_teams`/`team_event_stats`)
+- **FK** `raw_payload_id` → `raw_source_payloads(id)` **ON DELETE SET NULL** — *not* a
+  model field; lineage back to the payload an observation arrived in. Nullable, because an
+  observation submitted directly to StratAI never passes through the landing layer
+- `defense_rating`, `feeding_rating` (INT `0`–`5`, either may be NULL but **not both** —
+  `CHECK`), `notes`, `submitted_at`
+- **`0` is a real rating** ("confirmed no defense/feeding observed"), never a
+  missing-data sentinel
+- `event_key` is **denormalized** from `match_key` (derivable via `matches.event_key`)
+  because "every observation for this event" is the expected dominant access pattern.
+  Agreement between the two is deliberately **not** enforced here — that is a
+  raw-payload validation concern for a later milestone
+- `scout_identifier` is **free text, not a foreign key**. There is no scouting
+  user-identity system in Phase 3; nothing prevents spoofing or duplicate scout names.
+  A documented MVP limitation
+- The `0`–`5` bounds are hardcoded in SQL (it cannot import `MIN_RATING`/`MAX_RATING`), so
+  changing the rating scale requires a migration
+
+**Why `SET NULL` and not `CASCADE` on `raw_payload_id`:** `0007` sets two precedents — a
+purely subordinate audit row cascades (`canonical_lineage.raw_payload_id`), while a
+provenance pointer hanging off a row that must outlive it is set null
+(`canonical_lineage.pipeline_run_id`). Observations are the second case, and are the only
+irreplaceable data in the system: every other table is re-fetchable from TBA or Statbotics,
+but a human's rating of a match played three weeks ago is not. Purging a raw payload —
+which integration teardown does — must never take scouting data with it. Losing the
+provenance pointer is recoverable; losing the observation is not.
+
+#### `team_metrics`
+
+The complete served metrics object for one team at one event — `TeamMetrics`, the literal
+answer to Phase 3's Definition of Done.
+
+- **PK** `(team_number, event_key)` composite — the same keying as `team_event_stats`
+- **FKs** → `teams(team_number)`, → `events(event_key)`, no ON DELETE action
+- **Index** on `event_key`. There is deliberately **no** `team_number` index: the PK
+  already covers it on its leading column, exactly as `0005` records for `team_event_stats`
+- `season`, `computed_at`
+- From `ScoringProfile`: `matches_scheduled`, `matches_used` (both NOT NULL), plus nullable
+  `average_score`, `score_stddev`, `consistency_rating`, `reliability_score`,
+  `good_day_count`, `average_day_count`, `bad_day_count`
+- From `DefenseFeedingProfile`: `defense_score`, `defense_observation_count`,
+  `defense_agreement`, `defense_insufficient_data`, the same four for `feeding_*`, and
+  `contributing_sources` TEXT[]
+
+**`TeamMetrics` composes two sub-models; the table flattens them.** The nesting is
+fixed-arity — exactly one `ScoringProfile` and one `DefenseFeedingProfile`, never optional,
+never a list — and the two share no field names, so every column keeps its model name
+unprefixed and reassembly is mechanical. JSONB would have made the column types and the
+constraints below unenforceable; separate tables would have turned one upsert into two
+writes for no gain. **The served object stays composed; only its storage is flat** — the
+same split `StagingMatch` already makes when it flattens TBA's alliance nesting into
+`score_red`/`score_blue`.
+
+**A current-state snapshot, upserted in place** — not an append-only history, consistent
+with `team_event_stats`. Recomputing during a live event overwrites the previous value.
+"What did we know as of match 5" is answered by replaying the pipeline against a historical
+cut of the already-versioned `raw_source_payloads`, not by storing every intermediate
+snapshot.
+
+**Naming:** the Phase 3 roadmap calls for a `last_computed_at` column; the model's field is
+`computed_at`, and that is the name used. Since the row is upserted in place, the timestamp
+of the computation that produced it *is* the last-computed time — the two names describe
+the same column, and the model's spelling keeps every column traceable to a model field.
+
+**How "no data" is represented**, mirroring the models exactly — the two tracks use
+different mechanisms and the schema does not unify them:
+
+- **`ScoringProfile` has no flag.** `matches_used` *is* the signal, and NULL always means
+  "not computed" for a reason it determines: `0` means there is no data at all (every value
+  column NULL); `1` means variance is undefined for one sample (`average_score` may be set,
+  but `score_stddev`, `consistency_rating`, `reliability_score` and the day counts are
+  NULL). `CHECK`s enforce both, plus `matches_used <= matches_scheduled` and the day counts
+  being all-set-or-all-NULL and summing to `matches_used`
+- **`DefenseFeedingProfile` has explicit flags.** `defense_score` is non-NULL **if and only
+  if** `defense_insufficient_data` is false, and zero observations force the flag (same for
+  feeding). This is load-bearing for *"defense/feeding scores = directly measured, NOT
+  inferred"*: a confident-looking score built on no observations is not merely rejected by
+  the model, it is **unstorable**
+- `contributing_sources` is empty if and only if both tracks are insufficient — if either
+  produced a real score, at least one source must be named as having produced it
+
+`average_score` and `score_stddev` are bounded below by `0` but deliberately **not above**:
+a future game could score higher than anything seen so far, and a hard ceiling would
+eventually reject real data — the reasoning that rejected an invented EPA tolerance in
+Milestone 9. The float columns are `DOUBLE PRECISION` rather than `team_event_stats`'
+`NUMERIC`, because the models declare them as `float` and psycopg3 returns `NUMERIC` as
+`Decimal`; nothing recomputes from `team_event_stats` yet, but this table is read back and
+reassembled into a model on every access.
 
 ---
 
@@ -678,10 +802,11 @@ DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 | `0005_canonical.sql` | Re-keys the canonical layer to `team_number`; composite PK on `team_event_stats` |
 | `0006_pipeline_run_scope.sql` | `pipeline_runs.scope_key`, `pipeline_runs.stage_counts` |
 | `0007_data_quality_lineage.sql` | `data_quality_issues.raw_payload_id`/`field` + cascades; creates `canonical_lineage` |
+| `0008_metrics_schema.sql` | Phase 3 M2: creates `scouting_observations` and `team_metrics` (schema only, nothing writes them yet) |
 
 Migrations are plain SQL applied in filename order and recorded in `migrations_applied`.
 **There is no Alembic and none should be added.** To add one, create
-`database/migrations/0008_<name>.sql` and run `database/migrate.py`.
+`database/migrations/0009_<name>.sql` and run `database/migrate.py`.
 
 ### 8.7 Watching a live event
 
@@ -1103,7 +1228,7 @@ rejection/retry machinery.
 
 ### Adding a migration
 
-Create `database/migrations/0008_<name>.sql`, keeping it additive where possible, and run
+Create `database/migrations/0009_<name>.sql`, keeping it additive where possible, and run
 `database/migrate.py`. Then update [§8.6](#86-migrations) and the schema reference in
 [§4](#4-schema-reference) — `tests/test_docs_contract.py` fails if a table exists in the
 database but is not documented here, or vice versa.
