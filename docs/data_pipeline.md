@@ -90,7 +90,7 @@ loading is idempotent by construction.
 | `data/serving/repository.py` | `CanonicalRepository` — upsert loaders, FK-safe ordering |
 | `data/lineage.py` | `LineageStore` — canonical row ↔ raw payload provenance |
 | `data/pipeline.py` | The four stages as independent functions |
-| `data/orchestrator.py` | Run bookkeeping, watermarks, `sync_event`, CLI entry point |
+| `data/orchestrator.py` | Run bookkeeping, watermarks, `sync_event`, its `sync_season` / `watch_event` wrappers, CLI entry point |
 | `database/connection.py` | `Database` — context-managed psycopg3 connections/cursors |
 | `database/migrate.py` | Applies `migrations/*.sql` in sorted order |
 | `database/verify_db.py` | Asserts every expected table exists |
@@ -519,22 +519,46 @@ venv/bin/python -m data.orchestrator --help
 
 ```text
 usage: orchestrator.py [-h] [--season YEAR] [--no-statbotics]
-                       [--delay SECONDS]
+                       [--delay SECONDS] [--watch EVENT_KEY]
+                       [--interval SECONDS] [--max-interval SECONDS]
+                       [--statbotics-interval SECONDS] [--settle-polls N]
+                       [--max-failures N] [--max-duration DURATION]
                        [event_key]
 
 positional arguments:
-  event_key        TBA event key, e.g. 2025casj
+  event_key             TBA event key, e.g. 2025casj
 
 options:
-  --season YEAR    Sync every official event of a season in chronological
-                   order, e.g. --season 2024. Offseason and preseason events
-                   are excluded.
-  --no-statbotics  Skip Statbotics EPA metrics (TBA data only).
-  --delay SECONDS  Pause between events in a season sync (default 0.5).
-                   Ignored for a single event.
+  --season YEAR         Sync every official event of a season in chronological
+                        order, e.g. --season 2024. Offseason and preseason
+                        events are excluded.
+  --no-statbotics       Skip Statbotics EPA metrics (TBA data only).
+  --delay SECONDS       Pause between events in a season sync (default 0.5).
+                        Ignored for a single event.
+  --watch EVENT_KEY     Keep one event fresh during live play: re-sync it on
+                        an interval until the event is over, e.g. --watch
+                        2025casj. Stops on its own once the finals are
+                        complete; Ctrl-C stops it cleanly at any time.
+
+watch options (used with --watch):
+  --interval SECONDS    Seconds between polls (default 120).
+  --max-interval SECONDS
+                        Ceiling the interval backs off to while nothing is
+                        changing (default 600).
+  --statbotics-interval SECONDS
+                        Seconds between Statbotics refreshes, which cost one
+                        request per team (default 1800).
+  --settle-polls N      Extra polls after the event first looks complete, to
+                        catch post-finals score corrections (default 2).
+  --max-failures N      Consecutive failed polls before giving up (default
+                        20).
+  --max-duration DURATION
+                        Optional runaway guard, e.g. 8h or 90m. Off by
+                        default: the finals and calendar stop conditions
+                        already end the watch.
 ```
 
-Give exactly one of `event_key` or `--season`.
+Give exactly one of `event_key`, `--season`, or `--watch`.
 
 ### 8.2 Syncing a whole season
 
@@ -658,6 +682,103 @@ DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 Migrations are plain SQL applied in filename order and recorded in `migrations_applied`.
 **There is no Alembic and none should be added.** To add one, create
 `database/migrations/0008_<name>.sql` and run `database/migrate.py`.
+
+### 8.7 Watching a live event
+
+```bash
+venv/bin/python -m data.orchestrator --watch 2025casj
+```
+
+Start this once when an event opens and it keeps that event's data fresh for the
+rest of the event with no further triggering — the automated half of *"real-time
+updates must sync during an event as matches are played"*. It stops on its own
+when the event ends.
+
+`watch_event` is a thin wrapper over `sync_event`, exactly as `sync_season` is.
+**Every poll is an ordinary single-event sync** with its own `pipeline_runs` row,
+its own watermarks, and its own advisory lock. No sync logic is duplicated. What
+the wrapper adds is four policies:
+
+**Cadence (`--interval`, default 120s).** One poll is three TBA requests
+(`/event`, `/event/{k}/matches`, `/event/{k}/teams`), so this is ~90 requests an
+hour. Qualification cycles run 7–8 minutes, making it 3–4 polls per match.
+
+An unchanged poll is **already a near no-op by construction** ([§5](#5-incremental-state)):
+the landing layer discards identical payloads, so nothing sits above the
+watermark and the staging and serving stages do no work at all. Only the three
+HTTP fetches cost anything. After **3 consecutive** polls that land nothing the
+interval grows by 1.5× up to `--max-interval` (600s), snapping back to the base
+the moment anything lands. The threshold is 3 rather than 1 deliberately: a
+7-minute match cycle produces 2–3 idle polls during perfectly normal play, and
+backing off immediately would slow detection exactly when the event is live.
+Overnight it still walks up to the ceiling, cutting a 12-hour idle stretch from
+~1,080 requests to ~216.
+
+**Statbotics on its own clock (`--statbotics-interval`, default 1800s).**
+Statbotics is one request *per team*, so a 40-team regional costs ~40 requests
+per poll — 1,200/hour at the TBA cadence, which is not a well-mannered thing to
+do to a free community API. It therefore refreshes every 30 minutes (~80
+requests/hour) and every poll in between is TBA-only. It is also **probed once
+and circuit-broken** for the whole watch if it is down, using the same helper and
+the same reasoning as a season sync ([§8.2](#82-syncing-a-whole-season)): 40
+failing lookups per poll, each burning the client's full retry ladder, would turn
+a two-minute cadence into minutes of nothing but timeouts. `--no-statbotics`
+disables it outright.
+
+**Failure isolation (`--max-failures`, default 20).** TBA being briefly
+unreachable mid-event is normal at a venue. A failed poll is logged, counted, and
+retried after a backed-off wait — `sync_event` has already written its `failed`
+run row and its quality evidence by the time it re-raises, so nothing is lost by
+carrying on. Only that many *consecutive* failures end the watch, and only that
+exit returns a non-zero status, so a mistyped event key 404s out instead of
+looping forever. One success resets the count.
+
+**Knowing when to stop.** Two independent signals, both read from data the poll
+just loaded, so neither costs an API request:
+
+* **Finals complete** *(primary)* — a `final` match exists and none is unplayed.
+  Checked against the whole 2024 season: **190/190** official events have a
+  played final and **none** has an unplayed one, so the signal is neither
+  premature (it waits out a double-elimination `f1m2`/`f1m3`) nor unreachable (an
+  unneeded `f1m3` is not published in advance).
+* **Calendar** *(fallback)* — `end_date` plus a **1-day** grace has passed, for an
+  event that never produces finals at all (cancelled or abandoned). The grace
+  cannot be zero: `end_date` is a *local* date, so 7pm Saturday in Houston is
+  already Sunday 00:00 UTC and a zero-grace check would stop the watch during
+  Einstein finals.
+
+> **The obvious third option — "every scheduled match has a result" — is wrong,
+> and the season data proves it.** Two of those 190 finished events
+> (`2024gagwi`, `2024mdsev`) permanently hold unplayed matches, because the
+> `-1`/`frc0` sentinel rows load with NULL scores and TBA never reissues a
+> finished event's schedule. A watch keyed on that condition would never stop for
+> them. It also false-positives mid-event, in the gap between the last
+> qualification match and the playoff bracket being published.
+
+After completion is first seen the watch polls `--settle-polls` more times
+(default 2) before exiting, to catch the score corrections TBA posts in the
+minutes after finals. `--max-duration` (e.g. `8h`) is an optional runaway guard,
+**off by default** — the two conditions above already terminate a real event, and
+a legitimate watch spans several days.
+
+**Stopping it by hand.** Ctrl-C (or `SIGTERM`) finishes the poll in flight and
+then exits cleanly; a second one aborts immediately. There is no half-written
+state to worry about either way — `sync_event` is transactional and advances
+watermarks at exactly one point after serving succeeds, so *between* polls is
+always a consistent state.
+
+Each poll reports what it did:
+
+```text
+poll 14: landed={'tba.match': 3} loaded={'matches': 3} | matches 41/78 played (+2 new) | next in 120s
+poll 15: nothing new | matches 41/78 played | next in 120s
+poll 16 FAILED (1/20 consecutive): ConnectTimeout: ...
+Event 2025casj looks complete (finals complete - 78/78 matches, 3/3 finals played); 2 settle poll(s) before stopping
+```
+
+EPA (`team_event_stats`) is only as fresh as the last Statbotics refresh, and is
+skipped entirely if Statbotics was down when the watch started; running a plain
+single-event sync after the event picks up whatever the watch missed.
 
 ---
 
@@ -846,9 +967,13 @@ thoroughly and in both directions:
   never been observed publishing that shape — every real case has both alliances
   unassigned — so no rule was invented for it. Worth revisiting only if it is actually
   seen.
-- **Only single-event sync exists.** There is no whole-season or multi-event driver yet;
-  `TBAClient.fetch_event_list` and `StatboticsClient.fetch_event_match_stats` are
-  implemented but not yet wired into any flow.
+- **A watch covers one event at a time.** `watch_event` polls a single event key; running
+  two events concurrently means two processes. That is the real use case (a team is at one
+  event), and per-event advisory locking means the two would not interfere anyway.
+- **`StatboticsClient.fetch_event_match_stats` is implemented but wired into no flow.**
+  (This entry previously read "only single-event sync exists", which was already stale when
+  `sync_season` landed on 2026-07-25 and is doubly so now that `--watch` exists;
+  `TBAClient.fetch_event_list` has driven season enumeration since then.)
 
 ### 9.6 Destructive integration teardown — RESOLVED 2026-08-01
 
