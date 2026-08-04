@@ -36,6 +36,7 @@ def verify_database() -> None:
         "canonical_lineage",
         "scouting_observations",
         "team_metrics",
+        "scouting_access_codes",
     }
 
     missing = expected_tables - tables

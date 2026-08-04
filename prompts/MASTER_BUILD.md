@@ -55,7 +55,7 @@ Never implement "temporary" production code.
 
 ---
 
-# Architecture Rules
+# Architecture Rules & File System Protocols
 
 Maintain clean dependency direction.
 
@@ -76,6 +76,10 @@ Avoid duplicate validation logic.
 Avoid duplicate database access patterns.
 
 If existing infrastructure can be reused cleanly, reuse it.
+
+### File Interaction Rules
+- **Read Before Write:** Never assume the contents of any file. You MUST use file-reading tools to inspect existing code, schemas, docstrings, and tests before editing or creating dependent code.
+- **Atomic File Edits:** Do not wipe or leave incomplete files during implementation. Every file edit must preserve existing functionality unless explicitly refactoring.
 
 
 ---
@@ -166,7 +170,7 @@ Every design decision should have a reason.
 
 ---
 
-# Phase D — Testing
+# Phase D — Testing & Automated Validation
 
 After implementation:
 
@@ -186,11 +190,14 @@ Testing must include whenever applicable:
 - rollback behavior
 - failure recovery
 
-Run the entire test suite.
+### Terminal Validation Protocol
+Before proceeding to Phase E, you must run and pass the following terminal checks in sequence:
+1. **Type Checking:** Run strict static typing checks (e.g., `mypy .`).
+2. **Linting & Formatting:** Run project linter checks (e.g., `ruff check .` or `flake8`).
+3. **Test Suite:** Run unit and integration tests (e.g., `pytest`).
 
-Fix every failing test.
-
-Repeat until every test passes.
+### The Circuit Breaker Rule
+If a test or type-check fails and you attempt to fix it **3 times consecutively** without resolving the failure, STOP. Do not enter an infinite modification loop. Output the current error log, explain what fixes were attempted, and pause for human guidance.
 
 
 ---
@@ -228,15 +235,13 @@ Improve anything that naturally belongs in this milestone.
 
 ---
 
-# Phase F — Bug Hunt
+# Phase F — Bug Hunt & Adversarial Review
 
 Attempt to break the implementation.
 
-Construct adversarial scenarios.
+Construct adversarial scenarios. Assume someone is intentionally trying to expose weaknesses.
 
-Assume someone is intentionally trying to expose weaknesses.
-
-Look for:
+Actively inspect for:
 
 - hidden bugs
 - race conditions
@@ -279,7 +284,7 @@ Update documentation if needed.
 
 # Phase H — Regression Testing
 
-Run the complete test suite again.
+Run the complete test suite again via terminal execution.
 
 Ensure:
 
@@ -287,7 +292,7 @@ Ensure:
 - previous milestones still work
 - architecture remains clean
 - documentation remains accurate
-- all tests pass
+- all tests pass cleanly
 
 Repeat until no further issues remain.
 
@@ -335,7 +340,7 @@ A milestone is complete only when:
 
 ✓ Every required test exists.
 
-✓ Entire test suite passes.
+✓ Entire test suite passes (tests, types, linting).
 
 ✓ Documentation is current.
 
@@ -395,22 +400,6 @@ Review:
 - security
 - production readiness
 
-Look for:
-
-- hidden bugs
-- race conditions
-- stale documentation
-- duplicated code
-- unnecessary abstractions
-- incorrect assumptions
-- missing edge cases
-- API inconsistencies
-- database inconsistencies
-- missing tests
-- insufficient tests
-- backwards compatibility
-- future extension issues
-
 Fix everything possible.
 
 Repeat until no additional meaningful improvements remain.
@@ -458,7 +447,7 @@ Implement
 
 ↓
 
-Testing
+Testing (Lint / Type / Test)
 
 ↓
 
@@ -487,33 +476,23 @@ Only then continue.
 
 ---
 
-# Milestone Report
+# Standard Milestone Acceptance Report
 
-At the end of every milestone report:
+At the end of every completed milestone, you MUST output this exact report format to the user:
 
-Completed
-
-Files Changed
-
-Architectural Decisions
-
-Architectural Improvements
-
-Tests Added
-
-Tests Passing
-
-Issues Found
-
-Issues Fixed
-
-Remaining Known Risks
-
-Why the milestone satisfies the roadmap
-
-Production Readiness
-
-Readiness for the next milestone
+- **Completed Milestone:** [e.g., Phase 3 — Milestone 3]
+- **Files Modified/Created:** [List of files]
+- **Architectural Decisions:** [Key technical decisions made]
+- **Architectural Improvements:** [Refactorings or cleanup performed]
+- **Tests Added & Executed:** [List of new unit/integration tests]
+- **Terminal Verification Status:** - Pytest: [Pass / Fail]
+  - Type Check (Mypy): [Pass / Fail / N/A]
+  - Linter (Ruff/Flake8): [Pass / Fail / N/A]
+- **Issues Found During Phase F Bug Hunt:** [List of bugs found and resolved]
+- **Remaining Known Risks:** [Any acceptable low-level risks]
+- **Roadmap Satisfaction:** [Explicit statement of why this fulfills the milestone criteria]
+- **Production Readiness:** [Confirmed / Not Confirmed]
+- **Readiness for Next Milestone:** [Clear statement of readiness]
 
 
 ---

@@ -296,13 +296,27 @@ Audit trail from a canonical row back to the raw payload it was built from (`000
 Created by `database/migrate.py` (not by a migration file). **PK** `migration_file`,
 plus `applied_at`.
 
-### 4.1 Phase 3 metrics tables (schema only)
+### 4.1 Phase 3 metrics tables
 
-Created by `0008_metrics_schema.sql`. **Both are empty and nothing writes them yet** — the
-statistics functions, the scouting validator/normalizer, the aggregation policy, and the
-metrics computation pipeline are later Phase 3 milestones. The tables exist now so that
-the storage shape is fixed before any of that logic is written, for the same reason
-Milestone 1 fixed the model shape first.
+Created by `0008_metrics_schema.sql`. **`team_metrics` is still empty; nothing writes it
+yet.** `scouting_observations` is no longer empty as of Phase 3 Milestone 7: the human
+scouting submission path (`data/metrics/submission.py`) is a real, tested writer, landing a
+submission via `RawPayloadWriter` (source `"human_scout"`) and loading it into this table
+via `CanonicalRepository.load_scouting_observation` once `data.pipeline.stage_batch`
+validates and normalizes it (Milestones 5-6's `data/metrics/validator.py`/`normalizer.py`).
+See §4.2 for the anti-abuse gate this path sits behind.
+
+Phase 3 Milestone 3 (`data/metrics/statistics.py`) implements the pure statistical
+functions — `average_score`, `score_stddev`, `consistency_rating`, `classify_match_days`,
+`reliability_score` — over an already-extracted list of scores, and Phase 3 Milestone 4
+(`data/metrics/history.py`) supplies that list for real: `get_team_match_history` reads
+`matches`/`match_teams` and returns one team's own scores at one event, plus
+`matches_scheduled`/`matches_used`. Neither M3 nor M4 writes `team_metrics` — they are pure
+functions and a read path respectively, with no writer between them and that table yet. The
+aggregation policy and the metrics computation pipeline that would compose M3+M4 into a
+`TeamMetrics` and write `team_metrics` are later Phase 3 milestones. Both tables were
+created ahead of any of this logic so the storage shape was fixed first, for the same
+reason Milestone 1 fixed the model shape before any of it was written.
 
 Every column in both tables is a field of a model in `data/metrics/schemas.py`, under its
 own name, with two marked exceptions. The `CHECK` constraints are transcriptions of that
@@ -410,6 +424,33 @@ Milestone 9. The float columns are `DOUBLE PRECISION` rather than `team_event_st
 `NUMERIC`, because the models declare them as `float` and psycopg3 returns `NUMERIC` as
 `Decimal`; nothing recomputes from `team_event_stats` yet, but this table is read back and
 reassembled into a model on every access.
+
+### 4.2 Phase 3 scouting submission table
+
+Created by `0009_scouting_access_codes.sql`, as part of Milestone 7's human scouting
+submission path (`data/metrics/submission.py`).
+
+#### `scouting_access_codes`
+
+A lightweight, no-full-auth anti-abuse gate — not an identity system. There is still no
+scouting-user-identity system in Phase 3 (`scouting_observations.scout_identifier` remains
+free text); this only deters casual or accidental cross-event submission noise.
+
+- **PK** `event_key`, **FK** → `events(event_key)`, no ON DELETE action
+- `access_code` (`TEXT`, `CHECK (length(access_code) > 0)`), `created_at`
+
+**A row's absence, not its presence, is the default-open state:** an event with no row here
+accepts submissions without a code. Phase 3 has no admin surface yet to let a coordinator
+set one, so requiring a code unconditionally would make every event unsubmittable out of
+the box. An event only becomes gated once a coordinator (via direct SQL, today — no
+tooling exists yet) inserts a row for it; submissions to that event must then supply the
+exact matching `access_code` or are rejected with `ScoutingAccessDeniedError`, before
+anything is landed.
+
+A dedicated table, not a column on `events`: `events` is a Phase 2 canonical table sourced
+from TBA, and this is a Phase-3-only, scouting-specific concern — the same reasoning that
+already kept `scouting_observations`/`team_metrics` as their own tables referencing
+`events`/`teams` by FK rather than columns bolted onto them.
 
 ---
 
@@ -803,10 +844,11 @@ DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 | `0006_pipeline_run_scope.sql` | `pipeline_runs.scope_key`, `pipeline_runs.stage_counts` |
 | `0007_data_quality_lineage.sql` | `data_quality_issues.raw_payload_id`/`field` + cascades; creates `canonical_lineage` |
 | `0008_metrics_schema.sql` | Phase 3 M2: creates `scouting_observations` and `team_metrics` (schema only, nothing writes them yet) |
+| `0009_scouting_access_codes.sql` | Phase 3 M7: creates `scouting_access_codes`, the lightweight per-event anti-abuse gate for human scouting submissions |
 
 Migrations are plain SQL applied in filename order and recorded in `migrations_applied`.
 **There is no Alembic and none should be added.** To add one, create
-`database/migrations/0009_<name>.sql` and run `database/migrate.py`.
+`database/migrations/0010_<name>.sql` and run `database/migrate.py`.
 
 ### 8.7 Watching a live event
 
@@ -1228,7 +1270,7 @@ rejection/retry machinery.
 
 ### Adding a migration
 
-Create `database/migrations/0009_<name>.sql`, keeping it additive where possible, and run
+Create `database/migrations/0010_<name>.sql`, keeping it additive where possible, and run
 `database/migrate.py`. Then update [§8.6](#86-migrations) and the schema reference in
 [§4](#4-schema-reference) — `tests/test_docs_contract.py` fails if a table exists in the
 database but is not documented here, or vice versa.
