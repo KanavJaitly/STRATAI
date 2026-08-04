@@ -51,6 +51,7 @@ from data.clients.statbotics import StatboticsClient
 from data.clients.tba import TBAClient
 from data.landing.raw_writer import RawPayloadRecord, RawPayloadWriter
 from data.lineage import LineageEntry, entity_key_of
+from data.metrics.normalizer import normalize_scouting_observation
 from data.serving.repository import CanonicalRepository
 from data.staging import (
     PayloadValidationError,
@@ -71,6 +72,10 @@ logger = logging.getLogger(__name__)
 
 SOURCE_TBA = "tba"
 SOURCE_STATBOTICS = "statbotics"
+# Phase 3 Milestone 7: the human scouting submission path. Unlike TBA/Statbotics,
+# this source's raw payloads are landed directly by a submission service
+# (data.metrics.submission), never by an extraction poll against an external API.
+SOURCE_HUMAN_SCOUT = "human_scout"
 
 # Object-type names double as raw_source_payloads.source_object_type values and
 # as source_watermarks.object_type values, so the run history, the landed rows,
@@ -79,6 +84,7 @@ OBJECT_TYPE_EVENT = "event"
 OBJECT_TYPE_MATCH = "match"
 OBJECT_TYPE_TEAM = "team"
 OBJECT_TYPE_TEAM_EVENT = "team_event"
+OBJECT_TYPE_SCOUTING_OBSERVATION = "scouting_observation"
 
 # Mirrors data.staging.normalizer's team-key parsing, including its documented
 # collapse of an off-season B-team ("frc254b") onto its parent team number.
@@ -88,11 +94,17 @@ _TBA_TEAM_KEY_DIGITS = re.compile(r"^frc(\d+)")
 
 # Dispatch by object type into the staging layer's own source registries, so
 # adding a source means registering a normalizer there, not editing this table.
+# scouting_observation is the one entry that dispatches into data.metrics
+# (Milestone 6's own source-dispatch registry) rather than data.staging --
+# stage_batch's job is to orchestrate whichever package owns an object type's
+# normalizer, and data.metrics.normalizer already has its own "human_scout"/
+# future-"scoutradioz" registry one level down, exactly like this one.
 _STAGING_DISPATCH: dict[str, Callable[[str, dict[str, Any]], Any]] = {
     OBJECT_TYPE_EVENT: normalize_event,
     OBJECT_TYPE_MATCH: normalize_match,
     OBJECT_TYPE_TEAM: normalize_team,
     OBJECT_TYPE_TEAM_EVENT: normalize_team_event_stats,
+    OBJECT_TYPE_SCOUTING_OBSERVATION: normalize_scouting_observation,
 }
 
 
@@ -393,6 +405,8 @@ def stage_batch(
     after_raw_id: int,
     *,
     context: QualityContext | None = None,
+    entity_key_fn: Callable[[Any], str] = entity_key_of,
+    quality_check_fn: Callable[..., list[QualityIssue]] = check_entity,
 ) -> StagedBatch:
     """Validate, normalize, and quality-screen pending raw payloads into staging entities.
 
@@ -412,6 +426,20 @@ def stage_batch(
     that quality checks need. Omitted, the referential checks are skipped and
     only self-contained plausibility checks run, which is what makes this safe
     to call without a database.
+
+    `entity_key_fn`/`quality_check_fn` default to data.lineage's and
+    data.staging.quality's own dispatchers, which is exact zero-behavior-change
+    for every existing TBA/Statbotics caller. They exist as parameters (added
+    Milestone 7) because both defaults raise TypeError for any entity type
+    outside their own closed sets (the four Staging* models), and
+    ScoutingObservation is deliberately not one of them -- teaching either
+    dispatcher about data.metrics would invert the dependency direction
+    data/metrics/schemas.py's module docstring already decided to protect.
+    data.metrics.submission passes data.metrics.normalizer's own
+    scouting_observation_natural_key here instead, and (for now) a
+    quality_check_fn that returns no issues -- scouting-observation-specific
+    quality checks are not in any milestone's scope yet, and adding them later
+    means writing the check function, not touching this signature again.
     """
     normalizer = _STAGING_DISPATCH[object_type]
     staged = StagedBatch(source=source, object_type=object_type, watermark_id=after_raw_id or None)
@@ -433,7 +461,7 @@ def stage_batch(
             )
             continue
 
-        issues = check_entity(
+        issues = quality_check_fn(
             entity, source=source, raw_payload_id=item.raw_id,
             context=context, raw_payload=item.payload,
         )
@@ -452,7 +480,7 @@ def stage_batch(
         staged.entities.append(entity)
         staged.lineage.append(LineageEntry(
             entity_type=object_type,
-            entity_key=entity_key_of(entity),
+            entity_key=entity_key_fn(entity),
             raw_payload_id=item.raw_id,
             source=source,
         ))

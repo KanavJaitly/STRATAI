@@ -446,6 +446,8 @@ def test_every_migration_on_disk_is_recorded_as_applied(database):
                       "feeding_agreement": "double precision",
                       "feeding_insufficient_data": "boolean",
                       "contributing_sources": "ARRAY"}),
+    # Phase 3 M7 (0009).
+    ("scouting_access_codes", {"event_key": "text", "access_code": "text", "created_at": "timestamp with time zone"}),
 ])
 def test_documented_columns_exist_with_the_documented_types(database, table, expected):
     actual = _columns(database, table)
@@ -478,6 +480,7 @@ def test_reserved_columns_documented_as_unpopulated_still_exist(database):
     # needs a surrogate because its natural key is the four-column unique index.
     ("team_metrics", "PRIMARY KEY (team_number, event_key)"),
     ("scouting_observations", "PRIMARY KEY (id)"),
+    ("scouting_access_codes", "PRIMARY KEY (event_key)"),
 ])
 def test_documented_primary_keys(database, table, expected_pk):
     assert any(expected_pk in defn for defn in _constraint_defs(database, table)), (
@@ -498,6 +501,7 @@ def test_documented_primary_keys(database, table, expected_pk):
     ("scouting_observations", "raw_payload_id", "raw_source_payloads(id)"),
     ("team_metrics", "team_number", "teams(team_number)"),
     ("team_metrics", "event_key", "events(event_key)"),
+    ("scouting_access_codes", "event_key", "events(event_key)"),
 ])
 def test_documented_foreign_keys(database, table, column, target):
     expected = f"FOREIGN KEY ({column}) REFERENCES {target}"
@@ -588,6 +592,10 @@ def test_documented_check_constraints(database):
     assert any("defense_score" in d and "defense_insufficient_data" in d for d in metrics_checks)
     assert any("feeding_score" in d and "feeding_insufficient_data" in d for d in metrics_checks)
     assert any("matches_used" in d and "matches_scheduled" in d for d in metrics_checks)
+
+    # 0009 (Phase 3 M7): an access code, once configured, must be a real value.
+    access_code_checks = _constraint_defs(database, "scouting_access_codes")
+    assert any("access_code" in d and "length" in d for d in access_code_checks)
 
 
 @requires_db

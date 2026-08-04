@@ -144,9 +144,31 @@ Phase 3 progress:
   ScoringProfile, DefenseFeedingProfile, ScoutingObservation, TeamMetrics.
 * Milestone 2 (Sven, 2026-08-02): database schema for metrics and scouting
   observations — 0008_metrics_schema.sql creates scouting_observations and
-  team_metrics. Schema only; no computation logic, and nothing writes either
-  table yet. See docs/data_pipeline.md section 4.1.
-* Milestone 3 onward (computation) not started.
+  team_metrics. Schema only at the time; team_metrics is still empty, but
+  scouting_observations now has a real writer (Milestone 7). See
+  docs/data_pipeline.md section 4.1.
+* Milestone 3 (Kanav, 2026-08-04): pure statistical functions in
+  data/metrics/statistics.py — average_score, score_stddev,
+  consistency_rating, classify_match_days, reliability_score.
+* Milestone 4 (Kanav, 2026-08-04): match history retrieval in
+  data/metrics/history.py — get_team_match_history reads matches/match_teams
+  and returns one team's own score history at one event.
+* Milestone 5 (Kanav, 2026-08-04): scouting observation validation in
+  data/metrics/validator.py — validate_human_scout_observation_payload,
+  reusing data.staging.validator's ValidationIssue/PayloadValidationError.
+* Milestone 6 (Kanav, 2026-08-04): scouting observation normalization in
+  data/metrics/normalizer.py — normalize_human_scout_observation builds a
+  validated raw submission into a canonical ScoutingObservation.
+* Milestone 7 (Kanav, 2026-08-04): human scouting submission path in
+  data/metrics/submission.py — submit_human_scout_observation gates (a
+  lightweight per-event access code, 0009_scouting_access_codes.sql), lands
+  via RawPayloadWriter, and stages+loads via data.pipeline's existing
+  read_pending/stage_batch into a real scouting_observations row. No HTTP
+  route yet — this is the service function Milestone 12's API layer will
+  call once it exists.
+* Milestone 8 onward (aggregation policy, the metrics computation pipeline,
+  and everything after) not started. See docs/P3Milestones.md for the full
+  per-milestone checklist and RUNNING_NOTES.md for status/decisions.
 
 Phase 2 – Data Pipeline (complete, Milestones 1-10)
 
@@ -173,9 +195,8 @@ fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
 team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
 Next Milestone:
-Phase 3 Milestone 3 onward – the computation milestones (statistics functions,
-match-history retrieval, scouting validation/normalization, aggregation policy,
-metrics computation pipeline).
+Phase 3 Milestone 8 – defense/feeding aggregation policy, then the metrics
+computation pipeline.
 
 ---
 

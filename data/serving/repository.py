@@ -4,6 +4,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, TypeVar
 
+from data.metrics.schemas import ScoutingObservation
 from data.staging.schemas import (
     StagingEvent,
     StagingMatch,
@@ -250,6 +251,66 @@ class CanonicalRepository:
             stats, self._upsert_team_event_stats, "team_event_stats",
             lambda s: f"{s.team_number}_{s.event_key}",
         )
+
+    # -- scouting_observations (Phase 3 Milestone 7) -----------------------
+    #
+    # No load_scouting_observations batch method: unlike the four Phase 2
+    # entity types, a ScoutingObservation's row also needs the raw_payload_id
+    # of the specific landed payload it came from -- a per-entity value
+    # _load_batch's shared upsert(cursor, entity) signature has no room for.
+    # Milestone 7's submission flow loads exactly one observation per
+    # submission, so a batch variant would be speculative; add one if a
+    # future caller actually needs to load many at once.
+
+    def _upsert_scouting_observation(
+        self, cursor: Any, observation: ScoutingObservation, raw_payload_id: int | None
+    ) -> None:
+        cursor.execute(
+            """
+            INSERT INTO scouting_observations (
+                match_key, event_key, team_number, scout_identifier,
+                defense_rating, feeding_rating, notes, source, submitted_at, raw_payload_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (match_key, team_number, scout_identifier, source) DO UPDATE SET
+                event_key = EXCLUDED.event_key,
+                defense_rating = EXCLUDED.defense_rating,
+                feeding_rating = EXCLUDED.feeding_rating,
+                notes = EXCLUDED.notes,
+                submitted_at = EXCLUDED.submitted_at,
+                raw_payload_id = EXCLUDED.raw_payload_id
+            """,
+            (
+                observation.match_key,
+                observation.event_key,
+                observation.team_number,
+                observation.scout_identifier,
+                observation.defense_rating,
+                observation.feeding_rating,
+                observation.notes,
+                observation.source,
+                observation.submitted_at,
+                raw_payload_id,
+            ),
+        )
+
+    def load_scouting_observation(
+        self, observation: ScoutingObservation, *, raw_payload_id: int | None = None
+    ) -> None:
+        """Upsert a single scouting observation into the canonical table.
+
+        Conflict target is the same four-column natural key
+        scouting_observations.idx_scouting_observations_unique enforces
+        (match_key, team_number, scout_identifier, source): a corrected
+        resubmission from the same scout for the same team/match updates this
+        row in place rather than creating a second opinion, exactly as
+        ScoutingObservation's own docstring describes. event_key is included
+        in the UPDATE SET despite being part of no natural key column, purely
+        for the (currently impossible, since Milestone 5 already rejects a
+        match_key/event_key mismatch) case of a corrected submission somehow
+        carrying a different event_key than the row already stored.
+        """
+        with self.database.cursor() as cursor:
+            self._upsert_scouting_observation(cursor, observation, raw_payload_id)
 
     # -- orchestration -----------------------------------------------------
 

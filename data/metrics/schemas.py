@@ -39,16 +39,20 @@ payloads in a later milestone).
 
 Dependency direction, decided now so a later milestone doesn't have to
 discover it awkwardly: ScoutingObservation lives here (data.metrics), not in
-data.staging, per this milestone's explicit instruction -- but its future
+data.staging, per this milestone's explicit instruction -- so its
 validator/normalizer (structural validation of a raw scouting submission
-before it becomes this model) should therefore also live in data.metrics, not
-be added to data.staging.validator/normalizer. data.staging is a foundational
-layer today; nothing in it depends on data.metrics, and adding a
+before it becomes this model) also live in data.metrics, not
+data.staging.validator/normalizer. data.staging is a foundational layer
+today; nothing in it depends on data.metrics, and adding a
 ScoutingObservation-shaped function there would make it import a higher-level
 package, inverting that direction. data.metrics importing data.staging's
 shared primitives (ValidationIssue, PayloadValidationError) the way
 data.pipeline already imports from data.staging is the clean direction, and
-the one to use when that milestone is implemented.
+the one data.metrics.validator (Milestone 5) and data.metrics.normalizer
+(Milestone 6) both use. docs/P3Milestones.md originally pointed the
+normalizer at data/staging/normalizer.py, written before this decision was
+made, and was corrected to data/metrics when Milestone 5 confirmed the
+contradiction.
 """
 
 from __future__ import annotations
@@ -91,8 +95,9 @@ FEEDING_RATING_DESCRIPTIONS: dict[int, str] = {
 # than one stddev below the mean), otherwise "average". Requires at least
 # MIN_MATCHES_FOR_STDDEV matches -- with fewer, stddev is undefined and no
 # classification is attempted (see ScoringProfile's invariants). Thresholds
-# live here, not in the future statistics module, so Milestone 13 implements
-# against an already-fixed policy instead of re-deciding it mid-implementation.
+# live here, not in the future statistics module, so Phase 3 Milestone 3
+# implements against an already-fixed policy instead of re-deciding it
+# mid-implementation.
 GOOD_DAY_ZSCORE_THRESHOLD = 1.0
 BAD_DAY_ZSCORE_THRESHOLD = -1.0
 MIN_MATCHES_FOR_STDDEV = 2
@@ -113,8 +118,8 @@ MIN_MATCHES_FOR_STDDEV = 2
 # is moderately-confident general knowledge, NOT verified against live TBA
 # docs the way this codebase's other TBA field mappings were), and neither is
 # modelled anywhere from the client layer down to `match_teams`. This is a
-# real prerequisite for Milestone 13 to compute reliability_score for real,
-# not a code bug -- confirm the field names against TBA's docs and extend
+# real prerequisite for Phase 3 Milestone 3 to compute reliability_score for
+# real, not a code bug -- confirm the field names against TBA's docs and extend
 # MatchAllianceResult/StagingMatch/match_teams before relying on the target
 # formula. Interim formula, computable with data that exists today:
 #
@@ -130,9 +135,9 @@ class ScoringProfile(BaseModel):
 
     Computed entirely from raw match scores already in the canonical schema --
     nothing here is scouted or otherwise externally measured. See
-    data.metrics.statistics (Milestone 13) for the functions that produce
-    these values; this model only fixes their shape and the invariants
-    relating them.
+    data.metrics.statistics (Phase 3 Milestone 3) for the functions that
+    produce these values; this model only fixes their shape and the
+    invariants relating them.
 
     None means "not computed", and the reason is always determined by
     matches_used:
@@ -207,16 +212,16 @@ class DefenseFeedingProfile(BaseModel):
 
     A score is present if and only if the matching insufficient_data flag is
     False -- there is deliberately no way to construct a confident-looking
-    score from zero observations. Milestone 18's aggregation policy decides
-    the exact minimum-observation threshold for anything above zero; this
-    model only enforces that whatever that policy decides, "insufficient" and
-    "no score" always travel together.
+    score from zero observations. Phase 3 Milestone 8's aggregation policy
+    decides the exact minimum-observation threshold for anything above zero;
+    this model only enforces that whatever that policy decides, "insufficient"
+    and "no score" always travel together.
 
     *_agreement is a 0.0-1.0 confidence signal (1.0 = every observation
     agreed exactly, 0.0 = maximal disagreement), independent of
     observation_count: six scouts who all disagree is a real, low-confidence
     result, not the same as relying on one scout's opinion. Proposed formula
-    for Milestone 18 (documented here, not implemented here):
+    for Phase 3 Milestone 8 (documented here, not implemented here):
     agreement = max(0, 1 - observation_stddev / ((MAX_RATING - MIN_RATING) / 2)).
 
     contributing_sources lists which sources (e.g. "human_scout",
@@ -272,9 +277,14 @@ class ScoutingObservation(BaseModel):
     single most common access pattern, feeding both the API and the
     aggregation step -- the same denormalization tradeoff StagingMatch
     already makes for season. Consistency between match_key and event_key is
-    a raw-payload validation concern for a later milestone, not a pydantic
-    invariant here, mirroring how StagingMatch doesn't re-validate its own
-    event_key format at the model level either.
+    a raw-payload validation concern (data.metrics.validator, Milestone 5,
+    mirroring validate_tba_match_payload's identical check), not a pydantic
+    invariant here -- mirroring how StagingMatch doesn't re-validate its own
+    event_key format at the model level either. Both fields must already be
+    present in the raw payload the normalizer receives (Milestone 6): nothing
+    in this pipeline derives event_key from match_key via a database lookup,
+    since data.pipeline.stage_batch calls every normalizer as a pure
+    function with no database access.
 
     scout_identifier is a free-text string, not a foreign key to an accounts
     system -- there is no scouting-user-identity system in Phase 3. This is a
