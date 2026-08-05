@@ -17,6 +17,7 @@ from pydantic import ValidationError as PydanticValidationError
 
 from data.metrics.normalizer import (
     normalize_human_scout_observation,
+    normalize_scoutradioz_observation,
     normalize_scouting_observation,
     scouting_observation_natural_key,
 )
@@ -203,11 +204,14 @@ def test_normalize_scouting_observation_dispatches_to_human_scout_normalizer():
     assert obs == normalize_human_scout_observation(VALID_PAYLOAD)
 
 
+def test_normalize_scouting_observation_dispatches_to_scoutradioz_normalizer():
+    # Milestone 9 (2026-08-05): registered for real. The two normalizers only
+    # differ in the `source` they stamp onto the built ScoutingObservation.
+    obs = normalize_scouting_observation("scoutradioz", VALID_PAYLOAD)
+    assert obs == normalize_scoutradioz_observation(VALID_PAYLOAD)
+    assert obs.source == "scoutradioz"
+
+
 def test_normalize_scouting_observation_unknown_source_raises_clear_error():
-    with pytest.raises(ValueError, match="No scouting_observation normalizer registered for source 'scoutradioz'"):
-        normalize_scouting_observation("scoutradioz", VALID_PAYLOAD)
-
-
-def test_normalize_scouting_observation_completely_unknown_source_raises_clear_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="No scouting_observation normalizer registered for source 'carrier_pigeon'"):
         normalize_scouting_observation("carrier_pigeon", VALID_PAYLOAD)

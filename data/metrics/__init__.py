@@ -12,20 +12,26 @@ raw submission into a canonical ScoutingObservation (data.metrics.normalizer).
 Phase 3 Milestone 7 provides the end-to-end submission path itself
 (data.metrics.submission) -- gate, validate, land, stage, load. Phase 3
 Milestone 8 provides pure aggregation of a team's scouting observations into
-a DefenseFeedingProfile (data.metrics.aggregation). The metrics computation
+a DefenseFeedingProfile (data.metrics.aggregation). Phase 3 Milestone 9
+provides ScoutRadioz CSV import (data.metrics.scoutradioz) -- ScoutRadioz has
+no public API, so this maps a CSV export into the same canonical scouting-
+observation pipeline human_scout submissions use. The metrics computation
 pipeline (Milestone 10) is a later milestone and is not exported here yet.
 
-data.metrics.submission is deliberately NOT imported here, unlike every other
-Milestone's module: it reaches back out to data.pipeline/data.orchestrator (to
-reuse read_pending/stage_batch and PipelineRunRecorder/WatermarkStore), and
-those modules import data.metrics.normalizer -- which requires importing this
-very package first. Re-exporting submission's names here would make importing
-data.pipeline (or data.metrics.normalizer, or this package) on its own, before
+data.metrics.submission and data.metrics.scoutradioz are deliberately NOT
+imported here, unlike every other Milestone's module: both reach back out to
+data.pipeline/data.orchestrator (to reuse read_pending/stage_batch and
+PipelineRunRecorder/WatermarkStore), and those modules import
+data.metrics.normalizer -- which requires importing this very package first.
+Re-exporting either module's names here would make importing data.pipeline
+(or data.metrics.normalizer, or this package) on its own, before
 data.orchestrator has been loaded some other way first, fail with an
-ImportError on a partially-initialized data.pipeline module (confirmed by
-triggering it, not just reasoned about). data.pipeline itself already imports
-data.metrics.normalizer directly rather than through this package for the same
-underlying reason. Import from data.metrics.submission directly.
+ImportError on a partially-initialized data.pipeline module (confirmed for
+submission during Milestone 7, and re-confirmed for scoutradioz during
+Milestone 9 by triggering the identical failure, not just reasoning by
+analogy). data.pipeline itself already imports data.metrics.normalizer
+directly rather than through this package for the same underlying reason.
+Import from data.metrics.submission or data.metrics.scoutradioz directly.
 """
 
 from data.metrics.aggregation import MIN_OBSERVATIONS_FOR_SCORE, aggregate_defense_feeding

@@ -242,11 +242,15 @@ def test_validate_scouting_observation_dispatches_to_human_scout_validator():
     assert any(issue.field == "team_number" for issue in issues)
 
 
+def test_validate_scouting_observation_dispatches_to_scoutradioz_validator():
+    # Milestone 9 (2026-08-05): "scoutradioz" is registered against the same
+    # underlying validate_human_scout_observation_payload function -- the
+    # rules describe the canonical payload shape, not who produced it.
+    assert validate_scouting_observation("scoutradioz", _valid_payload()) == []
+    issues = validate_scouting_observation("scoutradioz", _valid_payload(team_number=-1))
+    assert any(issue.field == "team_number" for issue in issues)
+
+
 def test_validate_scouting_observation_unknown_source_raises_value_error():
-    with pytest.raises(ValueError, match="scoutradioz"):
-        validate_scouting_observation("scoutradioz", _valid_payload())
-
-
-def test_validate_scouting_observation_completely_unknown_source_raises_value_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="carrier_pigeon"):
         validate_scouting_observation("carrier_pigeon", _valid_payload())

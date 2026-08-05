@@ -13,10 +13,14 @@ the same way data.pipeline already imports data.staging's shared primitives.
 Mirrors data.staging.validator's existing shape exactly: a validator function
 per source returning `list[ValidationIssue]` (empty if valid, never raising
 itself), collected into a per-source registry, dispatched by one small
-function that raises ValueError for an unregistered source. Only "human_scout"
-is registered today; "scoutradioz" is Milestone 9's, added as one more registry
-entry with no redesign needed here -- consistent with how data.staging.validator
-already supports multiple sources per entity type without special-casing.
+function that raises ValueError for an unregistered source. "human_scout" and,
+since Milestone 9 (2026-08-05), "scoutradioz" are both registered against the
+identical validate_human_scout_observation_payload function: these rules
+describe the canonical scouting-observation payload SHAPE, not who produced
+it, so a genuinely separate "validate_scoutradioz..." function would only
+duplicate logic that would inevitably drift the moment one copy was edited
+and the other wasn't -- consistent with how data.staging.validator already
+supports multiple sources per entity type without special-casing.
 
 Scope: this validates exactly what a human scout's raw submission is expected
 to contain -- match_key, event_key, team_number, scout_identifier,
@@ -173,6 +177,7 @@ def validate_human_scout_observation_payload(payload: Any) -> list[ValidationIss
 
 _SCOUTING_OBSERVATION_VALIDATORS: dict[str, ValidatorFunc] = {
     "human_scout": validate_human_scout_observation_payload,
+    "scoutradioz": validate_human_scout_observation_payload,
 }
 
 
