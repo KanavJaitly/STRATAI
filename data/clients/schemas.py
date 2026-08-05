@@ -108,6 +108,51 @@ class TeamInfo(BaseModel):
     motto: str | None = None
 
 
+class ScoutRadiozMatchScoutingRow(BaseModel):
+    """One row of a ScoutRadioz match-scouting CSV export -- the platform's own
+    stable, cross-season metadata columns only.
+
+    ScoutRadioz (github.com/FIRSTTeam102/scoutradioz) has no public API --
+    confirmed 2026-08-05 during Phase 3 Milestone 9 by reading its real GitHub
+    repo, wiki, and TypeScript route source directly rather than assuming one
+    existed: every data-bearing route, including this CSV export itself
+    (`/exportdata`), sits behind an authenticated per-team login. There is no
+    live request/response to model the way TBA/Statbotics have; a team exports
+    this CSV from their own ScoutRadioz instance and hands it to StratAI
+    directly. See RUNNING_NOTES.md for the full research trail.
+
+    These eight columns are ScoutRadioz's own stable export schema -- present
+    in every export regardless of season or game. Every OTHER column a real
+    export carries (StartPos, AutoScore, qDefenseQuality, superNotes, and
+    dozens more, all specific to one season's scouting form) is deliberately
+    NOT modeled here: data.metrics.scoutradioz reads those directly out of the
+    untouched raw row dict, driven by a caller-supplied field mapping, so this
+    model never has to change when a new game's form adds or renames a field.
+
+    `scouter` is allowed to be empty: a real export can have blank entries
+    (verified in the captured fixture, not assumed) for a row where the
+    scouting app was never told who was scouting. That is a real, structural
+    gap in the *data*, not a bug in this model -- data.metrics.scoutradioz's
+    mapping step surfaces it as a rejected row (an empty scout_identifier),
+    the same way any other source's missing required field is rejected.
+
+    `time` stays a raw string, not parsed here: it carries no timezone (see
+    data.metrics.scoutradioz's _parse_scheduled_time for the documented
+    limitation), and interpreting it is a mapping-layer concern, not a
+    property of the wire row itself -- mirroring how team_key also stays an
+    unparsed "frcNNNN" string here, exactly like MatchAllianceResult.team_keys.
+    """
+
+    org_key: str
+    event_key: str
+    match_key: str
+    match_number: int
+    time: str
+    alliance: str
+    team_key: str
+    scouter: str
+
+
 class StatboticsMatchStats(BaseModel):
     """Minimal Statbotics EPA-based match prediction model.
 

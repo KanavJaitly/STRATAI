@@ -28,6 +28,12 @@ brief calls for. That means event_key and submitted_at cannot be derived here
 payload carries its event_key directly rather than having the normalizer look
 it up. Milestone 5's validator already checks both are present (and that
 match_key/event_key agree), so this module only has to read them.
+
+Milestone 9 (2026-08-05) registered "scoutradioz" here for real: ScoutRadioz's
+CSV import (data.metrics.scoutradioz) maps a raw CSV row into this exact
+canonical payload shape before ever calling normalize_scouting_observation, so
+normalize_scoutradioz_observation needed only its own `source` value, not a
+parallel validation implementation.
 """
 
 from __future__ import annotations
@@ -49,6 +55,7 @@ NormalizerFunc = Callable[[dict[str, Any]], ScoutingObservation]
 __all__ = [
     "PayloadValidationError",
     "normalize_human_scout_observation",
+    "normalize_scoutradioz_observation",
     "normalize_scouting_observation",
     "scouting_observation_natural_key",
 ]
@@ -80,8 +87,17 @@ def _build_or_raise(entity_type: str, model_cls: type[BaseModel], source_object_
         raise PayloadValidationError(issues) from exc
 
 
-def normalize_human_scout_observation(payload: dict[str, Any]) -> ScoutingObservation:
-    """Validate and normalize a raw human-scout submission into a canonical ScoutingObservation."""
+def _normalize_scouting_observation_payload(payload: dict[str, Any], *, source: str) -> ScoutingObservation:
+    """Shared validate-then-build logic for any source that produces this canonical payload shape.
+
+    validate_human_scout_observation_payload's rules (required fields, at
+    least one rating, range checks, match_key/event_key agreement) describe
+    the CANONICAL payload shape itself, not who produced it or how -- reused
+    here for Milestone 9's ScoutRadioz CSV import too, rather than duplicated
+    under a "validate_scoutradioz..." name that would diverge from this one
+    the moment either was edited. `source` is the one thing that genuinely
+    differs per caller, so it stays a parameter, not baked into the payload.
+    """
     _raise_if_invalid(validate_human_scout_observation_payload(payload))
     return _build_or_raise(
         "scouting_observation", ScoutingObservation, payload.get("match_key"),
@@ -92,9 +108,28 @@ def normalize_human_scout_observation(payload: dict[str, Any]) -> ScoutingObserv
         defense_rating=payload.get("defense_rating"),
         feeding_rating=payload.get("feeding_rating"),
         notes=payload.get("notes"),
-        source="human_scout",
+        source=source,
         submitted_at=payload["submitted_at"],
     )
+
+
+def normalize_human_scout_observation(payload: dict[str, Any]) -> ScoutingObservation:
+    """Validate and normalize a raw human-scout submission into a canonical ScoutingObservation."""
+    return _normalize_scouting_observation_payload(payload, source="human_scout")
+
+
+def normalize_scoutradioz_observation(payload: dict[str, Any]) -> ScoutingObservation:
+    """Validate and normalize an already-mapped ScoutRadioz CSV row into a canonical ScoutingObservation.
+
+    `payload` here is NOT a raw ScoutRadioz CSV row -- it is the StratAI-canonical
+    scouting-observation shape data.metrics.scoutradioz.map_scoutradioz_row_to_
+    observation_payload builds from one first (match_key/event_key/team_number/
+    scout_identifier/defense_rating/feeding_rating/notes/submitted_at). By the
+    time a payload reaches this function, it is indistinguishable in shape from
+    a human_scout submission, which is exactly why the validation rules are
+    identical rather than a parallel "ScoutRadioz-flavored" copy.
+    """
+    return _normalize_scouting_observation_payload(payload, source="scoutradioz")
 
 
 def scouting_observation_natural_key(observation: ScoutingObservation) -> str:
@@ -126,6 +161,7 @@ def scouting_observation_natural_key(observation: ScoutingObservation) -> str:
 
 _SCOUTING_OBSERVATION_NORMALIZERS: dict[str, NormalizerFunc] = {
     "human_scout": normalize_human_scout_observation,
+    "scoutradioz": normalize_scoutradioz_observation,
 }
 
 

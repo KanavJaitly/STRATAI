@@ -306,20 +306,51 @@ via `CanonicalRepository.load_scouting_observation` once `data.pipeline.stage_ba
 validates and normalizes it (Milestones 5-6's `data/metrics/validator.py`/`normalizer.py`).
 See §4.2 for the anti-abuse gate this path sits behind.
 
-**Milestone 9 (ScoutRadioz) found no connector to build.** `source` was designed from
-`0008_metrics_schema.sql` onward to carry more than one value (its own comment: "one
-scout's (or ScoutRadioz's) direct assessment"), and `load_scouting_observation`/
-`aggregate_defense_feeding` are already source-agnostic — proven with two real rows
-sharing a `scout_identifier` but differing only in `source`, which persist as distinct
-rows and pool into one aggregated score (`tests/test_repository.py`,
-`tests/test_aggregation.py`). What does not exist is a second *connector*: ScoutRadioz's
-every data-bearing route, including its own CSV export, sits behind an authenticated,
-per-team login — there is no public, documented API of the kind TBA/Statbotics expose, so
-there is nothing a generic `SourceConnector` could fetch from without per-team credentials
-StratAI has no consent or admin surface to collect. Human-form submission
-(`data/metrics/submission.py`) remains the sole populated measurement path for Phase 3;
-the registries' `"scoutradioz"` slot stays reserved, unregistered, and tested as such
-(`tests/test_scouting_validator.py`, `tests/test_metrics_normalizer.py`).
+**Milestone 9 is ScoutRadioz CSV import** (`data/clients/scoutradioz.py` +
+`data/metrics/scoutradioz.py`), not an HTTP connector: ScoutRadioz
+(github.com/FIRSTTeam102/scoutradioz) has no public API — confirmed by reading its
+real GitHub repo, wiki, and TypeScript route source directly, not assumed. Every
+data-bearing route, including its own CSV export (`/exportdata`), sits behind an
+authenticated per-team login, unlike TBA/Statbotics's open APIs. A team exports its
+own match-scouting data as a CSV and hands it to StratAI, which imports it directly.
+
+The split mirrors the existing client/metrics boundary exactly:
+`data.clients.scoutradioz.ScoutRadiozCsvImporter` (a `SourceConnector`, exactly like
+`TBAClient`/`StatboticsClient` — `close()` is a no-op, since a CSV file holds no
+connection) reads the file and yields `SourceResponse[ScoutRadiozMatchScoutingRow]`
+per row; `data.metrics.scoutradioz.import_scoutradioz_csv` does the actual
+land → stage → load orchestration, reusing `RawPayloadWriter`,
+`PipelineRunRecorder`/`WatermarkStore`, `data.pipeline.read_pending`/`stage_batch`,
+and `CanonicalRepository.load_scouting_observation` — the identical machinery
+`data/metrics/submission.py`'s human-scout path already established, including two
+of its own helpers (`scouting_source_object_id`, `check_scouting_observation_references`)
+promoted from leading-underscore names specifically so this milestone could reuse
+rather than duplicate them.
+
+Column mapping is runtime configuration, not code: `ScoutRadiozFieldMapping` names
+which raw CSV column (if any) represents defense/feeding quality, on what native
+scale, and which columns fold into `notes` — nothing in `data.metrics.scoutradioz`
+names a specific FRC game's field. Ratings are linearly rescaled onto this
+codebase's canonical `[MIN_RATING, MAX_RATING]` (0–5); the reference 2026 export's
+own `qDefenseQuality` column is a 0–10 scale, confirmed by direct inspection of a
+real captured export (`tests/fixtures/scoutradioz_matchscouting_2026mrcmp.csv`), not
+assumed. The untouched raw CSV row is embedded under `_raw_csv_row` inside the very
+payload that lands in `raw_source_payloads` — the same "land the untouched body,
+never a projection" principle this page already establishes for TBA/Statbotics,
+applied the one way it can be here (see `data/metrics/scoutradioz.py`'s module
+docstring for why the raw row is embedded rather than landed bare). A real bug in an
+earlier draft — landing only the mapped canonical fields, silently losing every
+game-specific column at the landing layer too — was found and fixed during this
+milestone's own Phase F bug hunt, confirmed with a real-database regression test.
+
+`load_scouting_observation`/`aggregate_defense_feeding` needed no changes at all to
+support a second source: both were already source-agnostic since Milestone 7/8, and
+`0008_metrics_schema.sql`'s own comment already anticipated it ("one scout's (or
+ScoutRadioz's) direct assessment"). ScoutRadioz and human-form observations coexist
+in `scouting_observations`, distinguishable by `source`, and aggregate together into
+one pooled score — verified with a real import running alongside a real
+`submit_human_scout_observation` call for the same match and team
+(`tests/test_scoutradioz_import.py`).
 
 Phase 3 Milestone 3 (`data/metrics/statistics.py`) implements the pure statistical
 functions — `average_score`, `score_stddev`, `consistency_rating`, `classify_match_days`,

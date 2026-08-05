@@ -39,7 +39,7 @@ entity_key_of and check_entity both raise TypeError outside their closed
 Staging* type sets, by design, to avoid data.staging/data.lineage importing
 data.metrics. Milestone 7 supplies its own entity_key_fn
 (scouting_observation_natural_key) and quality_check_fn
-(_check_scouting_observation_references, below) through the optional
+(check_scouting_observation_references, below) through the optional
 parameters stage_batch was extended with for exactly this purpose.
 
 The one quality check this milestone does add -- confirming match_key/
@@ -81,6 +81,8 @@ __all__ = [
     "ScoutingAccessDeniedError",
     "SubmissionResult",
     "check_scouting_access_gate",
+    "check_scouting_observation_references",
+    "scouting_source_object_id",
     "submit_human_scout_observation",
 ]
 
@@ -91,7 +93,7 @@ class ScoutingAccessDeniedError(Exception):
     """Raised when a submission's access_code does not match its event's configured code."""
 
 
-def _scouting_source_object_id(observation: ScoutingObservation) -> str:
+def scouting_source_object_id(observation: ScoutingObservation) -> str:
     """The raw_source_payloads.source_object_id for one scout's rating of one team in one match.
 
     Three parts, not data.metrics.normalizer.scouting_observation_natural_key's
@@ -101,11 +103,16 @@ def _scouting_source_object_id(observation: ScoutingObservation) -> str:
     for the identical reason the natural key is: match_key already contains
     underscores and scout_identifier is unrestricted free text, so
     underscore-joining risks two different submissions rendering identically.
+
+    Public (not source-specific despite this module's name): reused as-is by
+    data.metrics.scoutradioz (Milestone 9) for the identical reason -- the
+    logic here has nothing to do with *how* an observation arrived, only with
+    what makes one canonically the same opinion as another.
     """
     return f"{observation.match_key}:{observation.team_number}:{observation.scout_identifier}"
 
 
-def _check_scouting_observation_references(
+def check_scouting_observation_references(
     entity: ScoutingObservation,
     *,
     database: Database,
@@ -141,6 +148,14 @@ def _check_scouting_observation_references(
     event_key: that is a raw-payload structural concern data.metrics.validator
     (Milestone 5) already enforces before normalization ever runs, not a
     referential-existence one.
+
+    Public (promoted from a leading-underscore name during Milestone 9): the
+    logic here is entirely about whether an *entity* references real
+    canonical rows, never about which source produced it -- `source` is only
+    used to label a QualityIssue, never branched on. data.metrics.scoutradioz
+    binds its own `database` via the identical functools.partial pattern
+    rather than duplicating this query, the same way scouting_source_object_id
+    above is shared.
     """
     with database.cursor() as cursor:
         cursor.execute(
@@ -252,7 +267,7 @@ def submit_human_scout_observation(
     watermarks = watermarks or WatermarkStore(database)
     lineage = lineage or LineageStore(database)
 
-    source_object_id = _scouting_source_object_id(observation)
+    source_object_id = scouting_source_object_id(observation)
     event_key = observation.event_key
 
     run_id = recorder.start(PIPELINE_NAME, source=pipeline.SOURCE_HUMAN_SCOUT, scope_key=event_key)
@@ -276,7 +291,7 @@ def submit_human_scout_observation(
         staged = pipeline.stage_batch(
             pipeline.SOURCE_HUMAN_SCOUT, pipeline.OBJECT_TYPE_SCOUTING_OBSERVATION, pending, after_raw_id,
             entity_key_fn=scouting_observation_natural_key,
-            quality_check_fn=partial(_check_scouting_observation_references, database=database),
+            quality_check_fn=partial(check_scouting_observation_references, database=database),
         )
 
         raw_payload_id: int | None = None

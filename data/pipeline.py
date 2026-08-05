@@ -103,7 +103,7 @@ _TBA_TEAM_KEY_DIGITS = re.compile(r"^frc(\d+)")
 # (Milestone 6's own source-dispatch registry) rather than data.staging --
 # stage_batch's job is to orchestrate whichever package owns an object type's
 # normalizer, and data.metrics.normalizer already has its own "human_scout"/
-# future-"scoutradioz" registry one level down, exactly like this one.
+# "scoutradioz" (Milestone 9) registry one level down, exactly like this one.
 _STAGING_DISPATCH: dict[str, Callable[[str, dict[str, Any]], Any]] = {
     OBJECT_TYPE_EVENT: normalize_event,
     OBJECT_TYPE_MATCH: normalize_match,
@@ -442,7 +442,7 @@ def stage_batch(
     data/metrics/schemas.py's module docstring already decided to protect.
     data.metrics.submission passes data.metrics.normalizer's own
     scouting_observation_natural_key here, and its own
-    _check_scouting_observation_references as quality_check_fn -- a real
+    check_scouting_observation_references as quality_check_fn -- a real
     referential-integrity check (does the referenced match/team/event exist
     canonically), added after a no-op version was found, during Milestone 7's
     own bug hunt, to let a submission for a not-yet-synced match reach
@@ -450,7 +450,9 @@ def stage_batch(
     foreign-key violation instead of a clean rejection. Rating-plausibility
     and submission-pattern checks remain out of scope and unassigned to any
     milestone; adding them means writing the check function, not touching
-    this signature again.
+    this signature again. data.metrics.scoutradioz (Milestone 9) reuses this
+    same function (public since that milestone, precisely so it could be
+    reused rather than duplicated) for its own CSV-import batches.
     """
     normalizer = _STAGING_DISPATCH[object_type]
     staged = StagedBatch(source=source, object_type=object_type, watermark_id=after_raw_id or None)
