@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Self, TypeVar
 
 T = TypeVar("T")
 
@@ -60,7 +60,7 @@ class SourceConnector(ABC):
     def close(self) -> None:
         """Release any underlying network resources."""
 
-    def __enter__(self) -> "SourceConnector":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:

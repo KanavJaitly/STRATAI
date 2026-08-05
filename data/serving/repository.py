@@ -24,9 +24,10 @@ class CanonicalRepository:
 
     This is the serving-layer counterpart to the landing-layer RawPayloadWriter:
     it takes the source-agnostic StagingTeam / StagingEvent / StagingMatch /
-    StagingTeamEventStats produced by the staging layer and persists them into
-    the canonical teams / events / matches / match_teams / team_event_stats
-    tables that downstream metrics and ML consume.
+    StagingTeamEventStats produced by the staging layer, plus (Phase 3
+    Milestone 7) data.metrics's ScoutingObservation, and persists them into
+    the canonical teams / events / matches / match_teams / team_event_stats /
+    scouting_observations tables that downstream metrics and ML consume.
 
     Every write is an INSERT ... ON CONFLICT DO UPDATE keyed on the table's
     natural key, so loads are idempotent: re-loading the same staging entity

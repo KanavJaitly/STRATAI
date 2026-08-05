@@ -111,7 +111,12 @@ class PipelineRunRecorder:
                 """,
                 (pipeline_name, source, scope_key),
             )
-            return int(cursor.fetchone()[0])
+            row = cursor.fetchone()
+            # A plain INSERT with no ON CONFLICT clause always inserts and
+            # returns exactly one row -- unlike raw_writer.py's ON CONFLICT DO
+            # NOTHING RETURNING, there is no legitimate zero-row outcome here.
+            assert row is not None
+            return int(row[0])
 
     def succeed(self, run_id: int, *, records_processed: int, stage_counts: dict[str, Any] | None = None) -> None:
         """Close a run row as succeeded, recording its per-stage counts."""
@@ -356,8 +361,12 @@ def sync_event(
             )
 
             # Single advance point, reached only once every stage above succeeded.
-            for batch in staged_batches:
-                watermarks.advance(batch.source, batch.object_type, event_key, batch.watermark_id)
+            # Named `staged`, not `batch` like the ExtractionBatch loop above it in
+            # this same function: same variable name, two different types across
+            # two sequential loops in one scope is legal Python but reads as
+            # ambiguous and defeats a type checker's ability to narrow either one.
+            for staged in staged_batches:
+                watermarks.advance(staged.source, staged.object_type, event_key, staged.watermark_id)
 
             result = SyncResult(
                 run_id=run_id,

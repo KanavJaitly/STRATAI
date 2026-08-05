@@ -514,6 +514,18 @@ def load(repository: CanonicalRepository, staged_batches: Iterable[StagedBatch])
     matches and team_event_stats. Every write is an upsert, so loading an
     entity that is already present updates it in place instead of duplicating
     it -- the property that makes re-running a sync safe.
+
+    TBA/Statbotics-only: unlike stage_batch (which dispatches any object_type
+    _STAGING_DISPATCH knows, including "scouting_observation"), this function
+    only ever handles the four Phase 2 entity types load_all accepts.
+    ScoutingObservation is loaded via CanonicalRepository.load_scouting_observation
+    directly (see data.metrics.submission), never through this function, because
+    it needs a per-entity raw_payload_id that load_all's batched signature has
+    no room for. Passing a "scouting_observation" StagedBatch here raises a
+    clear error rather than the raw KeyError a plain dict lookup would give --
+    found during a full-codebase audit as a trap for whoever wires Milestone 10,
+    since stage_batch's now-generic signature makes it easy to assume this
+    function is equally generic.
     """
     teams: list[StagingTeam] = []
     events: list[StagingEvent] = []
@@ -527,6 +539,13 @@ def load(repository: CanonicalRepository, staged_batches: Iterable[StagedBatch])
     }
 
     for batch in staged_batches:
+        if batch.object_type not in buckets:
+            raise ValueError(
+                f"pipeline.load() only handles {sorted(buckets)}; got {batch.object_type!r}. "
+                "Scouting observations are loaded via "
+                "CanonicalRepository.load_scouting_observation directly "
+                "(see data.metrics.submission), not through this function."
+            )
         buckets[batch.object_type].extend(batch.entities)
 
     counts = repository.load_all(

@@ -465,8 +465,9 @@ def _check_team_event_stats(
                 f"Match record cannot be negative, got {field_name}={value}",
             ))
 
-    if stats.matches_played is not None and all(value is not None for value in record.values()):
-        expected = stats.wins + stats.losses + stats.ties
+    wins, losses, ties = stats.wins, stats.losses, stats.ties
+    if stats.matches_played is not None and wins is not None and losses is not None and ties is not None:
+        expected = wins + losses + ties
         if stats.matches_played != expected:
             issues.append(build(
                 ISSUE_INCONSISTENT_VALUES, SEVERITY_ERROR, "matches_played",
@@ -672,6 +673,10 @@ class DataQualityRecorder:
                 """,
                 tuple(params),
             )
+            # cursor.description is only None before any query has executed;
+            # a SELECT always populates it with column metadata, even when
+            # zero rows match the WHERE clause.
+            assert cursor.description is not None
             columns = [description[0] for description in cursor.description]
             return [dict(zip(columns, row)) for row in cursor.fetchall()]
 

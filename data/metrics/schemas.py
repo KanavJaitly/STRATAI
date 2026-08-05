@@ -218,16 +218,17 @@ class DefenseFeedingProfile(BaseModel):
 
     A score is present if and only if the matching insufficient_data flag is
     False -- there is deliberately no way to construct a confident-looking
-    score from zero observations. Phase 3 Milestone 8's aggregation policy
-    decides the exact minimum-observation threshold for anything above zero;
+    score from zero observations. Phase 3 Milestone 8 (data.metrics.aggregation.
+    aggregate_defense_feeding) decided the exact minimum-observation threshold
+    for anything above zero (2, not 1 -- see that module's docstring for why);
     this model only enforces that whatever that policy decides, "insufficient"
     and "no score" always travel together.
 
     *_agreement is a 0.0-1.0 confidence signal (1.0 = every observation
     agreed exactly, 0.0 = maximal disagreement), independent of
     observation_count: six scouts who all disagree is a real, low-confidence
-    result, not the same as relying on one scout's opinion. Proposed formula
-    for Phase 3 Milestone 8 (documented here, not implemented here):
+    result, not the same as relying on one scout's opinion. Implemented in
+    Phase 3 Milestone 8 (data.metrics.aggregation) as:
     agreement = max(0, 1 - observation_stddev / ((MAX_RATING - MIN_RATING) / 2)).
 
     contributing_sources lists which sources (e.g. "human_scout",

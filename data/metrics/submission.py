@@ -124,9 +124,13 @@ def _check_scouting_observation_references(
     type and severity, same fatal-means-skipped-and-retried-next-time
     semantics -- but queries the database directly rather than consulting a
     prebuilt QualityContext: there is no upfront extraction batch here to
-    build one from, and a human submission is infrequent enough that three
-    light existence checks per call is the right tradeoff over threading a
-    context through a flow that doesn't otherwise need one.
+    build one from, and a human submission is infrequent enough that this is
+    the right tradeoff over threading a context through a flow that doesn't
+    otherwise need one. All three existence checks are one round trip (three
+    EXISTS subqueries in a single SELECT), not three separate queries --
+    submissions are low-frequency, so this was never a real latency concern,
+    but there is no reason to pay three round trips when one query already
+    says everything needed.
 
     `database` is bound via functools.partial by the caller (submit_human_
     scout_observation), not passed by stage_batch itself -- stage_batch's
@@ -139,12 +143,23 @@ def _check_scouting_observation_references(
     referential-existence one.
     """
     with database.cursor() as cursor:
-        cursor.execute("SELECT 1 FROM matches WHERE match_key = %s", (entity.match_key,))
-        match_exists = cursor.fetchone() is not None
-        cursor.execute("SELECT 1 FROM teams WHERE team_number = %s", (entity.team_number,))
-        team_exists = cursor.fetchone() is not None
-        cursor.execute("SELECT 1 FROM events WHERE event_key = %s", (entity.event_key,))
-        event_exists = cursor.fetchone() is not None
+        cursor.execute(
+            """
+            SELECT
+                EXISTS(SELECT 1 FROM matches WHERE match_key = %s),
+                EXISTS(SELECT 1 FROM teams WHERE team_number = %s),
+                EXISTS(SELECT 1 FROM events WHERE event_key = %s)
+            """,
+            (entity.match_key, entity.team_number, entity.event_key),
+        )
+        row = cursor.fetchone()
+        # A bare SELECT of three EXISTS(...) expressions -- no FROM/WHERE on
+        # the outer query -- always returns exactly one row regardless of
+        # whether any inner subquery matched; unlike the three individual
+        # per-table queries this replaced, there is no scenario where this
+        # cursor legitimately has zero rows to fetch.
+        assert row is not None
+        match_exists, team_exists, event_exists = row
 
     object_id = scouting_observation_natural_key(entity)
     issues: list[QualityIssue] = []

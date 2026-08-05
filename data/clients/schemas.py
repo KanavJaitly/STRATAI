@@ -38,12 +38,29 @@ class EventSummary(BaseModel):
 
 
 class MatchAllianceResult(BaseModel):
-    """One alliance's roster and score within a single TBA match."""
+    """One alliance's roster and score within a single TBA match.
+
+    team_keys' alias was "teams" until a system-wide audit found it factually
+    wrong: TBA's real field is "team_keys" (confirmed against a captured live
+    payload in tests/test_raw_body_preservation.py), not "teams" -- "teams" is
+    a legacy name that appeared only in payloads landed before raw response
+    bodies were preserved (a projection through this same model, which is why
+    it used that name). Every real TBA response therefore parsed through this
+    model only because populate_by_name=True let the attribute name itself
+    ("team_keys") satisfy the field, not because the alias was correct --
+    confirmed by grepping every test that populates this model: none ever
+    used "teams" as the actual input key. This model deliberately does not
+    also accept "teams" as a fallback: unlike data.staging.validator.
+    tba_alliance_team_keys (which reads raw payload dicts straight out of
+    raw_source_payloads, some landed before this fix and genuinely keyed on
+    "teams"), this model exists to parse a live API response, where "team_keys"
+    is the only form that has ever actually appeared.
+    """
 
     model_config = ConfigDict(populate_by_name=True)
 
     score: int | None = None
-    team_keys: list[str] = Field(default_factory=list, alias="teams")
+    team_keys: list[str] = Field(default_factory=list, alias="team_keys")
 
 
 class MatchAlliances(BaseModel):

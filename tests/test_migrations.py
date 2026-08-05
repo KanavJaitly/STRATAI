@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import psycopg
 import pytest
 
 from data.config import Settings
+from database.connection import Database, DatabaseConfig
+import database.migrate as migrate_module
 from database.migrate import run_migrations
 
 
@@ -106,3 +109,94 @@ def test_migrations_creates_tracking_table(monkeypatch, env_settings):
         "CREATE TABLE IF NOT EXISTS migrations_applied" in query
         for query, _ in cursor.executed
     )
+
+
+# ---------------------------------------------------------------------------
+# Real-Postgres rollback test (found during a system-wide audit: the mocked
+# DummyConnection above never actually rolls anything back -- its rollback()
+# is a no-op stub -- so nothing had ever exercised whether a failing
+# migration genuinely leaves the database unchanged, or only appeared to
+# because the double is too permissive to fail that way).
+# ---------------------------------------------------------------------------
+
+
+def _database_available() -> bool:
+    try:
+        import psycopg
+
+        settings = Settings()
+        with psycopg.connect(str(settings.database_url), connect_timeout=3):
+            return True
+    except Exception:
+        return False
+
+
+requires_db = pytest.mark.skipif(
+    not _database_available(),
+    reason="Requires a reachable PostgreSQL database via DATABASE_URL",
+)
+
+_ROLLBACK_TEST_MARKER = "9999_test_rollback_valid.sql"
+
+
+@requires_db
+def test_run_migrations_rolls_back_the_whole_batch_on_a_later_failure(monkeypatch, tmp_path):
+    """The entire run is one transaction: an early success must not survive a later failure.
+
+    run_migrations applies every unapplied migration inside a single
+    database.cursor() block, so the whole batch commits or none of it does.
+    That is only true if Database.connection()'s rollback-on-exception path
+    genuinely works against real Postgres, not just against a mock whose
+    rollback() is a no-op stub (as in the tests above). This drives a real
+    failure -- invalid SQL a real server rejects -- through a temporary
+    migrations directory containing one migration that would succeed
+    followed by one that cannot, and checks the database itself afterward.
+
+    Uses the real project Settings (not this file's autouse env_settings
+    fixture, whose DATABASE_URL is a placeholder for the mocked tests above
+    and does not point at a reachable database). DATABASE_URL must be
+    cleared first: Settings() calls load_dotenv(), which refuses to override
+    an env var already set, so the autouse fixture's placeholder would
+    otherwise shadow the real .env value here too.
+    """
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    real_settings = Settings()
+    valid_migration = tmp_path / _ROLLBACK_TEST_MARKER
+    valid_migration.write_text(
+        "CREATE TABLE test_rollback_should_not_persist (id INT PRIMARY KEY)"
+    )
+    broken_migration = tmp_path / "9999_test_rollback_broken.sql"
+    broken_migration.write_text("SELECT * FROM table_that_does_not_exist_anywhere")
+
+    monkeypatch.setattr(migrate_module, "MIGRATIONS_DIR", tmp_path)
+
+    with pytest.raises(psycopg.Error):
+        run_migrations(real_settings)
+
+    database = Database(DatabaseConfig(real_settings.database_url))
+    try:
+        with database.cursor() as cursor:
+            cursor.execute(
+                "SELECT 1 FROM migrations_applied WHERE migration_file = %s",
+                (_ROLLBACK_TEST_MARKER,),
+            )
+            assert cursor.fetchone() is None, (
+                "the earlier-succeeding migration was recorded as applied even "
+                "though a later migration in the same batch failed"
+            )
+
+            cursor.execute(
+                "SELECT to_regclass('test_rollback_should_not_persist')"
+            )
+            row = cursor.fetchone()
+            assert row is not None and row[0] is None, (
+                "the earlier-succeeding migration's CREATE TABLE survived a "
+                "rollback triggered by a later migration's failure"
+            )
+    finally:
+        with database.cursor() as cursor:
+            cursor.execute("DROP TABLE IF EXISTS test_rollback_should_not_persist")
+            cursor.execute(
+                "DELETE FROM migrations_applied WHERE migration_file = %s",
+                (_ROLLBACK_TEST_MARKER,),
+            )

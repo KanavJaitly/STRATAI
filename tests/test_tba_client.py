@@ -5,6 +5,7 @@ from unittest.mock import Mock
 
 import httpx
 import pytest
+from pydantic import ValidationError
 
 from data.clients.tba import TBAClient
 from data.clients.schemas import EventSummary, Match, TeamInfo
@@ -173,6 +174,33 @@ def test_retry_exhaustion_raises(monkeypatch, env_settings):
         client.fetch_event_list(year=2025)
 
     assert mock_request.call_count == client.max_retries
+
+
+# --- edge cases / malformed responses --------------------------------------
+# Parity with tests/test_statbotics_client.py's malformed-payload coverage,
+# found missing for this client during a system-wide audit.
+
+
+def test_fetch_event_list_raises_on_malformed_item(monkeypatch, env_settings):
+    # Missing the required "year" field (EventSummary.season's alias).
+    client = TBAClient(settings=env_settings)
+    malformed_data = [{"key": "2025casj", "name": "Sacramento"}]
+    mock_request = Mock(return_value=DummyResponse(200, malformed_data))
+    monkeypatch.setattr(client, "_client", Mock(request=mock_request))
+
+    with pytest.raises(ValidationError):
+        client.fetch_event_list(year=2025)
+
+
+def test_fetch_team_info_raises_on_malformed_response(monkeypatch, env_settings):
+    # Missing the required "team_number" field entirely.
+    client = TBAClient(settings=env_settings)
+    malformed_data = {"key": "frc1114"}
+    mock_request = Mock(return_value=DummyResponse(200, malformed_data))
+    monkeypatch.setattr(client, "_client", Mock(request=mock_request))
+
+    with pytest.raises(ValidationError):
+        client.fetch_team_info(1114)
 
 
 def test_http_error_raises(monkeypatch, env_settings):
