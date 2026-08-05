@@ -1233,6 +1233,27 @@ def main(argv: list[str] | None = None) -> int:
         f"(fatal={len(result.fatal_issues)}) lineage={result.lineage_recorded} "
         f"extraction_errors={len(result.extraction_errors)}"
     )
+
+    # Phase 3 Milestone 10's follow-on stage: metrics are recomputed for every
+    # team at this event immediately after its own sync, over whatever
+    # canonical + scouting data now exists. A deferred import, not a
+    # module-level one -- data.metrics.compute reaches back into this same
+    # module for PipelineRunRecorder, so importing it at module level here
+    # would reintroduce the identical circular import data/metrics/__init__.py's
+    # own docstring already documents avoiding (confirmed by triggering it).
+    # Deliberately not wired into sync_season/watch_event in this milestone:
+    # a full-season backfill recomputing every team of every historical event
+    # is a materially larger, unbounded-cost operation nobody has asked for
+    # yet, and watch_event's own live poll loop is a bigger, separately-tested
+    # state machine that deserves its own deliberate integration, not a
+    # same-milestone add-on.
+    from data.metrics.compute import compute_event_team_metrics
+
+    metrics_result = compute_event_team_metrics(args.event_key, database=database)
+    print(
+        f"metrics run {metrics_result.run_id}: teams_computed={metrics_result.teams_computed} "
+        f"lineage={metrics_result.lineage_recorded}"
+    )
     return 0
 
 

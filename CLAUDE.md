@@ -183,9 +183,21 @@ Phase 3 progress:
   caller-supplied configuration, not code, so no FRC game's field names are
   hardcoded. See docs/data_pipeline.md section 4.1 and RUNNING_NOTES.md for
   the full architecture and design decisions.
-* Milestone 10 onward (the metrics computation pipeline, and everything
-  after) not started. See docs/P3Milestones.md for the full per-milestone
-  checklist and RUNNING_NOTES.md for status/decisions.
+* Milestone 10 (Kanav, 2026-08-05): the metrics computation pipeline, in
+  data/metrics/compute.py — compute_team_metrics(database, team_number,
+  event_key) composes Milestones 3+4+8 into the TeamMetrics object Phase 3's
+  Definition of Done names; compute_event_team_metrics(event_key, ...)
+  computes and upserts it for every team rostered at an event and records
+  its own pipeline_runs row (pipeline_name="metrics_compute"), wired as a
+  follow-on stage right after a single-event sync in
+  data.orchestrator.main. Always fully recomputes on trigger, no incremental
+  watermark (documented why in data/metrics/compute.py's own module
+  docstring and docs/data_pipeline.md section 4.1). Lineage traces a
+  team_metrics row to every contributing match and scouting observation.
+  team_metrics is no longer empty.
+* Milestone 11 onward (metrics data quality checks, the API foundation, and
+  everything after) not started. See docs/P3Milestones.md for the full
+  per-milestone checklist and RUNNING_NOTES.md for status/decisions.
 
 Phase 2 – Data Pipeline (complete, Milestones 1-10)
 
@@ -212,7 +224,7 @@ fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
 team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
 Next Milestone:
-Phase 3 Milestone 10 – the metrics computation pipeline.
+Phase 3 Milestone 11 – metrics data quality checks.
 
 ---
 

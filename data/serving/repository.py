@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, TypeVar
 
-from data.metrics.schemas import ScoutingObservation
+from data.metrics.schemas import ScoutingObservation, TeamMetrics
 from data.staging.schemas import (
     StagingEvent,
     StagingMatch,
@@ -25,9 +25,10 @@ class CanonicalRepository:
     This is the serving-layer counterpart to the landing-layer RawPayloadWriter:
     it takes the source-agnostic StagingTeam / StagingEvent / StagingMatch /
     StagingTeamEventStats produced by the staging layer, plus (Phase 3
-    Milestone 7) data.metrics's ScoutingObservation, and persists them into
-    the canonical teams / events / matches / match_teams / team_event_stats /
-    scouting_observations tables that downstream metrics and ML consume.
+    Milestone 7) data.metrics's ScoutingObservation and (Phase 3 Milestone 10)
+    TeamMetrics, and persists them into the canonical teams / events / matches /
+    match_teams / team_event_stats / scouting_observations / team_metrics
+    tables that downstream metrics and ML consume.
 
     Every write is an INSERT ... ON CONFLICT DO UPDATE keyed on the table's
     natural key, so loads are idempotent: re-loading the same staging entity
@@ -312,6 +313,71 @@ class CanonicalRepository:
         """
         with self.database.cursor() as cursor:
             self._upsert_scouting_observation(cursor, observation, raw_payload_id)
+
+    # -- team_metrics (Phase 3 Milestone 10) --------------------------------
+
+    def _upsert_team_metrics(self, cursor: Any, metrics: TeamMetrics) -> None:
+        scoring, defense_feeding = metrics.scoring, metrics.defense_feeding
+        cursor.execute(
+            """
+            INSERT INTO team_metrics (
+                team_number, event_key, season, computed_at,
+                matches_scheduled, matches_used, average_score, score_stddev,
+                consistency_rating, reliability_score,
+                good_day_count, average_day_count, bad_day_count,
+                defense_score, defense_observation_count, defense_agreement, defense_insufficient_data,
+                feeding_score, feeding_observation_count, feeding_agreement, feeding_insufficient_data,
+                contributing_sources
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (team_number, event_key) DO UPDATE SET
+                season = EXCLUDED.season,
+                computed_at = EXCLUDED.computed_at,
+                matches_scheduled = EXCLUDED.matches_scheduled,
+                matches_used = EXCLUDED.matches_used,
+                average_score = EXCLUDED.average_score,
+                score_stddev = EXCLUDED.score_stddev,
+                consistency_rating = EXCLUDED.consistency_rating,
+                reliability_score = EXCLUDED.reliability_score,
+                good_day_count = EXCLUDED.good_day_count,
+                average_day_count = EXCLUDED.average_day_count,
+                bad_day_count = EXCLUDED.bad_day_count,
+                defense_score = EXCLUDED.defense_score,
+                defense_observation_count = EXCLUDED.defense_observation_count,
+                defense_agreement = EXCLUDED.defense_agreement,
+                defense_insufficient_data = EXCLUDED.defense_insufficient_data,
+                feeding_score = EXCLUDED.feeding_score,
+                feeding_observation_count = EXCLUDED.feeding_observation_count,
+                feeding_agreement = EXCLUDED.feeding_agreement,
+                feeding_insufficient_data = EXCLUDED.feeding_insufficient_data,
+                contributing_sources = EXCLUDED.contributing_sources
+            """,
+            (
+                metrics.team_number, metrics.event_key, metrics.season, metrics.computed_at,
+                scoring.matches_scheduled, scoring.matches_used, scoring.average_score, scoring.score_stddev,
+                scoring.consistency_rating, scoring.reliability_score,
+                scoring.good_day_count, scoring.average_day_count, scoring.bad_day_count,
+                defense_feeding.defense_score, defense_feeding.defense_observation_count,
+                defense_feeding.defense_agreement, defense_feeding.defense_insufficient_data,
+                defense_feeding.feeding_score, defense_feeding.feeding_observation_count,
+                defense_feeding.feeding_agreement, defense_feeding.feeding_insufficient_data,
+                defense_feeding.contributing_sources,
+            ),
+        )
+
+    def load_team_metrics(self, metrics: TeamMetrics) -> None:
+        """Upsert one team's complete computed metrics into the canonical table.
+
+        A current-state snapshot, one row per (team_number, event_key), keyed
+        on team_metrics_pk exactly as TeamMetrics's own docstring describes:
+        recomputing overwrites the previous value in place, rather than
+        appending a new version -- "what did we know as of match 5" is
+        answered by replaying the pipeline against a historical cut of the
+        already-versioned raw_source_payloads, not by keeping every snapshot
+        this table ever held. contributing_sources is passed as a plain Python
+        list; psycopg3 adapts it to a TEXT[] automatically.
+        """
+        with self.database.cursor() as cursor:
+            self._upsert_team_metrics(cursor, metrics)
 
     # -- orchestration -----------------------------------------------------
 

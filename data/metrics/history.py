@@ -65,6 +65,16 @@ class TeamMatchHistory:
     functions is order-sensitive today, but a future consumer that wants a
     trend (e.g. "did this team improve across the event") is not something a
     per-match retrieval layer should have to be re-queried to support.
+
+    match_keys (Milestone 10) is every match this team is rostered into at
+    this event, in the same play order as scores -- length matches_scheduled,
+    not matches_used, since it names the full roster this team's
+    matches_scheduled/reliability_score are computed from, not only the
+    subset that has been played. Milestone 10's compute_team_metrics traces a
+    team_metrics row's lineage to each of these matches' own canonical
+    lineage; unplayed-but-scheduled matches are included deliberately, since
+    they still feed matches_scheduled and therefore reliability_score, not
+    just the matches that contributed a score.
     """
 
     team_number: int
@@ -72,6 +82,7 @@ class TeamMatchHistory:
     matches_scheduled: int
     matches_used: int
     scores: list[int] = field(default_factory=list)
+    match_keys: list[str] = field(default_factory=list)
 
 
 def get_team_match_history(database: Database, team_number: int, event_key: str) -> TeamMatchHistory:
@@ -88,7 +99,7 @@ def get_team_match_history(database: Database, team_number: int, event_key: str)
     with database.cursor() as cursor:
         cursor.execute(
             f"""
-            SELECT mt.alliance_color, m.score_red, m.score_blue
+            SELECT m.match_key, mt.alliance_color, m.score_red, m.score_blue
             FROM match_teams mt
             JOIN matches m ON m.match_key = mt.match_key
             WHERE mt.team_number = %s AND m.event_key = %s
@@ -99,7 +110,9 @@ def get_team_match_history(database: Database, team_number: int, event_key: str)
         rows = cursor.fetchall()
 
     scores: list[int] = []
-    for alliance_color, score_red, score_blue in rows:
+    match_keys: list[str] = []
+    for match_key, alliance_color, score_red, score_blue in rows:
+        match_keys.append(match_key)
         # alliance_color has no third value to guard against: match_teams'
         # own CHECK constraint (0005_canonical.sql) already restricts it to
         # exactly 'red'/'blue' at the database level, unlike TBA's raw
@@ -115,4 +128,5 @@ def get_team_match_history(database: Database, team_number: int, event_key: str)
         matches_scheduled=len(rows),
         matches_used=len(scores),
         scores=scores,
+        match_keys=match_keys,
     )
