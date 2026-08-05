@@ -166,9 +166,14 @@ Phase 3 progress:
   read_pending/stage_batch into a real scouting_observations row. No HTTP
   route yet — this is the service function Milestone 12's API layer will
   call once it exists.
-* Milestone 8 onward (aggregation policy, the metrics computation pipeline,
-  and everything after) not started. See docs/P3Milestones.md for the full
-  per-milestone checklist and RUNNING_NOTES.md for status/decisions.
+* Milestone 8 (Kanav, 2026-08-04): defense/feeding aggregation logic in
+  data/metrics/aggregation.py — aggregate_defense_feeding takes one team's
+  ScoutingObservation rows at one event and returns a DefenseFeedingProfile:
+  median score (not mean), population-stddev-based agreement, and a
+  documented 2-observation minimum before anything is reported as sufficient.
+* Milestone 9 onward (ScoutRadioz connector, the metrics computation
+  pipeline, and everything after) not started. See docs/P3Milestones.md for
+  the full per-milestone checklist and RUNNING_NOTES.md for status/decisions.
 
 Phase 2 – Data Pipeline (complete, Milestones 1-10)
 
@@ -195,8 +200,8 @@ fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
 team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
 Next Milestone:
-Phase 3 Milestone 8 – defense/feeding aggregation policy, then the metrics
-computation pipeline.
+Phase 3 Milestone 9 – ScoutRadioz connector (second scouting source), then
+the metrics computation pipeline.
 
 ---
 

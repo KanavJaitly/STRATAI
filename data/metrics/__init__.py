@@ -10,9 +10,10 @@ PayloadValidationError directly rather than re-exporting them a third way here.
 Phase 3 Milestone 6 provides validate-then-build normalization of a validated
 raw submission into a canonical ScoutingObservation (data.metrics.normalizer).
 Phase 3 Milestone 7 provides the end-to-end submission path itself
-(data.metrics.submission) -- gate, validate, land, stage, load. Aggregation and
-the metrics computation pipeline are later milestones and are not exported
-here yet.
+(data.metrics.submission) -- gate, validate, land, stage, load. Phase 3
+Milestone 8 provides pure aggregation of a team's scouting observations into
+a DefenseFeedingProfile (data.metrics.aggregation). The metrics computation
+pipeline (Milestone 10) is a later milestone and is not exported here yet.
 
 data.metrics.submission is deliberately NOT imported here, unlike every other
 Milestone's module: it reaches back out to data.pipeline/data.orchestrator (to
@@ -27,6 +28,7 @@ data.metrics.normalizer directly rather than through this package for the same
 underlying reason. Import from data.metrics.submission directly.
 """
 
+from data.metrics.aggregation import MIN_OBSERVATIONS_FOR_SCORE, aggregate_defense_feeding
 from data.metrics.history import TeamMatchHistory, get_team_match_history
 from data.metrics.normalizer import (
     normalize_human_scout_observation,
@@ -65,12 +67,14 @@ __all__ = [
     "GOOD_DAY_ZSCORE_THRESHOLD",
     "MAX_RATING",
     "MIN_MATCHES_FOR_STDDEV",
+    "MIN_OBSERVATIONS_FOR_SCORE",
     "MIN_RATING",
     "DefenseFeedingProfile",
     "ScoringProfile",
     "ScoutingObservation",
     "TeamMatchHistory",
     "TeamMetrics",
+    "aggregate_defense_feeding",
     "average_score",
     "classify_match_days",
     "consistency_rating",

@@ -89,6 +89,7 @@ def _season_from_event_key(event_key: str) -> int:
     any event_key that doesn't start with 4 digits before this ever runs.
     """
     match = _EVENT_KEY_SEASON_PATTERN.match(event_key)
+    assert match is not None
     return int(match.group(1))
 
 
@@ -107,6 +108,7 @@ def _parse_team_number(team_key: str) -> int:
     distinguish yet.
     """
     match = _TEAM_KEY_DIGITS_PATTERN.match(team_key)
+    assert match is not None
     return int(match.group(1))
 
 
@@ -306,8 +308,9 @@ def normalize_statbotics_team_event_stats(payload: dict[str, Any]) -> StagingTea
     # real to check: while matches_played was always derived from W/L/T, the
     # quality rule comparing the two could never fire.
     matches_played = metrics.count
-    if matches_played is None and None not in (metrics.wins, metrics.losses, metrics.ties):
-        matches_played = metrics.wins + metrics.losses + metrics.ties
+    wins, losses, ties = metrics.wins, metrics.losses, metrics.ties
+    if matches_played is None and wins is not None and losses is not None and ties is not None:
+        matches_played = wins + losses + ties
 
     return _build_or_raise(
         "team_event_stats", StagingTeamEventStats, source_object_id,

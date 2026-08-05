@@ -311,10 +311,14 @@ functions — `average_score`, `score_stddev`, `consistency_rating`, `classify_m
 `reliability_score` — over an already-extracted list of scores, and Phase 3 Milestone 4
 (`data/metrics/history.py`) supplies that list for real: `get_team_match_history` reads
 `matches`/`match_teams` and returns one team's own scores at one event, plus
-`matches_scheduled`/`matches_used`. Neither M3 nor M4 writes `team_metrics` — they are pure
-functions and a read path respectively, with no writer between them and that table yet. The
-aggregation policy and the metrics computation pipeline that would compose M3+M4 into a
-`TeamMetrics` and write `team_metrics` are later Phase 3 milestones. Both tables were
+`matches_scheduled`/`matches_used`. Phase 3 Milestone 8 (`data/metrics/aggregation.py`)
+implements the defense/feeding side the same way: `aggregate_defense_feeding` takes an
+already-fetched `list[ScoutingObservation]` for one team at one event and returns a
+`DefenseFeedingProfile` (median score, population-stddev-based agreement, a
+2-observation minimum before anything is reported). None of M3/M4/M8 writes
+`team_metrics` — they are pure functions and a read path, with no writer between them and
+that table yet. The metrics computation pipeline that would compose M3+M4+M8 into a
+`TeamMetrics` and write `team_metrics` is a later Phase 3 milestone. Both tables were
 created ahead of any of this logic so the storage shape was fixed first, for the same
 reason Milestone 1 fixed the model shape before any of it was written.
 

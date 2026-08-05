@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from pydantic import ConfigDict, PostgresDsn, field_validator
+from pydantic import ConfigDict, Field, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -28,12 +28,17 @@ class Settings(BaseSettings):
     database_url: PostgresDsn
     tba_api_key: str
     statbotics_api_key: str | None = None
-    tba_timeout: float = 10.0
-    tba_max_retries: int = 3
-    tba_backoff_factor: float = 0.5
-    statbotics_timeout: float = 10.0
-    statbotics_max_retries: int = 3
-    statbotics_backoff_factor: float = 0.5
+    tba_timeout: float = Field(default=10.0, gt=0)
+    # ge=1, not ge=0: request_with_retries treats this as a total attempt
+    # count (range(1, max_retries + 1)), so 0 would make zero HTTP requests
+    # and fall straight through to a generic RuntimeError -- found during a
+    # system-wide audit. Caught here, at the config boundary, with a clear
+    # pydantic error instead of a confusing one deep in a retry loop.
+    tba_max_retries: int = Field(default=3, ge=1)
+    tba_backoff_factor: float = Field(default=0.5, ge=0)
+    statbotics_timeout: float = Field(default=10.0, gt=0)
+    statbotics_max_retries: int = Field(default=3, ge=1)
+    statbotics_backoff_factor: float = Field(default=0.5, ge=0)
     env: str = "development"
 
     model_config = ConfigDict(

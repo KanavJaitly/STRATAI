@@ -64,6 +64,11 @@ class StatboticsClient(SourceConnector):
 
     def _request(self, method: str, path: str, params: dict[str, Any] | None = None) -> Any:
         url = f"{self.base_url}{path}"
+        # max_retries/backoff_factor are typed Optional only to let a caller
+        # override the Settings default; __post_init__ always resolves both
+        # to a concrete value before any request can be made.
+        assert self.max_retries is not None
+        assert self.backoff_factor is not None
         return request_with_retries(
             self._client, method, url,
             max_retries=self.max_retries, backoff_factor=self.backoff_factor, params=params,
@@ -90,9 +95,3 @@ class StatboticsClient(SourceConnector):
     def close(self) -> None:
         """Close the underlying HTTP client."""
         self._client.close()
-
-    def __enter__(self) -> "StatboticsClient":
-        return self
-
-    def __exit__(self, exc_type, exc, tb) -> None:
-        self.close()

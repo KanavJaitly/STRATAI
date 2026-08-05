@@ -79,9 +79,17 @@ def test_projection_shaped_payloads_still_work(real_match):
     """Payloads landed before this change used the alias `teams`; they must still load.
 
     The landing layer never rewrites history, so both shapes are present in
-    raw_source_payloads permanently.
+    raw_source_payloads permanently. The legacy shape is built by hand here
+    (renaming `team_keys` to `teams` in a deep copy of the real payload)
+    rather than via `Match.model_dump(by_alias=True)`: that alias was itself
+    the bug this file guards against (see MatchAllianceResult's docstring in
+    data/clients/schemas.py) and, now corrected, no longer produces the
+    legacy shape at all.
     """
-    projected = Match.model_validate(real_match).model_dump(mode="json", by_alias=True)
+    projected = json.loads(json.dumps(real_match))
+    for color in ("red", "blue"):
+        alliance = projected["alliances"][color]
+        alliance["teams"] = alliance.pop("team_keys")
     assert "teams" in projected["alliances"]["red"]          # the old shape
     assert "team_keys" not in projected["alliances"]["red"]
 

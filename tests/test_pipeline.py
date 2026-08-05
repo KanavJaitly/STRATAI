@@ -629,17 +629,28 @@ def test_event_sync_lock_serializes_same_event_but_not_different_events(database
 
     order: list[str] = []
 
-    def hold(label: str, event_key: str, seconds: float) -> None:
+    def hold(label: str, event_key: str, seconds: float, acquired: threading.Event | None = None) -> None:
         with _event_sync_lock(database, event_key):
             order.append(f"{label}-acquired")
+            if acquired is not None:
+                acquired.set()
             time.sleep(seconds)
             order.append(f"{label}-released")
 
     # Same event_key: B must wait for A to fully release before acquiring.
-    t1 = threading.Thread(target=hold, args=("A", S_EVENT, 0.4))
+    # Found flaky during a system-wide audit's repeated full-suite runs: a
+    # fixed time.sleep(0.1) between starting A and starting B assumes A has
+    # already opened a connection and acquired the advisory lock within that
+    # window, which is a real network+DB round trip, not instantaneous --
+    # under load, B could start and win the race before A ever gets there.
+    # Waiting on an Event A itself sets right after acquiring makes this
+    # deterministic regardless of system load, instead of merely unlikely to
+    # fail.
+    a_acquired = threading.Event()
+    t1 = threading.Thread(target=hold, args=("A", S_EVENT, 0.4, a_acquired))
     t2 = threading.Thread(target=hold, args=("B", S_EVENT, 0.05))
     t1.start()
-    time.sleep(0.1)  # ensure A acquires first
+    assert a_acquired.wait(timeout=5), "thread A never acquired its lock within 5s"
     t2.start()
     t1.join()
     t2.join()
@@ -658,3 +669,18 @@ def test_event_sync_lock_serializes_same_event_but_not_different_events(database
         thread.join()
     elapsed = time.monotonic() - started
     assert elapsed < 0.6, f"unrelated events should not serialize on each other's lock, took {elapsed:.2f}s"
+
+
+# ---------------------------------------------------------------------------
+# pipeline.load()'s object-type scope (found during the full system-wide
+# audit: stage_batch is now generic across 5 object types since Milestone 7,
+# but load() only ever handled the original 4 -- a StagedBatch of type
+# "scouting_observation" reached a plain dict lookup and raised a bare
+# KeyError with no context, an easy trap for whoever wires Milestone 10.
+# ---------------------------------------------------------------------------
+
+
+def test_load_raises_a_clear_error_for_an_object_type_it_does_not_handle():
+    unsupported = pipeline.StagedBatch(source="human_scout", object_type=pipeline.OBJECT_TYPE_SCOUTING_OBSERVATION)
+    with pytest.raises(ValueError, match="scouting_observation"):
+        pipeline.load(repository=None, staged_batches=[unsupported])
