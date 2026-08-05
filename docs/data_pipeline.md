@@ -298,8 +298,9 @@ plus `applied_at`.
 
 ### 4.1 Phase 3 metrics tables
 
-Created by `0008_metrics_schema.sql`. **`team_metrics` is still empty; nothing writes it
-yet.** `scouting_observations` is no longer empty as of Phase 3 Milestone 7: the human
+Created by `0008_metrics_schema.sql`. **`team_metrics` is no longer empty as of Phase 3
+Milestone 10** (see below) — `data/metrics/compute.py`'s `compute_event_team_metrics` is
+its real writer. `scouting_observations` is no longer empty as of Phase 3 Milestone 7: the human
 scouting submission path (`data/metrics/submission.py`) is a real, tested writer, landing a
 submission via `RawPayloadWriter` (source `"human_scout"`) and loading it into this table
 via `CanonicalRepository.load_scouting_observation` once `data.pipeline.stage_batch`
@@ -352,6 +353,41 @@ one pooled score — verified with a real import running alongside a real
 `submit_human_scout_observation` call for the same match and team
 (`tests/test_scoutradioz_import.py`).
 
+**Milestone 10 is the metrics computation pipeline** (`data/metrics/compute.py`):
+`compute_team_metrics(database, team_number, event_key)` composes Milestone 4's match
+history, Milestone 3's pure statistics, and Milestone 8's defense/feeding aggregation
+into one `TeamMetrics` object — the literal answer to Phase 3's Definition of Done.
+`compute_event_team_metrics(event_key, ...)` computes and upserts it for every team
+rostered at an event (found via `match_teams`, not the optional Statbotics-only
+`team_event_stats`) and records its own `pipeline_runs` row
+(`pipeline_name="metrics_compute"`), wired as a follow-on stage right after a
+single-event `sync_event` in `data.orchestrator.main` — deliberately not wired into
+`sync_season`/`watch_event` in this milestone (a full-season backfill recomputing
+every historical event, or `watch_event`'s own separately-tested live-poll state
+machine, are each a materially larger, separate integration decision).
+
+**No incremental watermark — always fully recomputes on trigger**, a deliberate
+design decision the milestone explicitly called for: a `TeamMetrics` row's inputs span
+two entity types (`matches`, `scouting_observations`) across three sources (`tba`,
+`human_scout`, `scoutradioz`), each already independently watermarked for its own
+purpose — reconstructing "has anything this depends on changed" would mean comparing
+against the max of several existing watermarks, real complexity for a marginal
+benefit, since recomputing is cheap (a handful of indexed reads plus pure-Python
+math, nothing like TBA's network calls or the landing layer's checksum work). This is
+also the most literal way to satisfy `PROJECT_VISION.md`'s "calculated metrics should
+be reproducible from stored source data" — there is no partial, possibly-stale
+incremental state to reason about, ever.
+
+**Lineage** is extended for `team_metrics`: every match a team is rostered into (all of
+`matches_scheduled`, not only played ones — an unplayed-but-scheduled match still feeds
+`matches_scheduled` and therefore `reliability_score`) is traced to its current
+`canonical_lineage` entry, and every contributing `scouting_observations` row is traced
+via its own `raw_payload_id` column directly (no second lookup needed). A match or
+observation with no traceable raw payload is skipped, not an error — lineage here is
+best-effort audit information, not a correctness gate on the computation. A per-event
+cache avoids re-querying the same match's lineage once per rostered team (found and
+fixed during this milestone's own Phase F review, before it shipped).
+
 Phase 3 Milestone 3 (`data/metrics/statistics.py`) implements the pure statistical
 functions — `average_score`, `score_stddev`, `consistency_rating`, `classify_match_days`,
 `reliability_score` — over an already-extracted list of scores, and Phase 3 Milestone 4
@@ -361,10 +397,10 @@ functions — `average_score`, `score_stddev`, `consistency_rating`, `classify_m
 implements the defense/feeding side the same way: `aggregate_defense_feeding` takes an
 already-fetched `list[ScoutingObservation]` for one team at one event and returns a
 `DefenseFeedingProfile` (median score, population-stddev-based agreement, a
-2-observation minimum before anything is reported). None of M3/M4/M8 writes
-`team_metrics` — they are pure functions and a read path, with no writer between them and
-that table yet. The metrics computation pipeline that would compose M3+M4+M8 into a
-`TeamMetrics` and write `team_metrics` is a later Phase 3 milestone. Both tables were
+2-observation minimum before anything is reported). M3/M4/M8 themselves stay pure
+functions and a read path, with no writer of their own — Milestone 10
+(`data/metrics/compute.py`, described above) is what composes them into a
+`TeamMetrics` and writes `team_metrics` for real. Both tables were
 created ahead of any of this logic so the storage shape was fixed first, for the same
 reason Milestone 1 fixed the model shape before any of it was written.
 

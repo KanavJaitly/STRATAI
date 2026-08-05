@@ -15,23 +15,28 @@ Milestone 8 provides pure aggregation of a team's scouting observations into
 a DefenseFeedingProfile (data.metrics.aggregation). Phase 3 Milestone 9
 provides ScoutRadioz CSV import (data.metrics.scoutradioz) -- ScoutRadioz has
 no public API, so this maps a CSV export into the same canonical scouting-
-observation pipeline human_scout submissions use. The metrics computation
-pipeline (Milestone 10) is a later milestone and is not exported here yet.
+observation pipeline human_scout submissions use. Phase 3 Milestone 10
+provides the metrics computation pipeline itself (data.metrics.compute) --
+compute_team_metrics composes Milestones 3+4+8 into the TeamMetrics object
+Phase 3's Definition of Done names, and compute_event_team_metrics computes
+and persists it for every team at an event, as a follow-on stage after
+data.orchestrator.sync_event.
 
-data.metrics.submission and data.metrics.scoutradioz are deliberately NOT
-imported here, unlike every other Milestone's module: both reach back out to
-data.pipeline/data.orchestrator (to reuse read_pending/stage_batch and
-PipelineRunRecorder/WatermarkStore), and those modules import
-data.metrics.normalizer -- which requires importing this very package first.
-Re-exporting either module's names here would make importing data.pipeline
-(or data.metrics.normalizer, or this package) on its own, before
-data.orchestrator has been loaded some other way first, fail with an
-ImportError on a partially-initialized data.pipeline module (confirmed for
-submission during Milestone 7, and re-confirmed for scoutradioz during
-Milestone 9 by triggering the identical failure, not just reasoning by
-analogy). data.pipeline itself already imports data.metrics.normalizer
-directly rather than through this package for the same underlying reason.
-Import from data.metrics.submission or data.metrics.scoutradioz directly.
+data.metrics.submission, data.metrics.scoutradioz, and data.metrics.compute
+are deliberately NOT imported here, unlike every other Milestone's module: all
+three reach back out to data.pipeline/data.orchestrator (to reuse
+read_pending/stage_batch, PipelineRunRecorder, and/or WatermarkStore), and
+those modules import data.metrics.normalizer -- which requires importing this
+very package first. Re-exporting any of the three's names here would make
+importing data.pipeline (or data.metrics.normalizer, or this package) on its
+own, before data.orchestrator has been loaded some other way first, fail with
+an ImportError on a partially-initialized data.pipeline module (confirmed for
+submission during Milestone 7, re-confirmed for scoutradioz during Milestone
+9, and re-confirmed again for compute during Milestone 10, each time by
+triggering the identical failure, not just reasoning by analogy). data.pipeline
+itself already imports data.metrics.normalizer directly rather than through
+this package for the same underlying reason. Import from data.metrics.
+submission, data.metrics.scoutradioz, or data.metrics.compute directly.
 """
 
 from data.metrics.aggregation import MIN_OBSERVATIONS_FOR_SCORE, aggregate_defense_feeding
