@@ -171,9 +171,20 @@ Phase 3 progress:
   ScoutingObservation rows at one event and returns a DefenseFeedingProfile:
   median score (not mean), population-stddev-based agreement, and a
   documented 2-observation minimum before anything is reported as sufficient.
-* Milestone 9 onward (ScoutRadioz connector, the metrics computation
-  pipeline, and everything after) not started. See docs/P3Milestones.md for
-  the full per-milestone checklist and RUNNING_NOTES.md for status/decisions.
+* Milestone 9 (Kanav, 2026-08-05): ScoutRadioz research, in
+  docs/data_pipeline.md section 4.1 and RUNNING_NOTES.md — no connector
+  built. ScoutRadioz has no public, documented API: every data-bearing
+  route, including its own CSV export, requires an authenticated per-team
+  login, unlike TBA/Statbotics's open APIs. load_scouting_observation and
+  aggregate_defense_feeding are already source-agnostic (confirmed with real
+  multi-source rows in tests/test_repository.py and
+  tests/test_aggregation.py), so nothing needed to change there; human-form
+  submission remains the sole populated measurement path for Phase 3, and
+  the registries' "scoutradioz" slot stays reserved and tested as
+  unregistered.
+* Milestone 10 onward (the metrics computation pipeline, and everything
+  after) not started. See docs/P3Milestones.md for the full per-milestone
+  checklist and RUNNING_NOTES.md for status/decisions.
 
 Phase 2 – Data Pipeline (complete, Milestones 1-10)
 
@@ -200,8 +211,7 @@ fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
 team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
 Next Milestone:
-Phase 3 Milestone 9 – ScoutRadioz connector (second scouting source), then
-the metrics computation pipeline.
+Phase 3 Milestone 10 – the metrics computation pipeline.
 
 ---
 

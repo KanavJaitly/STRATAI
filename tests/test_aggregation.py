@@ -184,6 +184,79 @@ def test_aggregation_does_not_mutate_input_list():
     assert observations == snapshot
 
 
+# --- multi-source coexistence (Milestone 9) --------------------------------
+#
+# Milestone 9 found no public, unauthenticated ScoutRadioz API to build a
+# real connector against (every data-bearing route, including its own CSV
+# export, requires an authenticated per-team login -- see RUNNING_NOTES.md).
+# What Milestone 9's own success criteria actually require -- "ScoutRadioz
+# and human-form observations coexist... aggregate together correctly" --
+# is independent of whether a live connector exists: aggregate_defense_feeding
+# only ever sees already-built ScoutingObservation rows, regardless of their
+# origin. These tests construct a second source by hand to prove the pooling
+# behavior a real connector would rely on already works, with zero changes
+# to this module.
+
+def _obs_from(source: str, *, scout_identifier: str, defense: int | None = None, feeding: int | None = None) -> ScoutingObservation:
+    return ScoutingObservation(
+        match_key="2026casj_qm1", event_key="2026casj", team_number=1114,
+        scout_identifier=scout_identifier, defense_rating=defense, feeding_rating=feeding,
+        source=source, submitted_at=_SUBMITTED_AT,
+    )
+
+
+def test_observations_from_two_different_sources_pool_into_one_score():
+    observations = [
+        _obs_from("human_scout", scout_identifier="alice", defense=3),
+        _obs_from("scoutradioz", scout_identifier="scoutbot", defense=5),
+    ]
+    profile = aggregate_defense_feeding(observations)
+
+    assert profile.defense_observation_count == 2
+    assert profile.defense_score == 4.0  # median(3, 5), pooled across sources
+    assert not profile.defense_insufficient_data
+
+
+def test_contributing_sources_names_every_distinct_source_that_produced_a_score():
+    observations = [
+        _obs_from("human_scout", scout_identifier="alice", defense=3),
+        _obs_from("scoutradioz", scout_identifier="scoutbot", defense=4),
+    ]
+    profile = aggregate_defense_feeding(observations)
+
+    assert profile.contributing_sources == ["human_scout", "scoutradioz"]
+
+
+def test_identical_scout_identifier_from_two_sources_are_independent_observations():
+    # The DB migration's own documented edge case: "the same name arriving
+    # from a different source" must count as two independent opinions, not
+    # collide or get deduped -- scout_identifier alone is not the identity.
+    observations = [
+        _obs_from("human_scout", scout_identifier="scoutbot", defense=3),
+        _obs_from("scoutradioz", scout_identifier="scoutbot", defense=5),
+    ]
+    profile = aggregate_defense_feeding(observations)
+
+    assert profile.defense_observation_count == 2
+    assert profile.contributing_sources == ["human_scout", "scoutradioz"]
+
+
+def test_a_source_with_only_an_insufficient_metric_is_excluded_even_alongside_another_source():
+    # Mirrors the existing single-source contributing_sources test, but across
+    # two distinct sources: scoutradioz's lone feeding rating is below
+    # MIN_OBSERVATIONS_FOR_SCORE and must not be named as having contributed.
+    observations = [
+        _obs_from("human_scout", scout_identifier="alice", defense=3),
+        _obs_from("human_scout", scout_identifier="bob", defense=3),
+        _obs_from("scoutradioz", scout_identifier="scoutbot", feeding=4),
+    ]
+    profile = aggregate_defense_feeding(observations)
+
+    assert not profile.defense_insufficient_data
+    assert profile.feeding_insufficient_data
+    assert profile.contributing_sources == ["human_scout"]
+
+
 # --- cross-consistency with DefenseFeedingProfile's own invariants --------
 
 @pytest.mark.parametrize("observations", [
