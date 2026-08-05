@@ -11,7 +11,6 @@ from data.metrics.statistics import (
     score_stddev,
 )
 
-
 # --- average_score -----------------------------------------------------
 
 def test_average_score_empty_input_is_none():

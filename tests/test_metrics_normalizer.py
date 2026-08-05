@@ -180,10 +180,10 @@ def test_natural_key_does_not_collide_across_the_scout_identifier_source_boundar
     # Underscore-joining would collide here: scout_identifier="b_2"+source="c"
     # and scout_identifier="b"+source="2_c" both underscore-join to the
     # identical "..._b_2_c". Colon-joining keeps them distinct.
-    common = dict(
-        match_key="2026casj_qm1", event_key="2026casj", team_number=1114,
-        defense_rating=3, submitted_at=datetime(2026, 8, 4, tzinfo=timezone.utc),
-    )
+    common = {
+        "match_key": "2026casj_qm1", "event_key": "2026casj", "team_number": 1114,
+        "defense_rating": 3, "submitted_at": datetime(2026, 8, 4, tzinfo=timezone.utc),
+    }
     obs_a = ScoutingObservation(**common, scout_identifier="b_2", source="c")
     obs_b = ScoutingObservation(**common, scout_identifier="b", source="2_c")
     key_a = scouting_observation_natural_key(obs_a)

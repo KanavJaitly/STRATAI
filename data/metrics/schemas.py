@@ -1,14 +1,20 @@
 """Canonical models for Phase 3: statistical scoring metrics and scouting-observed
 qualities (defense, feeding), composed into one served TeamMetrics object.
 
-Models only. No database, no computation, no aggregation logic -- those are
-later milestones (statistics functions, match-history retrieval, scouting
-validation/normalization, aggregation, the metrics computation pipeline). This
-module exists to fix the *shape* of Phase 3's core domain concepts before any
-of that logic is written, for the same reason Milestone 6 defined
-StagingEvent/Match/Team before data/staging/normalizer.py existed: getting the
-canonical shape wrong here would force a schema re-key later, exactly as the
-team_key -> team_number re-key in Milestone 7 did.
+Models only. No database, no computation, no aggregation logic in this file
+itself -- those live in the modules each later milestone built: pure
+statistical functions (Milestone 3, data.metrics.statistics), match-history
+retrieval (Milestone 4, data.metrics.history), scouting observation
+validation (Milestone 5, data.metrics.validator), normalization (Milestone 6,
+data.metrics.normalizer), and the submission path (Milestone 7,
+data.metrics.submission). Aggregation (Milestone 8) and the metrics
+computation pipeline (Milestone 10) remain future work. This module exists to
+fix the *shape* of Phase 3's core domain concepts before any of that logic was
+written, for the same reason Milestone 6 (Phase 2's own Milestone 6, absolute
+numbering) defined StagingEvent/Match/Team before data/staging/normalizer.py
+existed: getting the canonical shape wrong here would force a schema re-key
+later, exactly as the team_key -> team_number re-key in Milestone 7 (Phase 2's
+own Milestone 7) did.
 
 Two independent measurement tracks compose into TeamMetrics:
 
@@ -95,8 +101,8 @@ FEEDING_RATING_DESCRIPTIONS: dict[int, str] = {
 # than one stddev below the mean), otherwise "average". Requires at least
 # MIN_MATCHES_FOR_STDDEV matches -- with fewer, stddev is undefined and no
 # classification is attempted (see ScoringProfile's invariants). Thresholds
-# live here, not in the future statistics module, so Phase 3 Milestone 3
-# implements against an already-fixed policy instead of re-deciding it
+# live here, not in data.metrics.statistics, so Phase 3 Milestone 3 could
+# implement against an already-fixed policy instead of re-deciding it
 # mid-implementation.
 GOOD_DAY_ZSCORE_THRESHOLD = 1.0
 BAD_DAY_ZSCORE_THRESHOLD = -1.0

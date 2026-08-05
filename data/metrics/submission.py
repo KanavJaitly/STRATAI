@@ -63,7 +63,10 @@ from typing import Any
 from data import pipeline
 from data.landing.raw_writer import RawPayloadRecord, RawPayloadWriter
 from data.lineage import LineageStore
-from data.metrics.normalizer import normalize_human_scout_observation, scouting_observation_natural_key
+from data.metrics.normalizer import (
+    normalize_human_scout_observation,
+    scouting_observation_natural_key,
+)
 from data.metrics.schemas import ScoutingObservation
 from data.metrics.validator import PayloadValidationError
 from data.orchestrator import PipelineRunRecorder, WatermarkStore

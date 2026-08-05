@@ -64,7 +64,12 @@ from data.staging import (
     normalize_team,
     normalize_team_event_stats,
 )
-from data.staging.quality import QualityContext, QualityIssue, check_entity, issues_from_validation_error
+from data.staging.quality import (
+    QualityContext,
+    QualityIssue,
+    check_entity,
+    issues_from_validation_error,
+)
 from data.staging.validator import is_unassigned_team_key, tba_alliance_team_keys
 from database.connection import Database
 
@@ -436,10 +441,16 @@ def stage_batch(
     dispatcher about data.metrics would invert the dependency direction
     data/metrics/schemas.py's module docstring already decided to protect.
     data.metrics.submission passes data.metrics.normalizer's own
-    scouting_observation_natural_key here instead, and (for now) a
-    quality_check_fn that returns no issues -- scouting-observation-specific
-    quality checks are not in any milestone's scope yet, and adding them later
-    means writing the check function, not touching this signature again.
+    scouting_observation_natural_key here, and its own
+    _check_scouting_observation_references as quality_check_fn -- a real
+    referential-integrity check (does the referenced match/team/event exist
+    canonically), added after a no-op version was found, during Milestone 7's
+    own bug hunt, to let a submission for a not-yet-synced match reach
+    CanonicalRepository.load_scouting_observation and fail as a raw
+    foreign-key violation instead of a clean rejection. Rating-plausibility
+    and submission-pattern checks remain out of scope and unassigned to any
+    milestone; adding them means writing the check function, not touching
+    this signature again.
     """
     normalizer = _STAGING_DISPATCH[object_type]
     staged = StagedBatch(source=source, object_type=object_type, watermark_id=after_raw_id or None)

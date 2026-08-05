@@ -1,11 +1,11 @@
 """Pure statistical functions over a team's match score history.
 
 Phase 3 Milestone 3. No database, no I/O -- every function here is a pure
-transformation of already-extracted data. The future Milestone 4 match-history
-layer is responsible for turning canonical matches/match_teams rows into the
-plain inputs these functions take (a team's own score per match it actually
-played, with unplayed matches already excluded); nothing here queries
-anything itself.
+transformation of already-extracted data. Milestone 4's match-history layer
+(data.metrics.history.get_team_match_history) turns canonical matches/
+match_teams rows into the plain inputs these functions take (a team's own
+score per match it actually played, with unplayed matches already excluded);
+nothing here queries anything itself.
 
 Every function returns None, never 0 or an exception, when its result is
 statistically undefined for the given input. This must stay consistent with
