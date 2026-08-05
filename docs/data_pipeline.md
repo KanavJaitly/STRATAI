@@ -306,6 +306,21 @@ via `CanonicalRepository.load_scouting_observation` once `data.pipeline.stage_ba
 validates and normalizes it (Milestones 5-6's `data/metrics/validator.py`/`normalizer.py`).
 See §4.2 for the anti-abuse gate this path sits behind.
 
+**Milestone 9 (ScoutRadioz) found no connector to build.** `source` was designed from
+`0008_metrics_schema.sql` onward to carry more than one value (its own comment: "one
+scout's (or ScoutRadioz's) direct assessment"), and `load_scouting_observation`/
+`aggregate_defense_feeding` are already source-agnostic — proven with two real rows
+sharing a `scout_identifier` but differing only in `source`, which persist as distinct
+rows and pool into one aggregated score (`tests/test_repository.py`,
+`tests/test_aggregation.py`). What does not exist is a second *connector*: ScoutRadioz's
+every data-bearing route, including its own CSV export, sits behind an authenticated,
+per-team login — there is no public, documented API of the kind TBA/Statbotics expose, so
+there is nothing a generic `SourceConnector` could fetch from without per-team credentials
+StratAI has no consent or admin surface to collect. Human-form submission
+(`data/metrics/submission.py`) remains the sole populated measurement path for Phase 3;
+the registries' `"scoutradioz"` slot stays reserved, unregistered, and tested as such
+(`tests/test_scouting_validator.py`, `tests/test_metrics_normalizer.py`).
+
 Phase 3 Milestone 3 (`data/metrics/statistics.py`) implements the pure statistical
 functions — `average_score`, `score_stddev`, `consistency_rating`, `classify_match_days`,
 `reliability_score` — over an already-extracted list of scores, and Phase 3 Milestone 4

@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 
 from data.config import Settings
+from data.metrics.aggregation import aggregate_defense_feeding
+from data.metrics.schemas import ScoutingObservation
 from data.serving.repository import CanonicalRepository
 from data.staging import (
     PayloadValidationError,
@@ -339,6 +343,7 @@ def _cleanup(database: Database) -> None:
     with database.cursor() as cursor:
         cursor.execute("DELETE FROM match_teams WHERE match_key = %s", (_S_MATCH,))
         cursor.execute("DELETE FROM team_event_stats WHERE event_key = %s", (_S_EVENT,))
+        cursor.execute("DELETE FROM scouting_observations WHERE event_key = %s", (_S_EVENT,))
         cursor.execute("DELETE FROM matches WHERE match_key = %s", (_S_MATCH,))
         cursor.execute("DELETE FROM teams WHERE team_number = ANY(%s::int[])", (_S_TEAMS,))
         cursor.execute("DELETE FROM events WHERE event_key = %s", (_S_EVENT,))
@@ -438,3 +443,89 @@ def test_team_event_stats_with_unknown_team_violates_foreign_key(repo):
         repo.load_team_event_stat(StagingTeamEventStats(
             team_number=990001, event_key=_S_EVENT, season=9999,
         ))
+
+
+# ---------------------------------------------------------------------------
+# Milestone 9: ScoutRadioz coexistence with human-form observations.
+#
+# No live ScoutRadioz connector exists -- research found no public,
+# unauthenticated API to build one against (see RUNNING_NOTES.md) -- but
+# load_scouting_observation is already source-agnostic (0008_metrics_schema.sql's
+# own comment: "one scout's (or ScoutRadioz's) direct assessment"), so this
+# proves the real database already supports a second source with zero code
+# changes, exactly as Milestone 9's success criteria require.
+# ---------------------------------------------------------------------------
+
+
+def _scouting_observation(*, source: str, scout_identifier: str, defense: int) -> ScoutingObservation:
+    return ScoutingObservation(
+        match_key=_S_MATCH, event_key=_S_EVENT, team_number=_S_TEAMS[0],
+        scout_identifier=scout_identifier, defense_rating=defense,
+        source=source, submitted_at=datetime(2026, 8, 5, tzinfo=timezone.utc),
+    )
+
+
+@requires_db
+def test_two_sources_observations_for_the_same_match_and_team_both_persist(repo):
+    repo.load_events([_integration_event()])
+    repo.load_teams(_integration_teams())
+    repo.load_match(_integration_match())
+
+    # The migration's own documented edge case: the same scout_identifier
+    # arriving from a different source must be a distinct row, not a collision
+    # on the unique index or a silent overwrite.
+    repo.load_scouting_observation(
+        _scouting_observation(source="human_scout", scout_identifier="scoutbot", defense=3)
+    )
+    repo.load_scouting_observation(
+        _scouting_observation(source="scoutradioz", scout_identifier="scoutbot", defense=5)
+    )
+
+    with repo.database.cursor() as cursor:
+        cursor.execute(
+            "SELECT source, scout_identifier, defense_rating FROM scouting_observations "
+            "WHERE event_key = %s ORDER BY source",
+            (_S_EVENT,),
+        )
+        rows = cursor.fetchall()
+
+    assert rows == [
+        ("human_scout", "scoutbot", 3),
+        ("scoutradioz", "scoutbot", 5),
+    ]
+
+
+@requires_db
+def test_two_sources_observations_aggregate_together_correctly(repo):
+    repo.load_events([_integration_event()])
+    repo.load_teams(_integration_teams())
+    repo.load_match(_integration_match())
+
+    repo.load_scouting_observation(
+        _scouting_observation(source="human_scout", scout_identifier="alice", defense=3)
+    )
+    repo.load_scouting_observation(
+        _scouting_observation(source="scoutradioz", scout_identifier="scoutbot", defense=5)
+    )
+
+    with repo.database.cursor() as cursor:
+        cursor.execute(
+            "SELECT match_key, event_key, team_number, scout_identifier, defense_rating, "
+            "feeding_rating, source, submitted_at FROM scouting_observations "
+            "WHERE event_key = %s AND team_number = %s",
+            (_S_EVENT, _S_TEAMS[0]),
+        )
+        rows = cursor.fetchall()
+
+    observations = [
+        ScoutingObservation(
+            match_key=r[0], event_key=r[1], team_number=r[2], scout_identifier=r[3],
+            defense_rating=r[4], feeding_rating=r[5], source=r[6], submitted_at=r[7],
+        )
+        for r in rows
+    ]
+    profile = aggregate_defense_feeding(observations)
+
+    assert profile.defense_observation_count == 2
+    assert profile.defense_score == 4.0  # median(3, 5), pooled across both sources
+    assert profile.contributing_sources == ["human_scout", "scoutradioz"]
