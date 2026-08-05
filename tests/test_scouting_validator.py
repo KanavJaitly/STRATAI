@@ -10,6 +10,8 @@ reuses those classes directly rather than redefining them (asserted below).
 
 from __future__ import annotations
 
+import pytest
+
 import data.staging.validator as staging_validator
 from data.metrics.validator import (
     PayloadValidationError,
@@ -17,8 +19,6 @@ from data.metrics.validator import (
     validate_human_scout_observation_payload,
     validate_scouting_observation,
 )
-
-import pytest
 
 
 def _valid_payload(**overrides) -> dict:

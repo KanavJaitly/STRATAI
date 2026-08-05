@@ -3,12 +3,12 @@
 Phase 3 Milestone 5. This lives in data.metrics, not data.staging, per the
 dependency-direction decision data/metrics/schemas.py already made and
 documented in its own module docstring: ScoutingObservation lives in
-data.metrics, so its validator (and its future normalizer, Milestone 6) must
-too -- data.staging is a foundational layer that nothing depends on today, and
-adding a ScoutingObservation-shaped function there would invert that. This
-module reuses data.staging.validator's ValidationIssue/PayloadValidationError
-directly rather than duplicating them, the same way data.pipeline already
-imports data.staging's shared primitives.
+data.metrics, so its validator (and its normalizer, Milestone 6,
+data.metrics.normalizer) must too -- data.staging is a foundational layer
+that nothing depends on today, and adding a ScoutingObservation-shaped
+function there would invert that. This module reuses data.staging.validator's
+ValidationIssue/PayloadValidationError directly rather than duplicating them,
+the same way data.pipeline already imports data.staging's shared primitives.
 
 Mirrors data.staging.validator's existing shape exactly: a validator function
 per source returning `list[ValidationIssue]` (empty if valid, never raising
@@ -48,7 +48,11 @@ from __future__ import annotations
 from typing import Any
 
 from data.metrics.schemas import MAX_RATING, MIN_RATING
-from data.staging.validator import PayloadValidationError, ValidationIssue, ValidatorFunc
+from data.staging.validator import (
+    PayloadValidationError,
+    ValidationIssue,
+    ValidatorFunc,
+)
 
 __all__ = [
     "PayloadValidationError",
@@ -75,10 +79,8 @@ def validate_human_scout_observation_payload(payload: Any) -> list[ValidationIss
             ValidationIssue("scouting_observation", "match_key", "Missing or empty required field 'match_key'")
         )
         match_key_context = None
-        match_key_valid = False
     else:
         match_key_context = match_key
-        match_key_valid = True
 
     event_key = payload.get("event_key")
     if not isinstance(event_key, str) or not event_key:
@@ -87,7 +89,7 @@ def validate_human_scout_observation_payload(payload: Any) -> list[ValidationIss
                 "scouting_observation", "event_key", "Missing or empty required field 'event_key'", match_key_context
             )
         )
-    elif match_key_valid and not match_key.startswith(f"{event_key}_"):
+    elif isinstance(match_key, str) and match_key and not match_key.startswith(f"{event_key}_"):
         # Mirrors validate_tba_match_payload's identical check: a match_key
         # always embeds the event_key it belongs to (e.g. "2026casj_qm1"
         # belongs to "2026casj"). Disagreement here means the observation has

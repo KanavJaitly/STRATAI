@@ -14,7 +14,7 @@
 | **Last Updated** | 2026-08-04 |
 | **Current Blocker** | **None.** The Statbotics blocker is closed — see the Known Issues entry below |
 | **Next Session Goal** | Phase 3 M8 — defense/feeding aggregation policy |
-| **Last Audit** | Full Phase 3 M1-M5 retrospective, 2026-08-04 (see §"Phase 3 Retrospective Audit" below) — clean; one real coverage gap found and closed (`tests/test_phase3_integration.py`), one stale doc found and fixed (`CLAUDE.md`'s Current Development Phase) |
+| **Last Audit** | Full Phase 3 M1-M7 audit against `PROJECT_VISION.md`/`MASTER_BUILD.md`, 2026-08-04 (see §"Phase 3 Full Audit (M1-M7)" below) — one-time mypy/ruff diagnostic passes (never permanent dependencies) found and fixed real issues in already-shipped M5/M7 code; concurrency and failure-recovery verified by direct reproduction against the live database, not just reasoned about; 5 stale docstrings describing done work as "future" corrected |
 
 ---
 
@@ -28,7 +28,7 @@
 | **Migrations** | Raw SQL in `database/migrations/*.sql` | applied in sorted order by `database/migrate.py`, tracked in `migrations_applied`. **No Alembic.** |
 | **Validation** | Pydantic v2 | staging + source schemas |
 | **HTTP client** | httpx | TBA / Statbotics clients |
-| **Testing** | pytest | 582 passed / 0 skipped (verified 2026-08-04, incl. M7's end-to-end submission suite) — **no `--deselect` needed**; run `venv/bin/python -m pytest -q` (the bare `pytest` shim does not put the project root on `sys.path`). No mypy/ruff in `requirements.txt` or anywhere in this project's history — terminal verification has always been pytest-only |
+| **Testing** | pytest | 586 passed / 0 skipped (verified 2026-08-04, incl. the M1-M7 audit's concurrency/failure-recovery/correction-semantics additions) — **no `--deselect` needed**; run `venv/bin/python -m pytest -q` (the bare `pytest` shim does not put the project root on `sys.path`). No mypy/ruff in `requirements.txt`; both were installed and run as one-time diagnostics during the 2026-08-04 audit, then uninstalled — terminal verification remains pytest-only, by established convention, not because the codebase can't pass a type/lint check |
 
 ---
 
@@ -115,6 +115,91 @@ own Phase E-I review at the time it was built.
 gap (cross-milestone integration coverage) is now closed and will keep failing loudly
 if a future milestone's change breaks the chain, rather than surfacing only when
 Milestone 10 tries to assemble the real pipeline.
+
+---
+
+## 🔍 Phase 3 Full Audit — M1 through M7 (2026-08-04, after M7)
+
+Requested explicitly: cross-reference every completed Phase 3 milestone against
+`PROJECT_VISION.md` and `MASTER_BUILD.md`, hunting specifically for small bugs, edge
+cases, type inconsistencies, and missing pieces — broader and deeper than the M1-M5
+retrospective above (which predates M6/M7 and didn't run a type-checker or linter).
+
+**One-time diagnostic tooling, not a toolchain change:** `mypy` and `ruff` were each
+`pip install`ed, run once against every Phase 3 file, and `pip uninstall`ed
+immediately after — confirmed absent from `requirements.txt` before and after. This
+project's pytest-only terminal verification (documented in every prior milestone
+report) is an established convention, not a limitation; running these once for a
+requested audit doesn't change that, and neither tool was left as a dependency.
+
+**Real findings, fixed:**
+
+1. **mypy caught a real (if non-runtime) type-safety gap in `data/metrics/validator.py`**:
+   a separate `match_key_valid: bool` flag couldn't be correlated back to `match_key`'s
+   narrowed type by the type checker, so `match_key.startswith(...)` was flagged as
+   possibly called on `None`. Not a runtime bug — `match_key_valid` was exactly True iff
+   `match_key` was a validated string, proven by 58 passing tests — but a one-line
+   restructure (`isinstance(match_key, str) and match_key` inline in the `elif`) makes it
+   provably safe instead of merely correct-in-practice.
+2. **ruff caught a real test-coverage gap**: `test_malformed_payload_raises_and_lands_nothing`
+   computed an unused `source_object_id` variable and never actually asserted that nothing
+   landed in `raw_source_payloads` — the test's own name was unverified. Fixed by asserting
+   the real thing instead of deleting the dead variable.
+3. **Five stale docstrings found describing completed work as "future"** — the same class
+   of drift as the M1-M5 audit's `CLAUDE.md` finding, but inside module docstrings this
+   time: `data/metrics/schemas.py`'s opening docstring listed M3-M6 as "later milestones"
+   (all four are done); `data/metrics/statistics.py` called M4's history layer "the future...
+   layer" (M4 is done); `data/metrics/validator.py` called M6's normalizer "future" (M6 is
+   done); `data/pipeline.py`'s `stage_batch` docstring still described `quality_check_fn` as
+   a no-op, even though Milestone 7's own bug hunt had already replaced it with a real
+   referential check — the fix landed in `data/metrics/submission.py`'s docstring at the
+   time but was never mirrored into `stage_batch`'s own docstring describing the same
+   parameter. All five corrected.
+4. **Concurrency verified by direct reproduction, not just reasoning** (`MASTER_BUILD.md`'s
+   testing checklist names this explicitly, and M7 shipped without a dedicated test for
+   it): ten threads submitting different observations for the same match, and fifteen
+   threads submitting the byte-identical payload, both run against the real database
+   first as ad-hoc scripts, then as permanent regression tests
+   (`test_concurrent_submissions_of_different_observations_all_succeed`,
+   `test_concurrent_identical_submissions_serialize_to_exactly_one_row`). Zero errors,
+   exactly the expected row counts both times — `RawPayloadWriter`'s existing advisory
+   lock already handled this correctly; the gap was in test coverage, not code.
+5. **Failure recovery / rollback verified the same way** (also named explicitly in
+   `MASTER_BUILD.md`'s checklist, also untested): a mocked `CanonicalRepository` forced a
+   failure mid-`submit_human_scout_observation`, confirming the watermark stays exactly
+   where it was, the run is recorded `failed`, and a genuine (unmocked) retry afterward
+   recovers cleanly and reaches the correct final state —
+   `test_failure_during_load_leaves_watermark_untouched_and_marks_run_failed`.
+6. **A real, previously-unverified design question resolved with a test**: does a
+   corrected resubmission that *omits* a previously-set field (e.g. drops
+   `feeding_rating` entirely) clear the stale value or silently preserve it? Confirmed
+   (and now pinned) as full-replace, not merge — consistent with every other canonical
+   table's upsert semantics in this codebase — via
+   `test_corrected_resubmission_that_omits_a_field_clears_it_not_preserves_it`.
+
+**Explicitly considered and left unchanged, with reasoning:** mypy/ruff also flagged
+several pre-existing Phase 2 issues (`data/orchestrator.py`, `data/staging/normalizer.py`,
+`data/config.py`, `data/clients/tba.py`/`statbotics.py`) and style preferences this
+codebase has never adopted (`typing.Callable` vs `collections.abc.Callable`, quoted
+self-referential type hints, blanket `except Exception` in intentionally-broad handlers
+matching `sync_event`'s own established pattern). None were changed: the first category
+is out of scope for a Phase 3 audit and already shipped/reviewed in prior sessions: the
+second would introduce a style inconsistency between Phase 3's new files and the
+existing, unchanged Phase 2 code for zero functional benefit.
+
+**PROJECT_VISION.md cross-check, section by section:** re-verified Team Metrics' exact
+9-item list against `ScoringProfile`/`DefenseFeedingProfile` field-for-field (all
+present); re-verified defense/feeding are structurally unreachable from match scores
+(no code path exists, not just a convention); explicitly re-examined whether
+`scouting_observations`' upsert-on-correction semantics violate "historical data must
+never be overwritten" — concluded no, for the same reason `TeamMetrics`'s own docstring
+already gives: the *raw* submission history is fully preserved and versioned in
+`raw_source_payloads` (every version kept, `is_current` distinguishes the latest), and
+the canonical row is a current-state *served* view, exactly like `matches`/`team_metrics`
+already are — not "historical data" in the sense the principle means.
+
+**Suite: 586 passed / 0 skipped** (582 baseline + 4 new tests from this audit's
+concurrency/failure-recovery/correction-semantics findings, zero regressions).
 
 ---
 
@@ -277,3 +362,4 @@ gave up after its configured consecutive failures and exited 1 rather than loopi
 | 2026-08-04 | **Phase 3 retrospective audit — M1 through M5** (Kanav, requested independently of any single milestone) | Re-verified every Phase 3 milestone built so far against `PROJECT_VISION.md` and `MASTER_BUILD.md` from scratch, not by trusting each milestone's own prior sign-off: re-read M1's models against the vision doc's explicit Team Metrics list (all 9 present), re-diffed M2's migration against the live M1 model field-for-field, re-ran `database.verify_db`, and gave M3/M4/M5 a fresh adversarial re-read. All five held up with no new issues in isolation. The audit's real value was cross-milestone: no test had ever run real data through the full M4→M3→M1 chain (history retrieval → statistics functions → `ScoringProfile` construction) end to end, since each milestone had only tested its own layer — closed with a new `tests/test_phase3_integration.py` (4 tests, seeded event `9994zzzint`, all three `matches_used` buckets, hand-computed expected values), which passed clean on the first run. Also found `CLAUDE.md`'s own "Current Development Phase" section three milestones stale (still said "Milestone 3 onward not started") and corrected it, and swept every remaining `Milestone \d+` reference across `data/` to confirm the bare-vs-"Phase 3"-prefixed numbering convention is holding project-wide, not just in files touched this session. **Suite 536 passed / 0 skipped** (532 baseline + 4 new, zero regressions) | Phase 3 M6 — scouting observation normalization |
 | 2026-08-04 | **Phase 3 Milestone 6 — scouting observation normalization** (Kanav) | Built `data/metrics/normalizer.py`: `normalize_human_scout_observation` (validate via M5's `validate_human_scout_observation_payload`, then build via a locally reimplemented `_build_or_raise` -- reimplemented rather than imported since `data.staging.normalizer`'s copy is private), `normalize_scouting_observation(source, payload)` dispatch with a `"scoutradioz"`-ready registry slot (not stubbed), and `scouting_observation_natural_key` for lineage tracing, matching the DB's `(match_key, team_number, scout_identifier, source)` UNIQUE constraint. Phase B.5 (Challenge the Milestone) surfaced a real gap in already-shipped M5 work: reading `data.pipeline.stage_batch` directly showed normalizers are pure `(source, payload) -> Model` with no database access, so `event_key` and `submitted_at` -- which M5 had assumed were "derived elsewhere" -- must actually be supplied directly in the raw payload, the same way TBA's own raw match payload carries `event_key`. Revised M5's validator to require both and to check `match_key`/`event_key` agreement (mirroring `validate_tba_match_payload`'s identical check), rather than build M6 around an incorrect assumption. A second finding came from adversarially reviewing the natural-key design *before* shipping it: underscore-joining (matching `entity_key_of`'s convention) would let two genuinely different `(scout_identifier, source)` pairs collide into the same string, since `match_key` and `scout_identifier` can themselves contain underscores; switched to colon-joining and pinned the fix with a test that also confirms the underscore version really would have collided. 12 tests added to `tests/test_scouting_validator.py` (58 total) for the M5 revision, plus 20 new tests in `tests/test_metrics_normalizer.py` -- valid-payload field checks, required-field/malformed-payload rejection, a dedicated `_build_or_raise` safety-net test (a malformed `submitted_at` string passes M5's presence-only check but is rejected by pydantic's actual datetime parsing, and must still surface as `PayloadValidationError`, not a raw pydantic error), determinism, non-mutation, and natural-key tests. **Suite 568 passed / 0 skipped** (536 baseline + 32 new, zero regressions) | Phase 3 M7 — the human scouting submission path |
 | 2026-08-04 | **Phase 3 Milestone 7 — human scouting submission path** (Kanav) | Built `data/metrics/submission.py`: `submit_human_scout_observation` runs gate → validate → land → stage → load end to end, reusing `RawPayloadWriter` (source `human_scout`), `PipelineRunRecorder`/`WatermarkStore` (scoped per event, mirroring TBA's convention), and `data.pipeline`'s `read_pending`/`stage_batch`. New migration `0009_scouting_access_codes.sql`: a per-event access-code table where a row's *absence* means open (no admin surface exists yet to set one). Extended `data.pipeline.stage_batch` with optional `entity_key_fn`/`quality_check_fn` parameters (defaulting to the existing `entity_key_of`/`check_entity`, zero behavior change for TBA/Statbotics) so a `ScoutingObservation` can plug into staging without `data.staging`/`data.lineage` ever importing `data.metrics`; added `CanonicalRepository.load_scouting_observation` (upsert on the same 4-column natural key the DB enforces). "Resubmission dedupes; corrected resubmission creates a new version" came free from `RawPayloadWriter`'s own checksum/versioning, verified end-to-end rather than assumed. Phase F bug hunt found and fixed two real issues before shipping: (1) an initial no-op quality check would have let a submission for a not-yet-synced match/team/event reach the database as a raw foreign-key violation instead of a clean rejection — replaced with a real referential check querying `matches`/`teams`/`events` directly, bound into `stage_batch` via `functools.partial` since that slot has no `database` parameter; (2) adding `submission`'s exports to `data/metrics/__init__.py` created a genuine circular import (`data.pipeline` → the `data.metrics` package init → `data.metrics.submission` → `data.orchestrator` → `data.pipeline`, mid-initialization) — confirmed by triggering it in a fresh interpreter, not just reasoned about, and fixed by excluding `submission` from the package's eager imports (callers import it directly, exactly as `data.pipeline` itself already imports `data.metrics.normalizer` directly). Also caught and fixed a test-hygiene bug in the same pass: a cleanup `LIKE` pattern scoped to the sentinel match key missed a payload landed under a different, deliberately-nonexistent match key, verified fixed by running the suite twice in a row. 21 new/changed tests: 11 in `tests/test_scouting_submission.py` (end-to-end, dedup, correction, three access-gate scenarios, malformed-payload rejection with no `pipeline_runs` row, two referential-rejection cases, multi-scout isolation) plus 3 new `docs_contract` parametrize cases for the new table. **Suite 582 passed / 0 skipped** (568 baseline + 11 + 3, zero regressions) | Phase 3 M8 — defense/feeding aggregation policy |
+| 2026-08-04 | **Phase 3 full audit — M1 through M7** (Kanav, requested explicitly against `PROJECT_VISION.md`/`MASTER_BUILD.md`) | Broader and deeper than the earlier M1-M5 retrospective: `mypy` and `ruff` were each installed as one-time diagnostics (never added to `requirements.txt`, both uninstalled immediately after) and run against every Phase 3 file — the first time either tool had been run in this project's history. Real findings from each: mypy caught a type-narrowing gap in `data/metrics/validator.py` (not a runtime bug — 58 tests already proved `match_key_valid` correlated correctly with `match_key`'s real type — but fixed to be provably safe); ruff caught a genuinely unused variable in `test_malformed_payload_raises_and_lands_nothing` that meant the test's own name ("lands nothing") was never actually verified, fixed by asserting the real thing. Found and fixed five stale docstrings describing now-completed M3-M6 work as "future" (`data/metrics/schemas.py`'s opening docstring, `statistics.py`, `validator.py`, and — the most consequential — `data/pipeline.py`'s `stage_batch` docstring, which still described its `quality_check_fn` parameter as a no-op after Milestone 7's own bug hunt had already replaced it with a real referential-integrity check; the fix had landed in `submission.py`'s docstring but was never mirrored into `stage_batch`'s own). Verified two `MASTER_BUILD.md`-mandated testing dimensions M7 had shipped without, both by direct reproduction against the live database before writing permanent tests: concurrency (ten threads submitting different observations, fifteen submitting the identical payload — zero errors, exact expected row counts, confirming `RawPayloadWriter`'s existing advisory lock already handled this correctly) and failure recovery (a mocked repository failure mid-submission leaves the watermark untouched and the run marked failed, and a real retry afterward recovers cleanly). Also resolved and pinned a previously-unverified design question: a corrected resubmission omitting a previously-set field clears it (full replacement), rather than silently preserving stale data — consistent with every other canonical table's upsert semantics in this codebase. Explicitly cross-checked `PROJECT_VISION.md`'s "historical data must never be overwritten" against `scouting_observations`' upsert-on-correction behavior and confirmed no conflict, for the same reason `TeamMetrics` already documents: raw submission history is fully preserved and versioned, and the canonical row is a current-state served view. 4 new tests; several pre-existing Phase 2 mypy/ruff findings and style preferences (`typing.Callable` vs `collections.abc.Callable`, blanket `except Exception` matching `sync_event`'s own established pattern) were deliberately left unchanged as out of scope or inconsistency-inducing. **Suite 586 passed / 0 skipped** (582 baseline + 4 new, zero regressions) | Phase 3 M8 — defense/feeding aggregation policy |
