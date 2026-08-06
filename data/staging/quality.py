@@ -36,6 +36,22 @@ Rejection reuses the pipeline's existing mechanism rather than adding a second
 one -- see data.pipeline.stage_batch, where a fatal issue takes exactly the
 path a validation failure takes: skipped, watermark held short of it, retried
 on the next run.
+
+Phase 3 Milestone 11 extends this layer to *computed* rows (team_metrics),
+which are judged on a third axis the two above do not cover: confidence. A
+metric can be structurally valid and individually believable and still rest on
+two matches, and today nothing distinguishes it from the same metric over a
+full schedule. Those checks are in data.metrics.quality, not this file --
+writing them here would mean importing data.metrics.schemas, inverting the
+layering direction data/metrics/schemas.py's module docstring deliberately
+protects -- but they are checks in the same sense as these: they build the same
+QualityIssue, carry the same severities, and are written by the same
+DataQualityRecorder into the same table. The thresholds they use live here with
+every other bound (below). Every metric rule is a warning without exception:
+pydantic and 0008's CHECK constraints already make a genuinely impossible
+metric unconstructible, so there is nothing left to reject -- an untrustworthy
+metric is uncertain, not corrupt, and discarding it is the failure mode this
+module's severity policy exists to prevent.
 """
 
 from __future__ import annotations
@@ -73,6 +89,12 @@ ISSUE_IMPLAUSIBLE_VALUE = "implausible_value"
 ISSUE_INCONSISTENT_VALUES = "inconsistent_values"
 ISSUE_MISSING_REFERENCE = "missing_reference"
 ISSUE_EXTRACTION_FAILURE = "extraction_failure"
+# Phase 3 Milestone 11. The value is fine; the sample behind it is too thin to
+# trust it. None of the five types above says that -- they all describe
+# something being *wrong* with a value, and a metric computed from two matches
+# is not wrong, only uncertain. Kept distinct precisely so "which metrics are
+# merely low-confidence" stays a separate query from "which are suspect".
+ISSUE_LOW_SAMPLE_SIZE = "low_sample_size"
 
 # FRC's first season. Nothing in this domain predates it.
 FIRST_FRC_SEASON = 1992
@@ -88,6 +110,34 @@ MIN_PLAUSIBLE_EPA = -50.0
 EXPECTED_ALLIANCE_SIZE = 3
 # A schedule more than this far in the future is corruption, not a schedule.
 MAX_SCHEDULE_LOOKAHEAD = timedelta(days=730)
+
+# --- Phase 3 Milestone 11: computed-metric confidence thresholds -----------
+#
+# These bound *confidence*, not validity, and so behave differently from every
+# bound above: nothing here ever rejects a row. They live in this module rather
+# than in data.metrics because every plausibility bound in this codebase lives
+# in one place; the checks that consume them live in data.metrics.quality,
+# which is the only side allowed to import data.metrics.schemas (see that
+# module's own docstring for the dependency-direction reasoning).
+#
+# A real FRC qualification schedule gives each team roughly 8-12 matches.
+# Below four, one outlier match moves score_stddev, consistency_rating and the
+# day counts by a large fraction of their value, so every statistic derived
+# from the set is materially shakier than the same statistic over a full
+# schedule -- while looking identical in the served object.
+LOW_SAMPLE_MATCHES = 4
+# Mirrors LOW_SAMPLE_MATCHES for the scouting track. Deliberately above
+# data.metrics.aggregation.MIN_OBSERVATIONS_FOR_SCORE (2), which is the point
+# below which a score is not reported *at all*; this is the band just above it,
+# where a score is reported but rests on two or three opinions.
+LOW_SAMPLE_OBSERVATIONS = 4
+# Agreement is 1 - pstdev / ((MAX_RATING - MIN_RATING) / 2), so this threshold
+# inverts exactly: agreement < 0.5 means a population stddev above 1.25 on the
+# 0-5 rating scale -- scouts typically differing by more than one and a quarter
+# tiers, i.e. not agreeing which *described* tier (see DEFENSE_RATING_
+# DESCRIPTIONS) the robot belongs in. Ratings of 2,3,2,3 score 0.8 and are not
+# flagged (adjacent-tier disagreement is normal); 1 vs 4 scores 0.4 and is.
+LOW_AGREEMENT = 0.5
 
 # Mirrors the team-key parsing in data.staging.normalizer and data.pipeline,
 # including the documented collapse of an off-season B-team onto its parent.
