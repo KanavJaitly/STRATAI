@@ -283,6 +283,7 @@ def test_issue_type_vocabulary_is_stable():
     assert quality.ISSUE_INCONSISTENT_VALUES == "inconsistent_values"
     assert quality.ISSUE_MISSING_REFERENCE == "missing_reference"
     assert quality.ISSUE_EXTRACTION_FAILURE == "extraction_failure"
+    assert quality.ISSUE_LOW_SAMPLE_SIZE == "low_sample_size"
 
 
 def test_documented_plausibility_bounds_match_the_code(docs_text: str):
@@ -294,6 +295,17 @@ def test_documented_plausibility_bounds_match_the_code(docs_text: str):
     assert quality.MAX_SCHEDULE_LOOKAHEAD.days == 730
     for quoted in ("1992", "100 000", "1 000", "−50", "730"):
         assert quoted in docs_text, f"docs do not quote plausibility bound {quoted!r}"
+
+
+def test_documented_metric_confidence_thresholds_match_the_code(docs_text: str):
+    # Phase 3 Milestone 11. These bound confidence, not validity -- nothing here
+    # can reject a row, so §6.4 documents them in its own table.
+    assert quality.LOW_SAMPLE_MATCHES == 4
+    assert quality.LOW_SAMPLE_OBSERVATIONS == 4
+    assert quality.LOW_AGREEMENT == 0.5
+    metrics_section = docs_text.split("### 6.4 Quality checks on computed metrics")[1]
+    for quoted in ("matches_used < 4", "observation_count < 4", "agreement < 0.5"):
+        assert quoted in metrics_section, f"§6.4 does not quote threshold {quoted!r}"
 
 
 # ===========================================================================
