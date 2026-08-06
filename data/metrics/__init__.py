@@ -26,7 +26,12 @@ internal-consistency counterpart to data.staging.quality's checks on ingested
 payloads, building that module's own QualityIssue and recorded through its own
 DataQualityRecorder. It is exported here, unlike the three modules below,
 because it depends only on data.metrics.schemas and data.staging.quality and
-so reaches back out to nothing.
+so reaches back out to nothing. Phase 3 Milestone 13 provides the read path
+back out of team_metrics (data.metrics.read) -- the counterpart to Milestone
+10's write, reassembling one stored row into the canonical TeamMetrics for the
+API to serve, and distinguishing the four reasons a row might not exist. Also
+exported here, for the same reason: it depends only on data.metrics.schemas and
+database.connection.
 
 data.metrics.submission, data.metrics.scoutradioz, and data.metrics.compute
 are deliberately NOT imported here, unlike every other Milestone's module: all
@@ -57,6 +62,16 @@ from data.metrics.quality import (
     QUALITY_SOURCE,
     check_team_metrics,
     team_metrics_object_id,
+)
+from data.metrics.read import (
+    STATUS_EVENT_NOT_FOUND,
+    STATUS_FOUND,
+    STATUS_METRICS_NOT_COMPUTED,
+    STATUS_TEAM_DID_NOT_ATTEND,
+    STATUS_TEAM_NOT_FOUND,
+    TeamMetricsLookup,
+    get_team_metrics,
+    look_up_team_metrics,
 )
 from data.metrics.schemas import (
     BAD_DAY_ZSCORE_THRESHOLD,
@@ -94,17 +109,25 @@ __all__ = [
     "MIN_RATING",
     "OBJECT_TYPE_TEAM_METRICS",
     "QUALITY_SOURCE",
+    "STATUS_EVENT_NOT_FOUND",
+    "STATUS_FOUND",
+    "STATUS_METRICS_NOT_COMPUTED",
+    "STATUS_TEAM_DID_NOT_ATTEND",
+    "STATUS_TEAM_NOT_FOUND",
     "DefenseFeedingProfile",
     "ScoringProfile",
     "ScoutingObservation",
     "TeamMatchHistory",
     "TeamMetrics",
+    "TeamMetricsLookup",
     "aggregate_defense_feeding",
     "average_score",
     "check_team_metrics",
     "classify_match_days",
     "consistency_rating",
     "get_team_match_history",
+    "get_team_metrics",
+    "look_up_team_metrics",
     "normalize_human_scout_observation",
     "normalize_scouting_observation",
     "reliability_score",
