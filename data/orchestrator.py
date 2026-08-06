@@ -1132,7 +1132,14 @@ def parse_duration(value: str) -> float:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Command-line entry point: sync one event, a whole season, or watch a live event."""
+    """Command-line entry point: sync one event, a whole season, or watch a live event.
+
+    The single-event path also recomputes team_metrics for every rostered team
+    immediately afterward (data.metrics.compute.compute_event_team_metrics) --
+    Phase 3 Milestone 10's follow-on stage. Deliberately not wired into the
+    season/watch paths in that milestone (see compute_event_team_metrics's own
+    docstring for why).
+    """
     parser = argparse.ArgumentParser(
         description="Run the StratAI ingestion pipeline for one event, a whole season, "
                     "or continuously for one live event.",
@@ -1252,7 +1259,7 @@ def main(argv: list[str] | None = None) -> int:
     metrics_result = compute_event_team_metrics(args.event_key, database=database)
     print(
         f"metrics run {metrics_result.run_id}: teams_computed={metrics_result.teams_computed} "
-        f"lineage={metrics_result.lineage_recorded}"
+        f"lineage={metrics_result.lineage_recorded} orphaned_removed={metrics_result.orphaned_removed}"
     )
     return 0
 

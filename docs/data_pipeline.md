@@ -388,6 +388,14 @@ best-effort audit information, not a correctness gate on the computation. A per-
 cache avoids re-querying the same match's lineage once per rostered team (found and
 fixed during this milestone's own Phase F review, before it shipped).
 
+**Stale rows are cleaned up on every recompute** (`_delete_orphaned_team_metrics`,
+added during a full Phase 3 audit, 2026-08-05): a team a schedule correction removes
+from every match at an event would otherwise keep its `team_metrics` row (and lineage)
+forever, showing stale statistics for a team no longer relevant to the event. Safe
+specifically because `team_metrics` is a current-state snapshot, not an append-only
+history — `PROJECT_VISION.md`'s "historical data must never be overwritten" governs
+`raw_source_payloads`, which this never touches.
+
 Phase 3 Milestone 3 (`data/metrics/statistics.py`) implements the pure statistical
 functions — `average_score`, `score_stddev`, `consistency_rating`, `classify_match_days`,
 `reliability_score` — over an already-extracted list of scores, and Phase 3 Milestone 4
