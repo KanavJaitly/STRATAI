@@ -133,6 +133,29 @@ Predictions should:
 
 ---
 
+## Critical Constraints
+
+These are the project's non-negotiable rules. Several modules, migrations, and
+tests cite "CLAUDE.md's critical constraints" by name — this is that section.
+RUNNING_NOTES.md carries the same list; keep the two in sync.
+
+* Defense/feeding scores = **directly measured**, NOT inferred from point output.
+* Win probabilities = **unbiased** — AI strategy cannot get inflated odds.
+* Core engine = **no LLM API calls** — ML / stats / optimization only.
+* LLM allowed only for: natural-language report generation and explanations.
+* Real-time updates must sync **during an event** as matches are played.
+
+The first constraint is enforced in four places, deliberately: the
+`DefenseFeedingProfile` invariants in data/metrics/schemas.py, the
+`*_sufficiency_check` CHECK constraints in
+database/migrations/0008_metrics_schema.sql, the fact that
+`aggregate_defense_feeding` is only ever handed scouting observations, and the
+regression guard in tests/test_defense_feeding_constraint.py. Defense and
+feeding derive from scouting_observations and nothing else; a team with no
+observations gets no rating, never one synthesized from its scoring.
+
+---
+
 ## Current Development Phase
 
 Current Phase:
