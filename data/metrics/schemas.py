@@ -24,9 +24,13 @@ Two independent measurement tracks compose into TeamMetrics:
   * DefenseFeedingProfile -- aggregated from ScoutingObservation rows, which
     are themselves either a human's direct scouting-form submission or a
     future ScoutRadioz pull. This is the load-bearing design constraint from
-    CLAUDE.md's critical constraints: "Defense/feeding scores = directly
-    measured, NOT inferred from point output." There is deliberately no path
-    from match scores to a defense or feeding number anywhere in this module.
+    the "Critical Constraints" section carried in both CLAUDE.md and
+    RUNNING_NOTES.md: "Defense/feeding scores = directly measured, NOT
+    inferred from point output." There is deliberately no path from match
+    scores to a defense or feeding number anywhere in this module -- nor
+    anywhere else in the pipeline, which tests/test_defense_feeding_
+    constraint.py pins with two teams whose scouting is identical and whose
+    match scores are not.
 
 Both tracks carry their own confidence signal (matches_used/matches_scheduled
 and *_observation_count/*_agreement) rather than presenting a bare number. A
