@@ -308,6 +308,47 @@ def test_compute_event_team_metrics_persists_every_rostered_team(database: Datab
 
 
 @requires_db
+def test_load_team_metrics_round_trips_every_column_correctly(database: Database) -> None:
+    # A full Phase 3 audit's own check on CanonicalRepository._upsert_team_metrics:
+    # a 22-column INSERT is exactly the shape of bug where two adjacent columns
+    # (e.g. consistency_rating/reliability_score, both floats in a similar
+    # range) could silently swap without crashing and without any existing
+    # test noticing, since most tests only read back a handful of columns.
+    # This compares every single column against the in-memory object that
+    # produced it, not just the few already spot-checked elsewhere.
+    metrics = compute_team_metrics(database, _S_TEAM_SCOUTED, _S_EVENT)
+    CanonicalRepository(database).load_team_metrics(metrics)
+
+    with database.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT team_number, event_key, season, matches_scheduled, matches_used,
+                   average_score, score_stddev, consistency_rating, reliability_score,
+                   good_day_count, average_day_count, bad_day_count,
+                   defense_score, defense_observation_count, defense_agreement, defense_insufficient_data,
+                   feeding_score, feeding_observation_count, feeding_agreement, feeding_insufficient_data,
+                   contributing_sources
+            FROM team_metrics WHERE team_number = %s AND event_key = %s
+            """,
+            (_S_TEAM_SCOUTED, _S_EVENT),
+        )
+        row = cursor.fetchone()
+
+    scoring, defense_feeding = metrics.scoring, metrics.defense_feeding
+    assert row == (
+        metrics.team_number, metrics.event_key, metrics.season,
+        scoring.matches_scheduled, scoring.matches_used,
+        scoring.average_score, scoring.score_stddev, scoring.consistency_rating, scoring.reliability_score,
+        scoring.good_day_count, scoring.average_day_count, scoring.bad_day_count,
+        defense_feeding.defense_score, defense_feeding.defense_observation_count,
+        defense_feeding.defense_agreement, defense_feeding.defense_insufficient_data,
+        defense_feeding.feeding_score, defense_feeding.feeding_observation_count,
+        defense_feeding.feeding_agreement, defense_feeding.feeding_insufficient_data,
+        defense_feeding.contributing_sources,
+    )
+
+
+@requires_db
 def test_compute_event_team_metrics_is_idempotent(database: Database) -> None:
     first = compute_event_team_metrics(_S_EVENT, database=database)
     second = compute_event_team_metrics(_S_EVENT, database=database)
@@ -370,6 +411,27 @@ def test_compute_event_team_metrics_traces_lineage_to_matches_and_observations(d
 
 
 @requires_db
+def test_compute_event_team_metrics_traces_lineage_to_an_unplayed_scheduled_match(database: Database) -> None:
+    # Documented design decision, directly verified rather than assumed: an
+    # unplayed-but-scheduled match still feeds matches_scheduled (and
+    # therefore reliability_score), so its lineage must be traced too, not
+    # only matches that contributed a score.
+    compute_event_team_metrics(_S_EVENT, database=database)
+
+    key = team_metrics_entity_key(_S_TEAM_UNPLAYED, _S_EVENT)
+    with database.cursor() as cursor:
+        cursor.execute(
+            "SELECT raw.source_object_id FROM canonical_lineage lin "
+            "JOIN raw_source_payloads raw ON raw.id = lin.raw_payload_id "
+            "WHERE lin.entity_type = 'team_metrics' AND lin.entity_key = %s AND raw.source_object_type = 'match'",
+            (key,),
+        )
+        traced_matches = {row[0] for row in cursor.fetchall()}
+
+    assert traced_matches == {_S_MATCH_3}
+
+
+@requires_db
 def test_compute_event_team_metrics_lineage_is_not_duplicated_on_rerun(database: Database) -> None:
     compute_event_team_metrics(_S_EVENT, database=database)
     with database.cursor() as cursor:
@@ -403,3 +465,57 @@ def test_compute_event_team_metrics_records_a_pipeline_run(database: Database) -
         row = cursor.fetchone()
 
     assert row == ("metrics_compute", None, _S_EVENT, "succeeded")
+
+
+@requires_db
+def test_compute_event_team_metrics_removes_a_stale_row_for_a_team_no_longer_rostered(
+    database: Database,
+) -> None:
+    """Found during a full Phase 3 audit: a team a schedule correction removes
+    from every match at an event must not keep a forever-stale team_metrics
+    row. Simulates the "before" state directly (a team_metrics row for a team
+    that was never actually added to match_teams in this fixture), then
+    confirms compute_event_team_metrics cleans it up, including its lineage.
+    """
+    orphan_team = 990298
+    with database.cursor() as cursor:
+        cursor.execute("INSERT INTO teams (team_number, name) VALUES (%s, %s)", (orphan_team, "Orphan"))
+        cursor.execute(
+            "INSERT INTO team_metrics ("
+            "  team_number, event_key, season, computed_at, matches_scheduled, matches_used,"
+            "  defense_observation_count, defense_insufficient_data,"
+            "  feeding_observation_count, feeding_insufficient_data"
+            ") VALUES (%s, %s, 9990, NOW(), 3, 3, 0, TRUE, 0, TRUE)",
+            (orphan_team, _S_EVENT),
+        )
+        entity_key = team_metrics_entity_key(orphan_team, _S_EVENT)
+        cursor.execute(
+            "INSERT INTO canonical_lineage (entity_type, entity_key, raw_payload_id, source) "
+            "SELECT 'team_metrics', %s, id, 'tba' FROM raw_source_payloads LIMIT 1",
+            (entity_key,),
+        )
+
+    try:
+        result = compute_event_team_metrics(_S_EVENT, database=database)
+
+        with database.cursor() as cursor:
+            cursor.execute(
+                "SELECT 1 FROM team_metrics WHERE team_number = %s AND event_key = %s", (orphan_team, _S_EVENT)
+            )
+            assert cursor.fetchone() is None  # the stale row is gone
+            cursor.execute(
+                "SELECT 1 FROM canonical_lineage WHERE entity_type = 'team_metrics' AND entity_key = %s",
+                (entity_key,),
+            )
+            assert cursor.fetchone() is None  # its lineage went with it
+
+        # The three real, still-rostered teams were computed normally, unaffected.
+        assert result.teams_computed == 3
+        assert result.orphaned_removed == 1
+    finally:
+        with database.cursor() as cursor:
+            cursor.execute("DELETE FROM canonical_lineage WHERE entity_key = %s", (entity_key,))
+            cursor.execute(
+                "DELETE FROM team_metrics WHERE team_number = %s AND event_key = %s", (orphan_team, _S_EVENT)
+            )
+            cursor.execute("DELETE FROM teams WHERE team_number = %s", (orphan_team,))

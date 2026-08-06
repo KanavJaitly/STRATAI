@@ -127,6 +127,46 @@ def _teams_at_event(database: Database, event_key: str) -> list[int]:
         return [row[0] for row in cursor.fetchall()]
 
 
+def _delete_orphaned_team_metrics(database: Database, event_key: str, current_team_numbers: list[int]) -> int:
+    """Remove team_metrics (and its lineage) for a team no longer rostered at this event.
+
+    Found during a full Phase 3 audit, not part of the original design: since
+    compute_event_team_metrics only ever upserts a row for a team _teams_at_event
+    currently returns, a team a schedule correction removes from every match at
+    an event (TBA does occasionally republish a corrected roster -- see
+    RUNNING_NOTES.md's frc0/roster-backfill history) would otherwise leave its
+    team_metrics row behind forever, showing stale statistics for a team no
+    longer relevant to this event. This is safe precisely because team_metrics
+    is documented as a current-state snapshot, not an append-only history
+    (data/metrics/schemas.py's TeamMetrics docstring) -- PROJECT_VISION.md's
+    "historical data must never be overwritten" governs raw_source_payloads,
+    which this never touches; nothing here removes or rewrites any raw payload
+    or any other canonical table.
+
+    `!= ALL(current_team_numbers)` is vacuously true for every row when
+    current_team_numbers is empty (verified directly against Postgres, not
+    assumed), which is exactly correct here: an event with zero currently
+    rostered teams means every existing team_metrics row for it is orphaned.
+    """
+    with database.cursor() as cursor:
+        cursor.execute(
+            """
+            DELETE FROM team_metrics
+            WHERE event_key = %s AND team_number != ALL(%s::int[])
+            RETURNING team_number
+            """,
+            (event_key, current_team_numbers),
+        )
+        removed = [row[0] for row in cursor.fetchall()]
+        if removed:
+            entity_keys = [team_metrics_entity_key(team_number, event_key) for team_number in removed]
+            cursor.execute(
+                "DELETE FROM canonical_lineage WHERE entity_type = %s AND entity_key = ANY(%s::text[])",
+                (ENTITY_TYPE_TEAM_METRICS, entity_keys),
+            )
+    return len(removed)
+
+
 @dataclass(frozen=True)
 class _ObservedRow:
     """One scouting_observations row, paired with the raw payload it came from."""
@@ -287,6 +327,7 @@ class MetricsComputeResult:
     event_key: str
     teams_computed: int
     lineage_recorded: int
+    orphaned_removed: int = 0
     metrics: list[TeamMetrics] = field(default_factory=list)
 
 
@@ -341,14 +382,18 @@ def compute_event_team_metrics(
             ))
 
         lineage_recorded = lineage.record(lineage_entries, run_id)
+        orphaned_removed = _delete_orphaned_team_metrics(database, event_key, team_numbers)
 
         recorder.succeed(
             run_id, records_processed=len(computed),
-            stage_counts={"teams_computed": len(computed), "lineage_recorded": lineage_recorded},
+            stage_counts={
+                "teams_computed": len(computed), "lineage_recorded": lineage_recorded,
+                "orphaned_removed": orphaned_removed,
+            },
         )
         return MetricsComputeResult(
             run_id=run_id, event_key=event_key, teams_computed=len(computed),
-            lineage_recorded=lineage_recorded, metrics=computed,
+            lineage_recorded=lineage_recorded, orphaned_removed=orphaned_removed, metrics=computed,
         )
     except Exception as exc:
         recorder.fail(run_id, f"{type(exc).__name__}: {exc}")

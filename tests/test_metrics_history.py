@@ -236,6 +236,20 @@ def test_scores_are_in_play_order_quals_before_playoffs(database: Database) -> N
 
 
 @requires_db
+def test_match_keys_names_every_scheduled_match_in_play_order(database: Database) -> None:
+    # Milestone 10 added match_keys (every match this team is rostered into,
+    # parallel in spirit to scores but covering all of matches_scheduled, not
+    # just matches_used) specifically so compute_event_team_metrics could
+    # trace team_metrics lineage back to unplayed-but-scheduled matches too --
+    # verified directly here, at the layer that owns the field, not only
+    # indirectly through Milestone 10's own downstream lineage tests.
+    history = get_team_match_history(database, _S_TEAM, _S_EVENT)
+    assert history.match_keys == [f"{_S_EVENT}_qm1", f"{_S_EVENT}_qm2", f"{_S_EVENT}_qm3", f"{_S_EVENT}_f1m1"]
+    assert len(history.match_keys) == history.matches_scheduled  # includes the unplayed qm3
+    assert len(history.scores) == history.matches_used            # scores excludes it
+
+
+@requires_db
 def test_unplayed_match_never_appears_in_scores_but_still_counts_as_scheduled(database: Database) -> None:
     history = get_team_match_history(database, _S_TEAM, _S_EVENT)
     # qm3's own score would have been score_red (this team is on red in qm3);
