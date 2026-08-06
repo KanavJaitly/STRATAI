@@ -20,7 +20,13 @@ provides the metrics computation pipeline itself (data.metrics.compute) --
 compute_team_metrics composes Milestones 3+4+8 into the TeamMetrics object
 Phase 3's Definition of Done names, and compute_event_team_metrics computes
 and persists it for every team at an event, as a follow-on stage after
-data.orchestrator.sync_event.
+data.orchestrator.sync_event. Phase 3 Milestone 11 provides quality checks over
+a computed TeamMetrics (data.metrics.quality) -- the confidence and
+internal-consistency counterpart to data.staging.quality's checks on ingested
+payloads, building that module's own QualityIssue and recorded through its own
+DataQualityRecorder. It is exported here, unlike the three modules below,
+because it depends only on data.metrics.schemas and data.staging.quality and
+so reaches back out to nothing.
 
 data.metrics.submission, data.metrics.scoutradioz, and data.metrics.compute
 are deliberately NOT imported here, unlike every other Milestone's module: all
@@ -45,6 +51,12 @@ from data.metrics.normalizer import (
     normalize_human_scout_observation,
     normalize_scouting_observation,
     scouting_observation_natural_key,
+)
+from data.metrics.quality import (
+    OBJECT_TYPE_TEAM_METRICS,
+    QUALITY_SOURCE,
+    check_team_metrics,
+    team_metrics_object_id,
 )
 from data.metrics.schemas import (
     BAD_DAY_ZSCORE_THRESHOLD,
@@ -80,6 +92,8 @@ __all__ = [
     "MIN_MATCHES_FOR_STDDEV",
     "MIN_OBSERVATIONS_FOR_SCORE",
     "MIN_RATING",
+    "OBJECT_TYPE_TEAM_METRICS",
+    "QUALITY_SOURCE",
     "DefenseFeedingProfile",
     "ScoringProfile",
     "ScoutingObservation",
@@ -87,6 +101,7 @@ __all__ = [
     "TeamMetrics",
     "aggregate_defense_feeding",
     "average_score",
+    "check_team_metrics",
     "classify_match_days",
     "consistency_rating",
     "get_team_match_history",
@@ -95,6 +110,7 @@ __all__ = [
     "reliability_score",
     "score_stddev",
     "scouting_observation_natural_key",
+    "team_metrics_object_id",
     "validate_human_scout_observation_payload",
     "validate_scouting_observation",
 ]
