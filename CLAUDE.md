@@ -236,8 +236,42 @@ Phase 3 progress:
   data.staging must not depend on data.metrics; the thresholds live in
   data/staging/quality.py with every other plausibility bound. See
   docs/data_pipeline.md section 6.4.
-* Milestone 12 onward (the API foundation and everything after) not started.
-  See docs/P3Milestones.md for the full per-milestone checklist and
+* Milestone 12 (Sven, 2026-08-06): the API foundation, in the new api/ package
+  — api/app.py's create_app(settings=None) builds the FastAPI application on a
+  bare Settings(), the same construction data/orchestrator.py's CLI uses, so
+  there is no parallel config and no second env-loading mechanism. Four new
+  fields on that existing Settings (api_host, api_port, api_prefix,
+  cors_origins) rather than an api-specific config object. Infrastructure only,
+  by the milestone's own instruction: no metrics or data endpoints, which are
+  Milestone 13, pinned by a test asserting the OpenAPI paths are exactly
+  /health and /ready.
+
+  Liveness and readiness are split because a readiness probe that checks
+  nothing is a liveness probe with a misleading name: /health does no I/O and
+  stays usable while PostgreSQL is down, /ready does one SELECT 1 through the
+  existing Database.connection() and returns 503 in the error envelope when it
+  fails. That check does not address database/connection.py's lack of
+  connection pooling, which remains an open backlog item.
+
+  api/errors.py gives every error path one envelope —
+  {"error": {code, message, status, request_id, details?}} — so nothing falls
+  back to FastAPI's {"detail": ...}. For any status >= 500 the response body is
+  built from module constants and the request id, and the exception is never
+  read into it; the real detail goes to the log, correlated by request id.
+  Starlette debug mode is hardcoded off and deliberately not wired to
+  settings.env. The primary catch-all lives in api/middleware.py, inside
+  CORSMiddleware, because Starlette's ServerErrorMiddleware re-raises after
+  calling its handler and the 500 it produces carries no CORS headers.
+
+  The request-logging middleware matches the existing convention exactly:
+  logging.getLogger(__name__) with %-style lazy args, and basicConfig called
+  only in api/__main__.py (python -m api), never in a library module. It logs
+  method, path, status, duration and request id, and deliberately not bodies,
+  headers, or query strings — Milestone 7's submission path is gated by a
+  per-event access code that must not be written to disk on every request.
+
+* Milestone 13 onward (the team metrics endpoint and everything after) not
+  started. See docs/P3Milestones.md for the full per-milestone checklist and
   RUNNING_NOTES.md for status/decisions.
 
 Phase 2 – Data Pipeline (complete, Milestones 1-10)
@@ -265,7 +299,7 @@ fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
 team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
 Next Milestone:
-Phase 3 Milestone 12 – API foundation.
+Phase 3 Milestone 13 – team metrics API endpoint.
 
 ---
 
