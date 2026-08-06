@@ -53,6 +53,7 @@ from typing import Any
 
 from data.metrics.aggregation import aggregate_defense_feeding
 from data.metrics.history import get_team_match_history
+from data.metrics.quality import check_team_metrics
 from data.metrics.schemas import DefenseFeedingProfile, ScoringProfile, ScoutingObservation, TeamMetrics
 from data.metrics.statistics import (
     average_score,
@@ -64,6 +65,7 @@ from data.metrics.statistics import (
 from data.lineage import LineageEntry, LineageStore
 from data.orchestrator import PipelineRunRecorder
 from data.serving.repository import CanonicalRepository
+from data.staging.quality import DataQualityRecorder, QualityIssue, summarize
 from database.connection import Database
 
 __all__ = [
@@ -329,6 +331,10 @@ class MetricsComputeResult:
     lineage_recorded: int
     orphaned_removed: int = 0
     metrics: list[TeamMetrics] = field(default_factory=list)
+    # Phase 3 Milestone 11. Every finding is a warning by construction (see
+    # data.metrics.quality), so unlike SyncResult this carries no fatal_issues
+    # counterpart -- there is nothing here a caller could reject a metric over.
+    issues: list[QualityIssue] = field(default_factory=list)
 
 
 def compute_event_team_metrics(
@@ -338,6 +344,7 @@ def compute_event_team_metrics(
     repository: CanonicalRepository | None = None,
     recorder: PipelineRunRecorder | None = None,
     lineage: LineageStore | None = None,
+    quality: DataQualityRecorder | None = None,
 ) -> MetricsComputeResult:
     """Compute and persist team_metrics for every team rostered at one event.
 
@@ -356,10 +363,23 @@ def compute_event_team_metrics(
     partial-progress state to roll back -- team_metrics rows already upserted
     before a later team's computation fails simply stay correct, and a retry
     recomputes every team fresh regardless of what a previous partial run did.
+
+    Phase 3 Milestone 11 added the quality step: every computed metric is
+    checked (data.metrics.quality.check_team_metrics) before it is loaded, and
+    the findings are written to data_quality_issues by the same
+    DataQualityRecorder every ingestion issue goes through. The checks never
+    block a load -- each one is a warning, and an untrustworthy metric is still
+    a real one. Issues are recorded once after the loop rather than per team
+    (one write, matching lineage.record's batching in this same function);
+    unlike sync_event's record-before-load, a failure mid-loop therefore loses
+    that run's findings, which costs nothing here because this function holds
+    no watermark and the retry recomputes and re-detects everything from
+    scratch.
     """
     repository = repository or CanonicalRepository(database)
     recorder = recorder or PipelineRunRecorder(database)
     lineage = lineage or LineageStore(database)
+    quality = quality or DataQualityRecorder(database)
 
     run_id = recorder.start(PIPELINE_NAME, source=None, scope_key=event_key)
     try:
@@ -368,12 +388,17 @@ def compute_event_team_metrics(
 
         computed: list[TeamMetrics] = []
         lineage_entries: list[LineageEntry] = []
+        issues: list[QualityIssue] = []
         match_lineage_cache: dict[str, Any] = {}
         for team_number in team_numbers:
             history = get_team_match_history(database, team_number, event_key)
             observed_rows = _fetch_team_scouting_observations(database, team_number, event_key)
 
             metrics = _assemble_team_metrics(team_number, event_key, season, history, observed_rows)
+            # Checked after computation and before the load, the same position
+            # stage_batch screens a staged entity in. Findings never gate the
+            # load: they annotate a row that is about to be stored either way.
+            issues.extend(check_team_metrics(metrics))
             repository.load_team_metrics(metrics)
             computed.append(metrics)
 
@@ -381,6 +406,7 @@ def compute_event_team_metrics(
                 lineage, team_number, event_key, history.match_keys, observed_rows, match_lineage_cache,
             ))
 
+        quality.record(issues, run_id)
         lineage_recorded = lineage.record(lineage_entries, run_id)
         orphaned_removed = _delete_orphaned_team_metrics(database, event_key, team_numbers)
 
@@ -388,12 +414,13 @@ def compute_event_team_metrics(
             run_id, records_processed=len(computed),
             stage_counts={
                 "teams_computed": len(computed), "lineage_recorded": lineage_recorded,
-                "orphaned_removed": orphaned_removed,
+                "orphaned_removed": orphaned_removed, "quality_issues": summarize(issues),
             },
         )
         return MetricsComputeResult(
             run_id=run_id, event_key=event_key, teams_computed=len(computed),
             lineage_recorded=lineage_recorded, orphaned_removed=orphaned_removed, metrics=computed,
+            issues=issues,
         )
     except Exception as exc:
         recorder.fail(run_id, f"{type(exc).__name__}: {exc}")

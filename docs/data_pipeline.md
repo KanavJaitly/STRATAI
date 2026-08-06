@@ -273,6 +273,13 @@ Every detected quality problem, one row per detection.
   `raw_payload_id` → `raw_source_payloads(id)` **ON DELETE CASCADE** (`0007`)
 - `source`, `object_type`, `object_id`, `field`, `issue_type`, `description`,
   `detected_at`
+- `raw_payload_id` is **nullable and frequently NULL** — extraction-failure issues describe
+  no single payload, and computed-metric issues ([§6.4](#64-quality-checks-on-computed-metrics))
+  describe a row derived from many. No consumer joins through it; provenance for a canonical
+  row lives in `canonical_lineage`.
+- `object_type` is the discriminator between ingestion and computed issues: `match`,
+  `team`, `event`, `team_event`, `extraction` — plus `team_metrics` (`0008`'s table, checked
+  by `data/metrics/quality.py`)
 - **Reserved, not populated:** `resolved`, `resolved_at` (no resolution workflow yet)
 
 #### `canonical_lineage`
@@ -600,7 +607,7 @@ deliberately only one rejection mechanism.
 | Severity | Effect | Checks |
 |---|---|---|
 | `error` / `critical` | **Record rejected — never reaches the canonical tables** | structural validation failure; negative alliance score; negative wins/losses/ties; `matches_played` contradicting `wins+losses+ties`; event ending before it starts; `team_number <= 0`; roster or stats referencing a team/event that will not exist |
-| `warning` | Recorded, record still loads | season outside 1992–next year; `team_number` above 100 000; alliance size ≠ 3 (when non-empty); a declared winner who was strictly outscored; alliance score above 1 000; TBA's unplayed sentinel on only *one* alliance; `scheduled_time` more than 730 days out or before 1992; implausible `rookie_year`; `epa_total` below −50; extraction failures |
+| `warning` | Recorded, record still loads | season outside 1992–next year; `team_number` above 100 000; alliance size ≠ 3 (when non-empty); a declared winner who was strictly outscored; alliance score above 1 000; TBA's unplayed sentinel on only *one* alliance; `scheduled_time` more than 730 days out or before 1992; implausible `rookie_year`; `epa_total` below −50; extraction failures; **every computed-metric check** ([§6.4](#64-quality-checks-on-computed-metrics)) |
 
 "Negative alliance score" above means a score that is genuinely impossible. It does **not**
 mean TBA's `-1` unplayed-match sentinel, which the normalizer resolves to NULL before the
@@ -636,6 +643,64 @@ store.trace("match", "2024casj_qm1")   # every payload version, oldest first
 store.latest("team", "841")            # LineageRecord(entity_type='team', entity_key='841',
                                        #   raw_payload_id=1367, source='tba', pipeline_run_id=108)
 ```
+
+### 6.4 Quality checks on computed metrics
+
+Phase 3 Milestone 11. Everything above judges an **ingested** record. A `team_metrics` row
+is **computed** by `data/metrics/compute.py` from rows that already passed those checks, so
+it is judged on a third axis: **confidence**. The checks live in `data/metrics/quality.py`
+(`check_team_metrics`) rather than in `data/staging/quality.py`, because they must import
+`data/metrics/schemas.py` and `data.staging` must not depend on `data.metrics`; the
+thresholds they use live with every other plausibility bound in `data/staging/quality.py`.
+
+Same mechanism, no second system: the same `QualityIssue`, the same severity constants, the
+same `DataQualityRecorder`, the same `data_quality_issues` table. `compute_event_team_metrics`
+checks each metric after computing it and before loading it, then records every finding
+against its own `metrics_compute` run.
+
+**Everything here is a `warning`, without exception**, and there is deliberately no
+metrics-side rejection path. Pydantic's validators and `0008`'s CHECK constraints already
+make a genuinely impossible metric unconstructible, so nothing is left to reject — and a
+metric built from two matches is *untrustworthy, not corrupt*. Discarding it would leave the
+team with no metrics at all, which is strictly worse than a flagged one.
+
+Because hard ranges are already enforced in three places (`statistics.py`, the model's
+`Field(ge=, le=)`, and `team_metrics_scoring_range_check`), "implausible" here can only mean
+**jointly** suspicious — fields that are each individually valid but cannot both be true of
+one team's match set:
+
+| Rule | Fires when | Why it cannot both be true |
+|---|---|---|
+| `reliability_score` vs. its counts | it differs from `100 × matches_used / matches_scheduled` | that ratio *is* its definition; disagreement means value and inputs came from different computations |
+| **perfect reliability, tiny sample** | `reliability_score` is 100.0 and `matches_used` < 4 | 2-of-2 and 12-of-12 both store 100.0; the value is arithmetic, not evidence |
+| `consistency_rating` vs. `score_stddev` | rating is 100 with non-zero stddev, or stddev is 0 without a rating of 100 | consistency reaches its maximum exactly at zero variance |
+| day counts vs. `score_stddev` | stddev is 0 but `good_day_count` or `bad_day_count` is non-zero | at zero variance no match can be strictly above or below the mean |
+| missing statistic | `matches_used ≥ 2` but a variance-derived field is `NULL` | the statistics layer is total above that threshold; the one path that returns `NULL` anyway needs a *negative* score in the match history |
+| score below the aggregation minimum | a defense/feeding score with fewer than 2 observations | the 2-observation floor lives only in the aggregator; the model and CHECK permit one |
+| score without agreement | a score present with `NULL` agreement (or the reverse) | they are produced together; agreement is the score's confidence half |
+
+Low-confidence rules, all `warning`, all still loaded:
+
+| Rule | Threshold | Rationale |
+|---|---|---|
+| few matches | `0 < matches_used < 4` | a real qual schedule is 8–12 matches; below four, one outlier moves every derived statistic by a large fraction |
+| few observations | a reported score with `observation_count < 4` | the band just above the 2-observation floor, where a score exists but rests on two or three opinions |
+| low agreement | a reported score with `agreement < 0.5` | inverts to a stddev above 1.25 on the 0–5 scale — scouts differing by more than one and a quarter *described* tiers |
+
+Two states are deliberately **not** flagged, because flagging them would bury the findings
+above under one row per team per computation: `matches_used == 0` (every field is already
+`NULL`, and during a live event that is the whole roster before the first match) and
+`insufficient_data == True` (the model correctly reporting *no* score — at a real event most
+teams have no observations at all).
+
+Metric issues use the existing columns with one convention worth stating: `object_type` is
+`team_metrics`, `object_id` is `"{team_number}_{event_key}"` — byte-identical to the
+`canonical_lineage.entity_key` for the same row — `source` is `metrics_compute`, and
+**`raw_payload_id` is `NULL`**. That is accurate, not missing: a metrics row derives from
+every contributing match *and* observation across up to three sources, so naming one payload
+would assert a false provenance. The many-to-one trace is already in `canonical_lineage`, one
+join away on `object_id`. Issues with no raw payload are not new — extraction failures have
+been recorded this way since Phase 2.
 
 ---
 
@@ -1361,6 +1426,14 @@ Add it to the relevant `_check_*` function in `data/staging/quality.py`. Choose 
 by the rule in [§6.2](#62-severity-is-policy): reject only if the record is meaningless
 or unloadable, otherwise warn. Fatal checks automatically inherit the existing
 rejection/retry machinery.
+
+For a check on a **computed** `team_metrics` row, add it to `data/metrics/quality.py`
+instead and put any threshold it needs alongside the other bounds in
+`data/staging/quality.py`. Before writing one, confirm it can actually fire: the pydantic
+validators in `data/metrics/schemas.py` and the CHECK constraints in
+`0008_metrics_schema.sql` already make most bad states unconstructible, so a rule that
+duplicates either is dead code. Metric checks are always warnings — see
+[§6.4](#64-quality-checks-on-computed-metrics).
 
 ### Adding a migration
 

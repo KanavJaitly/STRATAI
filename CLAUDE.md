@@ -218,9 +218,27 @@ Phase 3 progress:
   docstring and docs/data_pipeline.md section 4.1). Lineage traces a
   team_metrics row to every contributing match and scouting observation.
   team_metrics is no longer empty.
-* Milestone 11 onward (metrics data quality checks, the API foundation, and
-  everything after) not started. See docs/P3Milestones.md for the full
-  per-milestone checklist and RUNNING_NOTES.md for status/decisions.
+* Milestone 11 (Sven, 2026-08-05): metrics data quality checks, in
+  data/metrics/quality.py — check_team_metrics judges a computed TeamMetrics
+  on confidence and internal consistency, the axis neither the structural
+  validator nor data/staging/quality.py's plausibility checks cover. It
+  extends Phase 2's quality layer rather than adding a second one: the same
+  QualityIssue, the same severity constants, the same DataQualityRecorder,
+  the same data_quality_issues table, no migration.
+  compute_event_team_metrics runs it between computing a metric and loading
+  it. Because pydantic and 0008's CHECK constraints already make an
+  impossible metric unconstructible, "implausible" here means jointly
+  suspicious (fields individually valid that cannot both be true of one
+  team's match set), and every rule is a warning that still loads — a metric
+  from two matches is untrustworthy, not corrupt, and rejecting it would
+  leave the team with nothing. The checks live in data.metrics, not
+  data.staging, because they must import data/metrics/schemas.py and
+  data.staging must not depend on data.metrics; the thresholds live in
+  data/staging/quality.py with every other plausibility bound. See
+  docs/data_pipeline.md section 6.4.
+* Milestone 12 onward (the API foundation and everything after) not started.
+  See docs/P3Milestones.md for the full per-milestone checklist and
+  RUNNING_NOTES.md for status/decisions.
 
 Phase 2 – Data Pipeline (complete, Milestones 1-10)
 
@@ -247,7 +265,7 @@ fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
 team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
 Next Milestone:
-Phase 3 Milestone 11 – metrics data quality checks.
+Phase 3 Milestone 12 – API foundation.
 
 ---
 
