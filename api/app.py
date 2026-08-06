@@ -18,6 +18,7 @@ from api.errors import register_exception_handlers
 from api.middleware import RequestLoggingMiddleware
 from api.request_id import REQUEST_ID_HEADER
 from api.routes.health import router as health_router
+from api.routes.metrics import router as metrics_router
 from data.config import Settings
 from database.connection import Database, DatabaseConfig
 
@@ -25,7 +26,7 @@ from database.connection import Database, DatabaseConfig
 logger = logging.getLogger(__name__)
 
 API_TITLE = "StratAI API"
-API_DESCRIPTION = "FRC strategy platform API. Phase 3 Milestone 12: foundation only."
+API_DESCRIPTION = "FRC strategy platform API. Phase 3: team metrics."
 API_VERSION = "0.1.0"
 
 # No authentication exists yet, so credentialed cross-origin requests are not
@@ -89,6 +90,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Health and readiness are mounted at the application root, deliberately
     # outside api_prefix, so probes do not move when the API is re-mounted.
     app.include_router(health_router)
+
+    # Data routes, unlike the probes, DO sit under api_prefix -- which is what
+    # that setting exists for. It defaults to "", so the team metrics endpoint
+    # is served at the path the milestone documents it at.
+    app.include_router(metrics_router, prefix=settings.api_prefix)
 
     logger.info(
         "Application created: env=%s prefix=%r cors_origins=%s",

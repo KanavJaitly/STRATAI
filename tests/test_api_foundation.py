@@ -251,14 +251,22 @@ def test_module_entry_point_serves_the_configured_host_and_port(monkeypatch, set
     assert captured["port"] == settings.api_port
 
 
-def test_only_health_endpoints_are_exposed(settings: Settings):
-    """Milestone 12 is infrastructure only: the metrics endpoint is Milestone 13.
+def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
+    """The shipped application exposes these paths and nothing else.
 
-    Guards against scope creep in both directions -- a data endpoint landing
-    early, and a test-only forced-error route being shipped by accident.
+    Originally Milestone 12's scope pin, asserting health and readiness were the
+    only endpoints ("the metrics endpoint is Milestone 13"). Milestone 13 landed
+    that endpoint, so the metrics path joins the list -- the pin doing exactly
+    its job. It still guards the other direction, which has not changed: a
+    test-only forced-error route (/_test_boom and friends, registered on locally
+    built apps in this module) must never reach the shipped application.
     """
     app = create_app(settings)
-    assert sorted(app.openapi()["paths"]) == ["/health", "/ready"]
+    assert sorted(app.openapi()["paths"]) == [
+        "/health",
+        "/ready",
+        "/teams/{team_number}/events/{event_key}/metrics",
+    ]
 
 
 # ===========================================================================
