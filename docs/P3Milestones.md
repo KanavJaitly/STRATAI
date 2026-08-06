@@ -149,7 +149,7 @@ What to test
  tests/test_api_foundation.py using FastAPI TestClient
  Health check, 404 shape, forced-500 shape, CORS headers
 
-☐ Milestone 13: Team metrics API endpoint
+☑ Milestone 13: Team metrics API endpoint (done — Sven, 2026-08-06)
  What to do
  Add GET /teams/{team_number}/events/{event_key}/metrics returning the exact TeamMetrics model
  Distinct handling for: team/event not found, metrics not yet computed, normal case

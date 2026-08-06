@@ -30,6 +30,19 @@ Three supporting rules close the remaining leaks:
   * 422 details are allow-listed down to (field, message, type). Pydantic's
     raw errors also carry "input" (the caller's own payload) and "ctx", which
     can hold arbitrary objects and exception reprs from custom validators.
+
+**Codes are derived, unless a route needs a finer one.** By default `code` comes
+from the HTTP status phrase, so every 404 reads "not_found". Phase 3 Milestone
+13 added ApiError for the case where one status covers several genuinely
+different situations a client must branch on: its team metrics endpoint returns
+404 for four distinct reasons -- unknown team, unknown event, team never at that
+event, metrics not computed yet -- of which only the last is worth retrying. A
+status cannot express that difference and a stable code can, so a route may
+supply one. This is additive: an exception without a `.code` renders exactly as
+it did before. The override is also honoured only below 500, mirroring the
+detail rule directly above it, which keeps the guarantee that a >= 500 body is
+assembled entirely from module constants intact -- the code feature must not
+become the one field a route can vary in a 500.
 """
 
 from __future__ import annotations
@@ -82,6 +95,34 @@ _DEFAULT_MESSAGES = {
 _FALLBACK_MESSAGE = "The request could not be completed."
 
 _NON_CODE_CHARS = re.compile(r"[^a-z0-9]+")
+
+
+class ApiError(StarletteHTTPException):
+    """An HTTPException that carries its own machine-readable error code.
+
+    Raise this instead of HTTPException when a route needs a code more specific
+    than the one derived from its status -- see the module docstring's fourth
+    rule. Everything else is unchanged: it is an HTTPException, so
+    http_exception_handler renders it through the same envelope as any other,
+    and `message` becomes the client-visible message via the ordinary
+    detail path.
+
+    Subclasses Starlette's HTTPException rather than FastAPI's for the same
+    reason register_exception_handlers registers the Starlette class: that is
+    the handler both are routed through, so this needs no registration of its
+    own.
+    """
+
+    def __init__(
+        self,
+        *,
+        status_code: int,
+        code: str,
+        message: str,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=message, headers=headers)
+        self.code = code
 
 
 class ErrorDetail(BaseModel):
@@ -220,6 +261,21 @@ def _sanitize_validation_errors(errors: Sequence[Any]) -> list[ErrorDetail]:
     return details
 
 
+def _client_safe_code(status: int, exc: StarletteHTTPException) -> str | None:
+    """Return a route-supplied error code, or None to derive one from the status.
+
+    Reads the attribute rather than isinstance-checking ApiError so any
+    exception carrying a `.code` works, and so an exception without one is
+    completely unaffected -- None makes error_json_response fall back to
+    error_code_for_status, which is exactly what happened before ApiError
+    existed. Ignored at 500 and above: see the module docstring.
+    """
+    if status >= 500:
+        return None
+    code = getattr(exc, "code", None)
+    return code if isinstance(code, str) and code else None
+
+
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Render any HTTPException -- including the router's own 404 and 405."""
     request_id = get_request_id(request)
@@ -234,6 +290,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
         status=exc.status_code,
         message=_client_safe_message(exc.status_code, exc.detail),
         request_id=request_id,
+        code=_client_safe_code(exc.status_code, exc),
         # Preserves headers the protocol requires, notably Allow on a 405 and
         # WWW-Authenticate on a 401.
         headers=getattr(exc, "headers", None),

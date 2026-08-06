@@ -270,7 +270,47 @@ Phase 3 progress:
   headers, or query strings — Milestone 7's submission path is gated by a
   per-event access code that must not be written to disk on every request.
 
-* Milestone 13 onward (the team metrics endpoint and everything after) not
+* Milestone 13 (Sven, 2026-08-06): the team metrics endpoint —
+  GET /teams/{team_number}/events/{event_key}/metrics in api/routes/metrics.py,
+  returning the canonical TeamMetrics. Phase 3's Definition of Done is now
+  callable. Mounted under Settings.api_prefix, the first use of the field
+  Milestone 12 added for it; the health probes stay deliberately outside it.
+
+  Read-only, and it never recomputes: data/metrics/read.py's
+  look_up_team_metrics reads team_metrics directly — one primary-key query on
+  the happy path — and is a sibling of Milestone 4's history.py, not a wrapper
+  over Milestone 10's compute_team_metrics. A test asserts a read adds no
+  pipeline_runs row, which is an external witness that nothing recomputed.
+  Reassembly constructs real ScoringProfile/DefenseFeedingProfile objects
+  rather than model_construct, so Milestone 1's validators run on the way out
+  and a row contradicting its own invariants fails loudly instead of being
+  served as a model that lies about itself.
+
+  Five outcomes. Metrics found is a 200. The four ways to have none are all
+  404 with distinct machine-readable codes — team_not_found, event_not_found,
+  team_did_not_attend, metrics_not_computed — because what separates the last
+  two is actionability, not existence: compute_event_team_metrics writes rows
+  only for teams match_teams rosters at the event and
+  _delete_orphaned_team_metrics deletes the row for a team dropped from that
+  roster, so "not computed" resolves by waiting while "did not attend" never
+  resolves at all. HTTP status has no vocabulary for that difference and a
+  stable code does. This required one additive change to Milestone 12's
+  foundation: ApiError in api/errors.py, an HTTPException carrying its own
+  code, read via getattr so every existing exception renders byte-identically,
+  and honoured only below 500 so that milestone's guarantee that a >= 500 body
+  is assembled purely from module constants stays intact.
+
+  A thin-data team returns 200 with the complete object — its insufficient_data
+  flags and None confidence fields intact — never an error. Returning "not
+  computed" as a 200 with an empty body was considered and rejected for that
+  exact reason: a thin-data team genuinely is a 200 with a mostly-empty body,
+  so absent must stay a 404 or the two become indistinguishable.
+
+  No writes and no authentication, both out of scope here and neither needed by
+  a read endpoint. Auth and rate limiting are a real prerequisite for exposing
+  Milestone 7's submission path over HTTP, and a separate later concern.
+
+* Milestone 14 onward (the human validation harness and documentation) not
   started. See docs/P3Milestones.md for the full per-milestone checklist and
   RUNNING_NOTES.md for status/decisions.
 
@@ -299,7 +339,9 @@ fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
 team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
 Next Milestone:
-Phase 3 Milestone 13 – team metrics API endpoint.
+Phase 3 Milestone 14 – human validation and acceptance harness
+(scripts/metrics_spot_check.py). The deliverable is a dated human sign-off in
+RUNNING_NOTES.md, not an automated test.
 
 ---
 
