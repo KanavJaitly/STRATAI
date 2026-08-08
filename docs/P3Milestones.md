@@ -161,7 +161,19 @@ What to test
  Happy path; team not found; event not found; metrics not yet computed; insufficient_data surfaced correctly
  Response schema validated against the canonical TeamMetrics model
 
-☐ Milestone 14: Human validation and acceptance harness
+◐ Milestone 14: Human validation and acceptance harness (defense accepted, feeding deferred — NOT complete)
+ Status
+ Defense: ACCEPTED — dated human sign-off written 2026-08-08 (Sven), on 2026mrcmp real
+   data (331 ScoutRadioz observations, 58 teams over the 2-observation minimum).
+   Corroborated against an independent aggregation at Spearman ρ = 0.79 like-for-like.
+ Feeding: DEFERRED — no feeding-quality column exists in the ScoutRadioz export or any
+   other raw source, so no feeding observation has ever been collected. This is a
+   collection-time gap, not fixable in code; the DCMP summary's Feeding Score is
+   pre-aggregated output and importing it would bypass the aggregation engine and
+   validate nothing. Blocked until scout-time collection changes.
+ The milestone stays open until the feeding half is validated.
+ See RUNNING_NOTES.md § "M14 — Defense/Feeding Human Validation — DEFENSE SIGN-OFF"
+ for the full record, caveats, and open items.
  What to do
  Build scripts/metrics_spot_check.py, mirroring spot_check.py, printing computed metrics with no automated verdict
  Run against real synced events/teams the user has direct scouting knowledge of
