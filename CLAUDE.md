@@ -143,7 +143,10 @@ RUNNING_NOTES.md carries the same list; keep the two in sync.
 * Win probabilities = **unbiased** — AI strategy cannot get inflated odds.
 * Core engine = **no LLM API calls** — ML / stats / optimization only.
 * LLM allowed only for: natural-language report generation and explanations.
-* Real-time updates must sync **during an event** as matches are played.
+* Real-time updates must sync **during an event** as matches are played. This is a
+  **real-time-phase target, not a current guarantee**: `--watch` keeps the canonical
+  tables current, but `team_metrics` recomputes only on the single-event path, so the
+  metrics the API serves do not move during a watch. See docs/metrics_pipeline.md §9.9.
 
 The first constraint is enforced in four places, deliberately: the
 `DefenseFeedingProfile` invariants in data/metrics/schemas.py, the
