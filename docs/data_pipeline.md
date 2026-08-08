@@ -478,8 +478,9 @@ answer to Phase 3's Definition of Done.
   `average_score`, `score_stddev`, `consistency_rating`, `reliability_score`,
   `good_day_count`, `average_day_count`, `bad_day_count`
 - From `DefenseFeedingProfile`: `defense_score`, `defense_observation_count`,
-  `defense_agreement`, `defense_insufficient_data`, the same four for `feeding_*`, and
-  `contributing_sources` TEXT[]
+  `defense_agreement`, `defense_insufficient_data`, the same four for feeding
+  (`feeding_score`, `feeding_observation_count`, `feeding_agreement`,
+  `feeding_insufficient_data`), and `contributing_sources` TEXT[]
 
 **`TeamMetrics` composes two sub-models; the table flattens them.** The nesting is
 fixed-arity — exactly one `ScoringProfile` and one `DefenseFeedingProfile`, never optional,

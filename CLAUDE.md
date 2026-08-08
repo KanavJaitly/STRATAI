@@ -310,9 +310,37 @@ Phase 3 progress:
   a read endpoint. Auth and rate limiting are a real prerequisite for exposing
   Milestone 7's submission path over HTTP, and a separate later concern.
 
-* Milestone 14 onward (the human validation harness and documentation) not
-  started. See docs/P3Milestones.md for the full per-milestone checklist and
-  RUNNING_NOTES.md for status/decisions.
+* Milestone 14 (Sven, 2026-08-06 harness; 2026-08-08 defense sign-off): the
+  human validation and acceptance harness, scripts/metrics_spot_check.py.
+  Read-only, reads through Milestone 13's look_up_team_metrics so it never
+  recomputes, and prints no verdict — defense and feeding have no external
+  truth source, so the only authority is a human who watched the matches.
+  **Still open.** The defense half is signed off on real 2026mrcmp data (331
+  observations, 58 teams over the 2-observation minimum); the feeding half
+  cannot be validated at all until a feeding-quality field exists at
+  collection time.
+
+* Milestone 15 (Sven, 2026-08-08): documentation and Phase 3 contract tests —
+  docs/metrics_pipeline.md and tests/test_metrics_docs_contract.py (48 tests,
+  8 against the live schema). Phase 3 is now documented to Phase 2's standard
+  and enforced by tests rather than trust: every column, key, cascade rule,
+  endpoint, error code, rating description, and threshold the page quotes is
+  pinned to the live schema or the live constant, in both directions, so a
+  column or route added without documenting it fails. The page is the
+  *semantic* reference for scouting_observations and team_metrics;
+  docs/data_pipeline.md section 4.1 keeps the DDL, and a test intersects both
+  pages' column sets with the live schema so they cannot drift apart.
+
+  Documentation only, deliberately. The extension guide documents the real
+  ScoutRadiozFieldMapping Python-dataclass mechanism rather than a YAML
+  mapping file, because no YAML exists in this repo and building a loader is a
+  feature, not documentation — deferred to Phase 4. reliability_score's
+  candidate TBA field names (dq_team_keys/surrogate_team_keys) are documented
+  as UNVERIFIED, with a test enforcing the marker, since they have never been
+  checked against TBA's live docs.
+
+See docs/P3Milestones.md for the full per-milestone checklist and
+RUNNING_NOTES.md for status/decisions.
 
 Phase 2 – Data Pipeline (complete, Milestones 1-10)
 
@@ -339,9 +367,22 @@ fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
 team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
 Next Milestone:
-Phase 3 Milestone 14 – human validation and acceptance harness
-(scripts/metrics_spot_check.py). The deliverable is a dated human sign-off in
-RUNNING_NOTES.md, not an automated test.
+Closing Phase 3 Milestone 14, the only Phase 3 milestone still open. Its
+harness is built and its defense half is signed off; what remains is not code.
+Two things block it, and neither is fixable in the pipeline:
+
+1. Feeding cannot be validated until a feeding-quality field is captured at
+   scout time. No raw source has one. Importing the DCMP summary's
+   pre-aggregated Feeding Score would bypass the aggregation engine and
+   validate nothing.
+2. The defense metric definition is an open product decision — serve quality
+   only, add a defended-frequency term, or serve quality × volume. It drives
+   Alliance Selection and Match Strategy, so it needs a call with Kanav.
+
+Standing constraint on what any of this may claim: zero (match, team) pairs
+have been rated by two scouts, so defense_agreement measures match-to-match
+variance confounded with scout calibration, not inter-scout agreement. See
+docs/metrics_pipeline.md section 9.1.
 
 ---
 

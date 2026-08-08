@@ -14,6 +14,11 @@ it traceable to its source. Metrics, predictions, and pick lists come in later p
 architecture, the full schema, incremental state, data quality and lineage, a verified
 local quickstart, and known issues. Start there.
 
+**[docs/metrics_pipeline.md](docs/metrics_pipeline.md)** is the reference for Phase 3:
+how a scouting observation and a match score become one served `TeamMetrics` object — the
+rating scale, the aggregation methodology, the API contract, and the limits on what the
+served numbers may be used to claim.
+
 [RUNNING_NOTES.md](RUNNING_NOTES.md) tracks milestone status and the design-decision log.
 
 ## Project layout
