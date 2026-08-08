@@ -111,11 +111,31 @@ _TEAM_KEY_DIGITS = re.compile(r"^frc(\d+)$")
 @dataclass(frozen=True)
 class ScoutRadiozRatingMapping:
     """One raw CSV column, on its own native numeric scale, mapped onto StratAI's
-    canonical [MIN_RATING, MAX_RATING] rating scale."""
+    canonical [MIN_RATING, MAX_RATING] rating scale.
+
+    excluded_values names raw cell values on THIS column that do not express a
+    rating at all. Empty by default: unless a caller opts in, every value is a
+    rating, and in particular 0 stays a real, meaningful one everywhere.
+
+    It exists because one scouting-form column can carry two different
+    questions. 2026's qDefenseQuality uses 0 for "played no defense", not
+    "defended badly" -- established for the 2026mrcmp export by cross-tabulating
+    it against on-field participation, not assumed: all 33 zero-rated rows
+    participated normally (0 of 33 scoreless, 33 of 33 active) and out-scored
+    the rated defenders roughly 2:1, which is the opposite of what "defended
+    badly" would produce. Rescaling that 0 as a rating would publish a
+    confident defense_score of 0.0 for a team that never defended -- an
+    inference from absence, which is exactly what CLAUDE.md's "defense/feeding
+    = directly measured, NOT inferred" constraint forbids.
+
+    Per-column configuration, like source_min/source_max, and inert for any
+    column that does not set it.
+    """
 
     column: str
     source_min: int
     source_max: int
+    excluded_values: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -147,6 +167,9 @@ class ScoutRadiozImportResult:
     loaded: int
     skipped: list[SkippedRecord] = field(default_factory=list)
     malformed_rows: list[tuple[int, str]] = field(default_factory=list)
+    # Rows the field mapping deliberately excluded (see _row_expresses_no_rating).
+    # Defaulted, so every existing construction of this result is unaffected.
+    excluded_rows: int = 0
 
 
 def _rescale_rating(raw_value: str, mapping: ScoutRadiozRatingMapping) -> int | None:
@@ -158,7 +181,14 @@ def _rescale_rating(raw_value: str, mapping: ScoutRadiozRatingMapping) -> int | 
     (docs/data_pipeline.md's scouting_observations section), 0 is always a
     real, meaningful rating, never a missing-data sentinel, so a present "0"
     cell rescales like any other value, not to None.
+
+    The single exception is opt-in and per-column: a value listed in this
+    mapping's own excluded_values is not a rating on this column and returns
+    None. The default is an empty tuple, so the paragraph above remains the
+    behaviour for every column that does not configure one.
     """
+    if raw_value in mapping.excluded_values:
+        return None
     if raw_value == "":
         return None
     raw_int = int(raw_value)
@@ -171,6 +201,29 @@ def _rescale_rating(raw_value: str, mapping: ScoutRadiozRatingMapping) -> int | 
         return MIN_RATING
     scaled = (raw_int - mapping.source_min) / span * (MAX_RATING - MIN_RATING) + MIN_RATING
     return round(scaled)
+
+
+def _row_expresses_no_rating(raw_row: dict[str, str], mapping: ScoutRadiozFieldMapping) -> bool:
+    """True when every rating column this mapping configures is excluded for this row.
+
+    Such a row is not malformed and is not a data error: the form recorded it
+    faithfully, and the mapping says none of its rating columns express a
+    rating here. It carries no observation, so it is skipped before landing
+    and counted in ScoutRadiozImportResult.excluded_rows rather than reported
+    beside genuinely broken rows in malformed_rows -- a distinction that
+    matters precisely because half of a real export can land in this bucket.
+
+    Only configured rating columns count, so a mapping that sets no
+    excluded_values can never exclude a row. That is what keeps this opt-in
+    and default-off. An empty cell is deliberately NOT treated as exclusion:
+    "not recorded" and "recorded as not applicable" are different facts, and
+    the former keeps its existing behaviour (None rating -> the shared
+    validator rejects a row with no rating at all).
+    """
+    configured = [m for m in (mapping.defense_rating, mapping.feeding_rating) if m is not None]
+    if not configured:
+        return False
+    return all(raw_row[m.column] in m.excluded_values for m in configured)
 
 
 def _team_number_from_key(team_key: str) -> int:
@@ -358,8 +411,16 @@ def import_scoutradioz_csv(
         malformed_rows: list[tuple[int, str]] = []
         source_object_ids: list[str] = []
         landed_count = 0
+        excluded_count = 0
         # Header is CSV row 1, so the first data row is row 2.
         for row_number, response in enumerate(rows, start=2):
+            # Checked before mapping, not after: an excluded row's ratings are
+            # all None, and the shared validator rejects a payload with no
+            # rating at all, so mapping it first would file a deliberate
+            # exclusion as a malformed row.
+            if _row_expresses_no_rating(response.raw, field_mapping):
+                excluded_count += 1
+                continue
             try:
                 payload = map_scoutradioz_row_to_observation_payload(response.raw, response.parsed, field_mapping)
                 observation = normalize_scoutradioz_observation(payload)
@@ -400,11 +461,13 @@ def import_scoutradioz_csv(
             stage_counts={
                 "rows_read": len(rows), "landed": landed_count, "loaded": len(staged.entities),
                 "skipped": len(staged.skipped), "malformed": len(malformed_rows),
+                "excluded": excluded_count,
             },
         )
         return ScoutRadiozImportResult(
             run_id=run_id, event_key=event_key, rows_read=len(rows), landed=landed_count,
             loaded=len(staged.entities), skipped=list(staged.skipped), malformed_rows=malformed_rows,
+            excluded_rows=excluded_count,
         )
     except Exception as exc:
         recorder.fail(run_id, str(exc))
