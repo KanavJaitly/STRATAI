@@ -27,6 +27,7 @@ from data.metrics.schemas import ScoutingObservation
 from data.metrics.scoutradioz import (
     ScoutRadiozFieldMapping,
     ScoutRadiozRatingMapping,
+    _row_expresses_no_rating,
     import_scoutradioz_csv,
     map_scoutradioz_row_to_observation_payload,
 )
@@ -176,6 +177,92 @@ def test_empty_notes_columns_are_omitted_not_included_as_blank():
         ),
     )
     assert "notes" not in payload
+
+
+# ---------------------------------------------------------------------------
+# Opt-in per-column value exclusion (ScoutRadiozRatingMapping.excluded_values)
+# ---------------------------------------------------------------------------
+
+
+def test_excluded_values_defaults_off_across_the_whole_real_fixture():
+    # The regression test for the exclusion feature: a mapping that does not
+    # configure excluded_values must behave exactly as it did before the
+    # feature existed, for every row of the real captured export -- every one
+    # of the 66 rows still produces a rating, no row is ever excluded, and in
+    # particular a raw "0" is still a real rating of 0, never None. If this
+    # fails, the opt-in default has leaked into a global rule and
+    # _rescale_rating's "0 is always a real, meaningful rating" contract is
+    # broken for every other column in the project.
+    with ScoutRadiozCsvImporter(FIXTURE_PATH) as importer:
+        rows = list(importer.read_rows())
+    assert len(rows) == 66
+
+    zero_rows = 0
+    for response in rows:
+        assert _row_expresses_no_rating(response.raw, _DEFENSE_0_10) is False
+        payload = map_scoutradioz_row_to_observation_payload(response.raw, response.parsed, _DEFENSE_0_10)
+        assert payload["defense_rating"] is not None
+        if response.raw["qDefenseQuality"] == "0":
+            zero_rows += 1
+            assert payload["defense_rating"] == 0
+
+    assert zero_rows == 33  # half the real export, all still rated 0 by default
+
+
+def test_configured_excluded_value_maps_the_rating_to_none():
+    mapping = ScoutRadiozFieldMapping(
+        defense_rating=ScoutRadiozRatingMapping(
+            column="qDefenseQuality", source_min=1, source_max=10, excluded_values=("0",),
+        ),
+    )
+    raw, parsed = _row()
+
+    excluded = map_scoutradioz_row_to_observation_payload(dict(raw, qDefenseQuality="0"), parsed, mapping)
+    assert excluded["defense_rating"] is None
+    assert _row_expresses_no_rating(dict(raw, qDefenseQuality="0"), mapping) is True
+
+    # A non-excluded value on the same column is unaffected.
+    rated = map_scoutradioz_row_to_observation_payload(dict(raw, qDefenseQuality="10"), parsed, mapping)
+    assert rated["defense_rating"] == 5
+    assert _row_expresses_no_rating(dict(raw, qDefenseQuality="10"), mapping) is False
+
+
+def test_row_is_excluded_only_when_every_configured_rating_is_excluded():
+    # The reason exclusion is per-column rather than a whole-row predicate: a
+    # form where defense=0 means "played no defense" but the feeding column
+    # carries a genuine rating must keep the feeding observation, not discard
+    # the row wholesale.
+    mapping = ScoutRadiozFieldMapping(
+        defense_rating=ScoutRadiozRatingMapping(
+            column="qDefenseQuality", source_min=1, source_max=10, excluded_values=("0",),
+        ),
+        feeding_rating=ScoutRadiozRatingMapping(column="ShotPercentage", source_min=0, source_max=100),
+    )
+    raw, parsed = _row()
+    raw = dict(raw, qDefenseQuality="0", ShotPercentage="100")
+
+    assert _row_expresses_no_rating(raw, mapping) is False
+    payload = map_scoutradioz_row_to_observation_payload(raw, parsed, mapping)
+    assert payload["defense_rating"] is None
+    assert payload["feeding_rating"] == 5
+
+
+def test_empty_cell_is_not_an_exclusion():
+    # "not recorded" and "recorded as not applicable" are different facts. An
+    # empty cell keeps its pre-existing behaviour (a None rating that the
+    # shared validator then rejects), rather than being silently reclassified
+    # as a deliberate exclusion.
+    mapping = ScoutRadiozFieldMapping(
+        defense_rating=ScoutRadiozRatingMapping(
+            column="qDefenseQuality", source_min=1, source_max=10, excluded_values=("0",),
+        ),
+    )
+    raw, parsed = _row()
+    raw = dict(raw, qDefenseQuality="")
+
+    assert _row_expresses_no_rating(raw, mapping) is False
+    payload = map_scoutradioz_row_to_observation_payload(raw, parsed, mapping)
+    assert payload["defense_rating"] is None
 
 
 # ---------------------------------------------------------------------------
@@ -350,6 +437,68 @@ def test_import_scoutradioz_csv_skips_malformed_rows_without_failing_the_batch(
     reasons = " ".join(reason for _row_number, reason in result.malformed_rows)
     assert "scout_identifier" in reasons
     assert "notateam" in reasons
+
+
+@requires_db
+def test_import_excludes_configured_rows_and_does_not_call_them_malformed(
+    database: Database, tmp_path: Path,
+) -> None:
+    # An excluded row is a faithful recording the mapping says carries no
+    # rating -- it must be counted separately, never reported beside genuinely
+    # broken rows. Checked before mapping for exactly this reason: an excluded
+    # row's only rating is None, and the shared validator rejects a payload
+    # with no rating at all, so mapping it first would file it as malformed.
+    mapping = ScoutRadiozFieldMapping(
+        defense_rating=ScoutRadiozRatingMapping(
+            column="qDefenseQuality", source_min=1, source_max=10, excluded_values=("0",),
+        ),
+    )
+    rows = [
+        f"frc11,2026,{_S_EVENT},{_S_MATCH},1,8/5/2026 3:15:00 PM,red,frc{_S_TEAM_A},Alice,0,",
+        f"frc11,2026,{_S_EVENT},{_S_MATCH},1,8/5/2026 3:15:00 PM,red,frc{_S_TEAM_B},Bob,10,",
+    ]
+    csv_path = _write_csv(tmp_path, rows)
+
+    result = import_scoutradioz_csv(csv_path, mapping, database=database)
+
+    assert result.rows_read == 2
+    assert result.excluded_rows == 1
+    assert result.loaded == 1
+    assert result.malformed_rows == []  # the exclusion is NOT a malformed row
+
+    with database.cursor() as cursor:
+        cursor.execute(
+            "SELECT team_number, defense_rating FROM scouting_observations WHERE event_key = %s",
+            (_S_EVENT,),
+        )
+        stored = cursor.fetchall()
+    assert stored == [(_S_TEAM_B, 5)]  # the excluded row never landed an observation
+
+
+@requires_db
+def test_import_with_no_excluded_values_loads_zero_as_a_real_rating(
+    database: Database, tmp_path: Path,
+) -> None:
+    # The default-off guarantee at the import level: the same "0" row that the
+    # test above excludes is loaded as a real rating of 0 when the mapping
+    # configures no excluded_values.
+    rows = [
+        f"frc11,2026,{_S_EVENT},{_S_MATCH},1,8/5/2026 3:15:00 PM,red,frc{_S_TEAM_A},Alice,0,",
+    ]
+    csv_path = _write_csv(tmp_path, rows)
+
+    result = import_scoutradioz_csv(csv_path, _DEFENSE_0_10, database=database)
+
+    assert result.excluded_rows == 0
+    assert result.loaded == 1
+
+    with database.cursor() as cursor:
+        cursor.execute(
+            "SELECT team_number, defense_rating FROM scouting_observations WHERE event_key = %s",
+            (_S_EVENT,),
+        )
+        stored = cursor.fetchall()
+    assert stored == [(_S_TEAM_A, 0)]
 
 
 @requires_db
