@@ -186,9 +186,13 @@ reason only — no feeding observations exist in any available source.
 - **The served metric is "quality when defending," not "how much a team defended."**
   Excellent-but-rare defenders (e.g. 222, 272, 555) rank high; frequent mediocre
   defenders rank low. [DECISION FOR ALLIANCE SELECTION — see open item below.]
-- **Team 4285:** raw ratings [1,6,7,8] → computed 3.50, summary 0.11 (largest rank
-  gap). Not explained by the volume difference. Treated as **suspected summary-side
-  human error; the raw observations are authoritative.** [Confirm/adjust: Sven]
+- **Team 4285 — RESOLVED (Sven, 2026-08-08):** raw ratings [1,6,7,8] → computed 3.50,
+  summary 0.11 (largest rank gap). Not explained by the volume difference.
+  **Confirmed as a summary-side transcription/aggregation error. The raw observations
+  are authoritative and the computed 3.50 stands; no pipeline change is warranted.**
+  This is the expected-error case the sign-off already accounts for above — the DCMP
+  summary is a corroborating human-aggregated reference, not ground truth — so the
+  discrepancy leaves ρ = 0.79 standing as a floor on real agreement.
 - 8 teams have exactly 1 observation and correctly stay insufficient_data.
 
 ### Feeding — DEFERRED, not validated
