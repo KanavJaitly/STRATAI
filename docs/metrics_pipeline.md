@@ -773,6 +773,19 @@ effect on rank correlation against the human reference: ρ 0.54 for the raw medi
 0.51 for the stored value. A float 0–5 score would recover the lost resolution. This is a
 schema plus compute change and belongs in its own PR.
 
+**Same item, second symptom — half-tier scores have no anchor (found 2026-08-08, audit).**
+The stored score is not an integer either. `aggregate_defense_feeding` reports
+`statistics.median`, which averages the two middle values at an *even* observation count, so
+a team rated `[2, 2, 3, 3]` stores **2.5** — a value with no entry in
+`DEFENSE_RATING_DESCRIPTIONS`, which is `dict[int, str]` (§5.1). **13 of the 58 scored rows**
+on the live 2026mrcmp data are half-tiers, 2.5 the most common. Nothing crashes and nothing
+is wrong arithmetically: no code indexes the description table by score. But the tier
+vocabulary §5.1 publishes cannot name what is stored, and §7.2's rationale for the median
+("most scouts said X") does not hold at an even count, where nobody said 2.5. This is the
+same schema-plus-compute decision as the paragraph above — an explicit float 0–5 score,
+with a documented reading for a half-tier ("the observations split between the two
+neighbouring tiers") — and belongs in the same PR. Deferred.
+
 ### 9.6 Open product decision: quality versus volume
 
 The served metric today is **"quality when defending", not "how much a team defended"**.
@@ -794,6 +807,64 @@ Strategy, so it is a product decision, not an implementation detail. Unresolved.
 - **Sentinel event keys must agree with their payload year.** The staging layer derives a
   match's season from its event key, so a `9997…` key with `"year": 2025` yields season-9997
   matches and trips plausibility warnings.
+
+### 9.8 🟡 An off-roster observation is stored, then never aggregated
+
+**Found 2026-08-08 by audit. Latent — zero live rows. Needs a code change; deferred.**
+
+`check_scouting_observation_references` verifies that an observation's `match_key`,
+`team_number`, and `event_key` each exist canonically. It does **not** verify that the team
+is rostered into that match. `compute_event_team_metrics` iterates only the teams
+`match_teams` rosters at the event (§2.4), so an observation naming a team that is not on
+that roster feeds no metric at all, and `_delete_orphaned_team_metrics` removes any row a
+previous roster once produced. The API then answers `team_did_not_attend` (§8.4) while
+`scouting_observations` holds rows asserting that team was there.
+
+Nothing errors, and no quality issue names it — which is what makes it worth writing down.
+Scouting observations are the only irreplaceable data in the system (§4.1), and this is a
+path by which some of them become invisible to every consumer while still sitting in the
+table. It is reachable through exactly the failure §7.2 already anticipates — a scout
+misidentifying the robot they watched — whenever the mistyped number belongs to a team that
+exists but is not at this event.
+
+**Measured on the live database, 2026-08-08: zero off-roster observations**, on either the
+(team, event) or the (team, match) relation. The gap is real and currently unrealized.
+
+A fix would either extend the referential check to roster membership — rejecting at staging,
+while the observation is not yet irreplaceable — or add a metrics-side quality warning
+naming the orphan. Which of those is right is a real decision and was not made here.
+
+### 9.9 Metrics do not recompute during a live event
+
+**By design for Phase 3**, recorded here because a project-level constraint reads as
+promising otherwise. `compute_event_team_metrics` is wired as a follow-on stage after a
+single-event sync only; `--watch` returns before reaching it, and §2.4 records why that
+integration was deferred. During a live event the canonical tables track matches as they are
+played, while `team_metrics` — the table the API actually serves — does not move until
+someone runs the single-event path again.
+
+`CLAUDE.md`'s critical constraint *"Real-time updates must sync **during an event** as
+matches are played"* is therefore satisfied today for **ingestion**, not for the served
+metrics. It is a target for the real-time phase, not a description of what Phase 3
+guarantees. Closing the gap is the deliberate `watch_event` integration §2.4 defers — and it
+has a prerequisite: §9.10.
+
+### 9.10 🟡 Quality issues are re-inserted on every recompute
+
+**Found 2026-08-08 by audit. Harmless at today's cadence.** `DataQualityRecorder.record`
+writes one row per detection with no deduplication, and deliberately so: on the ingestion
+side a watermark holds short of a bad payload, so each re-detection is a genuinely new event
+whose timestamp answers "how long has this been broken". `compute_event_team_metrics` holds
+no watermark and fully recomputes every team on every trigger (§2.4), so that reasoning does
+not carry over — every warning is written again, in full, on every run. Measured 2026-08-08:
+39 rows for 36 distinct `(object_id, field, issue_type)` triples across 5 recomputes.
+
+⚠️ **TAG — this must be fixed BEFORE compute is wired into the watch loop (§9.9).** At manual
+cadence the growth is negligible. At live-poll cadence it is one row per warning per poll:
+the 33 `low_sample_size` warnings one `2026mrcmp` recompute produces become thousands over an
+event, and `data_quality_issues` stops being readable exactly when it is most needed. The fix
+is either metrics-side deduplication or an upsert-and-count path in the recorder for computed
+rows; both are small, and neither is urgent until the watch loop lands.
 
 ---
 
