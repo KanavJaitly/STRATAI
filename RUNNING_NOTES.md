@@ -77,7 +77,7 @@ metrics object. `team_metrics` is the table that answers it.
 
 ---
 
-## 🟡 Phase 3 M14 Status — harness built, validation pending (2026-08-06)
+## 🟡 Phase 3 M14 Status — defense signed off 2026-08-08 (see sign-off below); harness built 2026-08-06
 
 > **SUPERSEDED 2026-08-08:** The "BLOCKED / zero observations" status below is
 > historical. 331 real defense observations from 2026mrcmp are now imported and
