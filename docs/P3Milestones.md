@@ -1,4 +1,4 @@
-☐ Milestone 3: Pure statistical functions
+☑ Milestone 3: Pure statistical functions (done — Kanav, 2026-08-04)
  What to do
  Implement data/metrics/statistics.py: average_score, score_stddev, consistency_rating, classify_match_days, reliability_score
  Pure functions only — no DB, no I/O
@@ -14,7 +14,7 @@ What to test
  At least one hand-computed expected value per function
  reliability_score: low-DQ/low-variance team scores high, frequent-no-show team scores low
 
-☐ Milestone 4: Match history retrieval layer
+☑ Milestone 4: Match history retrieval layer (done — Kanav, 2026-08-04)
  What to do
  Implement data/metrics/history.py to fetch one team's match score history at one event
  Join matches + match_teams, resolve correct alliance color per match, exclude unplayed matches
@@ -27,7 +27,7 @@ What to test
  Team with 0 matches; team with only future/unplayed matches; team on mixed alliance colors
  Event where roster and match data disagree (Milestone 8 backfill scenario) doesn't drop/double-count
 
-☐ Milestone 5: Scouting observation validation
+☑ Milestone 5: Scouting observation validation (done — Kanav, 2026-08-04)
  What to do
  Add validate_human_scout_observation_payload (and a registry slot for scoutradioz) to the validator module
  Required-field checks: match_key, team_number, scout_identifier, at least one rating present
@@ -40,7 +40,7 @@ What to test
  Valid payload accepted; each required field individually missing; each rating out of range
  Malformed match_key rejected; "at least one rating" rule enforced
 
-☐ Milestone 6: Scouting observation normalization
+☑ Milestone 6: Scouting observation normalization (done — Kanav, 2026-08-04)
  What to do
  Add normalize_human_scout_observation to data/metrics/normalizer.py (NOT
  data/staging/normalizer.py -- corrected 2026-08-04, Milestone 5. This
@@ -65,7 +65,7 @@ What to test
  Required-field/malformed-payload rejection
  Determinism test; unknown-source dispatch raises clear ValueError
 
-☐ Milestone 7: Human scouting submission path
+☑ Milestone 7: Human scouting submission path (done — Kanav, 2026-08-04)
  What to do
  Reuse RawPayloadWriter/raw_source_payloads for submissions (source="human_scout") — document this decision
  Add a submission service wrapping validated input into RawPayloadRecord
@@ -81,7 +81,7 @@ What to test
  Correction test (new rating creates new version)
  Access-gate rejection test
 
-☐ Milestone 8: Defense/feeding aggregation logic
+☑ Milestone 8: Defense/feeding aggregation logic (done — Kanav, 2026-08-04)
  What to do
  Implement data/metrics/aggregation.py: aggregate_defense_feeding(observations) -> DefenseFeedingProfile
  Decide and document: minimum-observation threshold before trusting a score, median over mean, an agreement/confidence measure
@@ -94,7 +94,7 @@ What to test
  tests/test_aggregation.py
  Zero observations; one observation (per documented threshold); multiple agreeing observations; multiple disagreeing observations with an outlier
 
-☐ Milestone 9: ScoutRadioz connector (second scouting source)
+☑ Milestone 9: ScoutRadioz connector (second scouting source) (done — Kanav, 2026-08-05; CSV import, not HTTP)
  What to do
  Research ScoutRadioz's actual API/export shape against real documentation
  If available: data/clients/scoutradioz.py using the existing SourceConnector/SourceResponse pattern
@@ -108,7 +108,7 @@ What to test
  tests/test_scoutradioz_client.py with mocked HTTP responses
  Coexistence test: both sources' observations for the same team+event aggregate together correctly
 
-☐ Milestone 10: Metrics computation pipeline
+☑ Milestone 10: Metrics computation pipeline (done — Kanav, 2026-08-05)
  What to do
  Implement compute_team_metrics(event_key, team_number) combining history (M4) + statistics (M3) + aggregation (M8)
  Add a MetricsRepository (or extend CanonicalRepository) with upsert into team_metrics
@@ -125,7 +125,7 @@ What to test
  Partial-data case (no scouting observations)
  Lineage test tracing a team_metrics row back to its sources
 
-☐ Milestone 11: Metrics data quality checks
+☑ Milestone 11: Metrics data quality checks (done — Sven, 2026-08-05)
  What to do
  Extend data/staging/quality.py with checks for implausible consistency_rating/reliability_score values and low-sample-size warnings
  Wire into the existing data_quality_issues table and rejection mechanism — no second mechanism
@@ -136,7 +136,7 @@ What to test
  Each implausibility rule triggered individually
  Low-sample-size metrics flagged as warning but still loaded
 
-☐ Milestone 12: API foundation
+☑ Milestone 12: API foundation (done — Sven, 2026-08-06)
  What to do
  Create api/ package with an app factory, reusing existing Settings
  Add health/readiness endpoint, structured error response schema, request logging middleware
