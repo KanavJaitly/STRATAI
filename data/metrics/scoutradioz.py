@@ -144,10 +144,15 @@ class ScoutRadiozRatingMapping:
     maps raw 1 to canonical 1 and leaves 0 unreachable for the column, so the
     two facts stay distinguishable in storage.
 
-    A column whose source scale genuinely starts at "none of this" (a 0-10
-    scale where 0 means no defense) wants excluded_values, not target_min; a
-    column whose bottom value is a real, weak rating wants target_min. They are
-    independent and compose.
+    The two controls answer different questions -- excluded_values removes raw
+    values that are not ratings at all, target_min says where this column's real
+    ratings start on the canonical scale -- and they are independent, but they
+    are not alternatives. A 0-10 column whose 0 means "no defense" needs BOTH:
+    excluded_values=("0",) to drop the non-rating, AND target_min=1, because raw
+    1 -- the lowest real rating on that scale -- rescales to 1/10 * 5 = 0.5,
+    which rounds to exactly the canonical 0 excluded_values was set to protect.
+    Set target_min for ANY source scale whose lowest real rating should not land
+    on the canonical floor, wherever that source scale itself happens to begin.
     """
 
     column: str
@@ -203,7 +208,7 @@ class ScoutRadiozImportResult:
     excluded_rows: int = 0
 
 
-def _rescale_rating(raw_value: str, mapping: ScoutRadiozRatingMapping) -> int | None:
+def _rescale_rating(raw_value: str | None, mapping: ScoutRadiozRatingMapping) -> int | None:
     """Linearly rescale a raw numeric column value onto [mapping.target_min, MAX_RATING].
 
     target_min defaults to MIN_RATING, so the target range is the full canonical
@@ -217,6 +222,17 @@ def _rescale_rating(raw_value: str, mapping: ScoutRadiozRatingMapping) -> int | 
     real, meaningful rating, never a missing-data sentinel, so a present "0"
     cell rescales like any other value, not to None.
 
+    A *missing* cell is the same absence as an empty one and returns None too.
+    csv.DictReader hands back None -- not "" -- for a column a truncated line
+    stops before, so without this the value would reach int(None) and raise
+    TypeError, which import_scoutradioz_csv's per-row handler does not catch (it
+    catches ValueError/PayloadValidationError). One short line would therefore
+    abort the whole import, contradicting that function's own documented "never
+    fatal to the rest of the file" contract. Treated as absence, such a row
+    instead takes the ordinary malformed_rows path -- the shared validator
+    rejects an observation with no rating at all -- so it is skipped and counted
+    while every other row in the file still imports.
+
     The single exception is opt-in and per-column: a value listed in this
     mapping's own excluded_values is not a rating on this column and returns
     None. The default is an empty tuple, so the paragraph above remains the
@@ -224,7 +240,7 @@ def _rescale_rating(raw_value: str, mapping: ScoutRadiozRatingMapping) -> int | 
     """
     if raw_value in mapping.excluded_values:
         return None
-    if raw_value == "":
+    if raw_value is None or raw_value == "":
         return None
     raw_int = int(raw_value)
     span = mapping.source_max - mapping.source_min

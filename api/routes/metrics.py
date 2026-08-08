@@ -107,9 +107,11 @@ _NOT_FOUND_RESPONSES: dict[str, tuple[str, str]] = {
         "scouting observations. Reads stored metrics directly and never recomputes. "
         "A team with thin data still returns the full object, with its confidence "
         "fields (matches_used, the insufficient_data flags, the agreement scores) "
-        "reporting exactly how thin it is. Returns 404 with one of four distinct "
-        "error codes -- team_not_found, event_not_found, team_did_not_attend, "
-        "metrics_not_computed -- when no metrics object exists."
+        "reporting exactly how thin it is. reliability_score is an INTERIM "
+        "placeholder: the attendance ratio 100 * matches_used / matches_scheduled, "
+        "not a robot-failure or disqualification measure. Returns 404 with one of "
+        "four distinct error codes -- team_not_found, event_not_found, "
+        "team_did_not_attend, metrics_not_computed -- when no metrics object exists."
     ),
     responses={
         HTTPStatus.NOT_FOUND: {"model": ErrorResponse},
