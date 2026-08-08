@@ -130,12 +130,43 @@ class ScoutRadiozRatingMapping:
 
     Per-column configuration, like source_min/source_max, and inert for any
     column that does not set it.
+
+    target_min is the bottom of the canonical range this column rescales ONTO,
+    defaulting to MIN_RATING so every mapping written before it existed is
+    unaffected. It is also opt-in and per-column, and it exists for a defect
+    excluded_values does not cover: a source scale whose own bottom endpoint is
+    a real rating. 2026's qDefenseQuality is 1-10, so raw 1 -- a genuine "barely
+    defended at all" -- rescaled to canonical (1-1)/9 * 5 + 0 = 0.0 exactly, an
+    endpoint artifact of the two scales sharing no common bottom. That published
+    the same canonical 0 that excluded_values exists to prevent, by a completely
+    different route: not an inference from absence, but a real low rating
+    flattened into the value reserved for "no defense". Setting target_min=1
+    maps raw 1 to canonical 1 and leaves 0 unreachable for the column, so the
+    two facts stay distinguishable in storage.
+
+    A column whose source scale genuinely starts at "none of this" (a 0-10
+    scale where 0 means no defense) wants excluded_values, not target_min; a
+    column whose bottom value is a real, weak rating wants target_min. They are
+    independent and compose.
     """
 
     column: str
     source_min: int
     source_max: int
     excluded_values: tuple[str, ...] = ()
+    target_min: int = MIN_RATING
+
+    def __post_init__(self) -> None:
+        # target_min == MAX_RATING is rejected rather than accepted as another
+        # degenerate-but-coherent case: unlike source_min == source_max (a real
+        # if unusual single-value source scale, handled in _rescale_rating), it
+        # collapses the *target* range to a point, so every distinct raw value
+        # would report the identical canonical rating. That is a configuration
+        # mistake with no legitimate reading.
+        if not MIN_RATING <= self.target_min < MAX_RATING:
+            raise ValueError(
+                f"target_min must be in [{MIN_RATING}, {MAX_RATING}); got {self.target_min}"
+            )
 
 
 @dataclass(frozen=True)
@@ -173,7 +204,11 @@ class ScoutRadiozImportResult:
 
 
 def _rescale_rating(raw_value: str, mapping: ScoutRadiozRatingMapping) -> int | None:
-    """Linearly rescale a raw numeric column value onto [MIN_RATING, MAX_RATING].
+    """Linearly rescale a raw numeric column value onto [mapping.target_min, MAX_RATING].
+
+    target_min defaults to MIN_RATING, so the target range is the full canonical
+    [MIN_RATING, MAX_RATING] scale unless a caller opts out of its bottom (see
+    ScoutRadiozRatingMapping.target_min for why one would).
 
     An empty cell means "not recorded" and returns None -- the same absence a
     human_scout payload expresses by omitting the key entirely. This is NOT
@@ -196,10 +231,12 @@ def _rescale_rating(raw_value: str, mapping: ScoutRadiozRatingMapping) -> int | 
     if span == 0:
         # A degenerate single-value scale (source_min == source_max): every
         # recorded value is definitionally the same point, which maps to the
-        # bottom of the canonical scale rather than raising over a mapping
-        # that is unusual but not self-contradictory.
-        return MIN_RATING
-    scaled = (raw_int - mapping.source_min) / span * (MAX_RATING - MIN_RATING) + MIN_RATING
+        # bottom of the target range rather than raising over a mapping
+        # that is unusual but not self-contradictory. target_min, not
+        # MIN_RATING: a caller who has declared that this column's ratings do
+        # not reach the bottom of the canonical scale means that here too.
+        return mapping.target_min
+    scaled = (raw_int - mapping.source_min) / span * (MAX_RATING - mapping.target_min) + mapping.target_min
     return round(scaled)
 
 
