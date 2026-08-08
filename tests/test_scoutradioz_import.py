@@ -99,6 +99,21 @@ def test_blank_rating_cell_maps_to_none_not_zero():
     assert payload["defense_rating"] is None
 
 
+def test_missing_rating_cell_maps_to_none_not_a_crash():
+    """A cell a truncated CSV line stops before arrives as None, not "".
+
+    csv.DictReader fills the columns a short row never reached with None. That
+    is the same absence as a blank cell and must be read as one -- reaching
+    int(None) here raises TypeError, which import_scoutradioz_csv's per-row
+    handler does not catch, so a single short line would abort the entire
+    import (pinned end to end by the integration test of the same name below).
+    """
+    raw, parsed = _row()
+    raw = dict(raw, qDefenseQuality=None)
+    payload = map_scoutradioz_row_to_observation_payload(raw, parsed, _DEFENSE_0_10)
+    assert payload["defense_rating"] is None
+
+
 def test_unmapped_rating_is_absent_from_the_payload():
     mapping = ScoutRadiozFieldMapping()  # neither defense nor feeding configured
     raw, parsed = _row()
@@ -542,6 +557,45 @@ def test_import_scoutradioz_csv_skips_malformed_rows_without_failing_the_batch(
     reasons = " ".join(reason for _row_number, reason in result.malformed_rows)
     assert "scout_identifier" in reasons
     assert "notateam" in reasons
+
+
+@requires_db
+def test_import_scoutradioz_csv_skips_a_truncated_row_without_failing_the_batch(
+    database: Database, tmp_path: Path,
+) -> None:
+    """One short line must not cost the whole file.
+
+    A truncated line is the one malformed shape that does not arrive as a
+    string: csv.DictReader reports the columns it never reached as None, so the
+    rating cell is None rather than "". Reaching int(None) raises TypeError,
+    which the per-row handler does not catch (ValueError/PayloadValidationError
+    only), so before this the exception escaped to the run-level handler and
+    every valid row in the file was lost with it.
+    """
+    rows = [
+        *_valid_rows(),
+        # Stops after `scouter`: qDefenseQuality and superNotes are never reached.
+        f"frc11,2026,{_S_EVENT},{_S_MATCH},1,8/5/2026 3:15:00 PM,blue,frc{_S_TEAM_A},Carol",
+    ]
+    csv_path = _write_csv(tmp_path, rows)
+
+    result = import_scoutradioz_csv(csv_path, _DEFENSE_0_10, database=database)
+
+    assert result.rows_read == 3
+    assert result.loaded == 2  # both valid rows still imported
+    assert len(result.malformed_rows) == 1
+    row_number, reason = result.malformed_rows[0]
+    assert row_number == 4  # header is CSV row 1, so the third data row is row 4
+    # Reported as an ordinary no-rating rejection, not counted as an exclusion:
+    # nothing was recorded here, which is not the same fact as a form recording
+    # "not applicable" (see _row_expresses_no_rating).
+    assert "rating" in reason
+    assert result.excluded_rows == 0
+
+    with database.cursor() as cursor:
+        cursor.execute("SELECT count(*) FROM scouting_observations WHERE event_key = %s", (_S_EVENT,))
+        (count,) = cursor.fetchone()
+    assert count == 2
 
 
 @requires_db

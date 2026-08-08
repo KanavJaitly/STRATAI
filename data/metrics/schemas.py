@@ -174,7 +174,22 @@ class ScoringProfile(BaseModel):
     average_score: float | None = Field(default=None, ge=0)
     score_stddev: float | None = Field(default=None, ge=0)
     consistency_rating: float | None = Field(default=None, ge=0, le=100)
-    reliability_score: float | None = Field(default=None, ge=0, le=100)
+    # The one field here whose name promises more than it delivers, so the
+    # caveat travels with the field itself rather than only in prose. Every
+    # other surface already carries it -- the KNOWN GAP note above this class,
+    # docs/metrics_pipeline.md section 6.3, and the Milestone 14 harness at
+    # every site it prints the number -- but an API client saw the bare value
+    # with nothing marking it interim. Field(description=) is the one place the
+    # caveat reaches the served OpenAPI schema.
+    reliability_score: float | None = Field(
+        default=None, ge=0, le=100,
+        description=(
+            "INTERIM placeholder: the attendance ratio "
+            "100 * matches_used / matches_scheduled, NOT a robot-failure or "
+            "disqualification measure. See the KNOWN GAP note above "
+            "ScoringProfile and docs/metrics_pipeline.md section 6.3."
+        ),
+    )
     good_day_count: int | None = Field(default=None, ge=0)
     average_day_count: int | None = Field(default=None, ge=0)
     bad_day_count: int | None = Field(default=None, ge=0)
