@@ -9,7 +9,7 @@
 | Field | Current Value |
 |---|---|
 | **Active Phase** | **Phase 3 — Metrics & analytics 🟡 UNDERWAY** (Phase 2 ✅ complete: Milestones 1–10, validated against real results 2026-07-25; full-pipeline production-readiness audit 2026-07-28) |
-| **Active Milestone** | Phase 3 M14 — human validation & acceptance harness 🟡 **Harness built (2026-08-06), milestone NOT complete** — the deliverable is a dated human sign-off, which has not been written. M1 (pydantic models) by Kanav; M2 (DB schema) by Sven; M3-M10 (statistics, history retrieval, scouting validation/normalization/submission, aggregation, ScoutRadioz CSV import, metrics computation) by Kanav; M11 (metrics quality checks), M12 (API foundation), M13 (team metrics endpoint) and M14's harness by Sven |
+| **Active Milestone** | Phase 3 M14 — human validation & acceptance harness 🟡 **Defense signed off (2026-08-08), feeding deferred — milestone NOT complete.** The defense half's dated human sign-off is written (see §"M14 — Defense/Feeding Human Validation — DEFENSE SIGN-OFF"); the feeding half stays open because no feeding observations exist in any raw source. M1 (pydantic models) by Kanav; M2 (DB schema) by Sven; M3-M10 (statistics, history retrieval, scouting validation/normalization/submission, aggregation, ScoutRadioz CSV import, metrics computation) by Kanav; M11 (metrics quality checks), M12 (API foundation), M13 (team metrics endpoint) and M14's harness by Sven |
 | **Last Completed** | **Phase 3 M13 — team metrics endpoint (2026-08-06)** — `GET /teams/{team_number}/events/{event_key}/metrics`, the literal answer to Phase 3's Definition of Done. Read-only: `data/metrics/read.py` reassembles a stored `team_metrics` row into the canonical `TeamMetrics`, and the request path never recomputes. Four distinguishable reasons for having no metrics, all 404, each with its own machine-readable code — `team_not_found`, `event_not_found`, `team_did_not_attend`, `metrics_not_computed` — which needed one additive change to M12's `api/errors.py` (`ApiError`). **M14's harness (`scripts/metrics_spot_check.py`) is merged since (PR #20), but M14 itself is still open** |
 | **Last Updated** | 2026-08-06 |
 | **Current Blocker** | **M14's defense/feeding CORRECTNESS is deferred, not blocked on ingestion.** As of 2026-08-07 the pipeline has processed real observations end to end (`2026mrcmp`, 32 observations, 4 teams scored), so the old "zero `scouting_observations`" blocker is closed. What remains is that this data cannot validate the scores: **one** reason: no team in this dataset is verifiable from firsthand memory. The full `2026mrcmp` export is now loaded — **331 observations, 66 teams, 58 clearing the 2-observation minimum** (2026-08-08) — which retires the thin-sample objection, and low-end rescale compression is fixed (`ScoutRadiozRatingMapping.target_min`). The "single-scout" objection is **not** retired, only made precise: **zero** `(match, team)` pairs have two scouts, so `defense_agreement` measures match-to-match variance confounded with scout calibration, not inter-scout agreement — see Known Issues. Feeding stays unvalidatable — no feeding column exists in any raw source. See Known Issues and §"Phase 3 M14 Status". (The Statbotics blocker is closed — separate Known Issues entry) |
@@ -69,7 +69,7 @@
 | 11. Metrics data quality checks | ✅ Done | **Sven, 2026-08-05.** `data/metrics/quality.py` — `check_team_metrics` judges a *computed* `team_metrics` row on confidence and internal consistency, the third axis neither the validator nor the staging quality layer covers. Six implausibility rules (all **jointly** suspicious, since pydantic + `0008`'s CHECKs already make out-of-range unconstructible) plus three low-confidence rules; **every one a warning that still loads**, and no metrics-side rejection path exists at all. Wired into `compute_event_team_metrics` as an additive hook: check after compute, before load, recorded through the existing `DataQualityRecorder` into the existing `data_quality_issues`. Thresholds live in `data/staging/quality.py` with every other bound; the check itself lives in `data.metrics` because it must import `data/metrics/schemas.py` and `data.staging` must not depend on `data.metrics` (M7's `check_scouting_observation_references` precedent) |
 | 12. API foundation | ✅ Done | **Sven, 2026-08-06.** The `api/` package — `create_app(settings=None)` building on a bare `Settings()`, exactly as `data/orchestrator.py`'s CLI does (no parallel config, no second env-loading mechanism). Split probes: `/health` (liveness, zero I/O, usable while PostgreSQL is down) and `/ready` (readiness, one `SELECT 1` through the existing `Database.connection()`, 503 in the error envelope on failure). One structured error shape — `{"error": {code, message, status, request_id, details?}}` — on **every** error path, including the router's own 404/405, so nothing falls back to FastAPI's `{"detail": ...}`. `RequestLoggingMiddleware` logs one line per request in the orchestrator's format and carries the primary catch-all. CORS configured from four new `Settings` fields. **Infrastructure only: no metrics or data endpoints** — pinned by a test asserting the OpenAPI paths are exactly `/health` and `/ready` |
 | 13. Team metrics API endpoint | ✅ Done | **Sven, 2026-08-06.** `GET /teams/{team_number}/events/{event_key}/metrics` (`api/routes/metrics.py`, mounted under `Settings.api_prefix` — the first use of that field, which M12 added for exactly this) returning the canonical `TeamMetrics`. The read path is `data/metrics/read.py`'s `look_up_team_metrics`, a sibling of M4's `history.py` and **not** `compute_team_metrics`: one PK query on the happy path, no recomputation ever, pinned by a test asserting no `pipeline_runs` row appears from a read. Reassembly builds real `ScoringProfile`/`DefenseFeedingProfile` objects (not `model_construct`), so M1's validators run on the way out. **Five outcomes, one of them a 200:** metrics found; `team_not_found`; `event_not_found`; `team_did_not_attend`; `metrics_not_computed` — the last four all 404 with distinct codes, since what separates them is actionability (only `metrics_not_computed` is worth retrying), which a status cannot express. A thin-data team is a **200 with the full object**, its `insufficient_data` flags and `None` confidence fields intact — never an error. 25 tests in `tests/test_metrics_api.py`, seeded through the real `compute_event_team_metrics` |
-| 14. Human validation & acceptance harness | 🟡 **Harness built, milestone NOT complete** | **Sven, 2026-08-06.** `scripts/metrics_spot_check.py` is built and merged (PR #20) — the tool half. **The milestone's actual deliverable is a dated human sign-off in this file, and that has not happened**, so M14 stays open. The harness mirrors `scripts/spot_check.py`: read-only (every statement a `SELECT`), reads `team_metrics` through M13's `look_up_team_metrics` so it never recomputes, and prints **no verdict** — no threshold, no pass/fail, exit code always 0. Defense/feeding leads each report, with observation count and agreement always shown together, and the individual contributing observations (match, scout, rating, source, notes) always listed rather than hidden behind `--verbose` — because M14's brief requires surfacing which observations contributed when a score is disputed, and `contributing_sources` names *sources*, not the ratings the median was taken over. `reliability_score` carries its interim-placeholder caveat at every site it prints. M11's quality warnings are deliberately **not** surfaced: they stay queryable in `data_quality_issues`, and showing them would nudge the validator's judgement before they form it. No automated test, per the milestone's own brief. See §"Phase 3 M14 Status" below for what is and is not validatable today |
+| 14. Human validation & acceptance harness | 🟡 **Defense signed off, feeding deferred — milestone NOT complete** | **Sven, 2026-08-06 (harness); 2026-08-08 (defense sign-off).** `scripts/metrics_spot_check.py` is built and merged (PR #20) — the tool half. **The defense half of the milestone's dated human sign-off is written (2026-08-08, `2026mrcmp`, 331 observations / 58 teams scored — see §"M14 — Defense/Feeding Human Validation — DEFENSE SIGN-OFF"); the feeding half has not happened and cannot until a feeding-quality field exists at collection time**, so M14 stays open. The harness mirrors `scripts/spot_check.py`: read-only (every statement a `SELECT`), reads `team_metrics` through M13's `look_up_team_metrics` so it never recomputes, and prints **no verdict** — no threshold, no pass/fail, exit code always 0. Defense/feeding leads each report, with observation count and agreement always shown together, and the individual contributing observations (match, scout, rating, source, notes) always listed rather than hidden behind `--verbose` — because M14's brief requires surfacing which observations contributed when a score is disputed, and `contributing_sources` names *sources*, not the ratings the median was taken over. `reliability_score` carries its interim-placeholder caveat at every site it prints. M11's quality warnings are deliberately **not** surfaced: they stay queryable in `data_quality_issues`, and showing them would nudge the validator's judgement before they form it. No automated test, per the milestone's own brief. See §"Phase 3 M14 Status" below for what is and is not validatable today |
 | 15. Documentation & Phase 3 contract tests | ⬜ Not Started | `docs/metrics_pipeline.md` + contract tests covering the new schema/API |
 
 **Phase 3 Definition of Done:** given a team number and an event, return a complete
@@ -134,6 +134,77 @@ M7's `submit_human_scout_observation` or M9's `import_scoutradioz_csv`, then
 recompute that event and run the harness against it. Until then the
 defense/feeding half of M14's sign-off cannot be written, and the feature
 should not be trusted in a decision that matters. Tracked in Known Issues.
+
+---
+
+## M14 — Defense/Feeding Human Validation — DEFENSE SIGN-OFF (2026-08-08, Sven)
+
+**Status: DEFENSE validated and signed off. FEEDING deferred (no data exists).**
+This closes the defense half of M14. The feeding half remains open for one
+reason only — no feeding observations exist in any available source.
+
+### Event and data checked
+- Event: **2026mrcmp** (FIRST Mid-Atlantic District Championship, 2026).
+- Source: full ScoutRadioz export, `data/imports/matchscouting_frc11_2026mrcmp_full.csv`
+  — 791 rows, 332 rated defense observations after excluding 459 qDefenseQuality=0
+  ("played no defense") rows, imported via `scripts/import_2026mrcmp_scouting.py`
+  (target_min=1, excluded_values=("0",)).
+- 331 observations landed across 66 teams; **58 teams** cleared the 2-observation
+  minimum and received a defense_score.
+
+### What was validated
+- **Pipeline, end to end, at production volume.** Ingest → normalize → aggregate →
+  compute → serve runs on 331 real human observations with correct low-end scaling
+  (the target_min rescale fix, commit 75940ae — canonical 0 no longer collapses
+  real low ratings; team 10070 went 0.0 → 1.0 on 7 observations).
+- **Defense scores corroborated against an independent aggregation.** The computed
+  scores were rank-compared (Spearman) against the DCMP team summary's independently
+  produced Defense Score:
+    - **ρ = 0.79 like-for-like** (both measured as "quality across all rows" from
+      the same underlying data) — strong agreement; the aggregation computes the
+      quantity it was designed to.
+    - ρ = 0.51 against the summary's as-published metric — the gap is a **definition
+      difference, not a defect**: the pipeline measures defense *quality when
+      defending* (0-rows excluded), the summary measures *quality × volume*
+      (0-rows averaged in). Confirmed by reconstructing both statistics from the
+      same CSV.
+- The DCMP summary is a **human-aggregated reference with expected transcription/
+  averaging error** — a corroborating source, not ground truth. The 0.79 is
+  therefore a *floor* on real agreement, not a ceiling.
+
+### Caveats (these bound what the metric may be used for)
+- **Single-scout dataset. `defense_agreement` is NOT an inter-scout reliability
+  signal.** Zero (match, team) pairs were rated by more than one scout. The
+  agreement number reflects per-team match-to-match consistency mixed with unknown
+  scout-calibration noise. **It must never be used as an observer-reliability
+  feature in the ML model.**
+- **The served metric is "quality when defending," not "how much a team defended."**
+  Excellent-but-rare defenders (e.g. 222, 272, 555) rank high; frequent mediocre
+  defenders rank low. [DECISION FOR ALLIANCE SELECTION — see open item below.]
+- **Team 4285:** raw ratings [1,6,7,8] → computed 3.50, summary 0.11 (largest rank
+  gap). Not explained by the volume difference. Treated as **suspected summary-side
+  human error; the raw observations are authoritative.** [Confirm/adjust: Sven]
+- 8 teams have exactly 1 observation and correctly stay insufficient_data.
+
+### Feeding — DEFERRED, not validated
+No feeding column exists in the ScoutRadioz export or any other raw source. The
+DCMP summary has a Feeding Score, but it is pre-aggregated output, not raw
+observations — importing it would bypass the aggregation engine and validate
+nothing. Feeding validation requires a feeding-quality field captured **at scout
+time**, which does not yet exist. Blocked until collection changes.
+
+### Open items logged from this validation
+1. **Metric definition (product decision):** serve quality-only, or add a
+   defended-frequency term (defended in N of M matches), or serve quality × volume?
+   Affects Alliance Selection and Match Strategy. Coordinate with Kanav.
+2. **Float-valued defense_score:** the 0–5 integer scale collapses 15 median values
+   into 8 (24 teams tie at 2.0/3.0), costing rank resolution (ρ 0.54 raw-median vs
+   0.51 stored). A float 0–5 would recover it. Schema + compute change — separate PR.
+3. **Multi-scout collection:** required before `defense_agreement` can become a real
+   observer-reliability signal (and before it's usable as an ML feature).
+
+**Signed:** Sven, 2026-08-08. Defense half of M14 accepted on 2026mrcmp real data.
+Feeding half deferred pending a feeding column at collection time.
 
 ---
 
