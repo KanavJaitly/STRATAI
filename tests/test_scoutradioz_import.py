@@ -23,7 +23,7 @@ import pytest
 from data.clients.scoutradioz import ScoutRadiozCsvImporter
 from data.config import Settings
 from data.metrics.aggregation import aggregate_defense_feeding
-from data.metrics.schemas import ScoutingObservation
+from data.metrics.schemas import MAX_RATING, MIN_RATING, ScoutingObservation
 from data.metrics.scoutradioz import (
     ScoutRadiozFieldMapping,
     ScoutRadiozRatingMapping,
@@ -115,6 +115,111 @@ def test_degenerate_scale_maps_to_min_rating_not_a_crash():
     raw = dict(raw, qDefenseQuality="5")
     payload = map_scoutradioz_row_to_observation_payload(raw, parsed, mapping)
     assert payload["defense_rating"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Opt-in target range floor (ScoutRadiozRatingMapping.target_min)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("source_min,source_max,raw_value,expected", [
+    # 0-10 -> 0-5. Odd raw values land on exact .5 ties here (raw/2), resolved
+    # by round()'s ties-to-even: 1 -> 0, 3 -> 2, 5 -> 2, 7 -> 4, 9 -> 4. Pinned
+    # as observed behaviour, not endorsed as correct -- see RUNNING_NOTES'
+    # rescale-compression entry. test_rating_rescale_boundaries_and_even_
+    # midpoints covers only the even half of this scale, which is exactly why
+    # this test exists.
+    (0, 10, "0", 0), (0, 10, "1", 0), (0, 10, "2", 1), (0, 10, "3", 2), (0, 10, "4", 2),
+    (0, 10, "5", 2), (0, 10, "6", 3), (0, 10, "7", 4), (0, 10, "8", 4), (0, 10, "9", 4),
+    (0, 10, "10", 5),
+    # 1-10 -> 0-5: the scale the 2026mrcmp import actually used, whose raw 1 ->
+    # canonical 0 collapse is what target_min was added to fix.
+    (1, 10, "1", 0), (1, 10, "2", 1), (1, 10, "3", 1), (1, 10, "4", 2), (1, 10, "5", 2),
+    (1, 10, "6", 3), (1, 10, "7", 3), (1, 10, "8", 4), (1, 10, "9", 4), (1, 10, "10", 5),
+])
+def test_default_target_min_leaves_every_existing_mapping_identical(
+    source_min, source_max, raw_value, expected
+):
+    # The regression guard for target_min being additive. Every value of both
+    # scales this codebase has used, under a mapping that does NOT pass
+    # target_min. If any of these moved, the field was not opt-in.
+    mapping = ScoutRadiozFieldMapping(
+        defense_rating=ScoutRadiozRatingMapping(
+            column="qDefenseQuality", source_min=source_min, source_max=source_max,
+        ),
+    )
+    raw, parsed = _row()
+    raw = dict(raw, qDefenseQuality=raw_value)
+    payload = map_scoutradioz_row_to_observation_payload(raw, parsed, mapping)
+    assert payload["defense_rating"] == expected
+
+
+def test_target_min_defaults_to_min_rating():
+    mapping = ScoutRadiozRatingMapping(column="qDefenseQuality", source_min=1, source_max=10)
+    assert mapping.target_min == MIN_RATING
+
+
+@pytest.mark.parametrize("raw_value,expected", [
+    ("1", 1), ("2", 1), ("3", 2), ("4", 2), ("5", 3),
+    ("6", 3), ("7", 4), ("8", 4), ("9", 5), ("10", 5),
+])
+def test_target_min_one_maps_the_source_floor_to_a_real_low_rating(raw_value, expected):
+    # The 2026mrcmp mapping. The point of the whole field is the first case:
+    # raw 1 is a real, weak defense rating and must not land on canonical 0,
+    # which this column reserves for "did not defend" via excluded_values.
+    mapping = ScoutRadiozFieldMapping(
+        defense_rating=ScoutRadiozRatingMapping(
+            column="qDefenseQuality", source_min=1, source_max=10,
+            excluded_values=("0",), target_min=1,
+        ),
+    )
+    raw, parsed = _row()
+    raw = dict(raw, qDefenseQuality=raw_value)
+    payload = map_scoutradioz_row_to_observation_payload(raw, parsed, mapping)
+    assert payload["defense_rating"] == expected
+
+
+def test_target_min_leaves_canonical_zero_unreachable_for_a_rated_row():
+    # Stronger than the parametrized case above: across the whole real fixture,
+    # no row that expresses a rating at all can produce canonical 0 under this
+    # mapping. That is what makes a stored 0 unambiguous -- it can now only
+    # have come from a column that does not set target_min.
+    mapping = ScoutRadiozFieldMapping(
+        defense_rating=ScoutRadiozRatingMapping(
+            column="qDefenseQuality", source_min=1, source_max=10,
+            excluded_values=("0",), target_min=1,
+        ),
+    )
+    with ScoutRadiozCsvImporter(FIXTURE_PATH) as importer:
+        rows = list(importer.read_rows())
+    rated = [r for r in rows if not _row_expresses_no_rating(r.raw, mapping)]
+    assert rated, "fixture must contain at least one rated row for this to mean anything"
+    for response in rated:
+        payload = map_scoutradioz_row_to_observation_payload(response.raw, response.parsed, mapping)
+        assert payload["defense_rating"] != 0
+
+
+def test_target_min_applies_to_a_degenerate_source_scale_too():
+    mapping = ScoutRadiozFieldMapping(
+        defense_rating=ScoutRadiozRatingMapping(
+            column="qDefenseQuality", source_min=5, source_max=5, target_min=1,
+        ),
+    )
+    raw, parsed = _row()
+    raw = dict(raw, qDefenseQuality="5")
+    payload = map_scoutradioz_row_to_observation_payload(raw, parsed, mapping)
+    assert payload["defense_rating"] == 1
+
+
+@pytest.mark.parametrize("target_min", [-1, MAX_RATING, MAX_RATING + 1])
+def test_out_of_range_target_min_is_rejected_at_construction(target_min):
+    # Rejected where the mistake is (building the mapping), not later as a
+    # confusing out-of-range rating on every single row. MAX_RATING itself is
+    # rejected because it collapses the target range to a single point.
+    with pytest.raises(ValueError, match="target_min"):
+        ScoutRadiozRatingMapping(
+            column="qDefenseQuality", source_min=1, source_max=10, target_min=target_min,
+        )
 
 
 def test_malformed_team_key_raises_value_error():
