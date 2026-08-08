@@ -356,6 +356,29 @@ def test_health_probes_stay_outside_the_prefix(openapi_schema: dict):
     assert PROBE_PATHS <= set(openapi_schema["paths"])
 
 
+def test_reliability_score_placeholder_caveat_reaches_the_served_schema(openapi_schema: dict):
+    """Section 6.3's caveat must travel on the API too, not only in prose.
+
+    The interim formula is documented in three places and printed by the M14
+    harness at every site, none of which an API client sees. Pinning it to the
+    OpenAPI schema keeps the caveat from being dropped while the placeholder
+    formula still stands -- the same reason section 6.3's UNVERIFIED marker is
+    pinned by a test rather than trusted.
+    """
+    field = openapi_schema["components"]["schemas"]["ScoringProfile"]["properties"]["reliability_score"]
+    assert "INTERIM" in field["description"]
+    assert "matches_used / matches_scheduled" in field["description"]
+
+    endpoints = [
+        operation["description"]
+        for path, item in openapi_schema["paths"].items()
+        if path not in PROBE_PATHS
+        for operation in item.values()
+    ]
+    assert endpoints, "no non-probe endpoint to check"
+    assert all("INTERIM" in description for description in endpoints)
+
+
 def test_documented_example_response_is_a_valid_team_metrics(docs_text: str):
     section = _section(docs_text, "### 8.2 A successful response")
     fences = re.findall(r"```json\n(.*?)```", section, flags=re.DOTALL)
