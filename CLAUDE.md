@@ -162,7 +162,11 @@ observations gets no rating, never one synthesized from its scoring.
 ## Current Development Phase
 
 Current Phase:
-Phase 3 – Metrics and analytics (underway)
+Phase 4 – ML Models (underway). Phase 3 is not fully closed — Milestone 14
+(human validation) remains open (see the Phase 3 section below) — but Phase 4
+work began ahead of it on explicit direction, since M14's remaining blockers
+(a feeding-data collection gap and a pending product decision on the defense
+metric's definition) are unrelated to and not fixable by any Phase 4 work.
 
 Phase 3 progress:
 
@@ -345,6 +349,38 @@ Phase 3 progress:
 See docs/P3Milestones.md for the full per-milestone checklist and
 RUNNING_NOTES.md for status/decisions.
 
+Phase 4 – ML Models (underway)
+
+Phase 4 follows the authoritative 13-milestone plan in docs/P4Milestones.md
+(restored 2026-09-21 from an earlier, independently-produced worktree after a
+6-milestone plan drafted from scratch inside this session was found to
+conflict with it and was discarded, code included — see RUNNING_NOTES.md for
+the full record).
+
+Phase 4 progress:
+
+* Milestone 1 (2026-09-21): the leakage-safe feature assembly layer —
+  ml/features/assembler.py's build_match_feature_row(database, match_key,
+  as_of) -> MatchFeatureRow. Recomputes scoring statistics and defense/
+  feeding aggregates fresh, at read time, from matches/match_teams/
+  scouting_observations rows filtered to strictly before as_of, reusing
+  Phase 3's own pure functions (data.metrics.statistics, data.metrics.
+  aggregation) unmodified rather than reading the stored team_metrics
+  snapshot — team_metrics is a current-state snapshot, not a historical
+  series, so reading it directly for a past match would leak that match's
+  own event forward. EPA (Statbotics team_event_stats) is never taken from
+  the target match's own event, at any as_of, since that table has no
+  historical series either and cannot be proven to reflect only prior
+  matches within its own event; only a strictly earlier, already-concluded
+  event's EPA is offered, documented as a real, open gap for a future
+  EPA-history table to close. Every optional feature carries an explicit
+  presence flag alongside its value. No new dependencies (pandas/numpy/
+  scikit-learn/xgboost/OR-Tools are added starting Milestone 5, when a
+  milestone that actually trains something needs them).
+
+See docs/P4Milestones.md for the full 13-milestone plan and RUNNING_NOTES.md
+for status/decisions.
+
 Phase 2 – Data Pipeline (complete, Milestones 1-10)
 
 Phase 2 delivered:
@@ -370,6 +406,17 @@ fixed on 2026-07-25 and confirmed against a live response on 2026-08-01;
 team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 
 Next Milestone:
+Two independent threads are open, and neither blocks the other.
+
+Phase 4 Milestone 2 — the labeled match-outcome dataset builder
+(ml/dataset/builder.py per docs/P4Milestones.md), attaching real outcomes to
+Milestone 1's MatchFeatureRow with documented inclusion/exclusion rules
+(comp level, surrogates, replays, DQ/no-show, unplayed matches) and
+persisting a versioned, regenerable artifact. Needs a reachable PostgreSQL
+database to build and verify against — the same environment gap Milestone 1
+worked around by depending on it directly and shipping DB-gated tests that
+skip cleanly without one, rather than deferring the database dependency.
+
 Closing Phase 3 Milestone 14, the only Phase 3 milestone still open. Its
 harness is built and its defense half is signed off; what remains is not code.
 Two things block it, and neither is fixable in the pipeline:
