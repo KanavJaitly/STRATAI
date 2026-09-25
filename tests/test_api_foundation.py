@@ -257,13 +257,19 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     Originally Milestone 12's scope pin, asserting health and readiness were the
     only endpoints ("the metrics endpoint is Milestone 13"). Milestone 13 landed
     that endpoint, so the metrics path joins the list -- the pin doing exactly
-    its job. It still guards the other direction, which has not changed: a
-    test-only forced-error route (/_test_boom and friends, registered on locally
-    built apps in this module) must never reach the shipped application.
+    its job. Phase 4 Milestone 12 added the four ML prediction endpoints the
+    same way: a deliberate, reviewed addition, not a silent one. It still
+    guards the other direction, which has not changed: a test-only
+    forced-error route (/_test_boom and friends, registered on locally built
+    apps in this module) must never reach the shipped application.
     """
     app = create_app(settings)
     assert sorted(app.openapi()["paths"]) == [
         "/health",
+        "/predictions/alliance-synergy",
+        "/predictions/events/{event_key}/ranking",
+        "/predictions/matches/{match_key}/win-probability",
+        "/predictions/win-probability",
         "/ready",
         "/teams/{team_number}/events/{event_key}/metrics",
     ]

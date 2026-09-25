@@ -67,6 +67,7 @@ from database.connection import Database
 __all__ = [
     "EPA_WITHHELD_NO_PRIOR_EVENT",
     "MatchFeatureRow",
+    "build_team_features",
     "TeamFeatures",
     "build_match_feature_row",
 ]
@@ -269,7 +270,7 @@ class MatchFeatureRow(BaseModel):
 class _EpaLookup:
     """Internal result of one point-in-time EPA lookup. Not part of the
     public API -- TeamFeatures is what callers see; this only exists so
-    _point_in_time_epa and _build_team_features share one shape without a
+    _point_in_time_epa and build_team_features share one shape without a
     5-tuple."""
 
     epa_total: float | None
@@ -439,7 +440,7 @@ def _point_in_time_epa(
     return _EpaLookup(epa_total, epa_auto, epa_teleop, epa_endgame, source_event_key, None)
 
 
-def _build_team_features(
+def build_team_features(
     database: Database, team_number: int, event_key: str, as_of: datetime,
 ) -> TeamFeatures:
     """Compose one team's point-in-time scoring, defense/feeding, and EPA
@@ -447,6 +448,14 @@ def _build_team_features(
     own reused, unmodified functions (data.metrics.statistics,
     data.metrics.aggregation) applied to this module's point-in-time-
     filtered rows.
+
+    Public (promoted from a private helper for build_match_feature_row's own
+    use, Milestone 12): the ML API layer needs one team's own point-in-time
+    snapshot directly -- team ranking for an event and alliance synergy for
+    three supplied teams both operate per-team, not per-match -- and this is
+    the exact same building block, not a new one. Mirrors this codebase's own
+    established precedent for promoting a genuinely-reused private helper
+    (data.staging.normalizer._parse_team_number -> parse_tba_team_number).
     """
     scores, matches_considered = _point_in_time_scores(database, team_number, event_key, as_of)
     matches_used = len(scores)
@@ -539,8 +548,8 @@ def build_match_feature_row(database: Database, match_key: str, as_of: datetime)
     red_team_numbers = [team_number for team_number, alliance_color in roster if alliance_color == "red"]
     blue_team_numbers = [team_number for team_number, alliance_color in roster if alliance_color == "blue"]
 
-    red_teams = [_build_team_features(database, team_number, event_key, as_of) for team_number in red_team_numbers]
-    blue_teams = [_build_team_features(database, team_number, event_key, as_of) for team_number in blue_team_numbers]
+    red_teams = [build_team_features(database, team_number, event_key, as_of) for team_number in red_team_numbers]
+    blue_teams = [build_team_features(database, team_number, event_key, as_of) for team_number in blue_team_numbers]
 
     return MatchFeatureRow(
         match_key=match_key, as_of=as_of, event_key=event_key, season=season,

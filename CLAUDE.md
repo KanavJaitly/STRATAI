@@ -377,6 +377,113 @@ Phase 4 progress:
   presence flag alongside its value. No new dependencies (pandas/numpy/
   scikit-learn/xgboost/OR-Tools are added starting Milestone 5, when a
   milestone that actually trains something needs them).
+* Milestone 2 (2026-09-24): the labeled match-outcome dataset builder —
+  ml/dataset/builder.py's build_training_frame(database, season_keys) ->
+  TrainingFrameResult, attaching a real red_win/blue_win/tie label plus score
+  margin to Milestone 1's MatchFeatureRow, and persist_training_frame writing
+  the result as a versioned parquet artifact with a manifest. Five documented
+  inclusion/exclusion rules (no_scheduled_time, unplayed, a defensive
+  winning_alliance_missing check, dq_affected, dq_status_unknown); comp
+  level, ties, and surrogate appearances are kept and tagged, never dropped.
+  Confirmed directly against TBA's own live OpenAPI spec that dq_team_keys/
+  surrogate_team_keys are real fields (resolving the "UNVERIFIED" status
+  these exact names have carried since Phase 3 M15) and that TBA has no
+  separate no-show concept (folded into DQ) and no replay concept at all
+  (match_key is already TBA's one canonical record). Neither field reached
+  this codebase's canonical schema, so the builder reads the untouched raw
+  TBA payload directly out of raw_source_payloads.payload_json, additively —
+  no migration, nothing touched in Kanav's M3-M10 computation logic. A DQ'd
+  match (or one with no raw payload to check) is excluded from the labeled
+  set by default, reversibly, via include_dq_affected=True. First Phase 4
+  dependency added: pyarrow only, no pandas (deferred to Milestone 5 as
+  planned). A related, out-of-scope gap surfaced and documented rather than
+  fixed: Milestone 1's own scoring history does not currently distinguish a
+  surrogate appearance from a normal one.
+* Milestone 3 (2026-09-25, first milestone under Phase Execution Mode —
+  prompts/MASTER_BUILD.md, adopted 2026-09-24): the temporal backtesting
+  harness and Model protocol — ml/backtest/harness.py's Model
+  (fit/predict_win_prob/predict_rating/save/load), Fold (structurally
+  enforces max(train.scheduled_time) < min(test.scheduled_time) for every
+  fold constructed, not merely tested after the fact), hold_out_season_split,
+  walk_forward_splits (ISO-week bucketed), and run_win_prob_backtest/
+  run_ranking_backtest, plus ml/backtest/metrics.py's seven pure metric
+  functions (accuracy, log-loss, Brier, ROC-AUC, ECE, Spearman, top-k
+  recall), all dependency-free per the plan's own "pandas/numpy add starting
+  Milestone 5" note. No reachable database needed at all: every function
+  operates on Milestone 1/2's already-assembled TrainingRow/TeamFeatures
+  objects, not the database directly, so all 56 new tests are pure and
+  actually execute (no requires_db skips). Found during Challenge, before
+  implementation: no table or client model anywhere in this codebase has
+  ever landed a team's real final event ranking, more fundamental than the
+  no-database gap since it means the ranking half of these metrics has no
+  real ground truth even with a live database — resolved by taking
+  final_ranks as an explicit external argument rather than fabricating a
+  source, flagged as load-bearing starting Milestone 5. Full acceptance
+  record: .agent/phase4/M03_ACCEPTANCE.md.
+* Milestone 4 (code complete 2026-09-25, NOT accepted): locked naive
+  baselines — ml/models/baselines.py's RawEpaRankingBaseline and
+  EpaWinProbBaseline (genuine Newton-Raphson-fit logistic, no invented
+  "standard Statbotics formula"), 24 tests, all synthetic and labeled as
+  such. The real, dated backtest numbers this milestone's own acceptance
+  requires are blocked on a Statbotics outage (HTTP 500/503 on every
+  substantive endpoint throughout this session) — see PHASE_STATUS.md.
+* Milestones 5-7 (code complete 2026-09-25, NOT accepted, built ahead of
+  M4's freeze as dependency-independent progress): ml/models/ranking_xgb.py
+  (XGBoost rating model — the training-target formulation, a real
+  architectural ambiguity M3's own locked Model protocol left open, was
+  confirmed with Kanav before implementation), ml/models/win_prob.py
+  (symmetric-by-construction XGBoost win-prob model — p(R,B) =
+  (raw(R,B) + (1-raw(B,R)))/2, a structural guarantee for any underlying
+  predictor, not merely observed), and ml/calibration/calibrator.py
+  (isotonic/Platt calibration, scikit-learn added, calibration-fit
+  isolation enforced structurally). 77 combined new tests. Each of these
+  three milestones' own real beats-M4-baseline / real-calibration-band
+  acceptance criteria need the same real EPA data M4 is blocked on.
+* Milestone 8 (2026-09-25, ACCEPTED, built out of numeric order — needs no
+  real data): scripts/ml_bias_audit.py, one command running symmetry,
+  order-invariance, no-strategy-leakage, as-of-feature-integrity, and
+  label-shuffle leakage checks against the real M5/M6 models. Proven to
+  have teeth via two deliberately-broken fixture models, each shown to
+  fail the specific check it violates. Full acceptance record:
+  .agent/phase4/M08_ACCEPTANCE.md.
+* Milestone 9 (2026-09-25, ACCEPTED): ml/synergy/score.py's
+  alliance_synergy() — since no "role" field exists anywhere in this
+  codebase's schema, role fit and scoring-distribution complementarity are
+  computed as unit-free share vectors (a team's value on one axis / the
+  alliance's total on that axis), scored via 1 − mean pairwise cosine
+  similarity. This design was confirmed with Kanav before implementation
+  (a genuine strategy/domain question, not just an engineering one) rather
+  than guessed at. Full acceptance record: .agent/phase4/M09_ACCEPTANCE.md.
+* Milestone 10 (2026-09-25, ACCEPTED): ml/registry.py's register_model/
+  load_registered_model/list_registered_versions and ModelManifest.
+  Write-once storage per (model_type, version_tag); the registry's own
+  feature-list guard is independent of (defense in depth alongside) each
+  model class's own internal check. Verified end to end against the real
+  RankingXGBModel, including a simulated feature-list drift correctly
+  refused at load time. Full acceptance record:
+  .agent/phase4/M10_ACCEPTANCE.md.
+* Milestone 11 — investigated 2026-09-25, DEFERRED (Kanav-confirmed): the
+  entire data/ and ml/ packages were grepped for score_breakdown, the
+  field this milestone's own brief names as the thing to adapt across
+  seasons. It is never parsed or consumed anywhere in this codebase, so
+  there is no existing feature or consumer for "season-aware feature
+  adapters" to adapt yet — building the guard now would be speculative
+  structure with no consumer, the same anti-pattern this phase already
+  rejected once (Milestone 1's discarded schema-only draft). Revisit if/
+  when a future feature actually reads score_breakdown.
+* Milestone 12 (2026-09-25, ACCEPTED): four ML prediction endpoints
+  extending the Phase 3 api/ package additively (api/routes/predictions.py)
+  — match-based and ad-hoc win probability, event team ranking, alliance
+  synergy — loading pinned model versions from Milestone 10's registry at
+  startup (api/ml_loading.py), never in the request path. Both pinned
+  version-tag settings default to None, this project's honest current
+  production state, so the two model-backed endpoints correctly answer
+  model_not_loaded until a real M4-M7 model is accepted and registered.
+  Found and fixed a real bug during testing: model_not_loaded was first
+  coded as a 503, which api/errors.py's own established security rule
+  silently strips a custom error code from at that status — fixed to a
+  404, matching api.routes.metrics's own existing metrics_not_computed
+  precedent. Full acceptance record: .agent/phase4/M12_ACCEPTANCE.md.
 
 See docs/P4Milestones.md for the full 13-milestone plan and RUNNING_NOTES.md
 for status/decisions.
@@ -408,14 +515,22 @@ team_event_stats now populates. See docs/data_pipeline.md section 9.1.
 Next Milestone:
 Two independent threads are open, and neither blocks the other.
 
-Phase 4 Milestone 2 — the labeled match-outcome dataset builder
-(ml/dataset/builder.py per docs/P4Milestones.md), attaching real outcomes to
-Milestone 1's MatchFeatureRow with documented inclusion/exclusion rules
-(comp level, surrogates, replays, DQ/no-show, unplayed matches) and
-persisting a versioned, regenerable artifact. Needs a reachable PostgreSQL
-database to build and verify against — the same environment gap Milestone 1
-worked around by depending on it directly and shipping DB-gated tests that
-skip cleanly without one, rather than deferring the database dependency.
+Phase 4 Milestones 4-7 — locked naive baselines, the rating model, the
+win-prob model, and calibration. The original PostgreSQL blocker is fully
+resolved (18.6 installed, migrated, full seasons 2024/2025/2026 synced
+TBA-side plus event rankings for all 608 events). All four milestones'
+code is built, unit-tested against synthetic fixtures, and unblocked on
+everything except one remaining dependency: Statbotics has returned HTTP
+500/503 on every substantive endpoint all session (independently
+curl-verified against this codebase's own exact endpoints), so the real,
+dated numbers these milestones' own acceptance criteria require — M4's
+frozen baseline, M5/M6's beats-baseline backtest, M7's real calibration
+band — stay blocked until it recovers. Rechecked at sensible intervals,
+not hammered. Milestones 8-10 and 12 do not depend on real data at all and
+are ACCEPTED (see their own .agent/phase4/M0X_ACCEPTANCE.md files above);
+Milestone 11 was investigated and DEFERRED (nothing in this codebase reads
+the field it would guard). See .agent/phase4/PHASE_PLAN.md and
+PHASE_STATUS.md.
 
 Closing Phase 3 Milestone 14, the only Phase 3 milestone still open. Its
 harness is built and its defense half is signed off; what remains is not code.

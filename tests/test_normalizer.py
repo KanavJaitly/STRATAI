@@ -329,7 +329,7 @@ def test_normalize_tba_team_prefers_nickname_over_legal_name():
 
 def test_normalize_tba_match_collapses_offseason_b_team_to_parent_team_number():
     # Regression: "frc254b" (TBA's real offseason second-robot convention)
-    # previously crashed _parse_team_number with a raw ValueError. It's
+    # previously crashed parse_tba_team_number with a raw ValueError. It's
     # deliberately collapsed to the parent team's number (254), not rejected
     # and not given a separate identity.
     payload = dict(

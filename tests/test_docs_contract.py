@@ -30,7 +30,7 @@ from unittest.mock import Mock
 import httpx
 import pytest
 
-from data.clients.schemas import EventSummary, TeamInfo
+from data.clients.schemas import EventRankings, EventSummary, TeamInfo
 from data.clients.source_connector import SourceConnector
 from data.clients.statbotics import StatboticsClient
 from data.clients.tba import TBAClient
@@ -252,6 +252,35 @@ def test_fetch_event_teams_handles_an_empty_roster(monkeypatch, env_settings: Se
     client = TBAClient(settings=env_settings)
     monkeypatch.setattr(client, "_client", Mock(request=Mock(return_value=DummyResponse(200, None))))
     assert client.fetch_event_teams("2025casj") == []
+
+
+def test_fetch_event_rankings_requests_the_documented_rankings_url(monkeypatch, env_settings: Settings):
+    # Phase 4 Milestone 3's own ranking-ground-truth gap, closed by data/rankings.py.
+    client = TBAClient(settings=env_settings)
+    body = {"rankings": [{"team_key": "frc1114", "rank": 1}, {"team_key": "frc254", "rank": 2}],
+            "sort_order_info": [], "extra_stats_info": []}
+    request = Mock(return_value=DummyResponse(200, body))
+    monkeypatch.setattr(client, "_client", Mock(request=request))
+
+    response = client.fetch_event_rankings("2025casj")
+
+    assert request.call_args_list[0][0][1].endswith("/event/2025casj/rankings")
+    assert response.raw == body
+    assert isinstance(response.parsed, EventRankings)
+    assert [(r.team_key, r.rank) for r in response.parsed.rankings] == [("frc1114", 1), ("frc254", 2)]
+
+
+def test_fetch_event_rankings_handles_tbas_null_body_for_an_unranked_event(monkeypatch, env_settings: Settings):
+    # TBA's real behavior for an event with no computed ranking yet -- a bare
+    # `null` body, not an empty {"rankings": []}. Confirmed against TBA's live
+    # OpenAPI spec, not assumed.
+    client = TBAClient(settings=env_settings)
+    monkeypatch.setattr(client, "_client", Mock(request=Mock(return_value=DummyResponse(200, None))))
+
+    response = client.fetch_event_rankings("2025casj")
+
+    assert response.raw is None  # the untouched wire body is genuinely null, preserved as such
+    assert response.parsed == EventRankings(rankings=[])
 
 
 # ===========================================================================

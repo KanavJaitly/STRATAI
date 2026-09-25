@@ -108,6 +108,40 @@ class TeamInfo(BaseModel):
     motto: str | None = None
 
 
+class TeamRanking(BaseModel):
+    """One team's row in an event's qualification ranking, per TBA's real
+    /event/{event_key}/rankings response (confirmed against TBA's own live
+    OpenAPI spec, schema "Event_Ranking", 2026-09-25 -- the same verification
+    discipline Phase 4 Milestone 2 already applied to dq_team_keys/
+    surrogate_team_keys).
+
+    Only team_key and rank are modeled. TBA's real response also carries
+    dq, matches_played, qual_average, record (W-L-T), sort_orders, and
+    extra_stats per team -- all preserved untouched in the landed raw
+    payload (SourceResponse.raw), just not modeled here, because nothing in
+    this codebase consumes them yet. Modeling fields nothing reads would be
+    exactly the speculative-feature building this project's principles
+    reject; extend this model when a real consumer needs one of them.
+    """
+
+    team_key: str
+    rank: int
+
+
+class EventRankings(BaseModel):
+    """An event's full qualification ranking, per TBA's /event/{event_key}/rankings.
+
+    rankings defaults to an empty list rather than being required, because
+    TBA returns a bare `null` response body (not an empty rankings array)
+    for an event with no computed ranking yet -- an unplayed or very early
+    event. TBAClient.fetch_event_rankings handles that null case explicitly
+    at the call site; this model's own default keeps construction from a
+    genuinely empty ranking list working the same way.
+    """
+
+    rankings: list[TeamRanking] = Field(default_factory=list)
+
+
 class ScoutRadiozMatchScoutingRow(BaseModel):
     """One row of a ScoutRadioz match-scouting CSV export -- the platform's own
     stable, cross-season metadata columns only.

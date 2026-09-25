@@ -16,9 +16,11 @@ from starlette.middleware.cors import CORSMiddleware
 
 from api.errors import register_exception_handlers
 from api.middleware import RequestLoggingMiddleware
+from api.ml_loading import load_pinned_ranking_model, load_pinned_win_prob_model
 from api.request_id import REQUEST_ID_HEADER
 from api.routes.health import router as health_router
 from api.routes.metrics import router as metrics_router
+from api.routes.predictions import router as predictions_router
 from data.config import Settings
 from database.connection import Database, DatabaseConfig
 
@@ -26,7 +28,7 @@ from database.connection import Database, DatabaseConfig
 logger = logging.getLogger(__name__)
 
 API_TITLE = "StratAI API"
-API_DESCRIPTION = "FRC strategy platform API. Phase 3: team metrics."
+API_DESCRIPTION = "FRC strategy platform API. Phase 3: team metrics. Phase 4: ML predictions."
 API_VERSION = "0.1.0"
 
 # No authentication exists yet, so credentialed cross-origin requests are not
@@ -71,6 +73,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.database = Database(DatabaseConfig(settings.database_url))
 
+    # ML models (Phase 4 Milestone 12): loaded once here, exactly like the
+    # database above never opens a connection at this point -- these two
+    # calls only read small local JSON files, so this stays fast and cannot
+    # itself depend on any external service (Statbotics, TBA) being up.
+    # Either resolves to (None, None) if nothing is pinned or loadable,
+    # which is this project's real current state -- see api.ml_loading's
+    # own docstring for why that must not fail application startup.
+    app.state.ranking_model, app.state.ranking_model_manifest = load_pinned_ranking_model(settings)
+    app.state.win_prob_model, app.state.win_prob_model_manifest = load_pinned_win_prob_model(settings)
+
     # add_middleware inserts at the front of the stack, so the last one added is
     # the outermost. CORS must be outermost: RequestLoggingMiddleware catches
     # unhandled exceptions and returns the 500 itself, and that response has to
@@ -95,6 +107,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # that setting exists for. It defaults to "", so the team metrics endpoint
     # is served at the path the milestone documents it at.
     app.include_router(metrics_router, prefix=settings.api_prefix)
+    app.include_router(predictions_router, prefix=settings.api_prefix)
 
     logger.info(
         "Application created: env=%s prefix=%r cors_origins=%s",

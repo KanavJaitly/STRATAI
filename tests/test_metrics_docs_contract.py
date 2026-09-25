@@ -73,6 +73,18 @@ METRICS_TABLES = ("scouting_observations", "team_metrics")
 # page's, so they are excluded when comparing documented endpoints to live ones.
 PROBE_PATHS = {"/health", "/ready"}
 
+# Phase 4 Milestone 12's ML prediction endpoints belong to their own future
+# docs/ml_models.md (Phase 4 Milestone 13), not this page (the Phase 3
+# scouting_observations/team_metrics reference) -- excluded here for the
+# identical reason PROBE_PATHS is: out of this page's own documented scope,
+# not undocumented by oversight.
+ML_PREDICTION_PATHS = {
+    "/predictions/matches/{match_key}/win-probability",
+    "/predictions/win-probability",
+    "/predictions/events/{event_key}/ranking",
+    "/predictions/alliance-synergy",
+}
+
 
 @pytest.fixture(scope="module")
 def docs_text() -> str:
@@ -335,7 +347,7 @@ def monkeypatch_module_env():
 
 
 def test_documented_endpoints_are_exactly_the_live_ones(docs_text: str, openapi_schema: dict):
-    live = set(openapi_schema["paths"]) - PROBE_PATHS
+    live = set(openapi_schema["paths"]) - PROBE_PATHS - ML_PREDICTION_PATHS
     documented = set(re.findall(r"^GET (/\S+)$", docs_text, flags=re.MULTILINE))
     assert documented, "section 8 documents no endpoint"
     assert live == documented, (
@@ -372,7 +384,7 @@ def test_reliability_score_placeholder_caveat_reaches_the_served_schema(openapi_
     endpoints = [
         operation["description"]
         for path, item in openapi_schema["paths"].items()
-        if path not in PROBE_PATHS
+        if path not in PROBE_PATHS and path not in ML_PREDICTION_PATHS
         for operation in item.values()
     ]
     assert endpoints, "no non-probe endpoint to check"
