@@ -6,3 +6,27 @@ python-dotenv>=1.0
 httpx>=0.24
 fastapi>=0.115,<1.0
 uvicorn>=0.30,<1.0
+# Added for Phase 4 Milestone 2 (ml/dataset/builder.py): the milestone's own
+# brief requires persisting the labeled training frame as a parquet artifact.
+# pyarrow alone (no pandas) writes parquet directly from row dicts, including
+# the nested list<struct> columns red_teams/blue_teams need -- pandas is
+# deferred to Milestone 5, per docs/P4Milestones.md's own "added starting
+# Milestone 5" note, since M2 needs parquet output, not a DataFrame layer.
+pyarrow>=18.0
+# Added for Phase 4 Milestone 5 (ml/models/ranking_xgb.py), per docs/
+# P4Milestones.md's own "added starting Milestone 5" note (see M2's pyarrow
+# comment above). numpy builds the model's feature matrices; xgboost is the
+# regressor itself. pandas is deliberately still not added -- this milestone
+# needs numeric arrays, not a DataFrame layer, and nothing here reads or
+# writes tabular files the way M2's parquet output does.
+numpy>=1.26
+xgboost>=2.0
+# Added for Phase 4 Milestone 7 (ml/calibration/calibrator.py): isotonic and
+# Platt-scaling calibration are both well-established, already-audited
+# algorithms (isotonic regression's PAV algorithm; Platt scaling is plain
+# logistic regression on one feature) -- reusing scikit-learn's own
+# implementations here rather than hand-rolling PAV, consistent with
+# CLAUDE.md's "prefer explainable models... never exaggerate certainty"
+# principle applied to not reinventing a numerically subtle algorithm from
+# scratch. Already listed in CLAUDE.md's own tech stack.
+scikit-learn>=1.5

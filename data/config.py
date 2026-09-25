@@ -73,6 +73,19 @@ class Settings(BaseSettings):
         default_factory=lambda: list(DEFAULT_CORS_ORIGINS)
     )
 
+    # --- ML layer (Phase 4 Milestone 12) --------------------------------------
+    # Same rationale as the API fields above: one Settings object, one place to
+    # look. version_tag fields default to None -- "nothing pinned" -- which is
+    # this project's actual current state (M4-M7's real, dated backtest numbers
+    # are blocked on a Statbotics outage; no model has been accepted for
+    # production serving yet). An operator sets these once a real model is
+    # registered and accepted, at which point api.app.create_app loads it once
+    # at startup; until then, every prediction endpoint correctly reports
+    # model_not_loaded rather than serving from an unaccepted model by default.
+    ml_registry_dir: str = str(PROJECT_ROOT / "ml_registry")
+    ml_ranking_model_version_tag: str | None = None
+    ml_win_prob_model_version_tag: str | None = None
+
     model_config = ConfigDict(
         case_sensitive=False,
     )

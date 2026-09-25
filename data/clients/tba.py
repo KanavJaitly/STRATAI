@@ -7,7 +7,7 @@ from typing import Any, ClassVar
 import httpx
 
 from data.clients.http_retry import request_with_retries
-from data.clients.schemas import EventSummary, Match, TeamInfo
+from data.clients.schemas import EventRankings, EventSummary, Match, TeamInfo
 from data.clients.source_connector import SourceConnector, SourceResponse
 from data.config import Settings
 
@@ -76,6 +76,21 @@ class TBAClient(SourceConnector):
         """Fetch all matches for an event."""
         data = self._request("GET", f"/event/{event_key}/matches")
         return [SourceResponse(item, Match.model_validate(item)) for item in (data or [])]
+
+    def fetch_event_rankings(self, event_key: str) -> SourceResponse[EventRankings]:
+        """Fetch an event's qualification ranking.
+
+        TBA returns a bare `null` body, not an empty {"rankings": []}, for an
+        event with no computed ranking yet (unplayed, or very early in a
+        multi-day event before quals conclude) -- confirmed against TBA's
+        live OpenAPI spec, not assumed. That null is preserved verbatim in
+        the returned SourceResponse.raw (the landing layer's own "store
+        exactly what the API sent" rule applies here too), while `parsed`
+        degrades to an empty EventRankings rather than failing to validate.
+        """
+        data = self._request("GET", f"/event/{event_key}/rankings")
+        parsed = EventRankings.model_validate(data) if data is not None else EventRankings(rankings=[])
+        return SourceResponse(data, parsed)
 
     def fetch_team_info(self, team_number: int) -> SourceResponse[TeamInfo]:
         """Fetch team information by team number."""

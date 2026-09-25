@@ -93,7 +93,7 @@ def _season_from_event_key(event_key: str) -> int:
     return int(match.group(1))
 
 
-def _parse_team_number(team_key: str) -> int:
+def parse_tba_team_number(team_key: str) -> int:
     """Extract the numeric team number from a TBA team key like 'frc1114'.
 
     Off-season events use a trailing letter for a team's second robot (e.g.
@@ -106,6 +106,13 @@ def _parse_team_number(team_key: str) -> int:
     acceptable, documented simplification rather than expanding team_number
     into a more complex identity for a case this system doesn't need to
     distinguish yet.
+
+    Public (not prefixed with `_`) because Phase 4 Milestone 2
+    (ml/dataset/builder.py) reuses it to resolve dq_team_keys/
+    surrogate_team_keys read directly out of a raw TBA match payload --
+    the same key format, the same B-team collapsing rule applies, and
+    duplicating the regex+collapse logic there would just be this function
+    copied, not a genuinely different parser.
     """
     match = _TEAM_KEY_DIGITS_PATTERN.match(team_key)
     assert match is not None
@@ -176,7 +183,7 @@ def _alliance_roster(alliance: dict[str, Any]) -> list[int]:
     quality layer already flags as an implausible alliance size.
     """
     return [
-        _parse_team_number(team_key)
+        parse_tba_team_number(team_key)
         for team_key in tba_alliance_team_keys(alliance)
         if not is_unassigned_team_key(team_key)
     ]

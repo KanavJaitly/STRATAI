@@ -5,6 +5,7 @@ from data.staging.normalizer import (
     normalize_match,
     normalize_team,
     normalize_team_event_stats,
+    parse_tba_team_number,
 )
 from data.staging.quality import (
     DataQualityRecorder,
@@ -43,6 +44,7 @@ __all__ = [
     "normalize_match",
     "normalize_team",
     "normalize_team_event_stats",
+    "parse_tba_team_number",
     "QualityIssue",
     "QualityContext",
     "DataQualityRecorder",
