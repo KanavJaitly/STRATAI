@@ -140,12 +140,12 @@ jobs:
           path: ${{ runner.temp }}/dataset
       - name: Restore and re-verify dataset
         env:
-          PG_CONTAINER: ${{ job.services.postgres.id }}
           EXPECTED_SHA256: ${{ needs.preflight.outputs.dump_sha256 }}
           EXPECTED_FINGERPRINT: ${{ needs.preflight.outputs.fingerprint }}
         run: |
           echo "${EXPECTED_SHA256}  $RUNNER_TEMP/dataset/stratai.dump" | sha256sum --check --strict
-          docker exec -i "$PG_CONTAINER" pg_restore -U stratai -d stratai --no-owner --exit-on-error < "$RUNNER_TEMP/dataset/stratai.dump"
+          # Same version-matched client, over localhost:5432, as the data build.
+          docker run --rm -i --network host postgres:18 pg_restore --dbname "$DATABASE_URL" --no-owner --exit-on-error < "$RUNNER_TEMP/dataset/stratai.dump"
           python -m automation.verify_dataset --expected-fingerprint "$EXPECTED_FINGERPRINT"
       - name: Run Claude (one attempt)
         timeout-minutes: 250

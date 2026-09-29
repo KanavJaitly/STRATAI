@@ -148,3 +148,24 @@ def test_lock_and_state_are_always_released_and_persisted():
         assert re.search(rf"- name: {step}\n\s+if: always\(\)", publish), step
     for step in ("Record build", "Persist state", "Release lock"):
         assert re.search(rf"- name: {step}\n\s+if: always\(\) && steps.lock.outputs.acquired == 'true'", BUILD), step
+
+
+def test_no_job_context_where_github_rejects_it():
+    # GitHub rejects `job.*` in a job-level env block ("Unrecognized named-value:
+    # 'job'"); these workflows don't need the context at all.
+    for text in (BUILD, EXECUTE):
+        assert "${{ job." not in text
+
+
+def test_dump_and_restore_use_the_service_image_over_localhost():
+    services = set(re.findall(r"^\s+image: (\S+)$", BUILD + EXECUTE, flags=re.MULTILINE))
+    assert services == {"postgres:18"}
+    tool_lines = re.findall(r"^.*\bpg_(?:dump|restore)\b.*$", BUILD + EXECUTE, flags=re.MULTILINE)
+    commands = [line for line in tool_lines if "docker run" in line]
+    assert len(commands) == 3  # build: restore + dump; execute: restore
+    for line in commands:
+        assert "docker run --rm" in line and "--network host postgres:18" in line
+        assert '--dbname "$DATABASE_URL"' in line
+    assert "docker exec" not in BUILD + EXECUTE
+    for text in (BUILD, EXECUTE):
+        assert "@localhost:5432/" in re.search(r"DATABASE_URL: (\S+)", text).group(1)
