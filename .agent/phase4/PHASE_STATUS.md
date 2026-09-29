@@ -1,8 +1,8 @@
 Phase: 4
 
-Current Milestone: M04 (M05, M06, M07 also code-complete; M08, M09, M10, M12 ACCEPTED — see below; M11 deferred, see below)
+Current Milestone: M04 (M05, M06, M07 also code-complete; M08, M09, M10, M12 ACCEPTED — see below; M11 required per decision D4, not started)
 
-Status: IN_PROGRESS — M04/M05/M06/M07 code complete, real-number freezes still blocked on Statbotics. M08/M09/M10/M12 fully accepted (none needed real data). M11 deferred (no real work to guard yet).
+Status: IN_PROGRESS — M04/M05/M06/M07 code complete, real-number freezes still blocked on Statbotics. M08/M09/M10/M12 fully accepted (none needed real data). M11 no longer deferred (decision D4, 2026-09-29) — not started; feature set open.
 
 Current Stage: Phase H — regression verification complete; awaiting external dependency to close M04's (and M05's, M06's, M07's) acceptance gate
 
@@ -28,7 +28,8 @@ Accepted (this phase execution, full artifact in .agent/phase4/):
   real M4-M7 model is accepted and registered -- that is this milestone
   working as designed, not a gap.
 
-Deferred (found not to have real scope yet, human-confirmed):
+Deferred (found not to have real scope yet, human-confirmed) — SUPERSEDED
+2026-09-29 by decision D4 below: M11 must be implemented and accepted:
 - M11 (cross-season generalization guard): nothing in this codebase's
   data/ or ml/ packages reads score_breakdown at all (confirmed by direct
   grep, not assumed) -- there is no existing consumer for "season-aware
@@ -213,16 +214,68 @@ Blocked, unchanged:
 Human Decisions Required:
 - Still open: how long to keep waiting on Statbotics before considering an
   alternative (see prior status entries).
-- New (2026-09-29, found while designing the recovery monitor —
-  docs/phase4_automation.md):
-  - Phase Acceptance Gate requires every milestone individually accepted
-    (MASTER_BUILD.md); M11 is deferred, not accepted. Phase 4 cannot close
-    until M11 is accepted, re-scoped, or formally removed from the phase.
-  - M5 "agreed metric" (Spearman vs top-8 recall) and M7 "agreed ECE
-    threshold" are not recorded anywhere. Held-out season not recorded as a
-    decision (M4 script example: train 2024+2025, hold out 2026).
-  - Definition of "complete" Statbotics coverage for M4-M7 (team_event_stats
-    has 0 rows; some team-events may legitimately have no record).
+- OPEN (2026-09-29): M11 logical-feature set. The spec requires "the same
+  logical feature computed correctly under both schemas" but names no
+  features; choosing them adds inputs to M5/M6 (methodology). Needs Kanav
+  before M11 implementation.
+- OPEN (2026-09-29): non-deterministic EPA source. 1,912 appearances in
+  2024-2026 have two "most recent" prior events with the same end_date
+  (Championship division + Einstein, e.g. 2025gal/2025cmptx; DCMP division +
+  finals, e.g. 2024micmp1/2024micmp). ml/features/assembler.py's
+  `ORDER BY end_date DESC` has no tie-break, so the EPA row read is
+  whichever Postgres returns first — not reproducible (M5 requires
+  reproducible training). Needs a deterministic, documented tie-break in M1
+  code (Kanav's) or another decision. The readiness gate reports these as
+  INVALID, so no automated attempt can start until resolved.
+- OPEN (2026-09-29): confirm the data-build dump checkpoint
+  (docs/phase4_automation.md §3) as the intended reading of D2 + D3.
+
+Decisions — Kanav, 2026-09-29 (authoritative for Phase 4 from here on):
+- D1 Claude auth: CLAUDE_CODE_OAUTH_TOKEN (`claude setup-token`) only. No
+  ANTHROPIC_API_KEY. Usage credits/overage OFF. Subscription exhausted =>
+  stop safely and escalate.
+- D2 Runtime: GitHub-hosted, execution job <= 5 h, checkpointed; <= 300
+  Actions minutes per automated execution attempt, then checkpoint and stop.
+  Later runs resume from persisted state. (Replaces the 24 h ceiling.)
+- D3 Database: ephemeral PostgreSQL service container in Actions, rebuilt
+  with existing migrations + orchestrator. No managed DB, no public exposure,
+  no parallel DB architecture.
+- D4 M11: NOT deferred. Implement exactly per docs/P4Milestones.md (2024 vs
+  2026 score_breakdown season-aware adapters, raw-body preservation,
+  explicit unsupported-season errors, cross-season feature-parity tests,
+  generalization test). No re-scope, no removal. Own M11_ACCEPTANCE.md.
+  (Supersedes the 2026-09-25 deferral below.)
+- D5 M5 metric: primary = Spearman vs real final event rank; XGBoost must
+  STRICTLY beat the frozen raw-EPA baseline on held-out 2026 Spearman.
+  Top-8 recall = secondary diagnostic. Metric fixed before results.
+- D6 M7: ECE < 0.05 (M3 ECE, 10 equal-width bins on [0,1]) is this project's
+  acceptance threshold; the 60% -> 58-62% band still applies where the bin
+  has sufficient observations; report bin counts, flag under-populated bins.
+- D7 Split: train 2024 + 2025, held-out test 2026, strict temporal order.
+- D8 Historical-data readiness: every model input the M4-M7 backtest needs
+  exists and validates, or takes a documented production insufficient_data
+  path. API failures, interrupted syncs, ingestion/schema errors and
+  unexplained missing records are NOT legitimate absence. Every exclusion
+  counted and reported. No fabricated/imputed/substituted EPA. Separate gate
+  from the service monitor.
+- D9 Real-data failure (incl. M5 missing the baseline): STOP and escalate. Fix
+  only objectively demonstrated defects; never change model, features,
+  metric, threshold, split or methodology to manufacture a pass. (Overrides
+  the spec's "iterate before closing" for this phase.)
+- D10 PR #28 merges after Kanav verifies $0 billing settings. Monitor
+  RECOVERY_CONFIRMED authorizes human review/preflight only.
+- D11 $0 absolute: no paid service/API/DB/VM, no billing-backed trial, no
+  overage. Anything that cannot be $0 => stop and escalate.
+
+Consequences recorded 2026-09-29:
+- M13 requires a dated HUMAN sign-off in RUNNING_NOTES.md, so unattended
+  execution can at most bring M13 to "awaiting sign-off"; the Phase
+  Acceptance Review follows that sign-off.
+- ml/features/assembler.py's EPA lookup picks the most recent prior event
+  that HAS a team_event_stats row, so a missing row silently falls back to
+  older EPA. The readiness gate (D8) checks the expected source event
+  independently of team_event_stats and fails on any mismatch; the
+  assembler itself is unchanged.
 
 Monitoring (2026-09-29): daily Statbotics readiness monitor built (monitor
 only, cannot start Phase 4) — docs/phase4_automation.md. Live probe of
