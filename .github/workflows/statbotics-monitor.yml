@@ -1,0 +1,100 @@
+# Daily Statbotics readiness monitor for the blocked Phase 4 milestones (M4-M7).
+# Monitor only: it records state and notifies; it cannot start Phase 4.
+# Operating guide and cost notes: docs/phase4_automation.md.
+
+name: Statbotics monitor (Phase 4)
+
+on:
+  schedule:
+    # Once a day, off the hour (GitHub delays top-of-hour cron most).
+    - cron: "37 15 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: >-
+          check = run a readiness check now; status = print state only;
+          clear-escalation = human reset of a tripped circuit breaker (returns
+          to WAITING, never skips the two-day debounce)
+        type: choice
+        options: [check, status, clear-escalation]
+        default: check
+
+permissions:
+  contents: write  # push state to the automation/phase4-state branch only
+  issues: write    # comment on the tracking issue, only on transitions
+
+concurrency:
+  group: statbotics-monitor
+  cancel-in-progress: false
+
+env:
+  TRACKING_ISSUE: "27"
+  STATE_BRANCH: automation/phase4-state
+
+jobs:
+  monitor:
+    # Pause without a commit: `gh variable set PHASE4_MONITOR_PAUSED --body true`
+    if: vars.PHASE4_MONITOR_PAUSED != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Install monitor dependencies
+        # Only what automation.monitor imports, with specifiers read from
+        # requirements.txt so versions stay single-sourced. No ML stack.
+        run: |
+          grep -E '^(pydantic|python-dotenv|httpx|psycopg)' requirements.txt > "$RUNNER_TEMP/monitor-requirements.txt"
+          python -m pip install --disable-pip-version-check --quiet -r "$RUNNER_TEMP/monitor-requirements.txt"
+
+      - name: Load monitor state
+        run: |
+          if git ls-remote --exit-code --heads origin "$STATE_BRANCH" > /dev/null; then
+            git fetch --quiet --depth=1 origin "$STATE_BRANCH"
+            git worktree add --quiet --detach "$RUNNER_TEMP/state" FETCH_HEAD
+          else
+            # First run. If ls-remote failed for any other reason, the later
+            # non-force push is rejected against the real branch: fail closed.
+            git worktree add --quiet --orphan -b "$STATE_BRANCH" "$RUNNER_TEMP/state"
+          fi
+
+      - name: Run monitor
+        env:
+          MODE: ${{ inputs.mode || 'check' }}
+          OWNER: ${{ github.repository_owner }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: >-
+          python -m automation.monitor
+          --state-dir "$RUNNER_TEMP/state"
+          --mode "$MODE"
+          --notify-out "$RUNNER_TEMP/notify.md"
+          --owner "$OWNER"
+          --run-url "$RUN_URL"
+
+      - name: Persist monitor state
+        if: inputs.mode != 'status'
+        working-directory: ${{ runner.temp }}/state
+        env:
+          MODE: ${{ inputs.mode || 'check' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add monitor_state.json monitor_log.jsonl
+          git commit --quiet -m "monitor: ${MODE} at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push --quiet origin "HEAD:refs/heads/${STATE_BRANCH}"
+
+      - name: Notify tracking issue
+        # State is pushed first: a failed comment fails the run (GitHub emails
+        # the failure) instead of silently losing the transition.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -f "$RUNNER_TEMP/notify.md" ]; then
+            gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/notify.md"
+          fi
