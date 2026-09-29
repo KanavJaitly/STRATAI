@@ -184,7 +184,8 @@ def _team_features_are_fully_absent(team_features: TeamFeatures) -> bool:
     return not any((
         team_features.epa_total_present, team_features.epa_auto_present,
         team_features.epa_teleop_present, team_features.epa_endgame_present,
-        team_features.average_score_present, team_features.defense_score_present,
+        team_features.average_score_present, team_features.average_auto_points_present,
+        team_features.defense_score_present,
         team_features.feeding_score_present,
     ))
 

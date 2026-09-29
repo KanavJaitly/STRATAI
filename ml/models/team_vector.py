@@ -31,6 +31,7 @@ __all__ = [
 TEAM_FEATURE_NAMES: tuple[str, ...] = (
     "epa_total", "epa_auto", "epa_teleop", "epa_endgame",
     "average_score", "score_stddev", "consistency_rating", "reliability_score",
+    "average_auto_points",  # Milestone 11 (ml/features/score_breakdown.py)
     "matches_considered", "matches_used",
     "defense_score", "defense_agreement", "defense_observation_count",
     "feeding_score", "feeding_agreement", "feeding_observation_count",
@@ -50,6 +51,7 @@ def team_features_to_vector(team_features: TeamFeatures) -> np.ndarray:
         team_features.score_stddev if team_features.score_stddev_present else float("nan"),
         team_features.consistency_rating if team_features.consistency_rating_present else float("nan"),
         team_features.reliability_score if team_features.reliability_score_present else float("nan"),
+        team_features.average_auto_points if team_features.average_auto_points_present else float("nan"),
         float(team_features.matches_considered),
         float(team_features.matches_used),
         team_features.defense_score if team_features.defense_score_present else float("nan"),

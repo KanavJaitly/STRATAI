@@ -29,6 +29,7 @@ def _team_features(team_number: int, epa_total: float | None) -> TeamFeatures:
         average_score_present=False, score_stddev_present=False,
         consistency_rating_present=False, reliability_score_present=False,
         matches_considered=0, matches_used=0,
+        average_auto_points_present=False, auto_points_matches_used=0,
         defense_score_present=False, defense_agreement_present=False, defense_observation_count=0,
         feeding_score_present=False, feeding_agreement_present=False, feeding_observation_count=0,
     )

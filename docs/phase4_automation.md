@@ -64,11 +64,18 @@ persistent data (it uses session TEMP tables only).
 
 The unit of requirement is a **team appearance**: one (team, event, match time)
 for every scheduled match in 2024–2026. The backtest reads exactly one EPA row per
-appearance, chosen by `ml/features/assembler.py`. That lookup takes the most
-recent prior event **that has a `team_event_stats` row**, so a missing row silently
-falls back to older EPA. The gate therefore works out the *expected* source event
-independently, from the events the team actually played, and classifies each
-appearance:
+appearance, chosen by `ml/features/assembler.EPA_SOURCE_SQL` (decision D13):
+
+- **Candidates** are the team's prior events it had finished before `as_of`: the
+  event's `end_date` is before `as_of`, *and* the team's latest completed match there
+  is before `as_of`.
+- **Order** is latest `end_date`, then latest completed match, then `event_key`
+  ascending. Postgres row order is never used.
+
+Because the lookup only considers events that **have a `team_event_stats` row**, a
+missing row silently falls back to older EPA. The gate therefore applies the same
+rule independently, to the events the team actually completed matches at, and
+classifies each appearance:
 
 | Category | Meaning | Effect |
 |---|---|---|
@@ -76,8 +83,17 @@ appearance:
 | `no_prior_event` | No earlier concluded event; the assembler's documented `EPA_WITHHELD_NO_PRIOR_EVENT` path | Legitimate, counted and reported |
 | `missing_expected_row` | Includes the silent-fallback case | `PARTIAL` |
 | `invalid_expected_row` | Null or non-finite EPA (any component), or `matches_played` null or ≤ 0 | `INVALID` |
-| `source_mismatch` | Assembler would read a row for an event the team never played | `INVALID` |
-| `ambiguous_source` | Two most-recent prior events share an `end_date` | `INVALID` |
+| `source_mismatch` | Gate and assembler disagree (impossible while their rules match; checked anyway) | `INVALID` |
+
+Same-date ties (a division and its Einstein or DCMP finals) are resolved by the
+rule and only counted, never blocking.
+
+**M11's input.** Every completed match must have a current raw TBA payload whose
+`score_breakdown` passes `ml/features/score_breakdown.auto_points`:
+
+- **not published** — TBA has no breakdown for the match. Legitimate; counted.
+- **raw payload missing** — `PARTIAL`.
+- **rejected by the adapter** — `INVALID`.
 
 It also requires a usable final ranking (via `read_final_ranks_for_season`, the
 backtest's own reader) for every held-out 2026 event.
@@ -85,11 +101,12 @@ backtest's own reader) for every held-out 2026 event.
 Status precedence is UNKNOWN > FAILED > INVALID > PARTIAL > COMPLETE. Only
 **COMPLETE** permits M4–M7.
 
-As of 2026-09-29 the result is **FAILED**:
+As of 2026-09-29 (after D13) the result is **FAILED**, only because Statbotics is unsynced:
 
-- 19,761 required EPA source rows, 0 present;
-- 208/208 held-out rankings present;
-- 1,912 `ambiguous_source` appearances, which are a real, standing blocker (see §7).
+- 19,735 required EPA source rows, 0 present;
+- 0 ambiguous sources: 1,979 ties resolved by latest completed match, 0 by `event_key`;
+- 53,195/53,195 completed-match score breakdowns valid (2024: 16,977; 2025: 17,846; 2026: 18,372);
+- 208/208 held-out rankings present.
 
 ## 3. Data build (D3)
 
@@ -113,8 +130,7 @@ retention is 30 days.
 1.7–3.3 h. Rebuilding inside every attempt would consume most of D2's 300-minute
 budget before any Phase 4 work began, and would be paid again on each resume. The
 dump is a checkpoint of the deterministic rebuild, not a separate database; it also
-pins a snapshot, so backtests are reproducible. *This is an interpretation of
-D2+D3 awaiting Kanav's confirmation.*
+pins a snapshot, so backtests are reproducible. Approved by Kanav (D14).
 
 ## 4. One execution attempt (D1, D2, D9)
 
@@ -238,13 +254,11 @@ and verified by Kanav.
 
 ## 7. Open items needing Kanav
 
-1. **M11 logical-feature set.** The spec requires "the same logical feature computed
-   correctly under both schemas" but names none. Choosing them adds inputs to M5/M6.
-2. **Ambiguous EPA source (1,912 appearances).** Championship divisions and Einstein,
-   and district-championship divisions and finals, end the same day. The assembler's
-   `ORDER BY end_date DESC` then picks arbitrarily, which is non-reproducible. It needs
-   a deterministic, documented tie-break in `ml/features/assembler.py` (M1 code) or
-   another decision. Until then readiness is `INVALID` and no attempt can start.
-3. **Confirm the dump checkpoint** (§3) as the intended reading of D2+D3.
-4. **Unknown subscription throughput.** Whether one 235-minute attempt fits the Claude
+1. **Review the D13 completed-match guard** in the PR. It changes accepted M1
+   behaviour, beyond the literal tie-break instruction, to stop same-day
+   Einstein/DCMP-finals EPA leaking into Saturday division matches (902 appearances).
+2. **Setup** (§5): billing check, `TBA_API_KEY` and `CLAUDE_CODE_OAUTH_TOKEN` secrets,
+   and optionally allowing Actions to open PRs.
+3. **Unknown subscription throughput.** Whether one 235-minute attempt fits the Claude
    plan's usage window is unknown; if not, the run stops as `usage_exhausted`.
+4. **M13's dated sign-off** is yours, after real M4–M7 held-out results exist.
