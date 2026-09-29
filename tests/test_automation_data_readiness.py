@@ -4,7 +4,8 @@ Pure classification tests run everywhere. requires_db tests build a tiny
 sentinel world (teams 99901/99902, seasons 9951-9953) in the real database,
 following tests/test_rankings.py's sentinel-and-cleanup convention, and check
 every category against the gate's real SQL -- including the assembler's silent
-fall-back to older EPA when the expected row is missing.
+fall-back to older EPA when the expected row is missing. Same-date tie-breaks
+and gate/assembler agreement live in tests/test_epa_source_selection.py.
 """
 
 from __future__ import annotations
@@ -46,7 +47,7 @@ def test_no_valid_rows_is_failed():
     assert status == dr.FAILED
 
 
-@pytest.mark.parametrize("category", [dr.CATEGORY_INVALID_ROW, dr.CATEGORY_SOURCE_MISMATCH, dr.CATEGORY_AMBIGUOUS_SOURCE])
+@pytest.mark.parametrize("category", [dr.CATEGORY_INVALID_ROW, dr.CATEGORY_SOURCE_MISMATCH])
 def test_invalid_categories_block_as_invalid(category):
     status, _ = dr.classify(report({dr.CATEGORY_OK: 50, category: 1}))
     assert status == dr.INVALID
@@ -96,12 +97,8 @@ BASE_EVENTS = [
     ("9952zzza", 9952, date(9952, 3, 10), (TEAM_A,)),
     ("9953zzza", 9953, date(9953, 3, 10), (TEAM_A, TEAM_B)),
 ]
-TIE_EVENTS = [  # a division and its finals ending the same day, played by team B
-    ("9952zzzdiv", 9952, date(9952, 4, 20), (TEAM_B,)),
-    ("9952zzzfin", 9952, date(9952, 4, 20), (TEAM_B,)),
-]
 NO_SHOW_EVENT = ("9952zzznoshow", 9952, date(9952, 6, 1), ())
-ALL_EVENTS = [key for key, *_ in (*BASE_EVENTS, *TIE_EVENTS, NO_SHOW_EVENT)]
+ALL_EVENTS = [key for key, *_ in (*BASE_EVENTS, NO_SHOW_EVENT)]
 
 
 def _cleanup(db: Database) -> None:
@@ -111,6 +108,8 @@ def _cleanup(db: Database) -> None:
         cursor.execute("DELETE FROM matches WHERE event_key = ANY(%s)", (ALL_EVENTS,))
         cursor.execute("DELETE FROM raw_source_payloads WHERE source = 'tba' AND source_object_type = 'event_ranking' "
                        "AND source_object_id = ANY(%s)", (ALL_EVENTS,))
+        cursor.execute("DELETE FROM raw_source_payloads WHERE source = 'tba' AND source_object_type = 'match' "
+                       "AND source_object_id LIKE '995_zzz%%'")
         cursor.execute("DELETE FROM events WHERE event_key = ANY(%s)", (ALL_EVENTS,))
         cursor.execute("DELETE FROM teams WHERE team_number = ANY(%s)", ([TEAM_A, TEAM_B],))
 
@@ -130,6 +129,13 @@ def _add_event(db: Database, event_key: str, season: int, end: date, teams: tupl
         for index, team in enumerate(teams):
             cursor.execute("INSERT INTO match_teams (match_key, team_number, alliance_color, station_position) "
                            "VALUES (%s, %s, %s, 1)", (match_key, team, "red" if index == 0 else "blue"))
+        # Sentinel seasons have no score_breakdown adapter, so these matches carry
+        # the one legitimate absence: a payload TBA published without a breakdown.
+        cursor.execute(
+            "INSERT INTO raw_source_payloads (source, source_object_type, source_object_id, event_key, match_key, "
+            "payload_json, payload_checksum) VALUES ('tba', 'match', %s, %s, %s, %s, %s)",
+            (match_key, event_key, match_key, json.dumps({"key": match_key, "score_breakdown": None}),
+             f"sentinel-{match_key}"))
 
 
 def _add_ranking(db: Database, event_key: str) -> None:
@@ -160,11 +166,11 @@ def world():
     db = Database(DatabaseConfig(settings.database_url))
     _cleanup(db)
 
-    def build(*, tie: bool = False, no_show: bool = False, ranking: bool = True) -> Database:
+    def build(*, no_show: bool = False, ranking: bool = True) -> Database:
         with db.cursor() as cursor:
             for team in (TEAM_A, TEAM_B):
                 cursor.execute("INSERT INTO teams (team_number, name) VALUES (%s, 'sentinel')", (team,))
-        for event in (*BASE_EVENTS, *(TIE_EVENTS if tie else ()), *((NO_SHOW_EVENT,) if no_show else ())):
+        for event in (*BASE_EVENTS, *((NO_SHOW_EVENT,) if no_show else ())):
             _add_event(db, *event)
         if ranking:
             _add_ranking(db, "9953zzza")
@@ -242,24 +248,13 @@ def test_non_finite_breakdown_component_is_invalid(world):
 
 
 @requires_db
-def test_row_for_an_event_the_team_never_played_is_a_source_mismatch(world):
+def test_row_for_an_event_the_team_never_played_is_never_the_source(world):
     db = world(no_show=True)
     complete_stats(db)
-    _add_stats(db, TEAM_A, "9952zzznoshow")  # more recent than 9952zzza, but A played no match there
+    _add_stats(db, TEAM_A, "9952zzznoshow")  # more recent than 9952zzza, but A completed no match there
     result = assess(db)
-    assert result.status == dr.INVALID
-    assert result.examples[dr.CATEGORY_SOURCE_MISMATCH][0]["selected_source"] == "9952zzznoshow"
-
-
-@requires_db
-def test_division_and_finals_ending_the_same_day_are_ambiguous(world):
-    db = world(tie=True)
-    complete_stats(db)
-    for event in ("9952zzzdiv", "9952zzzfin"):
-        _add_stats(db, TEAM_B, event)
-    result = assess(db)
-    assert result.status == dr.INVALID
-    assert result.examples[dr.CATEGORY_AMBIGUOUS_SOURCE][0]["team_number"] == TEAM_B
+    assert result.status == dr.COMPLETE, result.reasons
+    assert dr.CATEGORY_SOURCE_MISMATCH not in result.totals()
 
 
 @requires_db
@@ -287,3 +282,62 @@ def test_gate_writes_nothing_persistent(world):
     with db.cursor() as cursor:
         cursor.execute("SELECT count(*) FROM pg_tables WHERE tablename LIKE '_rd_%%'")
         assert cursor.fetchone()[0] == 0
+
+
+# --- score_breakdown coverage (Milestone 11 input) ------------------------------
+
+FIXTURES = __import__("pathlib").Path(__file__).parent / "fixtures"
+
+
+def _fixture(season: int) -> dict:
+    return json.loads((FIXTURES / f"tba_score_breakdown_{season}.json").read_text(encoding="utf-8"))["alliance_breakdown"]
+
+
+@pytest.mark.parametrize("season", [2024, 2025, 2026])
+def test_real_breakdowns_are_ok(season):
+    body = {"red": _fixture(season), "blue": _fixture(season)}
+    assert dr.classify_breakdown(season, True, body) == (dr.BREAKDOWN_OK, None)
+
+
+def test_breakdown_statuses():
+    assert dr.classify_breakdown(2024, True, None)[0] == dr.BREAKDOWN_NOT_PUBLISHED
+    assert dr.classify_breakdown(2024, None, None)[0] == dr.BREAKDOWN_RAW_MISSING
+    assert dr.classify_breakdown(2024, True, {"red": _fixture(2024)})[0] == dr.BREAKDOWN_INVALID
+    assert dr.classify_breakdown(2026, True, {"red": _fixture(2024), "blue": _fixture(2024)})[0] == dr.BREAKDOWN_INVALID
+    status, why = dr.classify_breakdown(2027, True, {"red": _fixture(2026), "blue": _fixture(2026)})
+    assert status == dr.BREAKDOWN_INVALID and "2027" in why
+
+
+def test_invalid_breakdowns_block_and_missing_payloads_are_partial():
+    base = report({dr.CATEGORY_OK: 50})
+    base.score_breakdown_counts = {"9951": {dr.BREAKDOWN_OK: 10, dr.BREAKDOWN_INVALID: 1}}
+    assert dr.classify(base)[0] == dr.INVALID
+    base.score_breakdown_counts = {"9951": {dr.BREAKDOWN_OK: 10, dr.BREAKDOWN_RAW_MISSING: 1}}
+    assert dr.classify(base)[0] == dr.PARTIAL
+    base.score_breakdown_counts = {"9951": {dr.BREAKDOWN_OK: 10, dr.BREAKDOWN_NOT_PUBLISHED: 2}}
+    status, reasons = dr.classify(base)
+    assert status == dr.COMPLETE and "2 not published by TBA" in reasons[0]
+
+
+@requires_db
+def test_a_completed_match_without_a_raw_payload_is_partial(world):
+    db = world()
+    complete_stats(db)
+    with db.cursor() as cursor:
+        cursor.execute("DELETE FROM raw_source_payloads WHERE source_object_id = '9952zzza_qm1'")
+    result = assess(db)
+    assert result.status == dr.PARTIAL
+    assert result.score_breakdown_counts["9952"][dr.BREAKDOWN_RAW_MISSING] == 1
+
+
+@requires_db
+def test_a_breakdown_for_an_unsupported_season_is_invalid(world):
+    db = world()
+    complete_stats(db)
+    body = {"red": _fixture(2024), "blue": _fixture(2024)}
+    with db.cursor() as cursor:
+        cursor.execute("UPDATE raw_source_payloads SET payload_json = jsonb_set(payload_json, '{score_breakdown}', %s::jsonb) "
+                       "WHERE source_object_id = '9952zzza_qm1'", (json.dumps(body),))
+    result = assess(db)
+    assert result.status == dr.INVALID
+    assert "9952" in result.score_breakdown_examples[dr.BREAKDOWN_INVALID][0]

@@ -56,6 +56,12 @@ comes only after the human sign-off below.
   rank, and it must **strictly** beat the frozen raw-EPA baseline. Top-8 recall
   is a secondary diagnostic only.
 - M6: exact symmetry, plus beats or matches the baseline on held-out log-loss and Brier.
+- M11 (D4, D12): its code is built. The logical feature is `average_auto_points`
+  (see `ml/features/score_breakdown.py`); do not re-choose it. Acceptance also
+  requires the real generalization test to pass:
+  `python -m scripts.run_m11_generalization`, and `tests/test_m11_generalization.py`
+  with `PHASE4_REAL_DATA_TESTS=1`, which is already set in this environment. Write
+  `M11_ACCEPTANCE.md` only if every one of M11's criteria is satisfied.
 - M7 (D6): **ECE < 0.05**, using the existing M3 ECE with 10 equal-width bins on
   [0,1]. The 60% → 58–62% band applies where that bin has sufficient observations.
   Report every bin's count and flag under-populated bins.
@@ -68,9 +74,7 @@ comes only after the human sign-off below.
   features, metric, threshold, split or methodology to pass. You may fix only an
   objectively demonstrated implementation defect, and you must document the
   evidence for it.
-- **M11 needs a choice the spec does not make.** In particular: which logical
-  features the season-aware `score_breakdown` adapters produce, if
-  `PHASE_STATUS.md` still lists that as open.
+- **M11 or any milestone needs a choice the spec and decisions D1–D14 do not make.**
 - **Anything MASTER_BUILD.md's Human Escalation Protocol reserves for a human**,
   or any situation where continuing would require guessing.
 - **The Circuit Breaker Rule trips**: the same failure 3 times.

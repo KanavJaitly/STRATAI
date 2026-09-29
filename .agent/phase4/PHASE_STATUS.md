@@ -1,8 +1,8 @@
 Phase: 4
 
-Current Milestone: M04 (M05, M06, M07 also code-complete; M08, M09, M10, M12 ACCEPTED — see below; M11 required per decision D4, not started)
+Current Milestone: M04 (M05, M06, M07, M11 also code-complete; M08, M09, M10, M12 ACCEPTED — see below)
 
-Status: IN_PROGRESS — M04/M05/M06/M07 code complete, real-number freezes still blocked on Statbotics. M08/M09/M10/M12 fully accepted (none needed real data). M11 no longer deferred (decision D4, 2026-09-29) — not started; feature set open.
+Status: IN_PROGRESS — M04/M05/M06/M07 code complete, real-number freezes still blocked on Statbotics. M08/M09/M10/M12 fully accepted (none needed real data). M11 code complete 2026-09-29 (D4/D12), NOT accepted: its generalization criterion needs the real held-out 2026 numbers (scripts/run_m11_generalization.py); no M11_ACCEPTANCE.md.
 
 Current Stage: Phase H — regression verification complete; awaiting external dependency to close M04's (and M05's, M06's, M07's) acceptance gate
 
@@ -214,21 +214,8 @@ Blocked, unchanged:
 Human Decisions Required:
 - Still open: how long to keep waiting on Statbotics before considering an
   alternative (see prior status entries).
-- OPEN (2026-09-29): M11 logical-feature set. The spec requires "the same
-  logical feature computed correctly under both schemas" but names no
-  features; choosing them adds inputs to M5/M6 (methodology). Needs Kanav
-  before M11 implementation.
-- OPEN (2026-09-29): non-deterministic EPA source. 1,912 appearances in
-  2024-2026 have two "most recent" prior events with the same end_date
-  (Championship division + Einstein, e.g. 2025gal/2025cmptx; DCMP division +
-  finals, e.g. 2024micmp1/2024micmp). ml/features/assembler.py's
-  `ORDER BY end_date DESC` has no tie-break, so the EPA row read is
-  whichever Postgres returns first — not reproducible (M5 requires
-  reproducible training). Needs a deterministic, documented tie-break in M1
-  code (Kanav's) or another decision. The readiness gate reports these as
-  INVALID, so no automated attempt can start until resolved.
-- OPEN (2026-09-29): confirm the data-build dump checkpoint
-  (docs/phase4_automation.md §3) as the intended reading of D2 + D3.
+- Resolved 2026-09-29: M11 feature set (D12), EPA-source tie-break (D13), dump
+  checkpoint (D14) -- see below. None open besides the Statbotics wait.
 
 Decisions — Kanav, 2026-09-29 (authoritative for Phase 4 from here on):
 - D1 Claude auth: CLAUDE_CODE_OAUTH_TOKEN (`claude setup-token`) only. No
@@ -266,6 +253,29 @@ Decisions — Kanav, 2026-09-29 (authoritative for Phase 4 from here on):
   RECOVERY_CONFIRMED authorizes human review/preflight only.
 - D11 $0 absolute: no paid service/API/DB/VM, no billing-backed trial, no
   overage. Anything that cannot be $0 => stop and escalate.
+
+- D12 M11 feature (Kanav approved the approach; feature chosen from the real
+  payloads): average_auto_points -- mean auto-period points of the team's own
+  alliance, excluding foul and adjustment points, over its completed matches at
+  the event before as_of (same scope as average_score). Sources: 2024
+  `autoPoints`, 2025 `autoPoints`, 2026 `totalAutoPoints` (NOT
+  `hubScore.autoPoints`, which omits tower points and differs in 1,764 rows).
+  Verified on all 106,390 alliance-rows: auto = that season's auto components
+  and totalPoints = auto + teleop + foul + adjust = official score, 100%.
+  Game points, not rescaled per season. Added to TEAM_FEATURE_NAMES (M5/M6
+  inputs); M5/M6 acceptance methodology unchanged.
+- D13 EPA source (ml/features/assembler.EPA_SOURCE_SQL, mirrored in
+  automation/data_readiness.py): among prior events with end_date < as_of AND
+  the team's latest completed match there < as_of, pick latest end_date, then
+  latest completed match, then event_key ascending. The completed-match guard
+  was added beyond the literal tie-break instruction: end_date alone let a
+  Saturday division match see the same-day Einstein/DCMP-finals EPA (future
+  information, 902 appearances); with the approved tie-break that leakage would
+  have become systematic. The guard only removes candidates. It also means an
+  event the team never played is never the source. After it: 0 ambiguous
+  sources; 1,979 same-date ties resolved by latest match, 0 by event_key.
+  FLAGGED FOR KANAV'S REVIEW in the PR: it changes accepted M1 behaviour.
+- D14 Data-build dump checkpoint approved (docs/phase4_automation.md §3).
 
 Consequences recorded 2026-09-29:
 - M13 requires a dated HUMAN sign-off in RUNNING_NOTES.md, so unattended
