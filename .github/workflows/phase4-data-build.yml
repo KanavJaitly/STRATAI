@@ -91,21 +91,19 @@ jobs:
         run: python -m automation.ops lock acquire --kind build --run-id "${{ github.run_id }}" --base-sha "$(git rev-parse HEAD)"
 
       - name: Locate previous dump
+        # Asks the Actions API whether the recorded checkpoint still exists: an
+        # expired or deleted artifact means "start fresh", never a failed build.
         id: previous
         if: steps.lock.outputs.acquired == 'true'
-        run: |
-          python - <<'EOF' >> "$GITHUB_OUTPUT"
-          import json, os
-          path = os.path.join(os.environ["RUNNER_TEMP"], "state", "execution_state.json")
-          build = json.load(open(path))["data_build"] if os.path.exists(path) else None
-          dump = (build or {}).get("dump")
-          print(f"run_id={dump['run_id'] if dump else ''}")
-          print(f"name={dump['artifact_name'] if dump else ''}")
-          print(f"sha256={dump['sha256'] if dump else ''}")
-          EOF
+        run: python -m automation.ops locate-dump --state-dir "$RUNNER_TEMP/state"
 
       - name: Download previous dump
-        if: steps.previous.outputs.run_id != ''
+        # continue-on-error: a checkpoint that cannot be fetched is simply not
+        # resumed from -- the build starts fresh in this same run -- and Record
+        # build forgets it, so no later build trips over it again.
+        id: download
+        if: steps.previous.outputs.available == 'true'
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ steps.previous.outputs.name }}
@@ -114,7 +112,11 @@ jobs:
           path: ${{ runner.temp }}/previous
 
       - name: Restore previous dump
-        if: steps.previous.outputs.run_id != ''
+        # A failure here (checksum mismatch, pg_restore error) stops the build: it
+        # never continues on a half-restored database. Record build then marks the
+        # checkpoint corrupt so the next build starts fresh.
+        id: restore
+        if: steps.download.outcome == 'success'
         env:
           EXPECTED_SHA256: ${{ steps.previous.outputs.sha256 }}
         run: |
@@ -144,6 +146,7 @@ jobs:
             "${{ github.run_id }}" "${{ github.run_id }}" "$sha" "$size" > "$RUNNER_TEMP/dump-meta.json"
 
       - name: Upload dump
+        id: upload
         if: steps.dump.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -155,11 +158,20 @@ jobs:
 
       - name: Record build
         if: always() && steps.lock.outputs.acquired == 'true'
+        env:
+          UPLOADED: ${{ steps.upload.outcome }}
+          PREV_RUN_ID: ${{ steps.previous.outputs.run_id }}
+          PREV_AVAILABLE: ${{ steps.previous.outputs.available }}
+          DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
+          RESTORE_OUTCOME: ${{ steps.restore.outcome }}
         run: |
+          # A checkpoint exists only once its artifact is uploaded; a local dump alone is not one.
           meta=()
-          if [ -f "$RUNNER_TEMP/dump-meta.json" ] && [ "${{ steps.dump.outcome }}" = "success" ]; then meta=(--dump-meta "$RUNNER_TEMP/dump-meta.json"); fi
+          if [ "$UPLOADED" = "success" ] && [ -f "$RUNNER_TEMP/dump-meta.json" ]; then meta=(--dump-meta "$RUNNER_TEMP/dump-meta.json"); fi
           python -m automation.ops record-build --state-dir "$RUNNER_TEMP/state" --run-id "${{ github.run_id }}" \
             --report "$RUNNER_TEMP/build-report.json" "${meta[@]}" \
+            --prev-run-id "$PREV_RUN_ID" --prev-available "$PREV_AVAILABLE" \
+            --download-outcome "$DOWNLOAD_OUTCOME" --restore-outcome "$RESTORE_OUTCOME" \
             --notify-out "$RUNNER_TEMP/notify.md" --owner "$OWNER" --run-url "$RUN_URL"
 
       - name: Persist state

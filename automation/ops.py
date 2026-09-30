@@ -235,6 +235,33 @@ def cmd_lock(args: argparse.Namespace) -> int:
     return 0
 
 
+def previous_dump_status(run_id: str, available: str, download: str, restore: str) -> str:
+    """What happened to the previous checkpoint, from the workflow's step facts
+    (available: the locate step's output; download/restore: step outcomes)."""
+    if not run_id:
+        return es.PREVIOUS_DUMP_NONE
+    if available != "true":
+        return es.PREVIOUS_DUMP_EXPIRED
+    if download != "success":
+        return es.PREVIOUS_DUMP_DOWNLOAD_FAILED
+    if restore != "success":
+        return es.PREVIOUS_DUMP_CORRUPT
+    return es.PREVIOUS_DUMP_RESTORED
+
+
+def cmd_locate_dump(args: argparse.Namespace) -> int:
+    """Name the recorded checkpoint and whether its artifact still exists, so an
+    expired one is skipped (fresh build) instead of failing the download."""
+    build = load_execution_state(args.state_dir)["data_build"]
+    dump = (build or {}).get("dump")
+    available = bool(dump) and dump_available(os.environ["GITHUB_REPOSITORY"], dump)
+    write_output(run_id=dump["run_id"] if dump else "", name=dump["artifact_name"] if dump else "",
+                 sha256=dump["sha256"] if dump else "", available=available)
+    print(f"previous checkpoint: {dump['artifact_name'] if dump else 'none'}"
+          + ("" if not dump else (" (available)" if available else " (expired or missing: starting fresh)")))
+    return 0
+
+
 def cmd_record_build(args: argparse.Namespace) -> int:
     state = load_execution_state(args.state_dir)
     report = json.loads(args.report.read_text(encoding="utf-8")) if args.report.exists() else None
@@ -250,6 +277,8 @@ def cmd_record_build(args: argparse.Namespace) -> int:
         "fingerprint": readiness.get("team_event_stats_fingerprint"),
         "stop_reason": ((report or {}).get("build") or {}).get("stop_reason") or ("no report" if report is None else "finished"),
         "dump": dump,
+        "previous_dump": previous_dump_status(args.prev_run_id, args.prev_available,
+                                              args.download_outcome, args.restore_outcome),
     }
     transition = es.record_build(state, build, month=_utc_now().strftime("%Y-%m"))
     save_execution_state(args.state_dir, transition.state, {"event": transition.event, "build": build})
@@ -389,8 +418,17 @@ def main(argv: list[str] | None = None) -> int:
     common(p)
     p.add_argument("--run-id", required=True)
     p.add_argument("--report", type=Path, required=True)
-    p.add_argument("--dump-meta", type=Path, default=None)
+    p.add_argument("--dump-meta", type=Path, default=None,
+                   help="Pass only when the dump was written AND its artifact upload succeeded.")
+    p.add_argument("--prev-run-id", default="")
+    p.add_argument("--prev-available", default="")
+    p.add_argument("--download-outcome", default="")
+    p.add_argument("--restore-outcome", default="")
     p.set_defaults(func=cmd_record_build)
+
+    p = sub.add_parser("locate-dump")
+    p.add_argument("--state-dir", type=Path, required=True)
+    p.set_defaults(func=cmd_locate_dump)
 
     p = sub.add_parser("record-attempt")
     common(p)

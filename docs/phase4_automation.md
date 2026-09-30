@@ -126,6 +126,20 @@ The dump (`pg_dump -Fc`) is uploaded as an Actions artifact, with a sha256 and t
 `team_event_stats` fingerprint recorded in state. The ceiling is 250 MB and
 retention is 30 days.
 
+State names a checkpoint only if one is usable:
+
+- **Recorded only after upload.** A checkpoint is recorded only once its artifact
+  upload has succeeded. A local dump alone isn't one, and neither is an oversized dump,
+  which is never uploaded.
+- **Resuming.** Before resuming, the build asks the Actions API whether the recorded
+  checkpoint still exists.
+- **Unusable previous checkpoint.** If it has expired, can't be downloaded, or fails
+  its checksum or restore, the build starts fresh and state forgets it, so a dead
+  pointer can never wedge later builds. A failed restore stops that run first, so it
+  never continues on a half-restored database.
+- **`data_ready` needs both** COMPLETE readiness and an uploaded checkpoint.
+- **Progress** counts only rows captured in an uploaded checkpoint.
+
 **Why a dump.** Statbotics is one request per team-event: 23,969 requests, about
 1.7–3.3 h. Rebuilding inside every attempt would consume most of D2's 300-minute
 budget before any Phase 4 work began, and would be paid again on each resume. The
