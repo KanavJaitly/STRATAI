@@ -211,8 +211,22 @@ Blocked, unchanged:
   sensible checkpoints only, not continuously.
 
 Human Decisions Required:
-- None new. Still open: how long to keep waiting on Statbotics before
-  considering an alternative (see prior status entries).
+- Still open: how long to keep waiting on Statbotics before considering an
+  alternative (see prior status entries).
+- New (2026-09-29, found while designing the recovery monitor —
+  docs/phase4_automation.md):
+  - Phase Acceptance Gate requires every milestone individually accepted
+    (MASTER_BUILD.md); M11 is deferred, not accepted. Phase 4 cannot close
+    until M11 is accepted, re-scoped, or formally removed from the phase.
+  - M5 "agreed metric" (Spearman vs top-8 recall) and M7 "agreed ECE
+    threshold" are not recorded anywhere. Held-out season not recorded as a
+    decision (M4 script example: train 2024+2025, hold out 2026).
+  - Definition of "complete" Statbotics coverage for M4-M7 (team_event_stats
+    has 0 rows; some team-events may legitimately have no record).
+
+Monitoring (2026-09-29): daily Statbotics readiness monitor built (monitor
+only, cannot start Phase 4) — docs/phase4_automation.md. Live probe of
+/team_event/1678/2024casj at 2026-09-29 22:10 UTC: HTTP 500, still down.
 
 Known Risks:
 - Ranking-ground-truth gap: RESOLVED (see above) — removed from risk list.
