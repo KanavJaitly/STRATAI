@@ -135,7 +135,9 @@ def test_workflow_has_no_untrusted_triggers(workflow_text):
 def test_workflow_permissions_are_minimal(workflow_text):
     block = workflow_text.split("\npermissions:", 1)[1].split("\n\n", 1)[0]
     granted = dict(re.findall(r"^\s+([a-z-]+):\s*(\w+)", block, flags=re.MULTILINE))
-    assert granted == {"contents": "write", "issues": "write"}
+    # actions: write exists only for the completion-gated shutdown step, which
+    # disables (never deletes) the Phase 4 workflows.
+    assert granted == {"contents": "write", "issues": "write", "pull-requests": "read", "actions": "write"}
 
 
 def test_workflow_uses_no_secrets_and_pins_actions(workflow_text):
