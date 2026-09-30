@@ -21,11 +21,14 @@ from automation import execution_state as es
 from automation.completion import CompletionFacts, evaluate
 from automation.execution_lock import GitHubRestRefs, LockOwner, acquire, release
 from automation.monitor import load_state as load_monitor_state
+from automation.publish import _git as publish_git
+from automation.publish import tree_blobs
 from automation.statbotics_health import check_statbotics_readiness
 
 EXECUTION_STATE_FILE = "execution_state.json"
 EXECUTION_LOG_FILE = "execution_log.jsonl"
 TRACKING_ISSUE_ENV = "TRACKING_ISSUE"
+HEAVY_WORKFLOWS = ("phase4-data-build.yml", "phase4-execute.yml")
 
 Runner = Callable[[Sequence[str]], subprocess.CompletedProcess]
 
@@ -125,11 +128,41 @@ def billed_minutes_from_jobs(jobs: list[dict[str, Any]], now: datetime) -> int:
 
 
 def run_billed_minutes(repository: str, run_id: str, runner: Runner = _run) -> int:
-    listed = runner(["gh", "api", f"repos/{repository}/actions/runs/{run_id}/jobs", "--jq", ".jobs"])
+    # filter=all: every job of every attempt of the run, re-runs included.
+    listed = runner(["gh", "api", "--paginate", f"repos/{repository}/actions/runs/{run_id}/jobs?filter=all&per_page=100",
+                     "--jq", ".jobs[]"])
     if listed.returncode != 0:
         # Unknown usage must never read as zero: charge the documented worst case.
         return es.ATTEMPT_WORST_CASE_MINUTES
-    return billed_minutes_from_jobs(json.loads(listed.stdout or "[]"), _utc_now())
+    jobs = [json.loads(line) for line in listed.stdout.splitlines() if line.strip()]
+    return billed_minutes_from_jobs(jobs, _utc_now())
+
+
+def month_minutes_from_api(repository: str, month: str, runner: Runner = _run) -> int | None:
+    """Billed minutes of every run (every attempt) of the heavy workflows created
+    this month, straight from the Actions API -- including runs whose state
+    record was never published. None if the API cannot be read."""
+    total = 0
+    for workflow in HEAVY_WORKFLOWS:
+        listed = runner(["gh", "api", "--paginate",
+                         f"repos/{repository}/actions/workflows/{workflow}/runs?created=%3E%3D{month}-01&per_page=100",
+                         "--jq", ".workflow_runs[].id"])
+        if listed.returncode != 0:
+            return None
+        for run_id in listed.stdout.split():
+            total += run_billed_minutes(repository, run_id, runner)
+    return total
+
+
+def published_present_on_main(repo: Path, published: dict[str, Any] | None, runner: Runner = _run) -> bool | None:
+    """Whether the last published branch's manifest is on origin/main (see execution_state)."""
+    if not published:
+        return None
+    try:
+        blobs = tree_blobs(publish_git(repo, runner), "origin/main")
+    except RuntimeError:
+        return None
+    return es.manifest_present_on(published.get("manifest"), blobs)
 
 
 # --- subcommands -----------------------------------------------------------
@@ -152,6 +185,8 @@ def cmd_preflight(args: argparse.Namespace) -> int:
         secrets_present={name: _flag(f"HAS_{name}") for name in args.require_secret},
         forbidden_secrets_present=[name for name in ("ANTHROPIC_API_KEY",) if _flag(f"HAS_{name}")],
         main_sha=main_sha,
+        run_attempt=int(os.environ.get("GITHUB_RUN_ATTEMPT") or 1),
+        api_month_minutes=month_minutes_from_api(repository, _utc_now().strftime("%Y-%m")),
     )
     try:
         facts.phase4_complete = evaluate(completion_facts(repo, repository, os.environ[TRACKING_ISSUE_ENV])).complete
@@ -165,8 +200,12 @@ def cmd_preflight(args: argparse.Namespace) -> int:
         published = state["last_published"]
         if published and main_sha:
             _run(["git", "-C", str(repo), "fetch", "--quiet", "origin", published["sha"]])
+            # A deleted branch's commit may be gone after a squash/rebase merge:
+            # the fetch then fails, both ancestry checks read False, and the
+            # content check below decides.
             facts.main_contains_published = is_ancestor(repo, published["sha"], main_sha)
             facts.published_contains_main = is_ancestor(repo, main_sha, published["sha"])
+            facts.published_present_on_main = published_present_on_main(repo, published)
 
     decision = es.preflight(facts)
     args.out.write_text(json.dumps({
@@ -224,24 +263,50 @@ def cmd_record_build(args: argparse.Namespace) -> int:
     return 0
 
 
+def attempt_outcome(claimed: dict[str, Any] | None, published: dict[str, Any] | None) -> tuple[dict[str, Any], dict]:
+    """The recorded outcome and publication facts of one attempt. Claude's own
+    report stands only when publication verifiably succeeded (or there was
+    nothing to publish); every failure of publication overrides it, and a
+    failed publication never contributes progress."""
+    if published is None:
+        return ({"outcome": es.OUTCOME_INFRASTRUCTURE_FAILED,
+                 "stop_reason": "no publication result: the publish step did not complete; the attempt bundle "
+                                "artifact is retained for diagnosis"}, {})
+    if published.get("error"):
+        return ({"outcome": es.OUTCOME_INFRASTRUCTURE_FAILED,
+                 "stop_reason": f"publication raised: {published['error']}"},
+                {**published, "new_acceptance_files": []})
+    if published.get("violations"):
+        return ({"outcome": es.OUTCOME_HARNESS_VIOLATION, "stop_reason": "; ".join(published["violations"])},
+                {**published, "new_acceptance_files": []})
+    if published.get("push_failures"):
+        return ({"outcome": es.OUTCOME_INFRASTRUCTURE_FAILED,
+                 "stop_reason": f"push failed for {sorted(published['push_failures'])}; possible divergence from "
+                                "human changes"},
+                {**published, "new_acceptance_files": []})
+    if claimed is None:
+        return ({"outcome": es.OUTCOME_INFRASTRUCTURE_FAILED,
+                 "stop_reason": "the execute job produced no outcome (runner lost, restore or setup failed)"},
+                {**published, "new_acceptance_files": []})
+    return claimed, published
+
+
 def cmd_record_attempt(args: argparse.Namespace) -> int:
     state = load_execution_state(args.state_dir)
-    outcome = json.loads(args.outcome.read_text(encoding="utf-8")) if args.outcome.exists() else {
-        "outcome": es.OUTCOME_INFRASTRUCTURE_FAILED,
-        "stop_reason": "the execute job produced no outcome (runner lost, restore or setup failed)"}
-    published = json.loads(args.publish.read_text(encoding="utf-8")) if args.publish.exists() else None
-    if published and published["violations"]:
-        outcome = {"outcome": es.OUTCOME_HARNESS_VIOLATION, "stop_reason": "; ".join(published["violations"])}
-    elif published and published["push_failures"]:
-        outcome = {"outcome": es.OUTCOME_INFRASTRUCTURE_FAILED,
-                   "stop_reason": f"push failed for {sorted(published['push_failures'])}; possible divergence from human changes"}
+    outcome, published = attempt_outcome(
+        json.loads(args.outcome.read_text(encoding="utf-8")) if args.outcome.exists() else None,
+        json.loads(args.publish.read_text(encoding="utf-8")) if args.publish.exists() else None,
+    )
     attempt = {
         "attempt_id": args.run_id, "run_id": args.run_id, "base_sha": args.base_sha,
         "outcome": outcome["outcome"], "stop_reason": outcome["stop_reason"],
         "claimed_milestones": outcome.get("claimed_milestones", {}),
         "billed_minutes": run_billed_minutes(os.environ["GITHUB_REPOSITORY"], args.run_id),
-        "published": (published or {}).get("published", {}),
-        "new_acceptance_files": (published or {}).get("new_acceptance_files", []),
+        "published": published.get("published", {}),
+        "manifests": published.get("manifests", {}),
+        "new_acceptance_files": published.get("new_acceptance_files", []),
+        "publication_error": published.get("error"),
+        "push_failures": published.get("push_failures", {}),
         "finished_at": _utc_now().isoformat(),
     }
     transition = es.record_attempt(state, attempt, month=_utc_now().strftime("%Y-%m"))
@@ -261,8 +326,13 @@ def cmd_record_attempt(args: argparse.Namespace) -> int:
 
 
 def cmd_clear(args: argparse.Namespace) -> int:
-    transition = es.clear(load_execution_state(args.state_dir), note=args.note)
-    save_execution_state(args.state_dir, transition.state, {"event": transition.event, "note": args.note})
+    state = load_execution_state(args.state_dir)
+    transition = es.clear(state, note=args.note,
+                          published_present_on_main=published_present_on_main(Path(args.repo), state["last_published"]))
+    save_execution_state(args.state_dir, transition.state, {
+        "event": transition.event, "note": args.note, "message": transition.message,
+        "last_published_before": state["last_published"], "last_published_after": transition.state["last_published"],
+    })
     notify(args.notify_out, "Phase 4 execution state cleared", transition.message, mention=None)
     print(transition.message)
     return 0
@@ -333,6 +403,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("clear")
     common(p)
     p.add_argument("--note", required=True)
+    p.add_argument("--repo", default=".")
     p.set_defaults(func=cmd_clear)
 
     p = sub.add_parser("completion")

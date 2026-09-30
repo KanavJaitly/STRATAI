@@ -77,7 +77,7 @@ def test_progress_resets_the_attempt_breaker_and_records_the_stack_top():
     state = es.record_attempt(ready_state(), attempt(published={"automation/phase4-m04": "s4", "automation/phase4-m05": "s5"},
                                                      new=[".agent/phase4/M04_ACCEPTANCE.md"]), month=MONTH).state
     assert state["status"] == es.READY
-    assert state["last_published"] == {"branch": "automation/phase4-m05", "sha": "s5"}
+    assert state["last_published"] == {"branch": "automation/phase4-m05", "sha": "s5", "manifest": None}
     assert state["consecutive_no_progress_attempts"] == 0
 
 
@@ -93,8 +93,12 @@ def test_usage_exhaustion_says_it_will_not_bill():
     assert "never bill" in transition.state["escalation_reason"]
 
 
+M13_PUBLISHED = {"automation/phase4-m13": "s13"}
+
+
 def test_m13_signoff_waits_for_a_human():
-    transition = es.record_attempt(ready_state(), attempt(es.OUTCOME_AWAITING_SIGNOFF), month=MONTH)
+    transition = es.record_attempt(ready_state(), attempt(es.OUTCOME_AWAITING_SIGNOFF, published=M13_PUBLISHED),
+                                   month=MONTH)
     assert transition.state["status"] == es.AWAITING_HUMAN
     assert transition.event in es.HUMAN_EVENTS
 
@@ -191,7 +195,9 @@ def test_build_preflight_needs_no_prior_dump():
 
 
 def test_awaiting_signoff_blocks_further_attempts():
-    state = es.record_attempt(ready_state(), attempt(es.OUTCOME_AWAITING_SIGNOFF), month=MONTH).state
+    state = es.record_attempt(ready_state(), attempt(es.OUTCOME_AWAITING_SIGNOFF, published=M13_PUBLISHED),
+                              month=MONTH).state
+    assert state["status"] == es.AWAITING_HUMAN
     assert not es.preflight(facts(state)).allowed
 
 

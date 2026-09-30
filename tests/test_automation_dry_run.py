@@ -187,9 +187,11 @@ def test_12_paid_paths_are_refused(tmp_path, monkeypatch, data_ready):
                         forbidden_secrets_present=["ANTHROPIC_API_KEY"])
     assert not refused.allowed and any("paid billing" in r for r in refused.reasons)
 
+    nothing_committed = {"ok": True, "bundle_present": False, "violations": [], "published": {},
+                         "new_acceptance_files": [], "push_failures": {}, "error": None}
     state = record_attempt(tmp_path, monkeypatch, data_ready,
                            outcome={"outcome": es.OUTCOME_USAGE_EXHAUSTED, "stop_reason": "usage limit"},
-                           publish=None).state
+                           publish=nothing_committed).state
     assert state["status"] == es.ESCALATED
 
 

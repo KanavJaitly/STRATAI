@@ -52,6 +52,9 @@ EVENTS = {
                                                  (T_TIE, at(9962, 3, 9, 14))]),
 }
 TEAMS = (T_CHAMPS, T_DCMP, T_TIE)
+# A registered no-show: Statbotics has a row, the team completed no match there,
+# and it ends AFTER Einstein -- so end_date alone would make it the source.
+NO_SHOW = ("9961zzznoshow", 9961, date(9961, 5, 1))
 
 
 def _database_available() -> bool:
@@ -66,7 +69,7 @@ pytestmark = pytest.mark.skipif(not _database_available(), reason="Requires a re
 
 
 def _cleanup(db: Database) -> None:
-    keys = list(EVENTS)
+    keys = [*EVENTS, NO_SHOW[0]]
     with db.cursor() as cursor:
         cursor.execute("DELETE FROM team_event_stats WHERE event_key = ANY(%s)", (keys,))
         cursor.execute("DELETE FROM match_teams WHERE match_key LIKE '996_zzz%%'")
@@ -110,6 +113,11 @@ def world() -> Database:
             for team in {team for team, _ in matches}:
                 cursor.execute("INSERT INTO team_event_stats (team_number, event_key, season, epa_total, "
                                "matches_played) VALUES (%s, %s, %s, 40, 3)", (team, key, season))
+        no_show_key, no_show_season, no_show_end = NO_SHOW
+        cursor.execute("INSERT INTO events (event_key, season, name, start_date, end_date) "
+                       "VALUES (%s, %s, 'sentinel no-show', %s, %s)", (no_show_key, no_show_season, no_show_end, no_show_end))
+        cursor.execute("INSERT INTO team_event_stats (team_number, event_key, season, epa_total, matches_played) "
+                       "VALUES (%s, %s, %s, 99, 0)", (T_CHAMPS, no_show_key, no_show_season))
         cursor.execute(
             "INSERT INTO raw_source_payloads (source, source_object_type, source_object_id, event_key, payload_json, "
             "payload_checksum) VALUES ('tba', 'event_ranking', '9962zzznext', '9962zzznext', %s, 'sentinel-epa-src')",
@@ -125,6 +133,14 @@ def source(db: Database, team: int, target: str, as_of: datetime) -> str | None:
 
 
 NEXT_AS_OF = {T_CHAMPS: at(9962, 3, 9, 12), T_DCMP: at(9962, 3, 9, 13), T_TIE: at(9962, 3, 9, 14)}
+
+
+def test_an_event_the_team_completed_no_match_at_is_never_the_source(world):
+    """Assembler-level: the no-show row is more recent than Einstein by end_date,
+    has a Statbotics row, and is before as_of -- and is still never selected."""
+    lookup = _point_in_time_epa(world, T_CHAMPS, "9962zzznext", NEXT_AS_OF[T_CHAMPS])
+    assert lookup.source_event_key == "9961zzzcmptx"
+    assert lookup.epa_total != 99
 
 
 def test_einstein_is_the_source_after_a_championship_division(world):

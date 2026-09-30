@@ -185,10 +185,58 @@ real-data acceptance failure is an `escalated` stop, never an iteration (D9).
 
 **Resume point.**
 
-- Start from `main` if nothing unmerged is outstanding or `main` already contains the
-  last published branch.
+- Start from `main` if nothing unmerged is outstanding, if `main` contains the last
+  published branch (merge commit, fast-forward), or if that branch's work is **on
+  `main` by content**.
+- The content test covers squash and rebase merges, which rewrite commits. At publish
+  time each branch records a manifest: every path it changed since its merge-base with
+  `main`, and that path's blob. The work is on `main` only if every manifest blob
+  matches `main` and every deleted path is absent there.
+- A file merely existing is never enough, and a hand-edit after the merge makes the
+  test fail.
+- A partially merged stack is not on `main`.
 - Otherwise, start from the last published branch if it contains `main`.
-- If they have diverged, refuse. Automation never rebases or overwrites human work.
+- Otherwise refuse. Automation never rebases or overwrites human work.
+- `clear-execution-escalation` also forgets the last published branch, but only when
+  its work is on `main` by content.
+- Deciding the resume point never marks anything accepted: acceptance is only the
+  milestone's own artifact on `main`.
+
+**Trusted code, never re-runs.** Every job of all three workflows first refuses a
+dispatch from any ref other than `main`. Every job then checks out
+`${{ github.sha }}`, the dispatched `main` commit, so only reviewed code runs.
+
+- **Separate workspaces:** the execute job keeps the harness in `trusted/` and gives
+  Claude a separate checkout of the resume commit in `work/`. `verify_dataset`,
+  `run_claude` and the prompt come only from `trusted/`, and Claude's workspace has no
+  push credentials.
+- **No re-runs:** every job of the two heavy workflows refuses GitHub's "Re-run".
+  A re-run reuses the preflight's earlier outputs, so it would skip the gates, the
+  lock and the budget. Dispatch a fresh run instead. The execute and publish jobs' always-run steps are
+  also gated on the guard, so a refused re-run writes no state, touches no lock and
+  posts no alarm.
+- **Minute accounting:** preflight takes the larger of the state ledger and the
+  Actions API's billed minutes for every attempt of every heavy run this month, using
+  `filter=all`. That catches re-run clicks and runs whose state record was never
+  published. If the API can't be read, preflight refuses.
+
+**State publication.** The monitor and the heavy workflows all write
+`automation/phase4-state`. `automation/state_push.py` handles each write:
+
+- It commits only that workflow's own files, then fetches, rebases onto the latest
+  tip and pushes, at most 5 times, never with force.
+- The workflows write disjoint files, so both sides' changes survive.
+- A genuine conflict aborts, pushes nothing, and fails the step.
+- A heavy workflow announces its result on #27 only after the push succeeded.
+  Otherwise it posts "state NOT published", @-mentions you, and fails the run.
+
+**Publication outcomes.** `publish.py` always writes its result. A missing result, an
+exception, a violation or any failed push overrides Claude's own report, and such an
+attempt never counts as progress. "Awaiting human sign-off" is accepted only if
+`automation/phase4-m13` is published.
+
+Protected paths are read NUL-separated, with git's path quoting and rename detection
+off. A non-ASCII or renamed path can't slip past the check.
 
 **Lock.** The lock is `refs/heads/automation/phase4-lock` (`automation/execution_lock.py`).
 

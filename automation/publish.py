@@ -13,8 +13,23 @@ Rules, per bundled branch:
 - the push is a plain, non-force push, so a branch a human has since changed
   is rejected rather than overwritten.
 
+Paths are read as git stores them, never as git displays them: NUL-separated
+output with core.quotePath off (the quoted display form of a non-ASCII path,
+"automation/\303\251.py", would not start with "automation/"), --no-renames
+(a rename out of a protected directory must show the deletion too), and UTF-8
+decoding with surrogateescape.
+
+Each published branch also carries a manifest -- every path it changes
+relative to its merge-base with main, and that path's blob (None if deleted) --
+so a later preflight can recognise the work on main after a squash or rebase
+merge rewrote the commits (see execution_state.preflight).
+
 PR creation can be disabled for GITHUB_TOKEN by a repository setting; then the
 branches are still pushed and the notification carries compare links instead.
+
+main() always writes its result file: a missing bundle is "nothing to
+publish", and an exception is recorded as {"ok": false, "error": ...}. The
+recorder treats a missing file as an infrastructure failure.
 """
 
 from __future__ import annotations
@@ -48,6 +63,9 @@ class PublishResult:
     pull_requests: dict[str, str] = field(default_factory=dict)
     compare_links: dict[str, str] = field(default_factory=dict)
     push_failures: dict[str, str] = field(default_factory=dict)
+    manifests: dict[str, dict[str, str | None]] = field(default_factory=dict)
+    bundle_present: bool = True
+    error: str | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -55,7 +73,8 @@ class PublishResult:
 
 def _git(repo: Path, runner: Runner) -> Callable[..., subprocess.CompletedProcess]:
     def git(*args: str, check: bool = True) -> subprocess.CompletedProcess:
-        result = runner(["git", "-C", str(repo), "-c", "core.hooksPath=/dev/null", *args])
+        result = runner(["git", "-C", str(repo), "-c", "core.hooksPath=/dev/null", "-c", "core.quotePath=false",
+                         *args])
         if check and result.returncode != 0:
             raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
         return result
@@ -63,7 +82,25 @@ def _git(repo: Path, runner: Runner) -> Callable[..., subprocess.CompletedProces
 
 
 def _run(command: Sequence[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(list(command), capture_output=True, text=True)
+    # UTF-8, not the locale codepage: git emits path bytes verbatim.
+    return subprocess.run(list(command), capture_output=True, text=True, encoding="utf-8", errors="surrogateescape")
+
+
+def _nul_split(output: str) -> list[str]:
+    return [path for path in output.split("\0") if path]
+
+
+def changed_paths(git: Callable[..., subprocess.CompletedProcess], old: str, new: str) -> list[str]:
+    return _nul_split(git("diff", "-z", "--name-only", "--no-renames", old, new).stdout)
+
+
+def tree_blobs(git: Callable[..., subprocess.CompletedProcess], commit: str, *paths: str) -> dict[str, str]:
+    """{path: blob sha} for every file under paths (the whole tree if none) at commit."""
+    blobs = {}
+    for entry in _nul_split(git("ls-tree", "-r", "-z", commit, "--", *paths).stdout):
+        meta, _, path = entry.partition("\t")
+        blobs[path] = meta.split()[2]
+    return blobs
 
 
 def bundle_branches(repo: Path, bundle: Path, runner: Runner = _run) -> dict[str, str]:
@@ -75,7 +112,7 @@ def bundle_branches(repo: Path, bundle: Path, runner: Runner = _run) -> dict[str
 
 def validate_and_publish(
     repo: Path, bundle: Path, *, base_sha: str, repository: str,
-    runner: Runner = _run, gh: Runner = _run,
+    runner: Runner = _run, gh: Runner = _run, main_ref: str = "origin/main",
 ) -> PublishResult:
     git = _git(repo, runner)
     result = PublishResult(ok=False)
@@ -95,24 +132,24 @@ def validate_and_publish(
         return result
 
     git("fetch", "--quiet", str(bundle), *[f"refs/heads/{b}:{IMPORT_NAMESPACE}{b}" for b in branches])
-    main_files = set(git("ls-tree", "-r", "--name-only", base_sha, "--", ".agent/phase4/").stdout.split())
+    main_files = set(tree_blobs(git, base_sha, ".agent/phase4/"))
+    acceptance_by_branch: dict[str, list[str]] = {}
     for name, sha in sorted(branches.items()):
         if git("merge-base", "--is-ancestor", base_sha, sha, check=False).returncode != 0:
             result.violations.append(f"{name} does not descend from the attempt base {base_sha[:12]}")
             continue
-        changed = git("diff", "--name-only", base_sha, sha).stdout.split()
-        touched = sorted(path for path in changed if path.startswith(PROTECTED_PATHS))
+        touched = sorted(path for path in changed_paths(git, base_sha, sha) if path.startswith(PROTECTED_PATHS))
         if touched:
             result.violations.append(f"{name} modifies protected harness paths: {touched}")
-        branch_files = set(git("ls-tree", "-r", "--name-only", sha, "--", ".agent/phase4/").stdout.split())
-        result.new_acceptance_files.extend(
-            path for path in sorted(branch_files - main_files) if ACCEPTANCE_PATTERN.match(path)
-        )
+        branch_files = set(tree_blobs(git, sha, ".agent/phase4/"))
+        acceptance_by_branch[name] = [p for p in sorted(branch_files - main_files) if ACCEPTANCE_PATTERN.match(p)]
+        merge_base = git("merge-base", main_ref, sha).stdout.strip()
+        blobs = tree_blobs(git, sha)
+        result.manifests[name] = {path: blobs.get(path) for path in changed_paths(git, merge_base, sha)}
     if result.violations:
-        result.new_acceptance_files = []
+        result.manifests = {}
         return result
 
-    result.new_acceptance_files = sorted(set(result.new_acceptance_files))
     previous = "main"
     for name, sha in sorted(branches.items()):
         push = git("push", "--quiet", "origin", f"{sha}:refs/heads/{name}", check=False)
@@ -126,6 +163,10 @@ def validate_and_publish(
         if not result.pull_requests[name].startswith("https://"):
             result.compare_links[name] = f"https://github.com/{repository}/compare/{pr_base}...{name}?expand=1"
         previous = name
+    # Only artifacts that actually reached the remote count, and none at all if
+    # any push failed: a partial publication is not progress.
+    if not result.push_failures:
+        result.new_acceptance_files = sorted({p for b in result.published for p in acceptance_by_branch[b]})
     result.ok = not result.push_failures
     return result
 
@@ -154,10 +195,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repository", required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
-    result = validate_and_publish(args.repo, args.bundle, base_sha=args.base_sha, repository=args.repository)
+    if not args.bundle.exists():
+        result = PublishResult(ok=True, bundle_present=False)  # the attempt committed nothing
+    else:
+        try:
+            result = validate_and_publish(args.repo, args.bundle, base_sha=args.base_sha, repository=args.repository)
+        except Exception as exc:  # recorded, not swallowed: the recorder makes this infrastructure_failed
+            result = PublishResult(ok=False, error=f"{type(exc).__name__}: {exc}"[:2000])
     args.out.write_text(json.dumps(result.to_dict(), indent=2), encoding="utf-8")
     print(json.dumps(result.to_dict(), indent=2))
-    return 0
+    return 0 if result.ok else 1
 
 
 if __name__ == "__main__":
