@@ -147,8 +147,12 @@ def test_lock_and_state_are_always_released_and_persisted():
     for step in ("Record attempt", "Persist state", "Release lock"):
         assert re.search(rf"- name: {step}\n(\s+id: \w+\n)?\s+if: always\(\)", publish), step
     for step in ("Record build", "Persist state", "Release lock"):
-        assert re.search(rf"- name: {step}\n(\s+id: \w+\n)?\s+if: always\(\) && steps.lock.outputs.acquired == 'true'",
-                         BUILD), step
+        assert re.search(rf"- name: {step}\n(\s+#[^\n]*\n)?(\s+id: \w+\n)?\s+if: always\(\) && "
+                         rf"steps.lock.outputs.acquired == 'true'", BUILD), step
+    # The build persists every completed record -- and never a crashed one (that
+    # case raises the "state NOT published" alarm instead).
+    assert re.search(r"- name: Persist state\n(\s+#[^\n]*\n)?\s+id: persist\n\s+if: always\(\) && "
+                     r"steps.lock.outputs.acquired == 'true' && steps.record.outcome == 'success'\n", BUILD)
 
 
 def test_no_job_context_where_github_rejects_it():
@@ -228,7 +232,11 @@ def test_state_is_only_published_through_the_reconciling_helper(text):
 def test_results_are_announced_only_after_state_is_published(text, job):
     notify = next(s for s in steps_of(job_blocks(text)[job]) if s.startswith("name: Notify tracking issue"))
     assert "PERSISTED: ${{ steps.persist.outcome }}" in notify
-    assert 'if [ "$PERSISTED" = "success" ]' in notify
+    success_branch = notify.split("\n          if ", 1)[1].split("; then", 1)[0]
+    assert '[ "$PERSISTED" = "success" ]' in success_branch
+    if job == "build":  # the build also requires its record step to have completed
+        assert "RECORDED: ${{ steps.record.outcome }}" in notify
+        assert '[ "$RECORDED" = "success" ] && [ "$PERSISTED" = "success" ]' in success_branch
     assert "state NOT published" in notify and notify.rstrip().endswith("fi")
     assert "exit 1" in notify
 
