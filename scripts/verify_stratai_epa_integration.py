@@ -35,15 +35,23 @@ from typing import Any
 
 from data.config import Settings
 from database.connection import Database, DatabaseConfig
+from database.readonly import ReadOnlySessionDatabase
 
 PR29_REF = "origin/automation/phase4-execution"
 # Paths whose content defines Phase 4 methodology, acceptance, or PR #29's infrastructure.
 PROTECTED_PATHS = [
-    "docs/P4Milestones.md", ".agent/phase4", "prompts", ".github", "automation",
+    "docs/P4Milestones.md", ".agent/phase4/PHASE_PLAN.md", ".agent/phase4/M03_ACCEPTANCE.md",
+    ".agent/phase4/M08_ACCEPTANCE.md", ".agent/phase4/M09_ACCEPTANCE.md", ".agent/phase4/M10_ACCEPTANCE.md",
+    ".agent/phase4/M12_ACCEPTANCE.md", "prompts", ".github", "automation",
     "ml/backtest", "ml/models", "ml/calibration", "ml/registry.py", "ml/synergy",
     "ml/features/score_breakdown.py", "scripts/run_m4_baseline_backtest.py",
-    "scripts/run_m11_generalization.py", "scripts/ml_bias_audit.py", "tests/test_automation_",
+    "scripts/ml_bias_audit.py", "tests/test_automation_",
 ]
+# Changed on purpose, and why; anything else outside ml/ratings, docs/ratings and new files is reported.
+DECLARED_CHANGES = {
+    "scripts/run_m11_generalization.py": "D15: STRATAI readiness gate replaces the team_event_stats half of D8 "
+                                         "and reads use one read-only session; generalization_checks unchanged",
+}
 
 CANONICAL_FINGERPRINT_SQL = {
     "events": "SELECT count(*), md5(coalesce(string_agg(event_key || ':' || coalesce(end_date::text, ''), ',' ORDER BY event_key), '')) FROM events",
@@ -100,8 +108,10 @@ def _git(*args: str) -> str:
 def methodology_diff() -> dict[str, Any]:
     changed = [line for line in _git("diff", "--name-only", PR29_REF, "HEAD").splitlines()]
     protected = [p for p in changed if any(p.startswith(q) for q in PROTECTED_PATHS)]
+    declared = {p: DECLARED_CHANGES[p] for p in changed if p in DECLARED_CHANGES}
     return {"base": _git("rev-parse", PR29_REF).strip(), "head": _git("rev-parse", "HEAD").strip(),
-            "changed_files": changed, "protected_files_changed": protected, "ok": not protected}
+            "changed_files": changed, "protected_files_changed": protected, "declared_changes": declared,
+            "ok": not protected}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -118,7 +128,8 @@ def main(argv: list[str] | None = None) -> int:
     from ml.ratings.readiness import assess_stratai_readiness
     from ml.ratings.runner import replay_chain, verify_resume
 
-    database = Database(DatabaseConfig(Settings().database_url))
+    # read-only at the database level: the verification itself cannot write
+    database = ReadOnlySessionDatabase(DatabaseConfig(Settings().database_url))
     report: dict[str, Any] = {"started_at": datetime.now(timezone.utc).isoformat(), "chain": str(args.chain)}
     before = canonical_fingerprint(database)
 

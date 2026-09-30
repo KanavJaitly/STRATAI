@@ -233,19 +233,55 @@ database.
 
 gzip is written with mtime 0, so identical content gives identical bytes.
 
-## 7. Provider boundary (interface only — no Phase 4 change)
+## 7. Provider boundary (Phase 4's EPA source, decision D15)
 
-Future consumers ask for EPA through one interface and choose the source:
+Consumers ask for EPA through `ml/ratings/provider.py` and the source is
+configured, never implied:
 
 ```text
-EpaSource = "statbotics" | "stratai"
-team_event_epa(team, event_key, source) -> TeamEventEpa | Unavailable(reason)
-TeamEventEpa: total, auto, teleop, endgame, source, provenance
+Settings.epa_source      "stratai" (default, production) | "statbotics" (optional reference)
+Settings.stratai_epa_chain   path to chain_<hash>.json from `run_epa_replay --chain`
+team_event_epa(team, event_key)               -> TeamEventEpa | Unavailable
+point_in_time_epa(team, target_event, as_of)  -> TeamEventEpa | Unavailable   (what Phase 4 uses)
 ```
-`source="stratai"` returns the §6.1 team-event `epa` (end of event, the same
-snapshot semantics Phase 4 reads from `team_event_stats` today). Phase 4's
-assembler, features, models and acceptance criteria are **not** changed by
-this work; switching any consumer is a separate, later decision.
+
+With `epa_source = "stratai"` and no chain configured, feature building fails
+with `EpaSourceNotConfigured`; it never falls back to Statbotics.
+
+`point_in_time_epa` applies decision D13 (`.agent/phase4/PHASE_STATUS.md`)
+to STRATAI's team-event values: among the team's other events whose
+`end_date::timestamptz` and whose latest completed match for the team are both
+before `as_of`, take the latest end date, then the latest completed match,
+then `event_key` ascending. The two D13 guards are read from the same
+canonical columns as `EPA_SOURCE_SQL`. STRATAI then also requires
+`available_at < as_of` (§9), so a season-end value, or a value whose week-1
+statistics were incomplete, is never served in-season; like D13's own guard
+it only removes candidates. The values served are the reference-rounded
+end-of-event `epa`, `auto_epa`, `teleop_epa`, `endgame_epa` (§6.1).
+
+Loading a chain checks each season's `team_events.json` against its manifest
+digest and, by default, that the season's raw-payload snapshot still matches
+the database (`StaleEpaArtifacts` otherwise). `ml/ratings/readiness.py` is the
+D8-style gate for this source.
+
+### 7.1 Prior-season chain (2024 -> 2025 -> 2026)
+
+`ml/ratings/chain.py`; the reference chain back to 2002 is not rebuilt.
+
+| Season | Prior history | Teams without history |
+|---|---|---|
+| 2024 | none; the run is labelled "initialized without prior-season history" | all: 1450 |
+| 2025 | STRATAI 2024 `norm_epa` as the most recent TeamYear; 1450 for the second slot | 1450 for both slots |
+| 2026 | STRATAI 2025 and 2024 `norm_epa` | 1450 for each missing slot |
+
+`norm_epa` is a season-end value used only to start a strictly later season.
+The prior's `source` names every contributing season's results fingerprint,
+so the chain is reproducible end to end. The 2026 isr rule uses team
+districts derived from the district events each team played; a team whose
+district events disagree gets no district and is counted (none of the 2026
+conflicts involve isr). In the first real chained run 3,240 of 3,690 2025
+teams and 3,402 of 3,709 2026 teams received STRATAI history; 51 2026 teams
+were isr.
 
 ## 8. Open items (to settle at the replay milestone, not now)
 
