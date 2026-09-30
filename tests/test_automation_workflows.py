@@ -145,9 +145,10 @@ def test_dump_storage_is_bounded():
 def test_lock_and_state_are_always_released_and_persisted():
     publish = job_blocks(EXECUTE)["publish"]
     for step in ("Record attempt", "Persist state", "Release lock"):
-        assert re.search(rf"- name: {step}\n\s+if: always\(\)", publish), step
+        assert re.search(rf"- name: {step}\n(\s+id: \w+\n)?\s+if: always\(\)", publish), step
     for step in ("Record build", "Persist state", "Release lock"):
-        assert re.search(rf"- name: {step}\n\s+if: always\(\) && steps.lock.outputs.acquired == 'true'", BUILD), step
+        assert re.search(rf"- name: {step}\n(\s+id: \w+\n)?\s+if: always\(\) && steps.lock.outputs.acquired == 'true'",
+                         BUILD), step
 
 
 def test_no_job_context_where_github_rejects_it():
@@ -169,3 +170,74 @@ def test_dump_and_restore_use_the_service_image_over_localhost():
     assert "docker exec" not in BUILD + EXECUTE
     for text in (BUILD, EXECUTE):
         assert "@localhost:5432/" in re.search(r"DATABASE_URL: (\S+)", text).group(1)
+
+
+# --- D/E: trusted code only, no re-runs; A: reconciled state publication --------
+
+GUARD_STEP = "- name: Refuse untrusted refs and re-runs"
+
+
+def steps_of(block: str) -> list[str]:
+    body = "\n" + block.split("\n    steps:\n", 1)[1]
+    return re.split(r"\n      - ", body)[1:]
+
+
+@pytest.mark.parametrize("text", [BUILD, EXECUTE], ids=["build", "execute"])
+def test_every_heavy_job_refuses_untrusted_refs_and_reruns_before_anything_else(text):
+    for name, block in job_blocks(text).items():
+        first = steps_of(block)[0]
+        assert first.startswith(GUARD_STEP.removeprefix("- ")), name
+        assert '"$GITHUB_REF" != "refs/heads/main"' in first and "exit 1" in first, name
+        assert '"$GITHUB_RUN_ATTEMPT" != "1"' in first and "fresh run" in first, name
+        assert "uses:" not in first, name
+
+
+def test_monitor_refuses_untrusted_refs_first():
+    first = steps_of(job_blocks(MONITOR)["monitor"])[0]
+    assert first.startswith("name: Refuse untrusted refs") and '"$GITHUB_REF" != "refs/heads/main"' in first
+
+
+@pytest.mark.parametrize("text", [BUILD, EXECUTE, MONITOR], ids=["build", "execute", "monitor"])
+def test_harness_checkouts_pin_the_dispatched_main_commit(text):
+    for step in re.findall(r"uses: actions/checkout@\S+.*?(?=\n      - |\Z)", text, flags=re.DOTALL):
+        if "path: work" in step:
+            assert "ref: ${{ needs.preflight.outputs.base_sha }}" in step  # Claude's workspace only
+            assert "persist-credentials: false" in step
+        else:
+            assert "ref: ${{ github.sha }}" in step, step
+
+
+def test_execute_runs_harness_code_only_from_the_trusted_checkout():
+    execute = job_blocks(EXECUTE)["execute"]
+    for step in steps_of(execute):
+        if "python -m automation." in step:
+            assert "working-directory: trusted" in step, step
+    assert '--workdir "$GITHUB_WORKSPACE/work"' in execute
+    assert "-r trusted/requirements.txt" in execute
+    bundle = next(s for s in steps_of(execute) if s.startswith("name: Bundle milestone branches"))
+    assert "working-directory: work" in bundle
+
+
+@pytest.mark.parametrize("text", [BUILD, EXECUTE, MONITOR], ids=["build", "execute", "monitor"])
+def test_state_is_only_published_through_the_reconciling_helper(text):
+    assert "python -m automation.state_push" in text
+    assert 'HEAD:refs/heads/${STATE_BRANCH}' not in text  # no raw, unreconciled state push remains
+
+
+@pytest.mark.parametrize("text, job", [(BUILD, "build"), (EXECUTE, "publish")], ids=["build", "execute"])
+def test_results_are_announced_only_after_state_is_published(text, job):
+    notify = next(s for s in steps_of(job_blocks(text)[job]) if s.startswith("name: Notify tracking issue"))
+    assert "PERSISTED: ${{ steps.persist.outcome }}" in notify
+    assert 'if [ "$PERSISTED" = "success" ]' in notify
+    assert "state NOT published" in notify and notify.rstrip().endswith("fi")
+    assert "exit 1" in notify
+
+
+def test_no_always_step_runs_after_a_refused_dispatch_or_rerun():
+    """A refused re-run must not post alarms, write state or touch the lock."""
+    for name, block in job_blocks(EXECUTE).items():
+        for condition in re.findall(r"^        if: (always\(\).*)$", block, flags=re.MULTILINE):
+            assert "steps.guard.outcome == 'success'" in condition, (name, condition)
+        assert "id: guard" in steps_of(block)[0], name
+    for condition in re.findall(r"^        if: (always\(\).*)$", BUILD, flags=re.MULTILINE):
+        assert "steps.lock.outputs.acquired == 'true'" in condition, condition  # a re-run never acquires the lock

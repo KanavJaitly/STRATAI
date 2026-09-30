@@ -8,6 +8,16 @@
 #   publish (15)   -> fresh runner: validate the bundle, push branches, open PRs,
 #                     record the outcome, release the lock
 #
+# Four things are kept apart:
+#   - trusted harness code: the dispatched commit on main (github.sha), the
+#     only code any job runs; every job refuses a dispatch from another ref;
+#   - Claude's workspace: a separate checkout of the resume commit (work/),
+#     which the harness never imports from;
+#   - execution state: the automation/phase4-state branch;
+#   - the dataset: the artifact the state record names.
+# Every job also refuses GitHub's "re-run": a re-run reuses the preflight's
+# earlier outputs, so it would skip the gates, the lock and the budget.
+#
 # See docs/phase4_automation.md.
 
 name: Phase 4 execute (one attempt)
@@ -34,7 +44,7 @@ jobs:
       contents: write   # lock ref, state branch
       issues: write
       pull-requests: read
-      actions: read     # dump artifact status, lock-owner run status
+      actions: read     # dump artifact status, lock-owner run status, month minutes
     outputs:
       acquired: ${{ steps.lock.outputs.acquired }}
       base_sha: ${{ steps.preflight.outputs.base_sha }}
@@ -45,8 +55,20 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Refuse untrusted refs and re-runs
+        id: guard
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Dispatched from $GITHUB_REF. Phase 4 workflows run only main's reviewed code: dispatch from main."
+            exit 1
+          fi
+          if [ "$GITHUB_RUN_ATTEMPT" != "1" ]; then
+            echo "::error::This is re-run attempt $GITHUB_RUN_ATTEMPT. Re-runs reuse earlier gate results and are refused: dispatch a fresh run from main."
+            exit 1
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -92,6 +114,7 @@ jobs:
           BASE: ${{ steps.preflight.outputs.base_sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          # shellcheck disable=SC2016  # the backticks are Markdown, not command substitution
           printf '### Phase 4 attempt started\n\nResuming from `%s`. Budget: 295 Actions minutes.\n\n- Run: %s\n' "$BASE" "$RUN_URL" > "$RUNNER_TEMP/start.md"
           gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/start.md"
 
@@ -119,9 +142,28 @@ jobs:
       # part of an attempt, so any TBA call fails loudly instead of re-syncing.
       TBA_API_KEY: unavailable-during-unattended-execution
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Refuse untrusted refs and re-runs
+        id: guard
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Dispatched from $GITHUB_REF. Phase 4 workflows run only main's reviewed code: dispatch from main."
+            exit 1
+          fi
+          if [ "$GITHUB_RUN_ATTEMPT" != "1" ]; then
+            echo "::error::This is re-run attempt $GITHUB_RUN_ATTEMPT. Re-runs reuse earlier gate results and are refused: dispatch a fresh run from main."
+            exit 1
+          fi
+      - name: Check out the trusted harness
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: trusted
+          persist-credentials: false
+      - name: Check out Claude's workspace (the resume commit)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.preflight.outputs.base_sha }}
+          path: work
           fetch-depth: 0
           persist-credentials: false   # Claude gets no push access
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -129,7 +171,7 @@ jobs:
           python-version: "3.14"
       - name: Install dependencies
         run: |
-          python -m pip install --disable-pip-version-check --quiet -r requirements.txt
+          python -m pip install --disable-pip-version-check --quiet -r trusted/requirements.txt
           npm install --global --no-fund --no-audit "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
       - name: Download dataset
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -139,6 +181,7 @@ jobs:
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/dataset
       - name: Restore and re-verify dataset
+        working-directory: trusted
         env:
           EXPECTED_SHA256: ${{ needs.preflight.outputs.dump_sha256 }}
           EXPECTED_FINGERPRINT: ${{ needs.preflight.outputs.fingerprint }}
@@ -149,26 +192,31 @@ jobs:
           python -m automation.verify_dataset --expected-fingerprint "$EXPECTED_FINGERPRINT"
       - name: Run Claude (one attempt)
         timeout-minutes: 250
+        working-directory: trusted
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # The restored dataset passed the readiness gate above, so real-data
           # acceptance tests (e.g. M11's generalization test) run for real here.
           PHASE4_REAL_DATA_TESTS: "1"
         run: |
-          git config user.name "StratAI Phase 4 automation"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$GITHUB_WORKSPACE/work" config user.name "StratAI Phase 4 automation"
+          git -C "$GITHUB_WORKSPACE/work" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p "$RUNNER_TEMP/attempt"
           python -m automation.run_claude --template prompts/PHASE4_UNATTENDED.md --minutes 235 \
+            --workdir "$GITHUB_WORKSPACE/work" \
             --report "$RUNNER_TEMP/claude-report.json" --outcome-out "$RUNNER_TEMP/attempt/outcome.json" \
             --attempt-id "${{ github.run_id }}" --base-sha "${{ needs.preflight.outputs.base_sha }}"
       - name: Bundle milestone branches
-        if: always()
+        if: always() && steps.guard.outcome == 'success'
+        working-directory: work
         run: |
           mkdir -p "$RUNNER_TEMP/attempt"
-          refs=$(git -c core.hooksPath=/dev/null for-each-ref --format='%(refname)' 'refs/heads/automation/phase4-m*')
-          if [ -n "$refs" ]; then git -c core.hooksPath=/dev/null bundle create "$RUNNER_TEMP/attempt/attempt.bundle" $refs; fi
+          mapfile -t refs < <(git -c core.hooksPath=/dev/null for-each-ref --format='%(refname)' 'refs/heads/automation/phase4-m*')
+          if [ "${#refs[@]}" -gt 0 ]; then
+            git -c core.hooksPath=/dev/null bundle create "$RUNNER_TEMP/attempt/attempt.bundle" "${refs[@]}"
+          fi
       - name: Upload attempt output
-        if: always()
+        if: always() && steps.guard.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: phase4-attempt-${{ github.run_id }}
@@ -192,8 +240,20 @@ jobs:
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       BASE: ${{ needs.preflight.outputs.base_sha }}
     steps:
+      - name: Refuse untrusted refs and re-runs
+        id: guard
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Dispatched from $GITHUB_REF. Phase 4 workflows run only main's reviewed code: dispatch from main."
+            exit 1
+          fi
+          if [ "$GITHUB_RUN_ATTEMPT" != "1" ]; then
+            echo "::error::This is re-run attempt $GITHUB_RUN_ATTEMPT. Re-runs reuse earlier gate results and are refused: dispatch a fresh run from main."
+            exit 1
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -213,29 +273,40 @@ jobs:
           name: phase4-attempt-${{ github.run_id }}
           path: ${{ runner.temp }}/attempt
       - name: Validate and publish
-        run: |
-          if [ -f "$RUNNER_TEMP/attempt/attempt.bundle" ]; then
-            python -m automation.publish --repo . --bundle "$RUNNER_TEMP/attempt/attempt.bundle" \
-              --base-sha "$BASE" --repository "$GITHUB_REPOSITORY" --out "$RUNNER_TEMP/publish.json"
-          fi
+        # Always writes publish.json -- "no bundle", a result, or the error it
+        # hit; a missing file is recorded as an infrastructure failure.
+        run: >-
+          python -m automation.publish --repo . --bundle "$RUNNER_TEMP/attempt/attempt.bundle"
+          --base-sha "$BASE" --repository "$GITHUB_REPOSITORY" --out "$RUNNER_TEMP/publish.json"
       - name: Record attempt
-        if: always()
+        if: always() && steps.guard.outcome == 'success'
         run: >-
           python -m automation.ops record-attempt --state-dir "$RUNNER_TEMP/state" --run-id "${{ github.run_id }}"
           --base-sha "$BASE" --outcome "$RUNNER_TEMP/attempt/outcome.json" --publish "$RUNNER_TEMP/publish.json"
           --notify-out "$RUNNER_TEMP/notify.md" --owner "$OWNER" --run-url "$RUN_URL"
       - name: Persist state
-        if: always()
-        working-directory: ${{ runner.temp }}/state
+        id: persist
+        if: always() && steps.guard.outcome == 'success'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add execution_state.json execution_log.jsonl
-          git commit --quiet -m "attempt ${{ github.run_id }}"
-          git push --quiet origin "HEAD:refs/heads/${STATE_BRANCH}"
+          git -C "$RUNNER_TEMP/state" config user.name "github-actions[bot]"
+          git -C "$RUNNER_TEMP/state" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python -m automation.state_push --state-dir "$RUNNER_TEMP/state" --branch "$STATE_BRANCH" \
+            --message "attempt ${{ github.run_id }}" execution_state.json execution_log.jsonl
       - name: Notify tracking issue
-        if: always()
-        run: if [ -f "$RUNNER_TEMP/notify.md" ]; then gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/notify.md"; fi
+        # The recorded outcome is announced only once it is actually on the state branch.
+        if: always() && steps.guard.outcome == 'success'
+        env:
+          PERSISTED: ${{ steps.persist.outcome }}
+        run: |
+          if [ "$PERSISTED" = "success" ]; then
+            if [ -f "$RUNNER_TEMP/notify.md" ]; then gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/notify.md"; fi
+          else
+            # shellcheck disable=SC2016  # the backticks are Markdown, not command substitution
+            printf '### Phase 4 attempt: state NOT published\n\n@%s\n\nThe attempt outcome could not be written to `%s` (%s), so it is not recorded and must not be treated as a result. The attempt bundle artifact is retained.\n\n- Run: %s\n' \
+              "$OWNER" "$STATE_BRANCH" "$PERSISTED" "$RUN_URL" > "$RUNNER_TEMP/unpublished.md"
+            gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/unpublished.md"
+            exit 1
+          fi
       - name: Release lock
-        if: always()
+        if: always() && steps.guard.outcome == 'success'
         run: python -m automation.ops lock release --kind attempt --run-id "${{ github.run_id }}"

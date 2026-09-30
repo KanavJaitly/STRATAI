@@ -91,13 +91,13 @@ def classify(
 
 
 def run(
-    *, prompt: str, minutes: float, report_path: Path, env: dict[str, str],
+    *, prompt: str, minutes: float, report_path: Path, env: dict[str, str], workdir: Path | None = None,
     runner: Callable[..., subprocess.CompletedProcess] = subprocess.run,
 ) -> dict[str, Any]:
     command = ["claude", "-p", prompt, "--output-format", "json",
                "--permission-mode", "dontAsk", "--allowedTools", ALLOWED_TOOLS]
     try:
-        completed = runner(command, env=env, capture_output=True, text=True, timeout=minutes * 60)
+        completed = runner(command, env=env, cwd=workdir, capture_output=True, text=True, timeout=minutes * 60)
     except subprocess.TimeoutExpired as exc:
         output = f"{exc.stdout or ''}{exc.stderr or ''}"
         return classify(returncode=None, timed_out=True, output=str(output), report_path=report_path)
@@ -113,6 +113,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--outcome-out", type=Path, required=True)
     parser.add_argument("--attempt-id", required=True)
     parser.add_argument("--base-sha", required=True)
+    parser.add_argument("--workdir", type=Path, required=True,
+                        help="Checkout Claude works in -- separate from the trusted harness checkout running this.")
     args = parser.parse_args(argv)
 
     prompt = render_prompt(args.template, {
@@ -120,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
         "report_path": str(args.report), "minutes": f"{args.minutes:.0f}",
     })
     outcome = run(prompt=prompt, minutes=args.minutes, report_path=args.report,
-                  env=child_environment(dict(os.environ)))
+                  env=child_environment(dict(os.environ)), workdir=args.workdir)
     args.outcome_out.write_text(json.dumps(outcome, indent=2), encoding="utf-8")
     print(f"attempt {args.attempt_id}: {outcome['outcome']} — {outcome['stop_reason']}")
     return 0

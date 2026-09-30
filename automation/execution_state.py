@@ -11,6 +11,18 @@ state. Statuses:
 
 Every preflight rule refuses rather than guesses; `preflight` returns every
 reason it refused, not just the first.
+
+Resuming after a human merge. The last published milestone branch carries a
+manifest (automation.publish): every path it changed relative to its
+merge-base with main, and that path's blob. After a merge commit or fast
+forward, main simply contains the branch. After a squash or rebase merge the
+commits are rewritten -- and the branch may be deleted -- but the content
+is identical, so the work is "present on main" exactly when every manifest
+path has the same blob on main (or is absent there, for a deletion). That is
+judged by content, never by a file merely existing: a manifest with a
+different blob anywhere, or no manifest, is not present. Presence only picks
+the commit to resume from; acceptance is still decided solely by the
+milestone's own artifact on main (automation.completion).
 """
 
 from __future__ import annotations
@@ -40,6 +52,8 @@ MONITOR_RESERVE_MINUTES = 310
 # free allowance is account-wide, so the default leaves headroom.
 DEFAULT_MONTHLY_MINUTE_CAP = 1500
 NO_PROGRESS_BREAKER = 3
+# The only branch whose publication can make "awaiting human sign-off" true.
+SIGNOFF_BRANCH = "automation/phase4-m13"
 
 OUTCOME_PROGRESS = "progress_checkpointed"
 OUTCOME_AWAITING_SIGNOFF = "awaiting_human_signoff"
@@ -161,9 +175,19 @@ def record_attempt(state: dict[str, Any], attempt: dict[str, Any], *, month: str
     _charge(new, month, attempt["billed_minutes"])
     if attempt["published"]:
         top = max(attempt["published"])  # milestone branches sort by number
-        new["last_published"] = {"branch": top, "sha": attempt["published"][top]}
+        new["last_published"] = {"branch": top, "sha": attempt["published"][top],
+                                 "manifest": (attempt.get("manifests") or {}).get(top)}
 
     outcome = attempt["outcome"]
+    if outcome == OUTCOME_AWAITING_SIGNOFF:
+        # M13's sign-off can only be pending if M13's work is actually published.
+        top_branch = (new["last_published"] or {}).get("branch")
+        if top_branch != SIGNOFF_BRANCH:
+            outcome = OUTCOME_CLAUDE_FAILED
+            attempt = {**attempt, "outcome": outcome,
+                       "stop_reason": f"claimed awaiting_human_signoff, but {SIGNOFF_BRANCH} is not published "
+                                      f"(top published branch: {top_branch}) — {attempt['stop_reason']}"}
+            new["attempts"][-1] = attempt
     progressed = bool(attempt["new_acceptance_files"])
     new["consecutive_no_progress_attempts"] = 0 if progressed else state["consecutive_no_progress_attempts"] + 1
     detail = f"{outcome}: {attempt['stop_reason']}"
@@ -181,14 +205,36 @@ def record_attempt(state: dict[str, Any], attempt: dict[str, Any], *, month: str
     return Transition(new, EVENT_ATTEMPT_RECORDED, detail)
 
 
-def clear(state: dict[str, Any], *, note: str) -> Transition:
-    """Human-only. Returns to READY; it does not touch any gate below."""
+def clear(state: dict[str, Any], *, note: str, published_present_on_main: bool | None = None) -> Transition:
+    """Human-only. Returns to READY; it does not touch any gate below.
+
+    Also forgets last_published, but only when its content is demonstrably on
+    main (published_present_on_main is True): that is the recovery after a
+    squash/rebase merge. Unknown or absent content is left in place.
+    """
     new = _copy(state)
-    if state["status"] == READY:
+    forgot = False
+    if state["last_published"] is not None and published_present_on_main is True:
+        new["last_published"] = None
+        forgot = True
+    if state["status"] == READY and not forgot:
         return Transition(new, None, "nothing to clear")
     new.update(status=READY, escalation_reason=None,
                consecutive_no_progress_builds=0, consecutive_no_progress_attempts=0)
-    return Transition(new, EVENT_CLEARED, f"cleared by a human ({note}); was: {state['escalation_reason']}")
+    forgotten = (f"; forgot {state['last_published']['branch']}, whose work is on main" if forgot else "")
+    return Transition(new, EVENT_CLEARED,
+                      f"cleared by a human ({note}); was: {state['status']} {state['escalation_reason']}{forgotten}")
+
+
+def manifest_present_on(manifest: dict[str, str | None] | None, blobs: dict[str, str]) -> bool | None:
+    """True if every change in manifest is on the tree whose {path: blob} is blobs,
+    False if any is not, None if there is no manifest to judge by."""
+    if not manifest:
+        return None
+    for path, blob in manifest.items():
+        if blobs.get(path) != blob:  # blob None (a deletion) requires the path to be absent
+            return False
+    return True
 
 
 @dataclass
@@ -207,6 +253,11 @@ class PreflightFacts:
     main_sha: str | None = None
     main_contains_published: bool | None = None
     published_contains_main: bool | None = None
+    published_present_on_main: bool | None = None
+    # Billed minutes of every run attempt of the heavy workflows this month, read
+    # from the Actions API (None = could not be read, which refuses).
+    api_month_minutes: int | None = 0
+    run_attempt: int = 1
     unreadable_facts: list[str] = field(default_factory=list)
 
 
@@ -238,9 +289,16 @@ def preflight(facts: PreflightFacts) -> PreflightDecision:
             reasons.append(f"required secret {name} is not configured")
     for name in facts.forbidden_secrets_present:
         reasons.append(f"secret {name} is configured; it would route usage to paid billing (decision D1/D11)")
+    if facts.run_attempt != 1:
+        reasons.append(f"this is re-run attempt {facts.run_attempt}; re-runs reuse earlier gate results, so they are "
+                       "refused — dispatch a fresh run instead")
 
     worst_case = ATTEMPT_WORST_CASE_MINUTES if facts.kind == "attempt" else BUILD_WORST_CASE_MINUTES
-    used = state["ledger"].get(facts.month, 0)
+    # The ledger misses runs whose state record was never published and minutes
+    # from re-run attempts; the API sees every attempt of every run. Take the larger.
+    if facts.api_month_minutes is None:
+        reasons.append("could not determine: this month's Actions minutes from the API")
+    used = max(state["ledger"].get(facts.month, 0), facts.api_month_minutes or 0)
     if used + worst_case + MONITOR_RESERVE_MINUTES > facts.monthly_cap:
         reasons.append(
             f"monthly minute cap: {used} used + {worst_case} worst case + {MONITOR_RESERVE_MINUTES} monitor "
@@ -257,14 +315,14 @@ def preflight(facts: PreflightFacts) -> PreflightDecision:
             reasons.append("the recorded database dump artifact is no longer available (expired or deleted)")
 
         published = state["last_published"]
-        if published is None or facts.main_contains_published:
-            base_sha = facts.main_sha
+        if published is None or facts.main_contains_published or facts.published_present_on_main:
+            base_sha = facts.main_sha  # nothing outstanding, merged, or squash/rebase-merged
         elif facts.published_contains_main:
             base_sha = published["sha"]
         else:
             reasons.append(
-                f"{published['branch']} and main have diverged; a human must reconcile them "
-                "(automation never rebases or overwrites human work)"
+                f"{published['branch']} and main have diverged and its work is not on main; a human must "
+                "merge or reconcile it (automation never rebases or overwrites human work)"
             )
         if base_sha is None and not any("diverged" in r for r in reasons):
             reasons.append("could not determine the commit to resume from")

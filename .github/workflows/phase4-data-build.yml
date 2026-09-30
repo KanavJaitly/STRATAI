@@ -44,9 +44,21 @@ jobs:
       OWNER: ${{ github.repository_owner }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
+      - name: Refuse untrusted refs and re-runs
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Dispatched from $GITHUB_REF. Phase 4 workflows run only main's reviewed code: dispatch from main."
+            exit 1
+          fi
+          if [ "$GITHUB_RUN_ATTEMPT" != "1" ]; then
+            echo "::error::This is re-run attempt $GITHUB_RUN_ATTEMPT. Re-runs reuse earlier results and are refused: dispatch a fresh run from main."
+            exit 1
+          fi
+
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
 
       - name: Set up Python
@@ -151,18 +163,29 @@ jobs:
             --notify-out "$RUNNER_TEMP/notify.md" --owner "$OWNER" --run-url "$RUN_URL"
 
       - name: Persist state
+        id: persist
         if: always() && steps.lock.outputs.acquired == 'true'
-        working-directory: ${{ runner.temp }}/state
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add execution_state.json execution_log.jsonl
-          git commit --quiet -m "data build ${{ github.run_id }}"
-          git push --quiet origin "HEAD:refs/heads/${STATE_BRANCH}"
+          git -C "$RUNNER_TEMP/state" config user.name "github-actions[bot]"
+          git -C "$RUNNER_TEMP/state" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python -m automation.state_push --state-dir "$RUNNER_TEMP/state" --branch "$STATE_BRANCH" \
+            --message "data build ${{ github.run_id }}" execution_state.json execution_log.jsonl
 
       - name: Notify tracking issue
+        # The build's result is announced only once it is actually on the state branch.
         if: always() && steps.lock.outputs.acquired == 'true'
-        run: if [ -f "$RUNNER_TEMP/notify.md" ]; then gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/notify.md"; fi
+        env:
+          PERSISTED: ${{ steps.persist.outcome }}
+        run: |
+          if [ "$PERSISTED" = "success" ]; then
+            if [ -f "$RUNNER_TEMP/notify.md" ]; then gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/notify.md"; fi
+          else
+            # shellcheck disable=SC2016  # the backticks are Markdown, not command substitution
+            printf '### Phase 4 data build: state NOT published\n\n@%s\n\nThe build record could not be written to `%s` (%s), so its dump is not usable and nothing may treat this build as a result. Dispatch a new build.\n\n- Run: %s\n' \
+              "$OWNER" "$STATE_BRANCH" "$PERSISTED" "$RUN_URL" > "$RUNNER_TEMP/unpublished.md"
+            gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/unpublished.md"
+            exit 1
+          fi
 
       - name: Release lock
         if: always() && steps.lock.outputs.acquired == 'true'

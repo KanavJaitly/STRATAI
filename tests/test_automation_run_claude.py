@@ -108,3 +108,15 @@ def test_run_uses_subscription_auth_flags_and_a_hard_timeout(tmp_path):
     assert "--dangerously-skip-permissions" not in seen["command"]
     assert seen["command"][seen["command"].index("--permission-mode") + 1] == "dontAsk"
     assert "ANTHROPIC_API_KEY" not in seen["env"]
+
+
+def test_claude_runs_in_its_own_workspace_not_the_harness_checkout(tmp_path):
+    seen = {}
+
+    def fake_run(command, **kwargs):
+        seen.update(kwargs)
+        return subprocess.CompletedProcess(command, 0, json.dumps({"is_error": False}), "")
+
+    rc.run(prompt="p", minutes=1, report_path=tmp_path / "r.json", env={"CLAUDE_CODE_OAUTH_TOKEN": "o"},
+           workdir=tmp_path / "work", runner=fake_run)
+    assert seen["cwd"] == tmp_path / "work"

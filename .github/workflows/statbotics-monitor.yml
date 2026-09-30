@@ -45,8 +45,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Refuse untrusted refs
+        # A scheduled run is always main; a manual dispatch must be too, since
+        # this job can write state and disable workflows.
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Dispatched from $GITHUB_REF. The monitor runs only main's reviewed code: dispatch from main."
+            exit 1
+          fi
+
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -99,7 +110,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ "$MODE" = "clear-execution-escalation" ]; then
-            python -m automation.ops clear --state-dir "$RUNNER_TEMP/state" \
+            python -m automation.ops clear --state-dir "$RUNNER_TEMP/state" --repo . \
               --note "workflow_dispatch by ${ACTOR}" --notify-out "$RUNNER_TEMP/notify.md"
           else
             python -m automation.monitor --state-dir "$RUNNER_TEMP/state" --mode "$MODE" \
@@ -107,16 +118,15 @@ jobs:
           fi
 
       - name: Persist monitor state
+        # Reconciles with any heavy workflow's concurrent state change; never forces.
         if: steps.completion.outputs.complete != 'true' && inputs.mode != 'status'
-        working-directory: ${{ runner.temp }}/state
         env:
           MODE: ${{ inputs.mode || 'check' }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add --all .
-          git commit --quiet -m "monitor: ${MODE} at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git push --quiet origin "HEAD:refs/heads/${STATE_BRANCH}"
+          git -C "$RUNNER_TEMP/state" config user.name "github-actions[bot]"
+          git -C "$RUNNER_TEMP/state" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python -m automation.state_push --state-dir "$RUNNER_TEMP/state" --branch "$STATE_BRANCH" \
+            --message "monitor: ${MODE} at $(date -u +%Y-%m-%dT%H:%M:%SZ)" .
 
       - name: Notify tracking issue
         # State is pushed first: a failed comment fails the run (GitHub emails
