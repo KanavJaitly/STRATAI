@@ -1,7 +1,8 @@
 # STRATAI rating engine — canonical input and output contract
 
-Status: **implemented by the pure engine core (`ml/ratings/epa/`)**; the database
-reader of §2 is not built yet. Companion to
+Status: **implemented** -- the pure engine core (`ml/ratings/epa/`), the
+read-only database reader of §2 (`ml/ratings/reader.py`) and the replay runner
+(`ml/ratings/runner.py`, `python -m scripts.run_epa_replay`). Companion to
 `docs/ratings/epa_specification.md` (the "spec"); section references like
 "spec §5" point there.
 
@@ -49,6 +50,26 @@ Phase 4 M2 already uses. **No migration is required for this contract.**
 | alliance DQs, surrogates | raw `alliances.<c>.dq_team_keys`, `surrogate_team_keys` | not in canonical tables |
 | alliance score | raw `alliances.<c>.score` (= canonical `score_red/blue`) | -1 or null = not played |
 | alliance breakdown | raw `score_breakdown.<c>` (object or null) | per-season adapter (spec §6) |
+
+### 2.1 Reader issues
+The canonical `events` and `matches` rows for the season decide which records
+exist. Where the reader cannot build a record, or where canonical and raw
+values disagree, it records a `ReaderIssue`; nothing is resolved silently.
+Excluded records never reach the engine; noted ones use the raw value above.
+
+| Code | Effect | Condition |
+|---|---|---|
+| `raw_event_payload_missing` | excluded (event and its matches) | no current raw TBA event payload |
+| `raw_event_payload_invalid` | excluded (event and its matches) | event_type / week / district of the wrong type |
+| `raw_match_payload_missing` | excluded | no current raw TBA match payload |
+| `raw_match_payload_invalid` | excluded | comp_level, numbers, time, scores or breakdown of the wrong shape |
+| `raw_match_event_mismatch` | excluded | the raw payload names a different event |
+| `duplicate_current_payload` | excluded | more than one `is_current` payload for one object |
+| `unparseable_team_key` | excluded | a team key that is not `frc` + digits (e.g. a B team) |
+| `placeholder_team_key` | noted | `frc0`; the engine then filters the match (`invalid_alliance`) |
+| `canonical_time_mismatch` | noted | canonical `scheduled_time` ≠ raw `time` |
+| `canonical_score_mismatch` | noted | canonical score ≠ raw score (raw -1 vs canonical NULL is not a mismatch) |
+| `canonical_roster_mismatch` | noted | `match_teams` ≠ raw team keys |
 
 ## 3. Input types
 
@@ -193,6 +214,25 @@ A stored result is traceable to exactly the raw TBA payloads that produced it
 through the input fingerprint and the snapshot identifier. No result is
 overwritten in place: a new run is a new artifact.
 
+### 6.4 Replay artifacts
+`python -m scripts.run_epa_replay --season Y --out ROOT` writes one directory
+per run, `ROOT/epa_<season>_<first 16 hex of the results fingerprint>/`,
+write-once: an identical rerun is recognised and not rewritten, and a
+different result under the same name is refused. Nothing is written to the
+database.
+
+| File | Contents |
+|---|---|
+| `season_input.json.gz` | the exact SeasonInput, canonically serialized (replays offline, no database) |
+| `match_records.jsonl.gz` | one line per processed match: unrounded record plus `reference_rounded` |
+| `team_events.json`, `team_seasons.json` | §6.1 aggregates |
+| `exclusions.json` | the full engine ExclusionReport (§5), every entry |
+| `reader_issues.json` | every ReaderIssue (§2.1) |
+| `execution_report.json` / `.md` | the per-season execution report, including verification |
+| `manifest.json` | §6.3 provenance, the reader snapshot, results fingerprint, sha256 of every file |
+
+gzip is written with mtime 0, so identical content gives identical bytes.
+
 ## 7. Provider boundary (interface only — no Phase 4 change)
 
 Future consumers ask for EPA through one interface and choose the source:
@@ -223,3 +263,38 @@ this work; switching any consumer is a separate, later decision.
    district team lists), which STRATAI does not sync. It matters only when
    `prior` is supplied (with no prior every team reverts to 1450 either way),
    so the engine requires `team_districts` exactly then.
+
+## 9. Point-in-time semantics for consumers (read before using EPA as a feature)
+
+The engine reproduces the reference EPA calculation. That calculation is not,
+everywhere, a strictly information-available-at-match-time quantity. A
+prediction consumer (Phase 5) must know which outputs are which.
+
+| Output | Available when | Point-in-time? |
+|---|---|---|
+| `MatchRecord.pre` and the match prediction, for a match scheduled **after the last week-1 match** | before the match | **Yes**: only earlier results, plus week-1 statistics that are complete by then |
+| `MatchRecord.pre` and the prediction, for a match scheduled **at or before the last week-1 match** (all of week 1; in 2024 also 96 early week-2 matches at 2024tuis) | -- | **No**: the season statistics that set every rating's scale and the win-probability spread include week-1 results not yet played. 2,869 / 2,177 / 2,401 matches in 2024 / 2025 / 2026 (13-17% of each season) |
+| Starting ratings | after week 1 | **No** before then, for the same reason; they also depend on `prior` |
+| `MatchRecord.post` | after the match | yes, as a post-match value |
+| team-event `epa`, components | after the event ends (includes playoffs) | yes, after the event |
+| team-event `epa` with `epa_is_season_end` / provider `lookahead=True` | after the season | **No** for any in-season use |
+| team-season `epa`, `epa_max`, `epa_pre_champs` | at season end / before champs | yes, after the stated point |
+| `unitless_epa` | after week 1 | a fixed transform of week-1 statistics; same caveat |
+| `norm_epa` | after the season | **No**: fitted over every team's season-end EPA; never a feature |
+
+Guidance:
+
+* To predict match N, use its teams' `MatchRecord.pre` vectors, or an engine
+  snapshot taken after the last match scheduled before N. Never use a
+  team-event or team-season value from the event or season N belongs to.
+* For matches exposed to the week-1 look-ahead, either accept the reference
+  behaviour and label those predictions as such, or build a strictly causal
+  variant (for example, statistics from the previous season, or a running
+  estimate). No such variant exists yet; it would be a methodology change
+  needing its own decision, and its values would no longer be the reference
+  EPA.
+* Without `prior`, relative starting ratings are uninformative, and an error
+  in a team's start persists through roughly its first one or two events
+  (spec §4.5). Early-season values from a run "initialized without
+  prior-season history" should be treated as low-confidence.
+
