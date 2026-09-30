@@ -1,0 +1,5315 @@
+{
+  "build_seconds": 392.2,
+  "built_at": "2026-09-30T22:07:01.471150+00:00",
+  "cache": "frame_rows.json.gz",
+  "cache_reload_reproduces_content_hash": true,
+  "excluded": [
+    {
+      "detail": null,
+      "event_key": "2024gagwi",
+      "match_key": "2024gagwi_qm61",
+      "reason": "unplayed",
+      "season": 2024
+    },
+    {
+      "detail": null,
+      "event_key": "2024gagwi",
+      "match_key": "2024gagwi_qm62",
+      "reason": "unplayed",
+      "season": 2024
+    },
+    {
+      "detail": null,
+      "event_key": "2024mdsev",
+      "match_key": "2024mdsev_qm73",
+      "reason": "unplayed",
+      "season": 2024
+    },
+    {
+      "detail": null,
+      "event_key": "2024mdsev",
+      "match_key": "2024mdsev_qm74",
+      "reason": "unplayed",
+      "season": 2024
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm64",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm65",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm66",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm67",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm68",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm69",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm70",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm71",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm72",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm73",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm74",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm75",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm76",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm77",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm78",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm79",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm80",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm81",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm82",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm83",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": null,
+      "event_key": "2025flta",
+      "match_key": "2025flta_qm84",
+      "reason": "unplayed",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[2647], blue_dq_team_numbers=[]",
+      "event_key": "2024azgl",
+      "match_key": "2024azgl_qm24",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9550]",
+      "event_key": "2024bcvi",
+      "match_key": "2024bcvi_qm60",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3863]",
+      "event_key": "2024cave",
+      "match_key": "2024cave_qm59",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2068]",
+      "event_key": "2024chcmp",
+      "match_key": "2024chcmp_qm105",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[2259], blue_dq_team_numbers=[]",
+      "event_key": "2024code",
+      "match_key": "2024code_qm19",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[3648], blue_dq_team_numbers=[]",
+      "event_key": "2024code",
+      "match_key": "2024code_qm75",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[175, 177, 5112], blue_dq_team_numbers=[]",
+      "event_key": "2024cthar",
+      "match_key": "2024cthar_f1m1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[178], blue_dq_team_numbers=[]",
+      "event_key": "2024ctwat",
+      "match_key": "2024ctwat_qm61",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9564]",
+      "event_key": "2024cur",
+      "match_key": "2024cur_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9728], blue_dq_team_numbers=[]",
+      "event_key": "2024flor",
+      "match_key": "2024flor_qm5",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[]",
+      "event_key": "2024gacar",
+      "match_key": "2024gacar_qm3",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5848], blue_dq_team_numbers=[]",
+      "event_key": "2024gacar",
+      "match_key": "2024gacar_qm4",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5848], blue_dq_team_numbers=[]",
+      "event_key": "2024gacar",
+      "match_key": "2024gacar_qm8",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5848], blue_dq_team_numbers=[]",
+      "event_key": "2024gacar",
+      "match_key": "2024gacar_qm15",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5848], blue_dq_team_numbers=[]",
+      "event_key": "2024gacar",
+      "match_key": "2024gacar_qm22",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9770], blue_dq_team_numbers=[]",
+      "event_key": "2024gacar",
+      "match_key": "2024gacar_qm26",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5848]",
+      "event_key": "2024gacar",
+      "match_key": "2024gacar_qm27",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[6905], blue_dq_team_numbers=[]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm4",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm5",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[6905], blue_dq_team_numbers=[]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm10",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm11",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6905]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm14",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm15",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm21",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm30",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9582]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm34",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9582]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm38",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9582]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm45",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9582]",
+      "event_key": "2024gadal",
+      "match_key": "2024gadal_qm49",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5651]",
+      "event_key": "2024gagwi",
+      "match_key": "2024gagwi_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4730]",
+      "event_key": "2024gagwi",
+      "match_key": "2024gagwi_qm5",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8577]",
+      "event_key": "2024gagwi",
+      "match_key": "2024gagwi_qm9",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[8815], blue_dq_team_numbers=[]",
+      "event_key": "2024gagwi",
+      "match_key": "2024gagwi_qm10",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4730]",
+      "event_key": "2024gagwi",
+      "match_key": "2024gagwi_qm12",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5705], blue_dq_team_numbers=[]",
+      "event_key": "2024hop",
+      "match_key": "2024hop_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9429]",
+      "event_key": "2024hop",
+      "match_key": "2024hop_qm64",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[4143, 4607, 7848], blue_dq_team_numbers=[]",
+      "event_key": "2024iacf",
+      "match_key": "2024iacf_sf8m1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[1576], blue_dq_team_numbers=[]",
+      "event_key": "2024isde1",
+      "match_key": "2024isde1_qm12",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6691]",
+      "event_key": "2024mabos",
+      "match_key": "2024mabos_qm5",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2262]",
+      "event_key": "2024mabri",
+      "match_key": "2024mabri_qm16",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[3654], blue_dq_team_numbers=[]",
+      "event_key": "2024mawne",
+      "match_key": "2024mawne_qm40",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6333]",
+      "event_key": "2024mawor",
+      "match_key": "2024mawor_qm46",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2377]",
+      "event_key": "2024mdowi",
+      "match_key": "2024mdowi_qm49",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[7886], blue_dq_team_numbers=[]",
+      "event_key": "2024mdsev",
+      "match_key": "2024mdsev_qm3",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[1446], blue_dq_team_numbers=[]",
+      "event_key": "2024mdsev",
+      "match_key": "2024mdsev_qm4",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2900]",
+      "event_key": "2024mdsev",
+      "match_key": "2024mdsev_qm6",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[7886], blue_dq_team_numbers=[]",
+      "event_key": "2024mdsev",
+      "match_key": "2024mdsev_qm8",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1446]",
+      "event_key": "2024mdsev",
+      "match_key": "2024mdsev_qm12",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[7886], blue_dq_team_numbers=[]",
+      "event_key": "2024mdsev",
+      "match_key": "2024mdsev_qm13",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1111]",
+      "event_key": "2024mdsev",
+      "match_key": "2024mdsev_qm36",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[7907], blue_dq_team_numbers=[]",
+      "event_key": "2024melew",
+      "match_key": "2024melew_qm3",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5239]",
+      "event_key": "2024miann",
+      "match_key": "2024miann_qm4",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5239], blue_dq_team_numbers=[]",
+      "event_key": "2024miann",
+      "match_key": "2024miann_qm14",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[8297], blue_dq_team_numbers=[]",
+      "event_key": "2024miber",
+      "match_key": "2024miber_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[8297], blue_dq_team_numbers=[]",
+      "event_key": "2024miber",
+      "match_key": "2024miber_qm7",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9736], blue_dq_team_numbers=[]",
+      "event_key": "2024mibro",
+      "match_key": "2024mibro_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9748], blue_dq_team_numbers=[]",
+      "event_key": "2024mibro",
+      "match_key": "2024mibro_qm3",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9748]",
+      "event_key": "2024mibro",
+      "match_key": "2024mibro_qm8",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9736]",
+      "event_key": "2024mibro",
+      "match_key": "2024mibro_qm10",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9748]",
+      "event_key": "2024mibro",
+      "match_key": "2024mibro_qm14",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7713]",
+      "event_key": "2024miesc",
+      "match_key": "2024miesc_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5567]",
+      "event_key": "2024miken",
+      "match_key": "2024miken_qm15",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[78], blue_dq_team_numbers=[]",
+      "event_key": "2024mil",
+      "match_key": "2024mil_qm3",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5704]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5704], blue_dq_team_numbers=[]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm10",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5704]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm15",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9753]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm33",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9753]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm37",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9753], blue_dq_team_numbers=[]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm44",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9753]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm51",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9753], blue_dq_team_numbers=[]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm56",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9753]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm64",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9753], blue_dq_team_numbers=[]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm73",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9753], blue_dq_team_numbers=[]",
+      "event_key": "2024milan",
+      "match_key": "2024milan_qm80",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8623]",
+      "event_key": "2024miliv",
+      "match_key": "2024miliv_qm49",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8623]",
+      "event_key": "2024miliv",
+      "match_key": "2024miliv_qm56",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5907, 6152, 7174], blue_dq_team_numbers=[]",
+      "event_key": "2024miliv",
+      "match_key": "2024miliv_f1m1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[4392, 5486, 5577], blue_dq_team_numbers=[]",
+      "event_key": "2024milsu",
+      "match_key": "2024milsu_sf2m1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9661], blue_dq_team_numbers=[]",
+      "event_key": "2024mimid",
+      "match_key": "2024mimid_qm9",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5065]",
+      "event_key": "2024mitr2",
+      "match_key": "2024mitr2_qm5",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5046], blue_dq_team_numbers=[]",
+      "event_key": "2024mitry",
+      "match_key": "2024mitry_qm44",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9528]",
+      "event_key": "2024mitry",
+      "match_key": "2024mitry_qm56",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1806]",
+      "event_key": "2024mndu2",
+      "match_key": "2024mndu2_qm43",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[876, 1816, 8188]",
+      "event_key": "2024mnmi2",
+      "match_key": "2024mnmi2_f1m2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5918]",
+      "event_key": "2024mokc",
+      "match_key": "2024mokc_qm38",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4213]",
+      "event_key": "2024mokc",
+      "match_key": "2024mokc_qm76",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5809]",
+      "event_key": "2024mose",
+      "match_key": "2024mose_qm19",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7725]",
+      "event_key": "2024mxmo",
+      "match_key": "2024mxmo_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[4735], blue_dq_team_numbers=[]",
+      "event_key": "2024mxmo",
+      "match_key": "2024mxmo_qm6",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[4735], blue_dq_team_numbers=[]",
+      "event_key": "2024mxmo",
+      "match_key": "2024mxmo_qm10",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[8734], blue_dq_team_numbers=[]",
+      "event_key": "2024mxmo",
+      "match_key": "2024mxmo_qm68",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9724], blue_dq_team_numbers=[]",
+      "event_key": "2024ncpem",
+      "match_key": "2024ncpem_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5511]",
+      "event_key": "2024ncwa2",
+      "match_key": "2024ncwa2_qm59",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6240]",
+      "event_key": "2024ncwak",
+      "match_key": "2024ncwak_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4652]",
+      "event_key": "2024njall",
+      "match_key": "2024njall_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[6897], blue_dq_team_numbers=[]",
+      "event_key": "2024njall",
+      "match_key": "2024njall_qm4",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4652]",
+      "event_key": "2024njall",
+      "match_key": "2024njall_qm9",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4652]",
+      "event_key": "2024njall",
+      "match_key": "2024njall_qm12",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8588]",
+      "event_key": "2024njfla",
+      "match_key": "2024njfla_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9439], blue_dq_team_numbers=[]",
+      "event_key": "2024njfla",
+      "match_key": "2024njfla_qm4",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[8588], blue_dq_team_numbers=[8704]",
+      "event_key": "2024njfla",
+      "match_key": "2024njfla_qm6",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9439]",
+      "event_key": "2024njfla",
+      "match_key": "2024njfla_qm11",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[8704], blue_dq_team_numbers=[]",
+      "event_key": "2024njfla",
+      "match_key": "2024njfla_qm12",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[6860], blue_dq_team_numbers=[]",
+      "event_key": "2024njtab",
+      "match_key": "2024njtab_qm3",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9439], blue_dq_team_numbers=[]",
+      "event_key": "2024njwas",
+      "match_key": "2024njwas_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9439]",
+      "event_key": "2024njwas",
+      "match_key": "2024njwas_qm8",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[353], blue_dq_team_numbers=[]",
+      "event_key": "2024nyli2",
+      "match_key": "2024nyli2_qm55",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4299]",
+      "event_key": "2024nyny",
+      "match_key": "2024nyny_qm70",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[334, 354, 1601], blue_dq_team_numbers=[]",
+      "event_key": "2024nyny",
+      "match_key": "2024nyny_sf6m1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7903]",
+      "event_key": "2024nyro",
+      "match_key": "2024nyro_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[6140], blue_dq_team_numbers=[]",
+      "event_key": "2024oncmp1",
+      "match_key": "2024oncmp1_qm68",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[4907], blue_dq_team_numbers=[]",
+      "event_key": "2024oncmp2",
+      "match_key": "2024oncmp2_qm22",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[610]",
+      "event_key": "2024onham",
+      "match_key": "2024onham_qm40",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5460], blue_dq_team_numbers=[]",
+      "event_key": "2024onosh",
+      "match_key": "2024onosh_qm54",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[1325], blue_dq_team_numbers=[]",
+      "event_key": "2024onsca",
+      "match_key": "2024onsca_qm56",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[6866], blue_dq_team_numbers=[]",
+      "event_key": "2024ontor",
+      "match_key": "2024ontor_qm34",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4127]",
+      "event_key": "2024orore",
+      "match_key": "2024orore_qm28",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[752], blue_dq_team_numbers=[]",
+      "event_key": "2024paphi",
+      "match_key": "2024paphi_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9095]",
+      "event_key": "2024tuis",
+      "match_key": "2024tuis_qm6",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9440], blue_dq_team_numbers=[]",
+      "event_key": "2024tuis",
+      "match_key": "2024tuis_qm7",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9095]",
+      "event_key": "2024tuis",
+      "match_key": "2024tuis_qm16",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[7228], blue_dq_team_numbers=[]",
+      "event_key": "2024tuis3",
+      "match_key": "2024tuis3_qm5",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7228]",
+      "event_key": "2024tuis3",
+      "match_key": "2024tuis3_qm13",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[7228], blue_dq_team_numbers=[]",
+      "event_key": "2024tuis3",
+      "match_key": "2024tuis3_qm20",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[7228], blue_dq_team_numbers=[]",
+      "event_key": "2024tuis3",
+      "match_key": "2024tuis3_qm29",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7228]",
+      "event_key": "2024tuis3",
+      "match_key": "2024tuis3_qm44",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[7228], blue_dq_team_numbers=[]",
+      "event_key": "2024tuis3",
+      "match_key": "2024tuis3_qm50",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7228]",
+      "event_key": "2024tuis3",
+      "match_key": "2024tuis3_qm56",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[7228], blue_dq_team_numbers=[]",
+      "event_key": "2024tuis3",
+      "match_key": "2024tuis3_qm63",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5783], blue_dq_team_numbers=[]",
+      "event_key": "2024txama",
+      "match_key": "2024txama_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5783]",
+      "event_key": "2024txama",
+      "match_key": "2024txama_qm9",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[8610], blue_dq_team_numbers=[9140, 9506]",
+      "event_key": "2024txbel",
+      "match_key": "2024txbel_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4597]",
+      "event_key": "2024txbel",
+      "match_key": "2024txbel_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9664], blue_dq_team_numbers=[]",
+      "event_key": "2024txbel",
+      "match_key": "2024txbel_qm4",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9407]",
+      "event_key": "2024txcmp1",
+      "match_key": "2024txcmp1_qm5",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[7091], blue_dq_team_numbers=[]",
+      "event_key": "2024txdal",
+      "match_key": "2024txdal_qm9",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9407]",
+      "event_key": "2024txfor",
+      "match_key": "2024txfor_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7321]",
+      "event_key": "2024txfor",
+      "match_key": "2024txfor_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7321]",
+      "event_key": "2024txfor",
+      "match_key": "2024txfor_qm10",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3029]",
+      "event_key": "2024txhou",
+      "match_key": "2024txhou_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9516]",
+      "event_key": "2024txhou",
+      "match_key": "2024txhou_qm3",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[3029], blue_dq_team_numbers=[]",
+      "event_key": "2024txhou",
+      "match_key": "2024txhou_qm7",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9516], blue_dq_team_numbers=[]",
+      "event_key": "2024txhou",
+      "match_key": "2024txhou_qm9",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[3029], blue_dq_team_numbers=[]",
+      "event_key": "2024txhou",
+      "match_key": "2024txhou_qm14",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3029]",
+      "event_key": "2024txhou",
+      "match_key": "2024txhou_qm20",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9051]",
+      "event_key": "2024txkat",
+      "match_key": "2024txkat_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7616]",
+      "event_key": "2024txkat",
+      "match_key": "2024txkat_qm70",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[6526], blue_dq_team_numbers=[]",
+      "event_key": "2024txpla",
+      "match_key": "2024txpla_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[8750], blue_dq_team_numbers=[]",
+      "event_key": "2024txsan",
+      "match_key": "2024txsan_qm2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[8750], blue_dq_team_numbers=[]",
+      "event_key": "2024txsan",
+      "match_key": "2024txsan_qm11",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[159], blue_dq_team_numbers=[]",
+      "event_key": "2024utwv",
+      "match_key": "2024utwv_qm78",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[159], blue_dq_team_numbers=[]",
+      "event_key": "2024utwv",
+      "match_key": "2024utwv_qm88",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5954], blue_dq_team_numbers=[]",
+      "event_key": "2024vaash",
+      "match_key": "2024vaash_qm4",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[5954], blue_dq_team_numbers=[]",
+      "event_key": "2024vaash",
+      "match_key": "2024vaash_qm6",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5954]",
+      "event_key": "2024vaash",
+      "match_key": "2024vaash_qm10",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[617]",
+      "event_key": "2024vaash",
+      "match_key": "2024vaash_qm11",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[4286], blue_dq_team_numbers=[]",
+      "event_key": "2024vaash",
+      "match_key": "2024vaash_qm13",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[617]",
+      "event_key": "2024vaash",
+      "match_key": "2024vaash_qm18",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[617], blue_dq_team_numbers=[]",
+      "event_key": "2024vaash",
+      "match_key": "2024vaash_qm22",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[339, 422, 4099]",
+      "event_key": "2024vaash",
+      "match_key": "2024vaash_f1m2",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[1086, 6802, 9003], blue_dq_team_numbers=[]",
+      "event_key": "2024vabla",
+      "match_key": "2024vabla_sf2m1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[2912], blue_dq_team_numbers=[]",
+      "event_key": "2024vafal",
+      "match_key": "2024vafal_qm4",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[122, 339, 5338], blue_dq_team_numbers=[]",
+      "event_key": "2024vafal",
+      "match_key": "2024vafal_sf3m1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[2912, 6882], blue_dq_team_numbers=[2988]",
+      "event_key": "2024vapor",
+      "match_key": "2024vapor_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9581]",
+      "event_key": "2024wabon",
+      "match_key": "2024wabon_qm1",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9581]",
+      "event_key": "2024wabon",
+      "match_key": "2024wabon_qm10",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[6651], blue_dq_team_numbers=[]",
+      "event_key": "2024wila",
+      "match_key": "2024wila_qm8",
+      "reason": "dq_affected",
+      "season": 2024
+    },
+    {
+      "detail": "red_dq_team_numbers=[9590], blue_dq_team_numbers=[]",
+      "event_key": "2025alhu",
+      "match_key": "2025alhu_qm7",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9126], blue_dq_team_numbers=[]",
+      "event_key": "2025arc",
+      "match_key": "2025arc_qm120",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[1860, 9459, 10295], blue_dq_team_numbers=[]",
+      "event_key": "2025brsp",
+      "match_key": "2025brsp_sf2m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9471], blue_dq_team_numbers=[]",
+      "event_key": "2025caav",
+      "match_key": "2025caav_qm19",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10500]",
+      "event_key": "2025cabe",
+      "match_key": "2025cabe_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9781]",
+      "event_key": "2025cabe",
+      "match_key": "2025cabe_qm18",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8861], blue_dq_team_numbers=[]",
+      "event_key": "2025cala",
+      "match_key": "2025cala_qm2",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10658]",
+      "event_key": "2025cala",
+      "match_key": "2025cala_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3189]",
+      "event_key": "2025camb",
+      "match_key": "2025camb_qm57",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10339]",
+      "event_key": "2025capt",
+      "match_key": "2025capt_qm24",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[4698], blue_dq_team_numbers=[]",
+      "event_key": "2025capt",
+      "match_key": "2025capt_qm35",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[649], blue_dq_team_numbers=[]",
+      "event_key": "2025capt",
+      "match_key": "2025capt_qm65",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10339]",
+      "event_key": "2025capt",
+      "match_key": "2025capt_qm67",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10644], blue_dq_team_numbers=[]",
+      "event_key": "2025casj",
+      "match_key": "2025casj_qm6",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10644], blue_dq_team_numbers=[]",
+      "event_key": "2025casj",
+      "match_key": "2025casj_qm28",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[5027], blue_dq_team_numbers=[]",
+      "event_key": "2025casj",
+      "match_key": "2025casj_qm65",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8060], blue_dq_team_numbers=[]",
+      "event_key": "2025cave",
+      "match_key": "2025cave_qm25",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[5515], blue_dq_team_numbers=[]",
+      "event_key": "2025cnsh",
+      "match_key": "2025cnsh_qm13",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10616]",
+      "event_key": "2025flwp",
+      "match_key": "2025flwp_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[5872], blue_dq_team_numbers=[]",
+      "event_key": "2025flwp",
+      "match_key": "2025flwp_qm34",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[4707], blue_dq_team_numbers=[]",
+      "event_key": "2025flwp",
+      "match_key": "2025flwp_qm51",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10616], blue_dq_team_numbers=[]",
+      "event_key": "2025flwp",
+      "match_key": "2025flwp_qm56",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7676]",
+      "event_key": "2025gadal",
+      "match_key": "2025gadal_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7514], blue_dq_team_numbers=[]",
+      "event_key": "2025gadal",
+      "match_key": "2025gadal_qm3",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1795, 4459]",
+      "event_key": "2025gadal",
+      "match_key": "2025gadal_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[4468, 6905], blue_dq_team_numbers=[]",
+      "event_key": "2025gadal",
+      "match_key": "2025gadal_qm5",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7514]",
+      "event_key": "2025gadal",
+      "match_key": "2025gadal_qm6",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1795]",
+      "event_key": "2025gadal",
+      "match_key": "2025gadal_qm7",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7514]",
+      "event_key": "2025gadal",
+      "match_key": "2025gadal_qm11",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[1795], blue_dq_team_numbers=[]",
+      "event_key": "2025gadal",
+      "match_key": "2025gadal_qm14",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[4240, 8865], blue_dq_team_numbers=[]",
+      "event_key": "2025gagai",
+      "match_key": "2025gagai_qm2",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9561], blue_dq_team_numbers=[10006]",
+      "event_key": "2025gagai",
+      "match_key": "2025gagai_qm5",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[4240], blue_dq_team_numbers=[]",
+      "event_key": "2025gagai",
+      "match_key": "2025gagai_qm9",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10006], blue_dq_team_numbers=[]",
+      "event_key": "2025gagai",
+      "match_key": "2025gagai_qm10",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9561], blue_dq_team_numbers=[]",
+      "event_key": "2025gagai",
+      "match_key": "2025gagai_qm11",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[2415], blue_dq_team_numbers=[]",
+      "event_key": "2025gagwi",
+      "match_key": "2025gagwi_qm18",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6910]",
+      "event_key": "2025gagwi",
+      "match_key": "2025gagwi_qm31",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5293]",
+      "event_key": "2025gagwi",
+      "match_key": "2025gagwi_qm36",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[2470], blue_dq_team_numbers=[]",
+      "event_key": "2025ilpe",
+      "match_key": "2025ilpe_qm49",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9431]",
+      "event_key": "2025inmis",
+      "match_key": "2025inmis_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[328], blue_dq_team_numbers=[]",
+      "event_key": "2025inmis",
+      "match_key": "2025inmis_qm14",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[1646], blue_dq_team_numbers=[]",
+      "event_key": "2025inmis",
+      "match_key": "2025inmis_qm31",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7177], blue_dq_team_numbers=[]",
+      "event_key": "2025isde1",
+      "match_key": "2025isde1_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1942]",
+      "event_key": "2025isde4",
+      "match_key": "2025isde4_qm58",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10550], blue_dq_team_numbers=[]",
+      "event_key": "2025lake",
+      "match_key": "2025lake_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1912, 2036, 2152]",
+      "event_key": "2025lake",
+      "match_key": "2025lake_sf12m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8013], blue_dq_team_numbers=[]",
+      "event_key": "2025mawne",
+      "match_key": "2025mawne_qm62",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3958]",
+      "event_key": "2025mawor",
+      "match_key": "2025mawor_qm27",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[716]",
+      "event_key": "2025mawor",
+      "match_key": "2025mawor_qm60",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8326]",
+      "event_key": "2025mdbet",
+      "match_key": "2025mdbet_qm19",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[2377], blue_dq_team_numbers=[2963]",
+      "event_key": "2025mdpas",
+      "match_key": "2025mdpas_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[3714], blue_dq_team_numbers=[]",
+      "event_key": "2025mdsev",
+      "match_key": "2025mdsev_qm2",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10449]",
+      "event_key": "2025mdsev",
+      "match_key": "2025mdsev_qm3",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[238], blue_dq_team_numbers=[]",
+      "event_key": "2025mefal",
+      "match_key": "2025mefal_qm36",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9703]",
+      "event_key": "2025mibat",
+      "match_key": "2025mibat_qm57",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5225]",
+      "event_key": "2025mibkn",
+      "match_key": "2025mibkn_qm5",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7501, 8423, 8895]",
+      "event_key": "2025mibkn",
+      "match_key": "2025mibkn_sf2m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[5532], blue_dq_team_numbers=[4758]",
+      "event_key": "2025midtr",
+      "match_key": "2025midtr_qm3",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7191], blue_dq_team_numbers=[]",
+      "event_key": "2025midtr",
+      "match_key": "2025midtr_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2048]",
+      "event_key": "2025midtr",
+      "match_key": "2025midtr_qm56",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10607]",
+      "event_key": "2025midtr",
+      "match_key": "2025midtr_qm57",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9682], blue_dq_team_numbers=[]",
+      "event_key": "2025miesc",
+      "match_key": "2025miesc_qm20",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9528], blue_dq_team_numbers=[]",
+      "event_key": "2025mifer",
+      "match_key": "2025mifer_qm20",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[5467], blue_dq_team_numbers=[]",
+      "event_key": "2025mifer",
+      "match_key": "2025mifer_qm25",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[226], blue_dq_team_numbers=[]",
+      "event_key": "2025milac",
+      "match_key": "2025milac_qm40",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6120]",
+      "event_key": "2025mimcc",
+      "match_key": "2025mimcc_qm60",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[94]",
+      "event_key": "2025misal",
+      "match_key": "2025misal_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[94], blue_dq_team_numbers=[]",
+      "event_key": "2025misal",
+      "match_key": "2025misal_qm9",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2513]",
+      "event_key": "2025mndu2",
+      "match_key": "2025mndu2_qm32",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[112]",
+      "event_key": "2025mndu2",
+      "match_key": "2025mndu2_qm60",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[2500, 4536, 5232], blue_dq_team_numbers=[]",
+      "event_key": "2025mnum",
+      "match_key": "2025mnum_sf5m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8112], blue_dq_team_numbers=[]",
+      "event_key": "2025mose",
+      "match_key": "2025mose_qm3",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8112], blue_dq_team_numbers=[]",
+      "event_key": "2025mose",
+      "match_key": "2025mose_qm7",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7474], blue_dq_team_numbers=[]",
+      "event_key": "2025mslr",
+      "match_key": "2025mslr_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7474]",
+      "event_key": "2025mslr",
+      "match_key": "2025mslr_qm9",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7474], blue_dq_team_numbers=[]",
+      "event_key": "2025mslr",
+      "match_key": "2025mslr_qm13",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9282], blue_dq_team_numbers=[]",
+      "event_key": "2025mxmo",
+      "match_key": "2025mxmo_qm31",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6199]",
+      "event_key": "2025mxto",
+      "match_key": "2025mxto_qm19",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3737, 9150, 9605]",
+      "event_key": "2025ncash",
+      "match_key": "2025ncash_sf12m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9559]",
+      "event_key": "2025nccat",
+      "match_key": "2025nccat_qm2",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9296]",
+      "event_key": "2025ncgre",
+      "match_key": "2025ncgre_qm6",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[2642, 4828, 7671], blue_dq_team_numbers=[]",
+      "event_key": "2025ncgre",
+      "match_key": "2025ncgre_sf12m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10412], blue_dq_team_numbers=[9724]",
+      "event_key": "2025ncmec",
+      "match_key": "2025ncmec_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9724], blue_dq_team_numbers=[]",
+      "event_key": "2025ncmec",
+      "match_key": "2025ncmec_qm7",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9298]",
+      "event_key": "2025ncmec",
+      "match_key": "2025ncmec_qm28",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5491]",
+      "event_key": "2025nhsal",
+      "match_key": "2025nhsal_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5491]",
+      "event_key": "2025nhsal",
+      "match_key": "2025nhsal_qm8",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9729], blue_dq_team_numbers=[]",
+      "event_key": "2025nhsal",
+      "match_key": "2025nhsal_qm62",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10366], blue_dq_team_numbers=[]",
+      "event_key": "2025njfla",
+      "match_key": "2025njfla_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10069], blue_dq_team_numbers=[]",
+      "event_key": "2025njfla",
+      "match_key": "2025njfla_qm2",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[6860], blue_dq_team_numbers=[]",
+      "event_key": "2025njfla",
+      "match_key": "2025njfla_qm5",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5624]",
+      "event_key": "2025njfla",
+      "match_key": "2025njfla_qm6",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10069], blue_dq_team_numbers=[10366]",
+      "event_key": "2025njfla",
+      "match_key": "2025njfla_qm11",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[5624], blue_dq_team_numbers=[]",
+      "event_key": "2025njfla",
+      "match_key": "2025njfla_qm12",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[222, 3142, 8588]",
+      "event_key": "2025njfla",
+      "match_key": "2025njfla_sf7m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10480]",
+      "event_key": "2025njwas",
+      "match_key": "2025njwas_qm33",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10480], blue_dq_team_numbers=[]",
+      "event_key": "2025njwas",
+      "match_key": "2025njwas_qm42",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10480]",
+      "event_key": "2025njwas",
+      "match_key": "2025njwas_qm45",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10480]",
+      "event_key": "2025njwas",
+      "match_key": "2025njwas_qm49",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10480], blue_dq_team_numbers=[]",
+      "event_key": "2025njwas",
+      "match_key": "2025njwas_qm58",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10480]",
+      "event_key": "2025njwas",
+      "match_key": "2025njwas_qm61",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[1676], blue_dq_team_numbers=[]",
+      "event_key": "2025njwas",
+      "match_key": "2025njwas_qm63",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[6947], blue_dq_team_numbers=[]",
+      "event_key": "2025ntwc",
+      "match_key": "2025ntwc_qm22",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4]",
+      "event_key": "2025nvlv",
+      "match_key": "2025nvlv_qm49",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[2347], blue_dq_team_numbers=[]",
+      "event_key": "2025nyli2",
+      "match_key": "2025nyli2_qm34",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[5123], blue_dq_team_numbers=[]",
+      "event_key": "2025nyny",
+      "match_key": "2025nyny_qm21",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10454]",
+      "event_key": "2025nyny",
+      "match_key": "2025nyny_qm65",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10454], blue_dq_team_numbers=[]",
+      "event_key": "2025nyny",
+      "match_key": "2025nyny_qm78",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[3004], blue_dq_team_numbers=[]",
+      "event_key": "2025nyro",
+      "match_key": "2025nyro_qm2",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7903], blue_dq_team_numbers=[]",
+      "event_key": "2025ohmv",
+      "match_key": "2025ohmv_qm7",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5719]",
+      "event_key": "2025oncmp1",
+      "match_key": "2025oncmp1_qm43",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6859]",
+      "event_key": "2025onosh",
+      "match_key": "2025onosh_qm21",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9782], blue_dq_team_numbers=[]",
+      "event_key": "2025onsca",
+      "match_key": "2025onsca_qm57",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7520, 9562, 9785], blue_dq_team_numbers=[]",
+      "event_key": "2025ontor",
+      "match_key": "2025ontor_sf3m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10579]",
+      "event_key": "2025onwin",
+      "match_key": "2025onwin_qm48",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[709], blue_dq_team_numbers=[]",
+      "event_key": "2025pahat",
+      "match_key": "2025pahat_qm13",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10143], blue_dq_team_numbers=[]",
+      "event_key": "2025paphi",
+      "match_key": "2025paphi_qm2",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10143], blue_dq_team_numbers=[]",
+      "event_key": "2025paphi",
+      "match_key": "2025paphi_qm5",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[296], blue_dq_team_numbers=[]",
+      "event_key": "2025qcmo",
+      "match_key": "2025qcmo_qm27",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10361], blue_dq_team_numbers=[]",
+      "event_key": "2025schar",
+      "match_key": "2025schar_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10361]",
+      "event_key": "2025schar",
+      "match_key": "2025schar_qm7",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[6961], blue_dq_team_numbers=[]",
+      "event_key": "2025schar",
+      "match_key": "2025schar_qm41",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[3492, 4020, 8570], blue_dq_team_numbers=[]",
+      "event_key": "2025tnkn",
+      "match_key": "2025tnkn_sf3m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[1014, 4265, 6517], blue_dq_team_numbers=[]",
+      "event_key": "2025tnkn",
+      "match_key": "2025tnkn_sf4m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9467], blue_dq_team_numbers=[]",
+      "event_key": "2025tuak",
+      "match_key": "2025tuak_qm3",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10204], blue_dq_team_numbers=[]",
+      "event_key": "2025tuak",
+      "match_key": "2025tuak_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10204]",
+      "event_key": "2025tuak",
+      "match_key": "2025tuak_qm51",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8828], blue_dq_team_numbers=[]",
+      "event_key": "2025tuak",
+      "match_key": "2025tuak_qm68",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9502], blue_dq_team_numbers=[]",
+      "event_key": "2025tuhc",
+      "match_key": "2025tuhc_qm3",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8798]",
+      "event_key": "2025tuhc",
+      "match_key": "2025tuhc_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10415], blue_dq_team_numbers=[]",
+      "event_key": "2025tuhc",
+      "match_key": "2025tuhc_qm7",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8759]",
+      "event_key": "2025tuhc",
+      "match_key": "2025tuhc_qm8",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8798, 9502]",
+      "event_key": "2025tuhc",
+      "match_key": "2025tuhc_qm9",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8759], blue_dq_team_numbers=[]",
+      "event_key": "2025tuhc",
+      "match_key": "2025tuhc_qm14",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8798]",
+      "event_key": "2025tuhc",
+      "match_key": "2025tuhc_qm23",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8759], blue_dq_team_numbers=[]",
+      "event_key": "2025tuhc",
+      "match_key": "2025tuhc_qm24",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8759]",
+      "event_key": "2025tuhc",
+      "match_key": "2025tuhc_qm33",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10209]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm2",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9601], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm5",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8263]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm6",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10353], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm8",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10209]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm9",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10105], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm12",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5773]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm20",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10105], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm23",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10209]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm24",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9247], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm25",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10209]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm31",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8263], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis",
+      "match_key": "2025tuis_qm33",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8092]",
+      "event_key": "2025tuis2",
+      "match_key": "2025tuis2_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9510], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis2",
+      "match_key": "2025tuis2_qm3",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8242], blue_dq_team_numbers=[10244]",
+      "event_key": "2025tuis2",
+      "match_key": "2025tuis2_qm5",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8242], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis2",
+      "match_key": "2025tuis2_qm12",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10244]",
+      "event_key": "2025tuis2",
+      "match_key": "2025tuis2_qm13",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10244]",
+      "event_key": "2025tuis2",
+      "match_key": "2025tuis2_qm19",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10531]",
+      "event_key": "2025tuis2",
+      "match_key": "2025tuis2_qm20",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9043]",
+      "event_key": "2025tuis2",
+      "match_key": "2025tuis2_qm38",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10251], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis2",
+      "match_key": "2025tuis2_qm61",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8500], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis3",
+      "match_key": "2025tuis3_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10243]",
+      "event_key": "2025tuis3",
+      "match_key": "2025tuis3_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[10521], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis3",
+      "match_key": "2025tuis3_qm23",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[9160], blue_dq_team_numbers=[]",
+      "event_key": "2025tuis3",
+      "match_key": "2025tuis3_qm56",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7271], blue_dq_team_numbers=[]",
+      "event_key": "2025txama",
+      "match_key": "2025txama_qm2",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7271], blue_dq_team_numbers=[]",
+      "event_key": "2025txama",
+      "match_key": "2025txama_qm9",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7271], blue_dq_team_numbers=[]",
+      "event_key": "2025txama",
+      "match_key": "2025txama_qm14",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7271]",
+      "event_key": "2025txama",
+      "match_key": "2025txama_qm28",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9448]",
+      "event_key": "2025txbel",
+      "match_key": "2025txbel_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7138], blue_dq_team_numbers=[]",
+      "event_key": "2025txbel",
+      "match_key": "2025txbel_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7271]",
+      "event_key": "2025txbel",
+      "match_key": "2025txbel_qm5",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7271], blue_dq_team_numbers=[]",
+      "event_key": "2025txbel",
+      "match_key": "2025txbel_qm13",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8610], blue_dq_team_numbers=[]",
+      "event_key": "2025txbel",
+      "match_key": "2025txbel_qm70",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2587, 3545, 9512]",
+      "event_key": "2025txcle",
+      "match_key": "2025txcle_sf4m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7535], blue_dq_team_numbers=[]",
+      "event_key": "2025txpla",
+      "match_key": "2025txpla_qm4",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[3355], blue_dq_team_numbers=[]",
+      "event_key": "2025txpla",
+      "match_key": "2025txpla_qm5",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7535]",
+      "event_key": "2025txpla",
+      "match_key": "2025txpla_qm8",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3355]",
+      "event_key": "2025txpla",
+      "match_key": "2025txpla_qm10",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7535], blue_dq_team_numbers=[3355]",
+      "event_key": "2025txpla",
+      "match_key": "2025txpla_qm14",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7535]",
+      "event_key": "2025txpla",
+      "match_key": "2025txpla_qm17",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7535]",
+      "event_key": "2025txpla",
+      "match_key": "2025txpla_qm22",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[7535], blue_dq_team_numbers=[]",
+      "event_key": "2025txpla",
+      "match_key": "2025txpla_qm27",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[3240], blue_dq_team_numbers=[]",
+      "event_key": "2025txsan",
+      "match_key": "2025txsan_qm3",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[6180], blue_dq_team_numbers=[]",
+      "event_key": "2025txtom",
+      "match_key": "2025txtom_qm5",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[6645], blue_dq_team_numbers=[]",
+      "event_key": "2025txtom",
+      "match_key": "2025txtom_qm12",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6645]",
+      "event_key": "2025txtom",
+      "match_key": "2025txtom_qm18",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3728]",
+      "event_key": "2025txtom",
+      "match_key": "2025txtom_qm62",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[8174], blue_dq_team_numbers=[]",
+      "event_key": "2025utwv",
+      "match_key": "2025utwv_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9684]",
+      "event_key": "2025vaale",
+      "match_key": "2025vaale_qm3",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[2199, 2421, 9072], blue_dq_team_numbers=[]",
+      "event_key": "2025vaale",
+      "match_key": "2025vaale_sf9m1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3258]",
+      "event_key": "2025vagle",
+      "match_key": "2025vagle_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[617], blue_dq_team_numbers=[]",
+      "event_key": "2025vagle",
+      "match_key": "2025vagle_qm8",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[3588], blue_dq_team_numbers=[]",
+      "event_key": "2025wasam",
+      "match_key": "2025wasam_qm1",
+      "reason": "dq_affected",
+      "season": 2025
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9401]",
+      "event_key": "2026alhu",
+      "match_key": "2026alhu_qm69",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7163], blue_dq_team_numbers=[]",
+      "event_key": "2026ausc",
+      "match_key": "2026ausc_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10437], blue_dq_team_numbers=[]",
+      "event_key": "2026ausc",
+      "match_key": "2026ausc_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7163], blue_dq_team_numbers=[]",
+      "event_key": "2026ausc",
+      "match_key": "2026ausc_qm9",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7163], blue_dq_team_numbers=[]",
+      "event_key": "2026ausc",
+      "match_key": "2026ausc_qm17",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5985, 8844, 9574], blue_dq_team_numbers=[]",
+      "event_key": "2026ausc",
+      "match_key": "2026ausc_sf5m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5648, 6083, 10002], blue_dq_team_numbers=[]",
+      "event_key": "2026ausc",
+      "match_key": "2026ausc_sf9m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4739, 4788, 6508]",
+      "event_key": "2026ausc",
+      "match_key": "2026ausc_sf12m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11302], blue_dq_team_numbers=[]",
+      "event_key": "2026bcvi",
+      "match_key": "2026bcvi_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11302]",
+      "event_key": "2026bcvi",
+      "match_key": "2026bcvi_qm8",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9406], blue_dq_team_numbers=[]",
+      "event_key": "2026bcvi",
+      "match_key": "2026bcvi_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11302]",
+      "event_key": "2026bcvi",
+      "match_key": "2026bcvi_qm19",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9614]",
+      "event_key": "2026brba",
+      "match_key": "2026brba_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9305], blue_dq_team_numbers=[]",
+      "event_key": "2026brba",
+      "match_key": "2026brba_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9305]",
+      "event_key": "2026brba",
+      "match_key": "2026brba_qm12",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6902], blue_dq_team_numbers=[]",
+      "event_key": "2026brsp",
+      "match_key": "2026brsp_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6902]",
+      "event_key": "2026brsp",
+      "match_key": "2026brsp_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6902], blue_dq_team_numbers=[]",
+      "event_key": "2026brsp",
+      "match_key": "2026brsp_qm19",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5924], blue_dq_team_numbers=[]",
+      "event_key": "2026cacac",
+      "match_key": "2026cacac_qm69",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5027], blue_dq_team_numbers=[]",
+      "event_key": "2026caetb",
+      "match_key": "2026caetb_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10500], blue_dq_team_numbers=[]",
+      "event_key": "2026caetb",
+      "match_key": "2026caetb_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5027]",
+      "event_key": "2026caetb",
+      "match_key": "2026caetb_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5027]",
+      "event_key": "2026caetb",
+      "match_key": "2026caetb_qm15",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5027], blue_dq_team_numbers=[]",
+      "event_key": "2026caetb",
+      "match_key": "2026caetb_qm22",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5027], blue_dq_team_numbers=[]",
+      "event_key": "2026caetb",
+      "match_key": "2026caetb_qm29",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5027]",
+      "event_key": "2026caetb",
+      "match_key": "2026caetb_qm34",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10500]",
+      "event_key": "2026caetb",
+      "match_key": "2026caetb_qm38",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6962, 9400, 10281], blue_dq_team_numbers=[]",
+      "event_key": "2026caetb",
+      "match_key": "2026caetb_sf12m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7607]",
+      "event_key": "2026cahal",
+      "match_key": "2026cahal_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7607]",
+      "event_key": "2026cahal",
+      "match_key": "2026cahal_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4999]",
+      "event_key": "2026calas",
+      "match_key": "2026calas_qm37",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5419], blue_dq_team_numbers=[]",
+      "event_key": "2026cancmp",
+      "match_key": "2026cancmp_qm16",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1323], blue_dq_team_numbers=[]",
+      "event_key": "2026cancmp",
+      "match_key": "2026cancmp_qm61",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5199]",
+      "event_key": "2026caoec",
+      "match_key": "2026caoec_qm34",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1972, 10166]",
+      "event_key": "2026capoh",
+      "match_key": "2026capoh_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2485, 2584, 2984]",
+      "event_key": "2026capoh",
+      "match_key": "2026capoh_sf7m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[670, 846, 9111], blue_dq_team_numbers=[]",
+      "event_key": "2026casac",
+      "match_key": "2026casac_sf10m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[4201, 4322, 5199], blue_dq_team_numbers=[]",
+      "event_key": "2026cascmp",
+      "match_key": "2026cascmp_sf12m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2827]",
+      "event_key": "2026casnd",
+      "match_key": "2026casnd_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[8016], blue_dq_team_numbers=[]",
+      "event_key": "2026casnf",
+      "match_key": "2026casnf_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10281], blue_dq_team_numbers=[10615, 11243]",
+      "event_key": "2026casnf",
+      "match_key": "2026casnf_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11230]",
+      "event_key": "2026casnf",
+      "match_key": "2026casnf_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11243]",
+      "event_key": "2026casnf",
+      "match_key": "2026casnf_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4186]",
+      "event_key": "2026casnf",
+      "match_key": "2026casnf_qm56",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10372]",
+      "event_key": "2026casnv",
+      "match_key": "2026casnv_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6822]",
+      "event_key": "2026casnv",
+      "match_key": "2026casnv_qm62",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6036]",
+      "event_key": "2026caven",
+      "match_key": "2026caven_qm38",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1262]",
+      "event_key": "2026chcmp",
+      "match_key": "2026chcmp_qm75",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1086]",
+      "event_key": "2026chcmp",
+      "match_key": "2026chcmp_qm89",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11256], blue_dq_team_numbers=[]",
+      "event_key": "2026cnsh",
+      "match_key": "2026cnsh_qm49",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6907]",
+      "event_key": "2026cnsh",
+      "match_key": "2026cnsh_qm58",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10266]",
+      "event_key": "2026ctwat",
+      "match_key": "2026ctwat_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5856], blue_dq_team_numbers=[]",
+      "event_key": "2026ctwat",
+      "match_key": "2026ctwat_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5856], blue_dq_team_numbers=[]",
+      "event_key": "2026ctwat",
+      "match_key": "2026ctwat_qm9",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2712]",
+      "event_key": "2026ctwat",
+      "match_key": "2026ctwat_qm29",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2712]",
+      "event_key": "2026ctwat",
+      "match_key": "2026ctwat_qm45",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10922]",
+      "event_key": "2026cur",
+      "match_key": "2026cur_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11304], blue_dq_team_numbers=[]",
+      "event_key": "2026cur",
+      "match_key": "2026cur_qm68",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8725]",
+      "event_key": "2026cur",
+      "match_key": "2026cur_qm116",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1156]",
+      "event_key": "2026dal",
+      "match_key": "2026dal_qm107",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[176, 1325, 6941]",
+      "event_key": "2026dal",
+      "match_key": "2026dal_sf13m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10996]",
+      "event_key": "2026flta",
+      "match_key": "2026flta_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10616]",
+      "event_key": "2026flwp",
+      "match_key": "2026flwp_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10616]",
+      "event_key": "2026flwp",
+      "match_key": "2026flwp_qm9",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11474]",
+      "event_key": "2026flwp",
+      "match_key": "2026flwp_qm26",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6905]",
+      "event_key": "2026gaalb",
+      "match_key": "2026gaalb_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3091]",
+      "event_key": "2026gaalb",
+      "match_key": "2026gaalb_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6905]",
+      "event_key": "2026gaalb",
+      "match_key": "2026gaalb_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3091], blue_dq_team_numbers=[]",
+      "event_key": "2026gaalb",
+      "match_key": "2026gaalb_qm8",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9477], blue_dq_team_numbers=[]",
+      "event_key": "2026gaalb",
+      "match_key": "2026gaalb_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1648, 5074, 9477]",
+      "event_key": "2026gaalb",
+      "match_key": "2026gaalb_sf2m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5828]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[4459], blue_dq_team_numbers=[]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[4459]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm8",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm11",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4459]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm14",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4459]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm17",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[4459], blue_dq_team_numbers=[]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm22",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm24",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4459]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm25",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9582], blue_dq_team_numbers=[]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm28",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[4459], blue_dq_team_numbers=[]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm30",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[4459], blue_dq_team_numbers=[]",
+      "event_key": "2026gacol",
+      "match_key": "2026gacol_qm35",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8849]",
+      "event_key": "2026gadal",
+      "match_key": "2026gadal_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6023], blue_dq_team_numbers=[]",
+      "event_key": "2026gadal",
+      "match_key": "2026gadal_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6023]",
+      "event_key": "2026gadal",
+      "match_key": "2026gadal_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8849]",
+      "event_key": "2026gadal",
+      "match_key": "2026gadal_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4730]",
+      "event_key": "2026gadal",
+      "match_key": "2026gadal_qm9",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5608], blue_dq_team_numbers=[]",
+      "event_key": "2026gadal",
+      "match_key": "2026gadal_qm19",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2974]",
+      "event_key": "2026gadal",
+      "match_key": "2026gadal_qm52",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1002]",
+      "event_key": "2026gadal",
+      "match_key": "2026gadal_qm61",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1795]",
+      "event_key": "2026gagai",
+      "match_key": "2026gagai_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[4509, 8577], blue_dq_team_numbers=[8849]",
+      "event_key": "2026gagai",
+      "match_key": "2026gagai_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1795, 8577]",
+      "event_key": "2026gagai",
+      "match_key": "2026gagai_qm8",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8849]",
+      "event_key": "2026gagai",
+      "match_key": "2026gagai_qm9",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[8849], blue_dq_team_numbers=[]",
+      "event_key": "2026gagai",
+      "match_key": "2026gagai_qm13",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[8849], blue_dq_team_numbers=[]",
+      "event_key": "2026gagai",
+      "match_key": "2026gagai_qm16",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2415]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1795, 9561]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5293], blue_dq_team_numbers=[]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9561], blue_dq_team_numbers=[1795]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2415]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[2415], blue_dq_team_numbers=[1795]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm11",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1795, 2415], blue_dq_team_numbers=[]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm17",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1795]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm24",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1795], blue_dq_team_numbers=[]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm29",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10482]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm31",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1795], blue_dq_team_numbers=[]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm33",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1795]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm36",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1795], blue_dq_team_numbers=[]",
+      "event_key": "2026gagwi",
+      "match_key": "2026gagwi_qm42",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7415]",
+      "event_key": "2026gal",
+      "match_key": "2026gal_qm122",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3928, 4646, 5557], blue_dq_team_numbers=[]",
+      "event_key": "2026iacf",
+      "match_key": "2026iacf_f1m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4702]",
+      "event_key": "2026ilch",
+      "match_key": "2026ilch_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4702]",
+      "event_key": "2026ilch",
+      "match_key": "2026ilch_qm8",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[4702], blue_dq_team_numbers=[]",
+      "event_key": "2026ilch",
+      "match_key": "2026ilch_qm13",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[45, 234, 3176]",
+      "event_key": "2026incmp",
+      "match_key": "2026incmp_sf9m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9530]",
+      "event_key": "2026inmis",
+      "match_key": "2026inmis_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10411], blue_dq_team_numbers=[]",
+      "event_key": "2026inmis",
+      "match_key": "2026inmis_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10411], blue_dq_team_numbers=[]",
+      "event_key": "2026inmis",
+      "match_key": "2026inmis_qm13",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10332], blue_dq_team_numbers=[]",
+      "event_key": "2026inmis",
+      "match_key": "2026inmis_qm67",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11478]",
+      "event_key": "2026isde2",
+      "match_key": "2026isde2_qm47",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5026], blue_dq_team_numbers=[]",
+      "event_key": "2026joh",
+      "match_key": "2026joh_qm14",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6652], blue_dq_team_numbers=[]",
+      "event_key": "2026joh",
+      "match_key": "2026joh_qm40",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1730, 1810, 5098]",
+      "event_key": "2026ksla",
+      "match_key": "2026ksla_sf6m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[16, 3478, 3824]",
+      "event_key": "2026lake",
+      "match_key": "2026lake_sf13m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5563]",
+      "event_key": "2026mabos",
+      "match_key": "2026mabos_qm56",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1761]",
+      "event_key": "2026marea",
+      "match_key": "2026marea_qm46",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6731]",
+      "event_key": "2026marea",
+      "match_key": "2026marea_qm49",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2084]",
+      "event_key": "2026marea",
+      "match_key": "2026marea_qm65",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[236]",
+      "event_key": "2026mawne",
+      "match_key": "2026mawne_qm64",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9101]",
+      "event_key": "2026mawne",
+      "match_key": "2026mawne_qm73",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2067, 2370, 7153]",
+      "event_key": "2026mawne",
+      "match_key": "2026mawne_sf11m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1446], blue_dq_team_numbers=[]",
+      "event_key": "2026mdbet",
+      "match_key": "2026mdbet_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[2914], blue_dq_team_numbers=[]",
+      "event_key": "2026mdbet",
+      "match_key": "2026mdbet_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1727, 4472, 8590], blue_dq_team_numbers=[]",
+      "event_key": "2026mdbet",
+      "match_key": "2026mdbet_sf2m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11211]",
+      "event_key": "2026mdsev",
+      "match_key": "2026mdsev_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11211]",
+      "event_key": "2026mdsev",
+      "match_key": "2026mdsev_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11211], blue_dq_team_numbers=[]",
+      "event_key": "2026mdsev",
+      "match_key": "2026mdsev_qm14",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4505, 9033, 11318]",
+      "event_key": "2026mdsev",
+      "match_key": "2026mdsev_sf13m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8623]",
+      "event_key": "2026mibel",
+      "match_key": "2026mibel_qm39",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[8623], blue_dq_team_numbers=[]",
+      "event_key": "2026mibel",
+      "match_key": "2026mibel_qm43",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[8623], blue_dq_team_numbers=[]",
+      "event_key": "2026mibel",
+      "match_key": "2026mibel_qm50",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[8623], blue_dq_team_numbers=[]",
+      "event_key": "2026mibel",
+      "match_key": "2026mibel_qm54",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7203], blue_dq_team_numbers=[]",
+      "event_key": "2026miber",
+      "match_key": "2026miber_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3620, 6548, 10633], blue_dq_team_numbers=[]",
+      "event_key": "2026miber",
+      "match_key": "2026miber_sf13m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9312]",
+      "event_key": "2026mibkn",
+      "match_key": "2026mibkn_qm48",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1528]",
+      "event_key": "2026mibro",
+      "match_key": "2026mibro_qm66",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1528]",
+      "event_key": "2026mibro",
+      "match_key": "2026mibro_qm71",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1528]",
+      "event_key": "2026mibro",
+      "match_key": "2026mibro_qm78",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5642], blue_dq_team_numbers=[]",
+      "event_key": "2026midtr",
+      "match_key": "2026midtr_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5225]",
+      "event_key": "2026midtr",
+      "match_key": "2026midtr_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5225], blue_dq_team_numbers=[]",
+      "event_key": "2026midtr",
+      "match_key": "2026midtr_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10607], blue_dq_team_numbers=[]",
+      "event_key": "2026midtr",
+      "match_key": "2026midtr_qm62",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4967]",
+      "event_key": "2026miken",
+      "match_key": "2026miken_qm77",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4481]",
+      "event_key": "2026mil",
+      "match_key": "2026mil_qm18",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7594]",
+      "event_key": "2026mil",
+      "match_key": "2026mil_qm32",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3419], blue_dq_team_numbers=[]",
+      "event_key": "2026mil",
+      "match_key": "2026mil_qm120",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11440], blue_dq_team_numbers=[5560]",
+      "event_key": "2026milac",
+      "match_key": "2026milac_qm63",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3537, 7794], blue_dq_team_numbers=[]",
+      "event_key": "2026milac",
+      "match_key": "2026milac_qm65",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6087, 7790]",
+      "event_key": "2026milac",
+      "match_key": "2026milac_qm66",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11440], blue_dq_team_numbers=[5560]",
+      "event_key": "2026milac",
+      "match_key": "2026milac_qm67",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9568], blue_dq_team_numbers=[]",
+      "event_key": "2026milac",
+      "match_key": "2026milac_qm68",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5467], blue_dq_team_numbers=[]",
+      "event_key": "2026miliv",
+      "match_key": "2026miliv_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4375, 8517, 10666]",
+      "event_key": "2026milsu",
+      "match_key": "2026milsu_f1m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[453, 5926, 11493]",
+      "event_key": "2026mimar",
+      "match_key": "2026mimar_sf3m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1940]",
+      "event_key": "2026mimas",
+      "match_key": "2026mimas_qm56",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2137, 7166, 8374]",
+      "event_key": "2026mimas",
+      "match_key": "2026mimas_f1m2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11473]",
+      "event_key": "2026mimil",
+      "match_key": "2026mimil_qm63",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11473]",
+      "event_key": "2026mimil",
+      "match_key": "2026mimil_qm68",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11473], blue_dq_team_numbers=[]",
+      "event_key": "2026mimil",
+      "match_key": "2026mimil_qm76",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8899]",
+      "event_key": "2026misal",
+      "match_key": "2026misal_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9727]",
+      "event_key": "2026misal",
+      "match_key": "2026misal_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9727]",
+      "event_key": "2026misal",
+      "match_key": "2026misal_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[469], blue_dq_team_numbers=[]",
+      "event_key": "2026mitry",
+      "match_key": "2026mitry_qm9",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11361], blue_dq_team_numbers=[]",
+      "event_key": "2026mitry",
+      "match_key": "2026mitry_qm65",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4362]",
+      "event_key": "2026mitry",
+      "match_key": "2026mitry_qm69",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7808]",
+      "event_key": "2026mitvc",
+      "match_key": "2026mitvc_qm67",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1918, 3572, 8397]",
+      "event_key": "2026miwmi",
+      "match_key": "2026miwmi_f1m2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[2503, 2846, 3082], blue_dq_team_numbers=[]",
+      "event_key": "2026mndu",
+      "match_key": "2026mndu_sf13m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3054]",
+      "event_key": "2026mndu2",
+      "match_key": "2026mndu2_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1178], blue_dq_team_numbers=[]",
+      "event_key": "2026mosl",
+      "match_key": "2026mosl_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7474], blue_dq_team_numbers=[]",
+      "event_key": "2026mslr",
+      "match_key": "2026mslr_qm8",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7474]",
+      "event_key": "2026mslr",
+      "match_key": "2026mslr_qm15",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7474], blue_dq_team_numbers=[]",
+      "event_key": "2026mslr",
+      "match_key": "2026mslr_qm22",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9282]",
+      "event_key": "2026mxmo",
+      "match_key": "2026mxmo_qm55",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1533, 2724, 9298], blue_dq_team_numbers=[]",
+      "event_key": "2026ncash",
+      "match_key": "2026ncash_f1m2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2682]",
+      "event_key": "2026nccmp",
+      "match_key": "2026nccmp_qm85",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6004, 9032, 9496], blue_dq_team_numbers=[]",
+      "event_key": "2026nccmp",
+      "match_key": "2026nccmp_sf7m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10412]",
+      "event_key": "2026ncelo",
+      "match_key": "2026ncelo_qm23",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8889]",
+      "event_key": "2026necmp2",
+      "match_key": "2026necmp2_qm60",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[177, 238, 8013]",
+      "event_key": "2026necmp2",
+      "match_key": "2026necmp2_sf4m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10937]",
+      "event_key": "2026nhbed",
+      "match_key": "2026nhbed_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11175], blue_dq_team_numbers=[]",
+      "event_key": "2026nhbed",
+      "match_key": "2026nhbed_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10138]",
+      "event_key": "2026nhbed",
+      "match_key": "2026nhbed_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10366], blue_dq_team_numbers=[10232]",
+      "event_key": "2026njfla",
+      "match_key": "2026njfla_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10232]",
+      "event_key": "2026njfla",
+      "match_key": "2026njfla_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10366], blue_dq_team_numbers=[]",
+      "event_key": "2026njfla",
+      "match_key": "2026njfla_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8771]",
+      "event_key": "2026njfla",
+      "match_key": "2026njfla_qm54",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4637]",
+      "event_key": "2026njtab",
+      "match_key": "2026njtab_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11104]",
+      "event_key": "2026njtab",
+      "match_key": "2026njtab_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[316], blue_dq_team_numbers=[]",
+      "event_key": "2026njwas",
+      "match_key": "2026njwas_qm50",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3171], blue_dq_team_numbers=[]",
+      "event_key": "2026nyli2",
+      "match_key": "2026nyli2_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[335], blue_dq_team_numbers=[]",
+      "event_key": "2026nyn2",
+      "match_key": "2026nyn2_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6880], blue_dq_team_numbers=[]",
+      "event_key": "2026nyn2",
+      "match_key": "2026nyn2_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[335], blue_dq_team_numbers=[]",
+      "event_key": "2026nyn2",
+      "match_key": "2026nyn2_qm13",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[335], blue_dq_team_numbers=[]",
+      "event_key": "2026nyn2",
+      "match_key": "2026nyn2_qm24",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6348]",
+      "event_key": "2026nyn2",
+      "match_key": "2026nyn2_qm35",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6880], blue_dq_team_numbers=[]",
+      "event_key": "2026nyn2",
+      "match_key": "2026nyn2_qm41",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[516, 2869, 3950]",
+      "event_key": "2026nyn2",
+      "match_key": "2026nyn2_sf5m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[8739], blue_dq_team_numbers=[]",
+      "event_key": "2026nyny",
+      "match_key": "2026nyny_qm67",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3204]",
+      "event_key": "2026nysu",
+      "match_key": "2026nysu_qm36",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6648]",
+      "event_key": "2026nytr",
+      "match_key": "2026nytr_qm49",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[27, 4611, 10208], blue_dq_team_numbers=[]",
+      "event_key": "2026ohcl",
+      "match_key": "2026ohcl_f1m2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3277], blue_dq_team_numbers=[]",
+      "event_key": "2026oktu",
+      "match_key": "2026oktu_qm77",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2634]",
+      "event_key": "2026oncmp2",
+      "match_key": "2026oncmp2_qm34",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1241, 1310, 4946], blue_dq_team_numbers=[]",
+      "event_key": "2026oncmp2",
+      "match_key": "2026oncmp2_sf1m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6725]",
+      "event_key": "2026onwat",
+      "match_key": "2026onwat_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6725], blue_dq_team_numbers=[]",
+      "event_key": "2026onwat",
+      "match_key": "2026onwat_qm8",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6725]",
+      "event_key": "2026onwat",
+      "match_key": "2026onwat_qm11",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6725], blue_dq_team_numbers=[]",
+      "event_key": "2026onwat",
+      "match_key": "2026onwat_qm28",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6975]",
+      "event_key": "2026onwel",
+      "match_key": "2026onwel_qm40",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5024]",
+      "event_key": "2026onwin",
+      "match_key": "2026onwin_qm23",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2733]",
+      "event_key": "2026orsal",
+      "match_key": "2026orsal_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3673], blue_dq_team_numbers=[]",
+      "event_key": "2026orsal",
+      "match_key": "2026orsal_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9023], blue_dq_team_numbers=[]",
+      "event_key": "2026orsal",
+      "match_key": "2026orsal_qm25",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3574], blue_dq_team_numbers=[]",
+      "event_key": "2026orwil",
+      "match_key": "2026orwil_qm11",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10143]",
+      "event_key": "2026paben",
+      "match_key": "2026paben_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2614]",
+      "event_key": "2026paca",
+      "match_key": "2026paca_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10300], blue_dq_team_numbers=[]",
+      "event_key": "2026paca",
+      "match_key": "2026paca_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[709], blue_dq_team_numbers=[]",
+      "event_key": "2026pahat",
+      "match_key": "2026pahat_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[816], blue_dq_team_numbers=[]",
+      "event_key": "2026pahat",
+      "match_key": "2026pahat_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11225]",
+      "event_key": "2026pawar",
+      "match_key": "2026pawar_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11225], blue_dq_team_numbers=[]",
+      "event_key": "2026pawar",
+      "match_key": "2026pawar_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[102], blue_dq_team_numbers=[]",
+      "event_key": "2026pawar",
+      "match_key": "2026pawar_qm21",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3550, 8067, 8224]",
+      "event_key": "2026qcmo",
+      "match_key": "2026qcmo_sf1m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10388]",
+      "event_key": "2026sccha",
+      "match_key": "2026sccha_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1293, 1648, 9496], blue_dq_team_numbers=[]",
+      "event_key": "2026sccha",
+      "match_key": "2026sccha_f1m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3489, 6167, 11424]",
+      "event_key": "2026sccmp",
+      "match_key": "2026sccmp_sf3m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3489], blue_dq_team_numbers=[]",
+      "event_key": "2026schar",
+      "match_key": "2026schar_qm25",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11475], blue_dq_team_numbers=[]",
+      "event_key": "2026schop",
+      "match_key": "2026schop_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11475], blue_dq_team_numbers=[9005]",
+      "event_key": "2026schop",
+      "match_key": "2026schop_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11475]",
+      "event_key": "2026schop",
+      "match_key": "2026schop_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11475]",
+      "event_key": "2026schop",
+      "match_key": "2026schop_qm15",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11475], blue_dq_team_numbers=[]",
+      "event_key": "2026schop",
+      "match_key": "2026schop_qm20",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3492], blue_dq_team_numbers=[]",
+      "event_key": "2026tnkn",
+      "match_key": "2026tnkn_qm66",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10216], blue_dq_team_numbers=[10548]",
+      "event_key": "2026tuak",
+      "match_key": "2026tuak_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9479]",
+      "event_key": "2026tuak",
+      "match_key": "2026tuak_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9479, 10216], blue_dq_team_numbers=[]",
+      "event_key": "2026tuak",
+      "match_key": "2026tuak_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9029], blue_dq_team_numbers=[]",
+      "event_key": "2026tuak",
+      "match_key": "2026tuak_qm31",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7672]",
+      "event_key": "2026tuak",
+      "match_key": "2026tuak_qm53",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6874], blue_dq_team_numbers=[]",
+      "event_key": "2026tuak2",
+      "match_key": "2026tuak2_qm24",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7539, 9609, 11300], blue_dq_team_numbers=[]",
+      "event_key": "2026tuak2",
+      "match_key": "2026tuak2_sf1m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9020], blue_dq_team_numbers=[]",
+      "event_key": "2026tuhc",
+      "match_key": "2026tuhc_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10598], blue_dq_team_numbers=[]",
+      "event_key": "2026tuhc",
+      "match_key": "2026tuhc_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9020]",
+      "event_key": "2026tuhc",
+      "match_key": "2026tuhc_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9020]",
+      "event_key": "2026tuhc",
+      "match_key": "2026tuhc_qm18",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10445]",
+      "event_key": "2026tuhc",
+      "match_key": "2026tuhc_qm37",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10383], blue_dq_team_numbers=[]",
+      "event_key": "2026tuhc",
+      "match_key": "2026tuhc_qm44",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[8595, 10598, 11442], blue_dq_team_numbers=[]",
+      "event_key": "2026tuhc",
+      "match_key": "2026tuhc_sf9m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10146], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7296]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10050]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9601], blue_dq_team_numbers=[7296]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9601, 10050], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9601], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm13",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10050]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm14",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9601], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm18",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10050]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm21",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9601]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm26",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9601]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm29",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9601]",
+      "event_key": "2026tuis",
+      "match_key": "2026tuis_qm35",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9610], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis2",
+      "match_key": "2026tuis2_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9468], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis2",
+      "match_key": "2026tuis2_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9468], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis2",
+      "match_key": "2026tuis2_qm11",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9427]",
+      "event_key": "2026tuis2",
+      "match_key": "2026tuis2_qm58",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9468], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis2",
+      "match_key": "2026tuis2_qm61",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10234], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis3",
+      "match_key": "2026tuis3_qm34",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9601], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis4",
+      "match_key": "2026tuis4_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9601]",
+      "event_key": "2026tuis4",
+      "match_key": "2026tuis4_qm8",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9601]",
+      "event_key": "2026tuis4",
+      "match_key": "2026tuis4_qm14",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8079]",
+      "event_key": "2026tuis4",
+      "match_key": "2026tuis4_qm17",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9601]",
+      "event_key": "2026tuis4",
+      "match_key": "2026tuis4_qm20",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9601]",
+      "event_key": "2026tuis4",
+      "match_key": "2026tuis4_qm23",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9601], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis4",
+      "match_key": "2026tuis4_qm26",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2905]",
+      "event_key": "2026tuis4",
+      "match_key": "2026tuis4_qm60",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2905, 6417, 8084]",
+      "event_key": "2026tuis4",
+      "match_key": "2026tuis4_sf11m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10906], blue_dq_team_numbers=[10692]",
+      "event_key": "2026tuis5",
+      "match_key": "2026tuis5_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9483]",
+      "event_key": "2026tuis5",
+      "match_key": "2026tuis5_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11382], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis5",
+      "match_key": "2026tuis5_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7035]",
+      "event_key": "2026tuis5",
+      "match_key": "2026tuis5_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10906]",
+      "event_key": "2026tuis5",
+      "match_key": "2026tuis5_qm9",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10692]",
+      "event_key": "2026tuis5",
+      "match_key": "2026tuis5_qm11",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[11382]",
+      "event_key": "2026tuis5",
+      "match_key": "2026tuis5_qm12",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10906], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis5",
+      "match_key": "2026tuis5_qm14",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[10692], blue_dq_team_numbers=[]",
+      "event_key": "2026tuis5",
+      "match_key": "2026tuis5_qm15",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7271]",
+      "event_key": "2026txama",
+      "match_key": "2026txama_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7271]",
+      "event_key": "2026txama",
+      "match_key": "2026txama_qm19",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7271], blue_dq_team_numbers=[]",
+      "event_key": "2026txbel",
+      "match_key": "2026txbel_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7271], blue_dq_team_numbers=[]",
+      "event_key": "2026txbel",
+      "match_key": "2026txbel_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7091], blue_dq_team_numbers=[]",
+      "event_key": "2026txcl2",
+      "match_key": "2026txcl2_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[5908]",
+      "event_key": "2026txcl2",
+      "match_key": "2026txcl2_qm24",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[8177], blue_dq_team_numbers=[]",
+      "event_key": "2026txcle",
+      "match_key": "2026txcle_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7115]",
+      "event_key": "2026txcle",
+      "match_key": "2026txcle_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8177]",
+      "event_key": "2026txcle",
+      "match_key": "2026txcle_qm6",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7115], blue_dq_team_numbers=[]",
+      "event_key": "2026txcle",
+      "match_key": "2026txcle_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7115]",
+      "event_key": "2026txcle",
+      "match_key": "2026txcle_qm11",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7115], blue_dq_team_numbers=[]",
+      "event_key": "2026txcle",
+      "match_key": "2026txcle_qm18",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3847]",
+      "event_key": "2026txcmp1",
+      "match_key": "2026txcmp1_qm13",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[8177]",
+      "event_key": "2026txcmp2",
+      "match_key": "2026txcmp2_qm17",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7091], blue_dq_team_numbers=[]",
+      "event_key": "2026txfar",
+      "match_key": "2026txfar_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9492], blue_dq_team_numbers=[]",
+      "event_key": "2026txfar",
+      "match_key": "2026txfar_qm4",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7534], blue_dq_team_numbers=[]",
+      "event_key": "2026txfor",
+      "match_key": "2026txfor_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[10032]",
+      "event_key": "2026txfor",
+      "match_key": "2026txfor_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7534], blue_dq_team_numbers=[]",
+      "event_key": "2026txfor",
+      "match_key": "2026txfor_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5212], blue_dq_team_numbers=[]",
+      "event_key": "2026txfor",
+      "match_key": "2026txfor_qm13",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7534]",
+      "event_key": "2026txfor",
+      "match_key": "2026txfor_qm16",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7534], blue_dq_team_numbers=[]",
+      "event_key": "2026txfor",
+      "match_key": "2026txfor_qm19",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7534], blue_dq_team_numbers=[]",
+      "event_key": "2026txfor",
+      "match_key": "2026txfor_qm22",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7534]",
+      "event_key": "2026txfor",
+      "match_key": "2026txfor_qm25",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[7540], blue_dq_team_numbers=[]",
+      "event_key": "2026txfor",
+      "match_key": "2026txfor_qm26",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[7534]",
+      "event_key": "2026txfor",
+      "match_key": "2026txfor_qm29",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[11224], blue_dq_team_numbers=[7088]",
+      "event_key": "2026txman",
+      "match_key": "2026txman_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9506]",
+      "event_key": "2026txman",
+      "match_key": "2026txman_qm45",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9993, 9994, 9998]",
+      "event_key": "2026txmca",
+      "match_key": "2026txmca_sf3m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9991, 9992, 9999]",
+      "event_key": "2026txmca",
+      "match_key": "2026txmca_sf4m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9993, 9994, 9998], blue_dq_team_numbers=[]",
+      "event_key": "2026txmca",
+      "match_key": "2026txmca_sf6m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9993, 9994, 9998]",
+      "event_key": "2026txmca",
+      "match_key": "2026txmca_sf9m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[8732, 9419], blue_dq_team_numbers=[]",
+      "event_key": "2026txsan",
+      "match_key": "2026txsan_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9658], blue_dq_team_numbers=[]",
+      "event_key": "2026txsan",
+      "match_key": "2026txsan_qm2",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[9419]",
+      "event_key": "2026txsan",
+      "match_key": "2026txsan_qm7",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9419], blue_dq_team_numbers=[]",
+      "event_key": "2026txsan",
+      "match_key": "2026txsan_qm16",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3282, 5682]",
+      "event_key": "2026txwac",
+      "match_key": "2026txwac_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5682], blue_dq_team_numbers=[]",
+      "event_key": "2026txwac",
+      "match_key": "2026txwac_qm13",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[359, 5071, 7426], blue_dq_team_numbers=[]",
+      "event_key": "2026utwv",
+      "match_key": "2026utwv_sf11m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[116]",
+      "event_key": "2026vaale",
+      "match_key": "2026vaale_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[116]",
+      "event_key": "2026vaale",
+      "match_key": "2026vaale_qm9",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[116], blue_dq_team_numbers=[]",
+      "event_key": "2026vaale",
+      "match_key": "2026vaale_qm18",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[116]",
+      "event_key": "2026vaale",
+      "match_key": "2026vaale_qm22",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[116]",
+      "event_key": "2026vaale",
+      "match_key": "2026vaale_qm28",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[116]",
+      "event_key": "2026vaale",
+      "match_key": "2026vaale_qm37",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[116]",
+      "event_key": "2026vaale",
+      "match_key": "2026vaale_qm41",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[116], blue_dq_team_numbers=[]",
+      "event_key": "2026vaale",
+      "match_key": "2026vaale_qm49",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[116], blue_dq_team_numbers=[]",
+      "event_key": "2026vaale",
+      "match_key": "2026vaale_qm58",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[9214], blue_dq_team_numbers=[]",
+      "event_key": "2026vache",
+      "match_key": "2026vache_qm46",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1915]",
+      "event_key": "2026vagle",
+      "match_key": "2026vagle_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[2998], blue_dq_team_numbers=[]",
+      "event_key": "2026vagle",
+      "match_key": "2026vagle_qm49",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[4909], blue_dq_team_numbers=[]",
+      "event_key": "2026vtbur",
+      "match_key": "2026vtbur_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[2342], blue_dq_team_numbers=[]",
+      "event_key": "2026vtbur",
+      "match_key": "2026vtbur_qm46",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3393], blue_dq_team_numbers=[]",
+      "event_key": "2026wabon",
+      "match_key": "2026wabon_qm3",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[2929], blue_dq_team_numbers=[]",
+      "event_key": "2026wabon",
+      "match_key": "2026wabon_qm5",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[3393]",
+      "event_key": "2026wabon",
+      "match_key": "2026wabon_qm8",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[492, 2412, 8896], blue_dq_team_numbers=[]",
+      "event_key": "2026wabon",
+      "match_key": "2026wabon_f1m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6350]",
+      "event_key": "2026wasam",
+      "match_key": "2026wasam_qm41",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[2046], blue_dq_team_numbers=[]",
+      "event_key": "2026wasam",
+      "match_key": "2026wasam_qm56",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1294]",
+      "event_key": "2026wasno",
+      "match_key": "2026wasno_qm1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[4682], blue_dq_team_numbers=[]",
+      "event_key": "2026wasno",
+      "match_key": "2026wasno_qm10",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[4682]",
+      "event_key": "2026wasno",
+      "match_key": "2026wasno_qm33",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[2910], blue_dq_team_numbers=[]",
+      "event_key": "2026wasno",
+      "match_key": "2026wasno_qm38",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[2910]",
+      "event_key": "2026wasno",
+      "match_key": "2026wasno_qm41",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[5826], blue_dq_team_numbers=[]",
+      "event_key": "2026wiapp",
+      "match_key": "2026wiapp_qm27",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[3381], blue_dq_team_numbers=[]",
+      "event_key": "2026wiapp",
+      "match_key": "2026wiapp_qm53",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[1259]",
+      "event_key": "2026wiapp",
+      "match_key": "2026wiapp_qm58",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1732, 3197, 10553], blue_dq_team_numbers=[]",
+      "event_key": "2026wicmp",
+      "match_key": "2026wicmp_sf7m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[1306, 2194, 6421], blue_dq_team_numbers=[]",
+      "event_key": "2026wicmp",
+      "match_key": "2026wicmp_f1m1",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[6574], blue_dq_team_numbers=[]",
+      "event_key": "2026wilax",
+      "match_key": "2026wilax_qm62",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[2143], blue_dq_team_numbers=[]",
+      "event_key": "2026wiply",
+      "match_key": "2026wiply_qm31",
+      "reason": "dq_affected",
+      "season": 2026
+    },
+    {
+      "detail": "red_dq_team_numbers=[], blue_dq_team_numbers=[6421]",
+      "event_key": "2026wiply",
+      "match_key": "2026wiply_qm48",
+      "reason": "dq_affected",
+      "season": 2026
+    }
+  ],
+  "manifest": {
+    "build_date": "2026-09-30T22:06:38.644710Z",
+    "code_version": "1.0.0",
+    "content_hash": "54e9d54b5ebe6b11b616f4e72cb402ad0a50cbfc89940632deda23ec5b7dc7bc",
+    "epa_provenance": {
+      "chain_manifest": "chain_e77d9444c57a7b50.json",
+      "seasons": [
+        {
+          "input_fingerprint": "774a4aea5da9b80c2e1819287be6faed6360963d2625b994d5e229040c43f460",
+          "prior_source": null,
+          "results_fingerprint": "6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+          "season": 2024
+        },
+        {
+          "input_fingerprint": "95c6bfc2eb30677a43c120fef3a7545fbcbbd13ed4349573278bd99f8b8490b5",
+          "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+          "results_fingerprint": "4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+          "season": 2025
+        },
+        {
+          "input_fingerprint": "29357e19e2fc7b12f71efb6ad22d9dcdea9cecad903019c863c8104857349aff",
+          "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7,2025=4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+          "results_fingerprint": "8fa397b25c6f5ff926aef47499fde818746732375245c5f0d0b3a74c5569a9e7",
+          "season": 2026
+        }
+      ],
+      "snapshot_verified": true,
+      "source": "stratai"
+    },
+    "epa_source": "stratai",
+    "excluded_by_reason": {
+      "dq_affected": 726,
+      "unplayed": 25
+    },
+    "excluded_count": 751,
+    "include_dq_affected": false,
+    "row_count": 52469,
+    "season_keys": [
+      2024,
+      2025,
+      2026
+    ]
+  },
+  "parquet": "training_frame_54e9d54b5ebe6b11.parquet",
+  "provider_diagnostics": {
+    "season_end": 1053,
+    "served": 260633,
+    "week_one_statistics": 755,
+    "withheld": 54181
+  }
+}

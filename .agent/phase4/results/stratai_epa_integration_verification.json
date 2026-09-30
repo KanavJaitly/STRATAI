@@ -1,0 +1,333 @@
+{
+  "artifacts": {
+    "identical_on_reload": true,
+    "loaded": true,
+    "provenance": {
+      "chain_manifest": "chain_e77d9444c57a7b50.json",
+      "seasons": [
+        {
+          "input_fingerprint": "774a4aea5da9b80c2e1819287be6faed6360963d2625b994d5e229040c43f460",
+          "prior_source": null,
+          "results_fingerprint": "6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+          "season": 2024
+        },
+        {
+          "input_fingerprint": "95c6bfc2eb30677a43c120fef3a7545fbcbbd13ed4349573278bd99f8b8490b5",
+          "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+          "results_fingerprint": "4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+          "season": 2025
+        },
+        {
+          "input_fingerprint": "29357e19e2fc7b12f71efb6ad22d9dcdea9cecad903019c863c8104857349aff",
+          "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7,2025=4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+          "results_fingerprint": "8fa397b25c6f5ff926aef47499fde818746732375245c5f0d0b3a74c5569a9e7",
+          "season": 2026
+        }
+      ],
+      "snapshot_verified": true,
+      "source": "stratai"
+    },
+    "snapshot_verified": true,
+    "team_event_values": 23969
+  },
+  "canonical_database": {
+    "after": {
+      "events": [
+        608,
+        "1c52d854515ab44516c2a69fbbaf738e"
+      ],
+      "match_teams": [
+        319308,
+        "6d4d5172beec4fe20e61b2b421c3d59a"
+      ],
+      "matches": [
+        53220,
+        "0f779f76d76f6738df3ceb5b89a19896"
+      ],
+      "raw_source_payloads": [
+        58676,
+        "6e24210f3f0f9acfe0d76d73d3adbda6"
+      ],
+      "scouting_observations": [
+        0,
+        ""
+      ],
+      "team_event_stats": [
+        0,
+        ""
+      ],
+      "team_metrics": [
+        42,
+        ""
+      ],
+      "teams": [
+        4240,
+        "24c85ec89d69c31a183193d3b58aa6e2"
+      ]
+    },
+    "before": {
+      "events": [
+        608,
+        "1c52d854515ab44516c2a69fbbaf738e"
+      ],
+      "match_teams": [
+        319308,
+        "6d4d5172beec4fe20e61b2b421c3d59a"
+      ],
+      "matches": [
+        53220,
+        "0f779f76d76f6738df3ceb5b89a19896"
+      ],
+      "raw_source_payloads": [
+        58676,
+        "6e24210f3f0f9acfe0d76d73d3adbda6"
+      ],
+      "scouting_observations": [
+        0,
+        ""
+      ],
+      "team_event_stats": [
+        0,
+        ""
+      ],
+      "team_metrics": [
+        42,
+        ""
+      ],
+      "teams": [
+        4240,
+        "24c85ec89d69c31a183193d3b58aa6e2"
+      ]
+    },
+    "unchanged": true
+  },
+  "chain": "C:\\Dev\\StratAI-artifacts\\ratings\\epa-chain\\chain_e77d9444c57a7b50.json",
+  "checks": {
+    "artifacts_integrity_and_reload": true,
+    "canonical_database_unchanged": true,
+    "consumption_without_statbotics": true,
+    "independent_recomputation": true,
+    "methodology_unchanged": true,
+    "readiness": true,
+    "snapshot_resume": true
+  },
+  "consumption": {
+    "deterministic_across_builds": true,
+    "epa_present": 2096,
+    "features_match_provider": true,
+    "network_connections_refused": [],
+    "sample_matches": 400,
+    "settings_default_is_stratai": true,
+    "statbotics_team_event_stats_rows": 0,
+    "team_appearances": 2400
+  },
+  "finished_at": "2026-09-30T21:57:47.229891+00:00",
+  "methodology": {
+    "base": "1a45bf1f27651ba60956064236ecfe7c31ad57b8",
+    "changed_files": [
+      "data/config.py",
+      "docs/ratings/data_contract.md",
+      "docs/ratings/epa_specification.md",
+      "ml/dataset/builder.py",
+      "ml/features/assembler.py",
+      "ml/ratings/__init__.py",
+      "ml/ratings/chain.py",
+      "ml/ratings/epa/__init__.py",
+      "ml/ratings/epa/adapters.py",
+      "ml/ratings/epa/aggregate.py",
+      "ml/ratings/epa/constants.py",
+      "ml/ratings/epa/engine.py",
+      "ml/ratings/epa/exclusions.py",
+      "ml/ratings/epa/initialization.py",
+      "ml/ratings/epa/inputs.py",
+      "ml/ratings/epa/math.py",
+      "ml/ratings/epa/normalization.py",
+      "ml/ratings/epa/rounding.py",
+      "ml/ratings/epa/season.py",
+      "ml/ratings/epa/validation.py",
+      "ml/ratings/epa/year_stats.py",
+      "ml/ratings/provider.py",
+      "ml/ratings/reader.py",
+      "ml/ratings/readiness.py",
+      "ml/ratings/runner.py",
+      "scripts/run_epa_replay.py",
+      "scripts/verify_stratai_epa_integration.py",
+      "tests/ratings_epa_support.py",
+      "tests/test_api_predictions.py",
+      "tests/test_epa_source_selection.py",
+      "tests/test_ml_dataset_builder.py",
+      "tests/test_ml_features_assembler.py",
+      "tests/test_ml_features_auto_points.py",
+      "tests/test_ratings_chain.py",
+      "tests/test_ratings_epa_adapters.py",
+      "tests/test_ratings_epa_determinism.py",
+      "tests/test_ratings_epa_leakage.py",
+      "tests/test_ratings_epa_math.py",
+      "tests/test_ratings_epa_rounding.py",
+      "tests/test_ratings_epa_season.py",
+      "tests/test_ratings_epa_validation.py",
+      "tests/test_ratings_point_in_time.py",
+      "tests/test_ratings_reader.py",
+      "tests/test_ratings_runner.py"
+    ],
+    "head": "3766bd3bb145072737e0086e6d07ac119e243594",
+    "ok": true,
+    "protected_files_changed": []
+  },
+  "ok": true,
+  "readiness": {
+    "counts": {
+      "appearances": 319308,
+      "availability_fallback": 1139,
+      "availability_withheld": 679,
+      "served_expected": 263044,
+      "withheld_no_prior_event": 54446
+    },
+    "missing_examples": [],
+    "ready": true,
+    "seasons": [
+      2024,
+      2025,
+      2026
+    ]
+  },
+  "recomputation": {
+    "prior_sources_identical": true,
+    "results_fingerprints_identical": true,
+    "served_values_identical": true
+  },
+  "replay_verification": {
+    "2024": {
+      "determinism": {
+        "ok": true,
+        "reread_input_identical": true,
+        "reread_issues_identical": true,
+        "rerun_results_fingerprint_identical": true
+      },
+      "performed": true,
+      "resume": {
+        "checks": [
+          {
+            "cut_index": 2741,
+            "records_identical": true,
+            "resumed_after": "2024tnkn_qm44"
+          },
+          {
+            "cut_index": 4244,
+            "records_identical": true,
+            "resumed_after": "2024waahs_qm4"
+          },
+          {
+            "cut_index": 8489,
+            "records_identical": true,
+            "resumed_after": "2024miwmi_qm9"
+          },
+          {
+            "cut_index": 12734,
+            "records_identical": true,
+            "resumed_after": "2024onham_sf6m1"
+          }
+        ],
+        "ok": true
+      }
+    },
+    "2025": {
+      "determinism": {
+        "ok": true,
+        "reread_input_identical": true,
+        "reread_issues_identical": true,
+        "rerun_results_fingerprint_identical": true
+      },
+      "performed": true,
+      "resume": {
+        "checks": [
+          {
+            "cut_index": 2177,
+            "records_identical": true,
+            "resumed_after": "2025camb_f1m2"
+          },
+          {
+            "cut_index": 4466,
+            "records_identical": true,
+            "resumed_after": "2025mimtp_qm73"
+          },
+          {
+            "cut_index": 8933,
+            "records_identical": true,
+            "resumed_after": "2025txfor_qm47"
+          },
+          {
+            "cut_index": 13400,
+            "records_identical": true,
+            "resumed_after": "2025nvlv_sf11m1"
+          }
+        ],
+        "ok": true
+      }
+    },
+    "2026": {
+      "determinism": {
+        "ok": true,
+        "reread_input_identical": true,
+        "reread_issues_identical": true,
+        "rerun_results_fingerprint_identical": true
+      },
+      "performed": true,
+      "resume": {
+        "checks": [
+          {
+            "cut_index": 2401,
+            "records_identical": true,
+            "resumed_after": "2026txcle_f1m2"
+          },
+          {
+            "cut_index": 4593,
+            "records_identical": true,
+            "resumed_after": "2026mdpas_qm54"
+          },
+          {
+            "cut_index": 9186,
+            "records_identical": true,
+            "resumed_after": "2026mdsev_qm7"
+          },
+          {
+            "cut_index": 13779,
+            "records_identical": true,
+            "resumed_after": "2026mibig_qm35"
+          }
+        ],
+        "ok": true
+      }
+    },
+    "offline_recheck": {
+      "results_fingerprint_identical": true,
+      "resume": {
+        "checks": [
+          {
+            "cut_index": 2401,
+            "records_identical": true,
+            "resumed_after": "2026txcle_f1m2"
+          },
+          {
+            "cut_index": 4593,
+            "records_identical": true,
+            "resumed_after": "2026mdpas_qm54"
+          },
+          {
+            "cut_index": 9186,
+            "records_identical": true,
+            "resumed_after": "2026mdsev_qm7"
+          },
+          {
+            "cut_index": 13779,
+            "records_identical": true,
+            "resumed_after": "2026mibig_qm35"
+          }
+        ],
+        "ok": true
+      },
+      "season": 2026
+    }
+  },
+  "started_at": "2026-09-30T21:54:55.416513+00:00"
+}
