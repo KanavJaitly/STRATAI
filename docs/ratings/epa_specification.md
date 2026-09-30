@@ -163,6 +163,18 @@ contract §4); where they are absent it must say so and apply the reference's
 own rookie rule only to genuine rookies, never as a silent stand-in for
 missing history. Resolving the chain is a later, separately approved milestone.
 
+**How much the start matters (measured, 2025 real data).** attrib = epa + err/3
+and err contains the team's own rating, so a team's rating updates as
+epa ← (1 − p/3)·epa + …, not (1 − p)·epa + …. An error in one team's
+starting value therefore persists far longer than the step size suggests:
+shifting a single team's start by +10 leaves about +4.9 after 6 qualifying
+matches, +2.3 after 12, +1.3 after 20 and +0.6 after 30 (teams 118, 1678,
+254). A shift applied to every team at once washes out within about 12
+matches, since only relative starts affect the error. Without prior history,
+teams are therefore mis-ranked relative to one another through roughly their
+first one or two events; this is the largest known source of difference from
+Statbotics' published 2024-2026 values.
+
 ## 5. Per-match procedure **[CODE]** `backend/src/models/template.py:54-99`
 
 For each match in order (§2.3):
