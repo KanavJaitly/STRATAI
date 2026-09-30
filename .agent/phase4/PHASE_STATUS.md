@@ -1,10 +1,10 @@
 Phase: 4
 
-Current Milestone: M04 (M05, M06, M07, M11 also code-complete; M08, M09, M10, M12 ACCEPTED — see below)
+Current Milestone: M05 — FAILED its real-data acceptance gate (D5); ESCALATED under D9 (2026-09-30)
 
-Status: IN_PROGRESS — M04/M05/M06/M07 code complete, real-number freezes still blocked on Statbotics. M08/M09/M10/M12 fully accepted (none needed real data). M11 code complete 2026-09-29 (D4/D12), NOT accepted: its generalization criterion needs the real held-out 2026 numbers (scripts/run_m11_generalization.py); no M11_ACCEPTANCE.md.
+Status: BLOCKED ON HUMAN DECISION — EPA provider switched to STRATAI (D15); integration verified. M04 ACCEPTED on real data (M04_ACCEPTANCE.md). M05 ranking model held-out 2026 Spearman 0.3903 vs frozen raw-EPA baseline 0.5951: gate not met, reproducible, no implementation defect found (M05_ESCALATION.md). Per D9 execution stopped at M05: M06, M07, M11 not run on real data; M13 not started. M08/M09/M10/M12 remain ACCEPTED.
 
-Current Stage: Phase H — regression verification complete; awaiting external dependency to close M04's (and M05's, M06's, M07's) acceptance gate
+Current Stage: Stopped — awaiting Kanav's decision on M05 (see M05_ESCALATION.md). Also queued for Kanav: M07's band check cannot pass for a well-calibrated model as implemented (see M05_ESCALATION.md, "Found ahead").
 
 Completed (pre-Phase-Execution-Mode, recorded in RUNNING_NOTES.md only):
 - M01 ACCEPTED (2026-09-21)

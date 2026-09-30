@@ -1,0 +1,87 @@
+{
+  "baseline_spearman": 0.5951239027959856,
+  "baseline_top8_recall": 0.6472355769230769,
+  "best_iteration": 2,
+  "feature_gain_share": {
+    "average_auto_points": 0.04918322317422028,
+    "average_score": 0.03985880793867558,
+    "consistency_rating": 0.07328830228385146,
+    "epa_auto": 0.03644492755735277,
+    "epa_endgame": 0.031373297588774086,
+    "epa_teleop": 0.034603538519985086,
+    "epa_total": 0.5926705469312862,
+    "matches_considered": 0.05059784188713899,
+    "matches_used": 0.05916991654172587,
+    "score_stddev": 0.03280959757698967
+  },
+  "frame_content_hash": "54e9d54b5ebe6b11b616f4e72cb402ad0a50cbfc89940632deda23ec5b7dc7bc",
+  "gate_d5_strictly_beats_baseline_spearman": false,
+  "label_shuffle": {
+    "aggregate": {
+      "accuracy": null,
+      "brier_score": null,
+      "calibration_error": null,
+      "excluded_count": 5,
+      "fold_label": "aggregate",
+      "log_loss": null,
+      "roc_auc": null,
+      "row_count": 208,
+      "season": null,
+      "spearman": 0.24913082852257934,
+      "top_k_recall": 0.3407451923076923
+    },
+    "folds": [
+      {
+        "accuracy": null,
+        "brier_score": null,
+        "calibration_error": null,
+        "excluded_count": 5,
+        "fold_label": "hold_out_season_2026 (labels shuffled)",
+        "log_loss": null,
+        "roc_auc": null,
+        "row_count": 208,
+        "season": 2026,
+        "spearman": 0.24913082852257934,
+        "top_k_recall": 0.3407451923076923
+      }
+    ],
+    "mode": "ranking",
+    "split_strategy": "hold_out_season"
+  },
+  "milestone": "M05",
+  "model": {
+    "aggregate": {
+      "accuracy": null,
+      "brier_score": null,
+      "calibration_error": null,
+      "excluded_count": 5,
+      "fold_label": "aggregate",
+      "log_loss": null,
+      "roc_auc": null,
+      "row_count": 208,
+      "season": null,
+      "spearman": 0.3902912694090953,
+      "top_k_recall": 0.5132211538461539
+    },
+    "folds": [
+      {
+        "accuracy": null,
+        "brier_score": null,
+        "calibration_error": null,
+        "excluded_count": 5,
+        "fold_label": "hold_out_season_2026",
+        "log_loss": null,
+        "roc_auc": null,
+        "row_count": 208,
+        "season": 2026,
+        "spearman": 0.3902912694090953,
+        "top_k_recall": 0.5132211538461539
+      }
+    ],
+    "mode": "ranking",
+    "split_strategy": "hold_out_season"
+  },
+  "model_summary": "Backtest: ranking (hold_out_season)\n  hold_out_season_2026: n=208, excluded=5, spearman=0.3903, top_k_recall=0.5132\n  aggregate: n=208, excluded=5, spearman=0.3903, top_k_recall=0.5132",
+  "ran_at": "2026-09-30T22:09:25.122292+00:00",
+  "reproducible": true
+}
