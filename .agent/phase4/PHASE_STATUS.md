@@ -277,6 +277,26 @@ Decisions — Kanav, 2026-09-29 (authoritative for Phase 4 from here on):
   FLAGGED FOR KANAV'S REVIEW in the PR: it changes accepted M1 behaviour.
 - D14 Data-build dump checkpoint approved (docs/phase4_automation.md §3).
 
+Decision D15 -- Kanav, 2026-09-30 (supersedes the Statbotics dependency only):
+- EPA provider = STRATAI's own EPA engine (ml/ratings, docs/ratings/). Path:
+  TBA/raw -> canonical DB -> STRATAI EPA -> Phase 4. Statbotics is an optional
+  external validation/reference source only, never a runtime dependency. This
+  supersedes the "Statbotics EPA" wording of the spec (M1 feature source, M4
+  baseline) and the "never substituted" EPA rule for the provider only.
+- Unchanged, explicitly: M4-M12 definitions, feature definitions and
+  TEAM_FEATURE_NAMES, baselines, D7 split, D5/D6 metrics and thresholds,
+  calibration requirements, leakage rules, D9 stop rule, M13 human sign-off.
+- Prior-season initialization: bounded chain 2024 -> 2025 -> 2026 from STRATAI's
+  own earlier norm EPA (ml/ratings/chain.py); 2002-2023 not reconstructed.
+- EPA selection: D13 unchanged, applied to STRATAI team-event values; STRATAI
+  additionally removes candidates not yet knowable at as_of (available_at:
+  season-end values; week-1 statistics incomplete). Week-1 look-ahead of the
+  EPA calculation itself is preserved and documented (data contract §9).
+- Execution for this run: local PostgreSQL (the synced 2024-2026 data), $0,
+  interactive session; PR #29's unattended automation left intact.
+- Three claims are reported separately: STRATAI EPA provider correctness,
+  Phase 4 model performance, Statbotics parity (not claimed).
+
 Consequences recorded 2026-09-29:
 - M13 requires a dated HUMAN sign-off in RUNNING_NOTES.md, so unattended
   execution can at most bring M13 to "awaiting sign-off"; the Phase

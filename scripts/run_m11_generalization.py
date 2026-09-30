@@ -72,6 +72,38 @@ def generalization_checks(
     ]
 
 
+def _read_only_database(settings):
+    from database.connection import DatabaseConfig
+    from database.readonly import ReadOnlySessionDatabase
+
+    return ReadOnlySessionDatabase(DatabaseConfig(settings.database_url))
+
+
+def _stratai_readiness_problems(settings, readiness) -> list[str]:
+    """D8's non-EPA requirements from its report, plus STRATAI EPA readiness."""
+    from automation.data_readiness import BREAKDOWN_INVALID, BREAKDOWN_RAW_MISSING, UNKNOWN
+    from ml.ratings.provider import default_point_in_time_provider
+    from ml.ratings.readiness import assess_stratai_readiness
+
+    problems: list[str] = []
+    if readiness.status == UNKNOWN:
+        problems.extend(readiness.reasons)
+    for season, counts in readiness.score_breakdown_counts.items():
+        for status in (BREAKDOWN_INVALID, BREAKDOWN_RAW_MISSING):
+            if counts.get(status):
+                problems.append(f"{season}: {counts[status]} completed match(es) {status}")
+    if readiness.rankings_missing or not readiness.rankings_events_required:
+        problems.append(f"held-out final rankings missing for {len(readiness.rankings_missing)} of "
+                        f"{readiness.rankings_events_required} events")
+    database = _read_only_database(settings)
+    stratai = assess_stratai_readiness(database, default_point_in_time_provider(database, settings),
+                                       [*TRAIN_SEASONS, HELD_OUT_SEASON])
+    print(f"STRATAI EPA readiness: {stratai.to_dict()['counts']}")
+    if not stratai.ready:
+        problems.append(f"STRATAI EPA not ready: {stratai.to_dict()}")
+    return problems
+
+
 def main() -> int:
     from data.config import Settings
     from data.rankings import read_final_ranks_for_season
@@ -84,11 +116,24 @@ def main() -> int:
     from ml.models.win_prob import WinProbXGBModel
     from scripts.run_m4_baseline_backtest import _split_epa_complete
 
-    database = Database(DatabaseConfig(Settings().database_url))
+    settings = Settings()
+    database = Database(DatabaseConfig(settings.database_url))
     readiness = assess_readiness(database)
-    if readiness.status != COMPLETE:
-        print(f"REFUSED: historical data readiness is {readiness.status}: {readiness.reasons}")
-        return 2
+    if settings.epa_source == "statbotics":
+        if readiness.status != COMPLETE:
+            print(f"REFUSED: historical data readiness is {readiness.status}: {readiness.reasons}")
+            return 2
+    else:
+        # Decision D15: EPA comes from STRATAI. D8's breakdown and final-ranking
+        # requirements still apply unchanged; its EPA half is specific to
+        # team_event_stats, so the STRATAI source is gated by its own
+        # equivalent (ml.ratings.readiness). Reads go through one read-only
+        # session: the same rows, and no writes are possible.
+        refused = _stratai_readiness_problems(settings, readiness)
+        if refused:
+            print(f"REFUSED: historical data readiness (STRATAI EPA): {refused}")
+            return 2
+        database = _read_only_database(settings)
 
     frame = build_training_frame(database, [*TRAIN_SEASONS, HELD_OUT_SEASON])
     fold = hold_out_season_split(frame.rows, held_out_season=HELD_OUT_SEASON)
