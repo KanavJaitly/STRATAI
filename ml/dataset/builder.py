@@ -131,6 +131,7 @@ from data.pipeline import OBJECT_TYPE_MATCH, SOURCE_TBA
 from data.staging.normalizer import parse_tba_team_number
 from database.connection import Database
 from ml.features.assembler import MatchFeatureRow, TeamFeatures, build_match_feature_row
+from ml.ratings.provider import PointInTimeEpaProvider, default_point_in_time_provider
 
 __all__ = [
     "DATASET_BUILDER_VERSION",
@@ -254,6 +255,11 @@ class DatasetManifest(BaseModel):
     excluded_count: int
     excluded_by_reason: dict[str, int]
     content_hash: str
+    # Which EPA source the features were built from (ml.ratings.provider), and
+    # that source's own provenance. content_hash already covers the EPA values
+    # themselves, since they are part of every row.
+    epa_source: str | None = None
+    epa_provenance: dict[str, Any] = Field(default_factory=dict)
 
 
 class TrainingFrameResult(BaseModel):
@@ -471,6 +477,7 @@ def _utcnow() -> datetime:
 
 def build_training_frame(
     database: Database, season_keys: Sequence[int], *, include_dq_affected: bool = False,
+    epa_provider: PointInTimeEpaProvider | None = None,
 ) -> TrainingFrameResult:
     """Build the labeled training frame for every qualifying match in these seasons.
 
@@ -491,6 +498,7 @@ def build_training_frame(
     content_hash -- see _fetch_season_matches' own ORDER BY for how row
     order is pinned regardless of season_keys' input order.
     """
+    provider = epa_provider or default_point_in_time_provider(database)
     match_rows = _fetch_season_matches(database, season_keys)
 
     excluded: list[ExcludedMatch] = []
@@ -544,7 +552,9 @@ def build_training_frame(
                 ))
                 continue
 
-        feature_row: MatchFeatureRow = build_match_feature_row(database, match_key, as_of=scheduled_time)
+        feature_row: MatchFeatureRow = build_match_feature_row(
+            database, match_key, as_of=scheduled_time, epa_provider=provider,
+        )
         assert feature_row.event_key == event_key and feature_row.season == season, (
             f"build_match_feature_row returned event_key/season {feature_row.event_key!r}/{feature_row.season!r} "
             f"inconsistent with matches row {event_key!r}/{season!r} for {match_key!r}"
@@ -584,6 +594,8 @@ def build_training_frame(
         excluded_count=len(excluded),
         excluded_by_reason=excluded_by_reason,
         content_hash=content_hash,
+        epa_source=provider.source,
+        epa_provenance=provider.provenance(),
     )
 
     return TrainingFrameResult(rows=rows, excluded=excluded, manifest=manifest)

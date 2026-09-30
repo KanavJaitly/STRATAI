@@ -31,8 +31,9 @@ from typing import Any
 
 from database.connection import Database
 from ml.backtest.metrics import accuracy, brier_score, expected_calibration_error, log_loss
+from ml.ratings.chain import CHAIN_SEASONS, prior_coverage, prior_from_results, team_districts_from_events
 from ml.ratings.epa import exclusions as ex
-from ml.ratings.epa.constants import REFERENCE_COMMIT
+from ml.ratings.epa.constants import ISR_DISTRICT, REFERENCE_COMMIT
 from ml.ratings.epa.engine import EpaEngine
 from ml.ratings.epa.inputs import PriorSeasonInput, SeasonInput, canonical_json, canonical_season_payload
 from ml.ratings.epa.season import SeasonResult, run_season, start_engine
@@ -63,6 +64,16 @@ class SeasonReplay:
     season_input: SeasonInput
     result: SeasonResult
     report: dict[str, Any]
+
+
+def engine_input(read: ReadResult, prior: PriorSeasonInput | None) -> tuple[SeasonInput, tuple[int, ...]]:
+    """The read input plus explicit prior history; with a prior, team districts are
+    derived from the district events played (ml.ratings.chain). Returns the input and
+    the teams whose district could not be derived consistently."""
+    if prior is None:
+        return read.season_input, ()
+    districts, conflicts = team_districts_from_events(read.season_input)
+    return read.season_input.model_copy(update={"prior": prior, "team_districts": districts}), conflicts
 
 
 # --- verification ------------------------------------------------------------------
@@ -136,9 +147,10 @@ def _breakdown_quality(prepared: PreparedSeason) -> dict[str, Any]:
 
 
 def build_execution_report(read: ReadResult, season_input: SeasonInput, result: SeasonResult,
-                           verification: dict[str, Any]) -> dict[str, Any]:
+                           verification: dict[str, Any], district_conflicts: tuple[int, ...] = ()) -> dict[str, Any]:
     """Everything the milestone asks the per-season report to show, as plain data."""
     prepared = prepare_season(season_input)
+    districts = season_input.team_districts
     report = result.report
     counts = report.counts
     reader_counts = Counter((i.code, i.effect) for i in read.issues)
@@ -194,6 +206,17 @@ def build_execution_report(read: ReadResult, season_input: SeasonInput, result: 
             "team_seasons": len(result.team_seasons),
             "norm_computed": result.norm_computed,
         },
+        "initialization": {
+            "label": result.initialization,
+            "prior_source": None if season_input.prior is None else season_input.prior.source,
+            "coverage": prior_coverage(season_input, prepared.teams),
+            "team_districts_derived": districts is not None,
+            "teams_with_district": 0 if districts is None else sum(1 for t in prepared.teams if t in districts),
+            "isr_teams_without_mean_reversion": 0 if districts is None or result.season != 2026
+            else sum(1 for t in prepared.teams if districts.get(t) == ISR_DISTRICT),
+            "district_conflicts": list(district_conflicts),
+        },
+        "availability": result.availability.to_dict(),
         "year_stats": result.stats.to_dict(),
         "week_one_lookahead": {
             "week_one_matches": sum(1 for m in prepared.stream if m.week == 1),
@@ -223,14 +246,13 @@ def replay_season(database: Database, season: int, *, prior: PriorSeasonInput | 
                   event_keys: list[str] | None = None) -> SeasonReplay:
     """Read, run, verify and report one season. Writes nothing."""
     read = read_season_input(database, season, event_keys=event_keys)
-    season_input = read.season_input.model_copy(update={"prior": prior})
+    season_input, conflicts = engine_input(read, prior)
     logger.info("season %s: %s events, %s matches read", season, len(season_input.events), len(season_input.matches))
     result = run_season(season_input, compute_norm=compute_norm, data_snapshot=read.snapshot)
     verification: dict[str, Any] = {"performed": verify}
     if verify:
         reread = read_season_input(database, season, event_keys=event_keys)
-        rerun = run_season(reread.season_input.model_copy(update={"prior": prior}), compute_norm=compute_norm,
-                           data_snapshot=reread.snapshot)
+        rerun = run_season(engine_input(reread, prior)[0], compute_norm=compute_norm, data_snapshot=reread.snapshot)
         verification["determinism"] = {
             "reread_input_identical": canonical_json(canonical_season_payload(reread.season_input))
             == canonical_json(canonical_season_payload(read.season_input)),
@@ -241,8 +263,32 @@ def replay_season(database: Database, season: int, *, prior: PriorSeasonInput | 
         verification["resume"] = verify_resume(season_input, result)
         logger.info("season %s: determinism %s, resume %s", season, verification["determinism"]["ok"],
                     verification["resume"]["ok"])
-    report = build_execution_report(read, season_input, result, verification)
+    report = build_execution_report(read, season_input, result, verification, conflicts)
     return SeasonReplay(season, read, season_input, result, report)
+
+
+def replay_chain(database: Database, seasons: tuple[int, ...] = CHAIN_SEASONS, *, compute_norm: bool = True,
+                 verify: bool = True) -> list[SeasonReplay]:
+    """Replay consecutive seasons, each starting from the two before it (ml.ratings.chain)."""
+    if list(seasons) != list(range(seasons[0], seasons[0] + len(seasons))):
+        raise ValueError(f"chain seasons must be consecutive, got {seasons}")
+    replays: list[SeasonReplay] = []
+    for season in seasons:
+        prior = prior_from_results(season, [r.result for r in replays[-2:]])
+        replays.append(replay_season(database, season, prior=prior, compute_norm=compute_norm, verify=verify))
+    return replays
+
+
+def chain_manifest(replays: list[SeasonReplay], directories: list[Path]) -> dict[str, Any]:
+    """What a chained run produced, in order, with each season's prior source."""
+    return {
+        "chain": [
+            {"season": r.season, "directory": d.name, "results_fingerprint": r.result.results_fingerprint(),
+             "input_fingerprint": r.result.manifest["input_fingerprint"],
+             "prior_source": None if r.season_input.prior is None else r.season_input.prior.source}
+            for r, d in zip(replays, directories, strict=True)
+        ],
+    }
 
 
 # --- artifacts ---------------------------------------------------------------------
@@ -293,6 +339,18 @@ def write_artifacts(out_root: Path, replay: SeasonReplay) -> tuple[Path, bool]:
         (directory / name).write_bytes(data)
     (directory / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return directory, True
+
+
+def write_once_json(path: Path, value: Any) -> tuple[Path, bool]:
+    """Write JSON unless an identical file exists; refuse to replace a different one."""
+    text = json.dumps(value, indent=2, sort_keys=True) + "\n"
+    if path.exists():
+        if path.read_text(encoding="utf-8") != text:
+            raise FileExistsError(f"{path} holds different content; refusing to overwrite")
+        return path, False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return path, True
 
 
 # --- rendering ---------------------------------------------------------------------
@@ -348,6 +406,17 @@ def render_execution_report(report: dict[str, Any]) -> str:
                 ("Match records", out["match_records"]), ("Team-events", out["team_events"]),
                 ("Team-events using season-end rating (look-ahead)", out["team_events_season_end_lookahead"]),
                 ("Team-seasons", out["team_seasons"]), ("Norm computed", out["norm_computed"])]),
+        "",
+        "## Initialization",
+        _table([("Label", report["initialization"]["label"]),
+                ("Prior source", report["initialization"]["prior_source"] or "none"),
+                ("Teams by prior seasons", _fmt(report["initialization"]["coverage"])),
+                ("Team districts derived from events", report["initialization"]["team_districts_derived"]),
+                ("2026 isr teams (no mean reversion)", report["initialization"]["isr_teams_without_mean_reversion"]),
+                ("District conflicts", len(report["initialization"]["district_conflicts"]))]),
+        "",
+        "## Availability (a value may be used only strictly after this time)",
+        _table([(k, v) for k, v in report["availability"].items()]),
         "",
         "## Week-1 statistics and look-ahead",
         _table([(k, _fmt(v)) for k, v in report["year_stats"].items() if k != "comp_means"]

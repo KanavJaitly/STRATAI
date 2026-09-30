@@ -57,6 +57,13 @@ TEAMS = (T_CHAMPS, T_DCMP, T_TIE)
 NO_SHOW = ("9961zzznoshow", 9961, date(9961, 5, 1))
 
 
+@pytest.fixture(autouse=True)
+def _statbotics_reference_epa_source(monkeypatch):
+    """These tests exercise EPA selection over sentinel team_event_stats rows, i.e.
+    the Statbotics reference source (ml.ratings.provider); production uses STRATAI."""
+    monkeypatch.setenv("EPA_SOURCE", "statbotics")
+
+
 def _database_available() -> bool:
     try:
         with psycopg.connect(str(Settings().database_url), connect_timeout=3):

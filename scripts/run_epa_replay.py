@@ -9,18 +9,26 @@ Usage:
 
     python -m scripts.run_epa_replay --season 2024 --season 2025 --season 2026 --out ../StratAI-artifacts/ratings/epa
     python -m scripts.run_epa_replay --season 2025 --out DIR --prior prior_2025.json   # explicit prior history
+    python -m scripts.run_epa_replay --chain --season 2024 --season 2025 --season 2026 --out DIR
+
+--chain runs consecutive seasons in order, each initialized from STRATAI's own
+two previous seasons (ml.ratings.chain), and writes chain_<hash>.json next to
+the season directories. Without --chain every season has no prior history
+unless --prior supplies it.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import logging
 from pathlib import Path
 
 from data.config import Settings
 from database.connection import Database, DatabaseConfig
 from ml.ratings.epa.inputs import PriorSeasonInput
-from ml.ratings.runner import replay_season, write_artifacts
+from ml.ratings.runner import chain_manifest, replay_chain, replay_season, write_artifacts, write_once_json
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -28,24 +36,38 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--season", type=int, action="append", required=True)
     parser.add_argument("--out", type=Path, required=True, help="artifact root; one subdirectory per season run")
     parser.add_argument("--prior", type=Path, help="PriorSeasonInput JSON; omitted = no prior-season history")
+    parser.add_argument("--chain", action="store_true", help="initialize each season from the previous two")
     parser.add_argument("--event", action="append", help="limit to these event keys (smoke runs)")
     parser.add_argument("--no-verify", action="store_true", help="skip the determinism and resume checks")
     parser.add_argument("--no-norm", action="store_true", help="skip the scipy norm-EPA fit")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
+    if args.chain and (args.prior is not None or args.event or args.no_norm):
+        parser.error("--chain derives the prior itself and needs whole seasons with norm EPA")
     prior = None if args.prior is None else PriorSeasonInput.model_validate_json(args.prior.read_text(encoding="utf-8"))
     database = Database(DatabaseConfig(Settings().database_url))
+    if args.chain:
+        replays = replay_chain(database, tuple(args.season), verify=not args.no_verify)
+    else:
+        replays = [replay_season(database, season, prior=prior, compute_norm=not args.no_norm,
+                                 verify=not args.no_verify, event_keys=args.event) for season in args.season]
     exit_code = 0
-    for season in args.season:
-        replay = replay_season(database, season, prior=prior, compute_norm=not args.no_norm,
-                               verify=not args.no_verify, event_keys=args.event)
+    directories = []
+    for replay in replays:
+        season = replay.season
         directory, written = write_artifacts(args.out, replay)
+        directories.append(directory)
         verification = replay.report["verification"]
         ok = not verification["performed"] or (verification["determinism"]["ok"] and verification["resume"]["ok"])
         exit_code = exit_code or (0 if ok else 1)
         print(f"{season}: {'written' if written else 'identical artifact already present'} {directory}"
               f" | results {replay.result.results_fingerprint()[:16]} | verification {'ok' if ok else 'FAILED'}")
+    if args.chain:
+        manifest = chain_manifest(replays, directories)
+        digest = hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()[:16]
+        path, written = write_once_json(args.out / f"chain_{digest}.json", manifest)
+        print(f"chain: {'written' if written else 'identical manifest already present'} {path}")
     return exit_code
 
 
