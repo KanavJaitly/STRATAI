@@ -62,6 +62,13 @@ _TEAM_UNKNOWN = 999799  # never rostered at this event at all
 _ALL_SENTINEL_TEAMS = _TEAM_RED + _TEAM_BLUE + _TEAM_EMPTY
 
 
+@pytest.fixture(autouse=True)
+def _statbotics_reference_epa_source(monkeypatch):
+    """These tests exercise EPA selection over sentinel team_event_stats rows, i.e.
+    the Statbotics reference source (ml.ratings.provider); production uses STRATAI."""
+    monkeypatch.setenv("EPA_SOURCE", "statbotics")
+
+
 def _database_available() -> bool:
     try:
         with psycopg.connect(str(Settings().database_url), connect_timeout=3):

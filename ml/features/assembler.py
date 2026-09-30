@@ -34,7 +34,9 @@ unmodified, so the *math* is identical to Phase 3's, only the *input rows*
 differ. This is additive, not a change to Kanav's M3-M10 computation logic --
 none of those modules are touched, only called.
 
-EPA (Statbotics team_event_stats) gets a stricter, structurally different
+EPA comes from the configured EPA source (ml.ratings.provider): STRATAI's own
+EPA engine in production, Statbotics' team_event_stats as an optional
+reference. Either way it gets a stricter, structurally different
 rule, documented in full at _point_in_time_epa below: team_event_stats has no
 historical/versioned series at all (one row per team/event, continuously
 overwritten by however Statbotics last reported it), so there is no way to
@@ -64,8 +66,16 @@ from data.metrics.statistics import (
 )
 from database.connection import Database
 from ml.features.score_breakdown import auto_points
+from ml.ratings.provider import (
+    EPA_SOURCE_SQL,
+    EPA_WITHHELD_NO_PRIOR_EVENT,
+    PointInTimeEpaProvider,
+    TeamEventEpa,
+    default_point_in_time_provider,
+)
 
 __all__ = [
+    "EPA_SOURCE_SQL",
     "EPA_WITHHELD_NO_PRIOR_EVENT",
     "MatchFeatureRow",
     "build_team_features",
@@ -73,37 +83,12 @@ __all__ = [
     "build_match_feature_row",
 ]
 
-# The one reason this module currently ever withholds EPA. A single constant
-# (not a set of finer-grained reasons) because the query that produces it
-# already collapses every distinguishable cause -- "team has no other event
-# at all" and "team's other events haven't concluded before as_of" -- into one
-# "nothing qualified" result; see _point_in_time_epa's own docstring for why
-# splitting them further isn't worth the complexity it would add.
-EPA_WITHHELD_NO_PRIOR_EVENT = "no_prior_concluded_event_epa"
+# The withheld reason and the D13 selection SQL live with the EPA source
+# boundary (ml.ratings.provider) and are re-exported here under their original
+# names: EPA_WITHHELD_NO_PRIOR_EVENT is still the one reason this module ever
+# withholds EPA (see _point_in_time_epa), and EPA_SOURCE_SQL is still the rule
+# automation/data_readiness.py mirrors for the Statbotics source.
 
-# The point-in-time EPA source rule; see _point_in_time_epa for the reasoning.
-# "Completed" = the team's own alliance score is recorded, the same played
-# test data.metrics.history applies.
-EPA_SOURCE_SQL = """
-SELECT tes.event_key, tes.epa_total, tes.epa_auto, tes.epa_teleop, tes.epa_endgame
-FROM team_event_stats tes
-JOIN events e ON e.event_key = tes.event_key
-JOIN LATERAL (
-    SELECT MAX(m.scheduled_time) AS last_completed_match
-    FROM match_teams mt
-    JOIN matches m ON m.match_key = mt.match_key
-    WHERE mt.team_number = tes.team_number
-      AND m.event_key = tes.event_key
-      AND m.scheduled_time IS NOT NULL
-      AND (CASE WHEN mt.alliance_color = 'red' THEN m.score_red ELSE m.score_blue END) IS NOT NULL
-) lm ON lm.last_completed_match < %(as_of)s
-WHERE tes.team_number = %(team)s
-  AND tes.event_key != %(target)s
-  AND e.end_date IS NOT NULL
-  AND e.end_date::timestamptz < %(as_of)s
-ORDER BY e.end_date DESC, lm.last_completed_match DESC, tes.event_key ASC
-LIMIT 1
-"""
 
 
 class TeamFeatures(BaseModel):
@@ -466,9 +451,20 @@ def _point_in_time_observations(
 
 def _point_in_time_epa(
     database: Database, team_number: int, target_event_key: str, as_of: datetime,
+    epa_provider: PointInTimeEpaProvider | None = None,
 ) -> _EpaLookup:
     """This team's EPA from its most recent already-concluded PRIOR event --
     never from the target match's own event, at any as_of.
+
+    The value comes from the configured EPA source (ml.ratings.provider):
+    STRATAI's own EPA in production, Statbotics' team_event_stats as an
+    optional reference. Both apply the selection rule below; the reasoning
+    was first written for team_event_stats and holds for both, because both
+    publish one end-of-event value per (team, event) and neither can say
+    which match a same-event value reflects. STRATAI additionally removes a
+    candidate whose value was not yet knowable at as_of (its available_at:
+    a season-end value, or one whose week-1 season statistics were not yet
+    complete) -- it only removes candidates, like the completed-match guard.
 
     team_event_stats (Statbotics' EPA) has no historical/versioned series:
     one row per (team_number, event_key), continuously overwritten as
@@ -521,19 +517,16 @@ def _point_in_time_epa(
     splitting them would need a second query to explain a case this one
     already resolves correctly.
     """
-    with database.cursor() as cursor:
-        cursor.execute(EPA_SOURCE_SQL, {"team": team_number, "target": target_event_key, "as_of": as_of})
-        row = cursor.fetchone()
-
-    if row is None:
+    provider = epa_provider or default_point_in_time_provider(database)
+    found = provider.point_in_time_epa(team_number, target_event_key, as_of)
+    if not isinstance(found, TeamEventEpa):
         return _EpaLookup(None, None, None, None, None, EPA_WITHHELD_NO_PRIOR_EVENT)
-
-    source_event_key, epa_total, epa_auto, epa_teleop, epa_endgame = row
-    return _EpaLookup(epa_total, epa_auto, epa_teleop, epa_endgame, source_event_key, None)
+    return _EpaLookup(found.total, found.auto, found.teleop, found.endgame, found.event_key, None)
 
 
 def build_team_features(
     database: Database, team_number: int, event_key: str, as_of: datetime,
+    *, epa_provider: PointInTimeEpaProvider | None = None,
 ) -> TeamFeatures:
     """Compose one team's point-in-time scoring, defense/feeding, and EPA
     features. Pure composition -- every actual number comes from Phase 3's
@@ -548,6 +541,9 @@ def build_team_features(
     the exact same building block, not a new one. Mirrors this codebase's own
     established precedent for promoting a genuinely-reused private helper
     (data.staging.normalizer._parse_team_number -> parse_tba_team_number).
+
+    epa_provider defaults to the one Settings configures (epa_source,
+    stratai_epa_chain); see ml.ratings.provider.default_point_in_time_provider.
     """
     scores, matches_considered = _point_in_time_scores(database, team_number, event_key, as_of)
     matches_used = len(scores)
@@ -560,7 +556,7 @@ def build_team_features(
     observations = _point_in_time_observations(database, team_number, event_key, as_of)
     profile = aggregate_defense_feeding(observations)
 
-    epa = _point_in_time_epa(database, team_number, event_key, as_of)
+    epa = _point_in_time_epa(database, team_number, event_key, as_of, epa_provider)
     average_auto, auto_matches = _point_in_time_auto_points(database, team_number, event_key, as_of)
 
     return TeamFeatures(
@@ -587,7 +583,9 @@ def build_team_features(
     )
 
 
-def build_match_feature_row(database: Database, match_key: str, as_of: datetime) -> MatchFeatureRow:
+def build_match_feature_row(
+    database: Database, match_key: str, as_of: datetime, *, epa_provider: PointInTimeEpaProvider | None = None,
+) -> MatchFeatureRow:
     """Build one match's leakage-safe feature row, as knowable strictly
     before as_of.
 
@@ -643,8 +641,11 @@ def build_match_feature_row(database: Database, match_key: str, as_of: datetime)
     red_team_numbers = [team_number for team_number, alliance_color in roster if alliance_color == "red"]
     blue_team_numbers = [team_number for team_number, alliance_color in roster if alliance_color == "blue"]
 
-    red_teams = [build_team_features(database, team_number, event_key, as_of) for team_number in red_team_numbers]
-    blue_teams = [build_team_features(database, team_number, event_key, as_of) for team_number in blue_team_numbers]
+    provider = epa_provider or default_point_in_time_provider(database)
+    red_teams = [build_team_features(database, team_number, event_key, as_of, epa_provider=provider)
+                 for team_number in red_team_numbers]
+    blue_teams = [build_team_features(database, team_number, event_key, as_of, epa_provider=provider)
+                  for team_number in blue_team_numbers]
 
     return MatchFeatureRow(
         match_key=match_key, as_of=as_of, event_key=event_key, season=season,

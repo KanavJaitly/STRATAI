@@ -19,7 +19,14 @@ from typing import Any
 import numpy as np
 
 from ml.ratings.epa import constants as c
-from ml.ratings.epa.aggregate import TeamEventResult, TeamSeasonResult, aggregate, with_norm
+from ml.ratings.epa.aggregate import (
+    Availability,
+    TeamEventResult,
+    TeamSeasonResult,
+    aggregate,
+    season_availability,
+    with_norm,
+)
 from ml.ratings.epa.engine import EpaEngine, MatchRecord
 from ml.ratings.epa.exclusions import ExclusionReport
 from ml.ratings.epa.initialization import initial_ratings
@@ -41,6 +48,7 @@ class SeasonResult:
     team_events: tuple[TeamEventResult, ...]
     report: ExclusionReport
     norm_computed: bool
+    availability: Availability
     manifest: dict[str, Any] = field(compare=False)
 
     def results_payload(self) -> dict[str, Any]:
@@ -49,6 +57,7 @@ class SeasonResult:
             "season": self.season,
             "initialization": self.initialization,
             "stats": self.stats.to_dict(),
+            "availability": self.availability.to_dict(),
             "records": [r.to_dict() for r in self.records],
             "reference_rounded_records": [r.reference_rounded(self.season) for r in self.records],
             "team_seasons": [t.to_dict() for t in self.team_seasons],
@@ -90,8 +99,10 @@ def run_season(
     start = engine.ratings()
     records = tuple(engine.process(match) for match in prepared.stream)
     final = engine.ratings()
+    availability = season_availability(prepared.stream)
     seasons, events = aggregate(
-        engine.stats, prepared.stream, records, start, final, {t: engine.qual_count(t) for t in prepared.teams}
+        engine.stats, prepared.stream, records, start, final, {t: engine.qual_count(t) for t in prepared.teams},
+        availability,
     )
     norm_computed = False
     if compute_norm:
@@ -111,6 +122,7 @@ def run_season(
         team_events=tuple(events),
         report=report,
         norm_computed=norm_computed,
+        availability=availability,
         manifest=manifest,
     )
 

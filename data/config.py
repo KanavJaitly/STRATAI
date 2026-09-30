@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Literal, Any
 
 from dotenv import load_dotenv
 from pydantic import ConfigDict, Field, PostgresDsn, field_validator, model_validator
@@ -85,6 +85,11 @@ class Settings(BaseSettings):
     ml_registry_dir: str = str(PROJECT_ROOT / "ml_registry")
     ml_ranking_model_version_tag: str | None = None
     ml_win_prob_model_version_tag: str | None = None
+    # EPA source for Phase 4 features (ml.ratings.provider). "stratai" is STRATAI's
+    # own EPA, read from a chained replay (python -m scripts.run_epa_replay --chain);
+    # "statbotics" reads team_event_stats and is kept as an optional reference.
+    epa_source: Literal["stratai", "statbotics"] = "stratai"
+    stratai_epa_chain: str | None = None
 
     model_config = ConfigDict(
         case_sensitive=False,

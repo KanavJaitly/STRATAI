@@ -141,3 +141,33 @@ def test_provider_serves_stratai_team_event_epa() -> None:
     assert isinstance(missing, Unavailable) and missing.reason == UNAVAILABLE_NO_TEAM_EVENT
     other = provider.team_event_epa(1, "2025wk1")
     assert isinstance(other, Unavailable) and other.reason == UNAVAILABLE_NOT_RUN
+
+
+def test_availability_metadata() -> None:
+    """available_at is the scheduled time of the last match a value depends on."""
+    result = run_season(_small_season(), created_at="t")
+    # week-1 event 2024wk1 ends at t=400; champs (week 8) ends at t=1000
+    assert (result.availability.week_one_complete_time, result.availability.season_final_time) == (400, 1000)
+    week_1 = result.team_event(1, "2024wk1")
+    champs = result.team_event(1, "2024cmp")
+    assert week_1.last_played_time == 400 and week_1.available_at == 400  # type: ignore[union-attr]
+    assert champs.last_played_time == 1000 and champs.available_at == 1000  # type: ignore[union-attr]
+    team_4 = result.team_event(4, "2024wk1")
+    # team 4 last played at t=200, but the statistics needed every week-1 match (t=400)
+    assert team_4.last_played_time == 200 and team_4.available_at == 400  # type: ignore[union-attr]
+    assert all(e.norm_available_at == 1000 for e in result.team_events)
+    assert all(s.available_at == 1000 for s in result.team_seasons)
+
+
+def test_season_end_team_event_is_available_only_at_season_end() -> None:
+    season = _small_season()
+    # team 5 plays qm1 and qm2 at 2024wk1; make it a surrogate in both, so it has no counted qual there
+    matches = []
+    for m in season.matches:
+        if m.event_key == "2024wk1" and m.comp_level == "qm" and 5 in m.red.teams + m.blue.teams:
+            color = "red" if 5 in m.red.teams else "blue"
+            m = m.model_copy(update={color: getattr(m, color).model_copy(update={"surrogate_teams": (5,)})})
+        matches.append(m)
+    result = run_season(season.model_copy(update={"matches": tuple(matches)}), created_at="t")
+    team_event = result.team_event(5, "2024wk1")
+    assert team_event.epa_is_season_end and team_event.available_at == result.availability.season_final_time  # type: ignore[union-attr]
