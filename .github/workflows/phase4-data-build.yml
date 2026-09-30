@@ -157,6 +157,7 @@ jobs:
           if-no-files-found: error
 
       - name: Record build
+        id: record
         if: always() && steps.lock.outputs.acquired == 'true'
         env:
           UPLOADED: ${{ steps.upload.outcome }}
@@ -175,8 +176,9 @@ jobs:
             --notify-out "$RUNNER_TEMP/notify.md" --owner "$OWNER" --run-url "$RUN_URL"
 
       - name: Persist state
+        # Only a completed record is published; a crashed one is never pushed half-written.
         id: persist
-        if: always() && steps.lock.outputs.acquired == 'true'
+        if: always() && steps.lock.outputs.acquired == 'true' && steps.record.outcome == 'success'
         run: |
           git -C "$RUNNER_TEMP/state" config user.name "github-actions[bot]"
           git -C "$RUNNER_TEMP/state" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -184,17 +186,20 @@ jobs:
             --message "data build ${{ github.run_id }}" execution_state.json execution_log.jsonl
 
       - name: Notify tracking issue
-        # The build's result is announced only once it is actually on the state branch.
+        # The build's result is announced only once it was recorded AND is on the
+        # state branch; any other combination is one "state NOT published" alarm.
         if: always() && steps.lock.outputs.acquired == 'true'
         env:
+          RECORDED: ${{ steps.record.outcome }}
           PERSISTED: ${{ steps.persist.outcome }}
         run: |
-          if [ "$PERSISTED" = "success" ]; then
+          if [ "$RECORDED" = "success" ] && [ "$PERSISTED" = "success" ]; then
             if [ -f "$RUNNER_TEMP/notify.md" ]; then gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/notify.md"; fi
           else
+            if [ "$RECORDED" != "success" ]; then why="record-build $RECORDED"; else why="state push $PERSISTED"; fi
             # shellcheck disable=SC2016  # the backticks are Markdown, not command substitution
             printf '### Phase 4 data build: state NOT published\n\n@%s\n\nThe build record could not be written to `%s` (%s), so its dump is not usable and nothing may treat this build as a result. Dispatch a new build.\n\n- Run: %s\n' \
-              "$OWNER" "$STATE_BRANCH" "$PERSISTED" "$RUN_URL" > "$RUNNER_TEMP/unpublished.md"
+              "$OWNER" "$STATE_BRANCH" "$why" "$RUN_URL" > "$RUNNER_TEMP/unpublished.md"
             gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/unpublished.md"
             exit 1
           fi
