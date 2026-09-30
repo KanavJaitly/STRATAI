@@ -30,9 +30,12 @@ from typing import Callable, Sequence
 
 MAX_ATTEMPTS = 5
 PUBLISHED = "published"
+NOTHING = "nothing_to_publish"      # the files were staged and are unchanged
+ADD_FAILED = "add_failed"           # could not stage: never read as "nothing to publish"
+COMMIT_FAILED = "commit_failed"
 CONFLICT = "conflict"
 EXHAUSTED = "retries_exhausted"
-NOTHING = "nothing_to_publish"
+SUCCESS_STATUSES = frozenset({PUBLISHED, NOTHING})
 
 Runner = Callable[[Sequence[str]], subprocess.CompletedProcess]
 
@@ -50,12 +53,14 @@ def publish_state(
     def git(*args: str) -> subprocess.CompletedProcess:
         return runner(["git", "-C", str(state_dir), "-c", "core.hooksPath=/dev/null", *args])
 
-    git("add", "--", *paths)
+    added = git("add", "--", *paths)
+    if added.returncode != 0:
+        return ADD_FAILED, f"could not stage {list(paths)}: {added.stderr.strip()[:500]}"
     if git("diff", "--cached", "--quiet").returncode == 0:
         return NOTHING, "no state change to publish"
     commit = git("commit", "--quiet", "-m", message)
     if commit.returncode != 0:
-        return CONFLICT, f"could not commit state: {commit.stderr.strip()}"
+        return COMMIT_FAILED, f"could not commit state: {commit.stderr.strip()[:500]}"
 
     for attempt in range(1, max_attempts + 1):
         fetched = git("fetch", "--quiet", "origin", branch)
@@ -82,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     status, detail = publish_state(args.state_dir, branch=args.branch, paths=args.paths, message=args.message)
     print(f"state {status}: {detail}")
-    return 0 if status in (PUBLISHED, NOTHING) else 1
+    return 0 if status in SUCCESS_STATUSES else 1
 
 
 if __name__ == "__main__":

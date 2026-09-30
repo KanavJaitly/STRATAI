@@ -52,6 +52,16 @@ MONITOR_RESERVE_MINUTES = 310
 # free allowance is account-wide, so the default leaves headroom.
 DEFAULT_MONTHLY_MINUTE_CAP = 1500
 NO_PROGRESS_BREAKER = 3
+# What happened to the previous checkpoint a data build tried to resume from.
+PREVIOUS_DUMP_NONE = "none"                    # nothing recorded to resume from
+PREVIOUS_DUMP_RESTORED = "restored"
+PREVIOUS_DUMP_EXPIRED = "expired"              # artifact gone (retention) or unlisted
+PREVIOUS_DUMP_DOWNLOAD_FAILED = "download_failed"  # listed, but could not be fetched
+PREVIOUS_DUMP_CORRUPT = "corrupt"              # downloaded, but checksum or restore failed
+# Forgotten, not kept: a pointer that one build could not use would make every
+# later build fail the same way. Worst case, a transient failure costs a fresh build.
+PREVIOUS_DUMP_UNUSABLE = frozenset({PREVIOUS_DUMP_EXPIRED, PREVIOUS_DUMP_DOWNLOAD_FAILED, PREVIOUS_DUMP_CORRUPT})
+
 # The only branch whose publication can make "awaiting human sign-off" true.
 SIGNOFF_BRANCH = "automation/phase4-m13"
 
@@ -137,7 +147,15 @@ def _escalate(state: dict[str, Any], reason: str) -> None:
 
 def record_build(state: dict[str, Any], build: dict[str, Any], *, month: str) -> Transition:
     """build: run_id, finished_at, billed_minutes, readiness_status, valid_source_rows,
-    required_source_rows, stop_reason, dump (artifact_name, run_id, sha256, size_bytes) or None."""
+    required_source_rows, stop_reason, previous_dump (a PREVIOUS_DUMP_* status), and
+    dump (artifact_name, run_id, sha256, size_bytes) -- present only if the dump was
+    both written and uploaded; None otherwise.
+
+    data_build names a checkpoint only if one is usable: a newly uploaded dump
+    replaces it; a previous dump found expired, unfetchable or corrupt is
+    forgotten rather than left as a pointer every later build would trip over;
+    otherwise it is
+    kept only when it was restored or there was none to begin with."""
     new = _copy(state)
     new["builds"].append(build)
     _charge(new, month, build["billed_minutes"])
@@ -149,15 +167,24 @@ def record_build(state: dict[str, Any], build: dict[str, Any], *, month: str) ->
             "required_source_rows": build["required_source_rows"],
             "fingerprint": build.get("fingerprint"),
         }
+    elif build.get("previous_dump") in PREVIOUS_DUMP_UNUSABLE:
+        new["data_build"] = None
 
-    progressed = build["valid_source_rows"] > state["best_valid_source_rows"]
-    new["best_valid_source_rows"] = max(state["best_valid_source_rows"], build["valid_source_rows"])
+    # Rows only count once captured in an uploaded checkpoint: without one they
+    # vanished with the ephemeral database, so they are neither progress nor a new best.
+    captured = build["valid_source_rows"] if build.get("dump") else 0
+    progressed = captured > state["best_valid_source_rows"]
+    new["best_valid_source_rows"] = max(state["best_valid_source_rows"], captured)
     summary = (f"readiness {build['readiness_status']}: {build['valid_source_rows']}/"
                f"{build['required_source_rows']} required EPA source rows valid; stop: {build['stop_reason']}")
 
-    if build["readiness_status"] == READINESS_COMPLETE:
+    # Ready means a restorable, verified checkpoint exists -- not merely that the
+    # ephemeral database passed the gate before it was thrown away.
+    if build["readiness_status"] == READINESS_COMPLETE and build.get("dump"):
         new["consecutive_no_progress_builds"] = 0
         return Transition(new, EVENT_DATA_READY, f"historical data ready — {summary}")
+    if build["readiness_status"] == READINESS_COMPLETE:
+        summary = f"{summary}; NOT ready: no checkpoint was uploaded, so nothing can restore this dataset"
     new["consecutive_no_progress_builds"] = 0 if progressed else state["consecutive_no_progress_builds"] + 1
     if new["consecutive_no_progress_builds"] >= NO_PROGRESS_BREAKER:
         _escalate(new, f"{NO_PROGRESS_BREAKER} consecutive data builds made no progress — {summary}")
