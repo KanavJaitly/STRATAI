@@ -1,6 +1,7 @@
 # STRATAI rating engine — canonical input and output contract
 
-Status: **specification only (rating-engine milestone 1)**. Companion to
+Status: **implemented by the pure engine core (`ml/ratings/epa/`)**; the database
+reader of §2 is not built yet. Companion to
 `docs/ratings/epa_specification.md` (the "spec"); section references like
 "spec §5" point there.
 
@@ -57,6 +58,10 @@ SeasonInput
   events: [EventInput]                every event of the season, before filtering
   matches: [MatchInput]               every match of those events, before filtering
   prior: PriorSeasonInput | None      spec §4.5; None = "no prior history supplied"
+  team_districts: {team: str} | None  the team's district abbreviation this season, as
+                                      the reference stores it; needed only for the 2026
+                                      isr rule, and required when season = 2026 and
+                                      prior is supplied
 
 EventInput
   event_key: str
@@ -82,10 +87,13 @@ AllianceInput
 
 PriorSeasonInput
   source: str                         where these values came from (provenance)
-  team_years: {team: [PriorTeamYear]} most recent first, at most the seasons Y-1..Y-4
+  team_years: {team: [PriorTeamYear]} any order; seasons outside Y-4..Y-1 are ignored,
+                                      a season >= Y rejects the run
 PriorTeamYear
   season: int
-  norm_epa: int                       the reference's integer year-normalized EPA
+  norm_epa: int | None                the reference's integer year-normalized EPA; None =
+                                      the TeamYear exists without one (it still occupies
+                                      a slot, and counts as 1450)
 ```
 
 `prior = None` is a legitimate, fully supported input: every team then starts
@@ -104,8 +112,13 @@ divergence. **Skip** means predicted and recorded but not updated (spec §5.4).
 | Code | Condition | Action | Reference | Divergence? |
 |---|---|---|---|---|
 | `unsupported_season` | season ∉ {2024, 2025, 2026} | reject run | n/a | — |
+| `duplicate_event_key` | an event_key appears twice | reject run | n/a | — |
 | `duplicate_match_key` | a match_key appears twice | reject run | n/a | — |
+| `event_season_mismatch` | an event_key does not start with the season | reject run | n/a | — |
 | `unknown_event` | match names an event not in `events` | reject run | n/a | — |
+| `prior_not_before_season` | a PriorTeamYear's season is ≥ the run's season | reject run | n/a | — |
+| `team_districts_required` | 2026 with prior supplied but no team_districts | reject run | n/a | — |
+| `no_week_one_data` | week-1 statistics give score_sd = 0 | reject run | reference divides by zero | — |
 | `event_blacklisted` | key in spec §2.1 blacklist, or contains `tempclone` | filter event | same | no |
 | `event_type_excluded` | TBA type 99/100 without override | filter event | same | no |
 | `event_week_missing` | adjusted week is null | filter event | same | no |
@@ -114,7 +127,7 @@ divergence. **Skip** means predicted and recorded but not updated (spec §5.4).
 | `upcoming` | either score null or < 0 | predict only | same | no |
 | `missing_breakdown` | completed, score ≠ 0, breakdown null | reject match | reference zero-fills | **yes** |
 | `malformed_breakdown` | breakdown present but a field the season adapter needs is absent or wrongly typed | reject match | reference zero-fills via `.get(f, 0)` | **yes** |
-| `zero_score` | completed, score == 0 | accept; all components 0 | same | no |
+| `zero_score` | completed, score == 0 on an alliance | accept; empty breakdown (spec §11) | same | possible (`shared_empty_breakdown`, per alliance) |
 | `skip_placeholder` | a team in 9970-9999 | skip update | same | no |
 | `skip_elim_all_dq` | elim match, an alliance with ≥ 3 DQs | skip update | same | no |
 | `skip_all_fouls` | both alliances no_foul == 0 and foul > 0 | skip update | same | no |
@@ -124,8 +137,9 @@ consumes a qual-count slot. That is the conservative choice, and it is why it
 counts as a divergence.
 
 Ordering is spec §2.3: ascending `time`, then **`match_key`** as the
-deterministic tie-break [STRATAI], recorded as a possible divergence wherever
-two retained matches share a `time`.
+deterministic tie-break [STRATAI]. Every group of retained matches sharing a
+`time` is reported; it counts as a possible divergence (`tie_order`) only when
+a team plays in two of them, the only case where order changes a rating.
 
 ## 5. Exclusion report
 
@@ -135,9 +149,11 @@ Every run returns, alongside its results:
 ExclusionReport
   counts: {code: int}                          every code in §4, zeros included
   entries: [ {code, event_key, match_key|None, detail} ]   sorted by (code, match_key)
-  ties: [ {time, match_keys: [..]} ]           retained matches sharing a time
-  divergences: {code: int}                     the subset of counts that differ from the reference
+  ties: [ {time, match_keys: [..], order_sensitive} ]
+  divergences: {code: int}                     missing_time, missing_breakdown, malformed_breakdown
+  possible_divergences: {tie_order, shared_empty_breakdown}
 ```
+A run-level rejection raises `RunRejected(code, detail)` and returns nothing.
 
 A run with a non-empty `divergences` is still valid, but it must never be
 described as an exact Level A reproduction for the affected matches.
@@ -203,3 +219,7 @@ this work; switching any consumer is a separate, later decision.
    would be missing from the fit. Measure the effect before claiming anything.
 3. **Initialization source.** `prior` has no in-repository source today; that
    is the separately approved initialization milestone.
+4. **Team districts.** The 2026 isr rule keys on the team's district (TBA's
+   district team lists), which STRATAI does not sync. It matters only when
+   `prior` is supplied (with no prior every team reverts to 1450 either way),
+   so the engine requires `team_districts` exactly then.

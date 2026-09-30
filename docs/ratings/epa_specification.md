@@ -340,20 +340,27 @@ at this commit.
 
 Each item is either reproduced (so Level A holds) or **deliberately not
 reproduced** — the latter is a documented, counted divergence, never a
-silent one. Items marked *proposed* await review.
+silent one. The items marked *proposed* at milestone 1 were decided in the
+engine-core milestone (`ml/ratings/epa/`); each decision names the test that
+pins it. Real-data counts are from a read-only profile of STRATAI's stored
+2024-2026 TBA payloads (2026-09-30).
 
 | Reference behaviour | Source | STRATAI treatment |
 |---|---|---|
-| Completed match with score ≠ 0 but no breakdown → all components 0, ratings pulled toward 0 | `match.py:195-211`, `tba/breakdown.py:830-832` | **Not reproduced** [STRATAI]: excluded and reported (`missing_breakdown`); a divergence from Level A for that match. (Believed to be 0 cases in 2024-2026; verified at replay.) |
-| Alliance score == 0 → empty breakdown (all 0) | `tba/breakdown.py:831` | Reproduced: a genuine 0 score has 0 components. |
-| Empty-breakdown dict is shared and mutated (2025 tiebreaker leak) | `tba/types`, `tba/breakdown.py:830, 929-936` | *Proposed*: not reproduced; each match gets its own value (the leak depends on read order). Counted where it would differ. |
-| Absent TBA fields default to 0 (`.get(f, 0)`) | `tba/breakdown.py` adapters | *Proposed*: a present breakdown missing a required field is rejected (`malformed_breakdown`), not zero-filled. |
-| Equal `time` ordering undefined | `calc.py:34` | [STRATAI] deterministic tie-break by `match_key`; divergence possible only on exact ties, counted. |
+| Completed match with score ≠ 0 but no breakdown → all components 0, ratings pulled toward 0 | `match.py:195-211`, `tba/breakdown.py:830-832` | **Not reproduced** [STRATAI]: excluded and reported (`missing_breakdown`); a divergence from Level A for that match. Real data: 0 cases in 2024-2026. |
+| Alliance score == 0 → empty breakdown: components None in season means, 0 in the update; rp False (counted as 0 in rp means) | `tba/breakdown.py:831`, `tba/types.py:52`, `data/avg.py:21` | Reproduced exactly, including the None/False distinction. Real data: 20 / 17 / 49 alliances. |
+| The empty breakdown is one module-level dict, returned by reference and written by `post_clean_breakdown` | `tba/types.py:52`, `tba/breakdown.py:830-832, 886-938` | **Decided.** Investigated: within 2025 the only write is `tiebreaker = int(min(red comp_6 or 0, blue comp_6 or 0) >= 2)`, and an empty alliance's comp_6 is unknown (0), so that write is always 0 — deterministic per match, independent of read order. That per-match rule is **reproduced** (decision *a*). The shared state itself persists across seasons in one process: 2018's post-clean writes comp_6..comp_9 and 2025's writes tiebreaker, and `reset_all_years` (`data/main.py:111-134`) processes 2002 → current in one process, so a 2024-2026 empty alliance can carry values left by an earlier season. That depends on the reference process's history, not on the match's data; it is **not reproduced** (decision *b*, a reference-process artifact) — each empty alliance is a fresh immutable value. Every empty alliance is counted as a possible divergence (`shared_empty_breakdown`). It can reach total EPA only in 2025, through the processor-algae revalue in attribution and year statistics. Tests: `test_ratings_epa_adapters.py` (2025 tiebreaker, no shared state, 2026 statistics). Not option *c*: STRATAI's raw payloads are read correctly; the issue is entirely in the reference's in-memory handling. |
+| Absent TBA fields default to 0 (`.get(f, 0)`) | `tba/breakdown.py` adapters | **Decided**: a present breakdown missing a required field, or holding a wrongly typed one, is rejected (`malformed_breakdown`), never zero-filled. A field whose value the reference always overwrites (2025 `coopertitionCriteriaMet`) is not required. Real data: every one of 106,304 scored 2024-2026 alliance breakdowns has every required field with the expected type. |
+| Equal `time` ordering undefined (stable sort over dict insertion order) | `calc.py:34` | [STRATAI] deterministic tie-break by `match_key`, counted as a possible divergence (`tie_order`) only when a team plays in two matches of the tie group. Real data: ~3,400-3,700 tie groups per season (simultaneous events), of which 1 (2024), 1 (2025), 0 (2026) are order-sensitive. |
 | `r()` negative-rounding bug | `utils.py:33-34` | Reproduced where the reference applies `r()` (needed for Level A). |
 | float32 actuals, `np.round` half-to-even | `match.py:198-211`, `main.py:175,197` | Reproduced. |
 | 2025 trough coral not auto-subtracted | `tba/breakdown.py:721,730` | Reproduced (it is the reference's definition of `coral_l1`). |
 | Shared default rating for unknown teams | `main.py:51-52` | Not reproduced: an unknown team is an input error. |
-| Norm depends on scipy version | `unitless.py:24-26` | Reproduced with STRATAI's scipy; version recorded in provenance; version sensitivity reported, not hidden. |
+| Norm depends on scipy version | `unitless.py:24-26` | Reproduced with STRATAI's scipy; version recorded in provenance; version sensitivity reported, not hidden. Exact norm parity needs the pinned scipy (^1.11.1, numpy 1.26.4): a validation-environment requirement, not a core-correctness one. |
+| Week-1 statistics use every week-1 result, so a week-1 match's own result feeds the scale used to predict it and every other week-1 match | `data/avg.py:10-12` | Reproduced; this is the only way a pre-match rating can depend on a later result. Pinned by `test_ratings_epa_leakage.py`, which also shows the loop itself is causal once the statistics are fixed. |
+| A team-event with no counted qual match (all DQ/surrogate, or none played) takes the team's season-end rating | `data/epa/calc.py:45-48`, `data/wins.py:67-81` | Reproduced and flagged: `epa_is_season_end` / provider `lookahead=True`. A consumer needing point-in-time values must not use it. |
+| Playoff RP freeze sets attrib = epa, then applies the normal update, so the value can move by one ulp | `breakdown.py:190-200`, `math.py:17-24` | Reproduced as arithmetic, not special-cased (`test_2024_elimination_update_by_hand`). |
+| numpy 1.26.4 in the reference; STRATAI runs numpy 2.x | `pyproject` of the reference | `np.exp` / `np.log` implementations can differ in the last ulp across numpy versions. Level A comparisons against a reference run must use the pinned numpy or a stated tolerance. |
 
 STRATAI additionally guarantees: no network access in the engine;
 deterministic output for identical inputs; every excluded or skipped match is
