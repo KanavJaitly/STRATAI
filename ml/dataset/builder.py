@@ -131,6 +131,7 @@ from data.pipeline import OBJECT_TYPE_MATCH, SOURCE_TBA
 from data.staging.normalizer import parse_tba_team_number
 from database.connection import Database
 from ml.features.assembler import MatchFeatureRow, TeamFeatures, build_match_feature_row
+from ml.features.scale import ScaleLookup
 from ml.ratings.provider import PointInTimeEpaProvider, default_point_in_time_provider
 
 __all__ = [
@@ -330,6 +331,10 @@ _TEAM_FEATURES_ARROW_TYPE = pa.struct([
     ("feeding_agreement_present", pa.bool_()),
     ("feeding_observation_count", pa.int64()),
     ("contributing_scouting_sources", pa.list_(pa.string())),
+    ("score_scale", pa.float64()),
+    ("score_scale_present", pa.bool_()),
+    ("epa_scale", pa.float64()),
+    ("epa_scale_present", pa.bool_()),
 ])
 
 TRAINING_ROW_ARROW_SCHEMA = pa.schema([
@@ -499,6 +504,7 @@ def build_training_frame(
     order is pinned regardless of season_keys' input order.
     """
     provider = epa_provider or default_point_in_time_provider(database)
+    scales = ScaleLookup(database)  # one per build: the database is read, never changed, during a build
     match_rows = _fetch_season_matches(database, season_keys)
 
     excluded: list[ExcludedMatch] = []
@@ -553,7 +559,7 @@ def build_training_frame(
                 continue
 
         feature_row: MatchFeatureRow = build_match_feature_row(
-            database, match_key, as_of=scheduled_time, epa_provider=provider,
+            database, match_key, as_of=scheduled_time, epa_provider=provider, scale_lookup=scales,
         )
         assert feature_row.event_key == event_key and feature_row.season == season, (
             f"build_match_feature_row returned event_key/season {feature_row.event_key!r}/{feature_row.season!r} "
