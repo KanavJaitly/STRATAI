@@ -15,6 +15,7 @@ from ml.backtest.harness import Model
 from ml.dataset.builder import TrainingRow
 from ml.features.assembler import MatchFeatureRow, TeamFeatures
 from ml.models.ranking_xgb import RankingXGBModel
+from ml.models.ranking_xgb_v2 import RankingXGBModelV2
 from ml.models.win_prob import WinProbXGBModel
 from scripts.ml_bias_audit import (
     check_as_of_feature_integrity,
@@ -122,6 +123,17 @@ def test_run_full_audit_passes_for_the_real_models():
     report = run_full_audit()
     assert report.passed
     assert len(report.checks) == 7
+
+
+def test_label_shuffle_leakage_check_passes_for_the_ranking_model_of_record():
+    # M5 v2 must actually learn the fixture's signal; a constant rating would make the check vacuous
+    check = check_label_shuffle_leakage_ranking(RankingXGBModelV2)
+    assert check.passed, check.detail
+
+
+def test_run_full_audit_passes_for_the_ranking_model_of_record():
+    report = run_full_audit(ranking_model_factory=RankingXGBModelV2)
+    assert report.passed, report.summary()
 
 
 # ---------------------------------------------------------------------------

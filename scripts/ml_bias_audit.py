@@ -43,6 +43,7 @@ from ml.backtest.metrics import spearman_correlation
 from ml.dataset.builder import LABEL_BLUE_WIN, LABEL_RED_WIN, TrainingRow
 from ml.features.assembler import EPA_WITHHELD_NO_PRIOR_EVENT, MatchFeatureRow, TeamFeatures
 from ml.models.ranking_xgb import RankingXGBModel
+from ml.models.ranking_xgb_v2 import RankingXGBModelV2
 from ml.models.win_prob import WinProbXGBModel
 
 __all__ = [
@@ -60,6 +61,12 @@ __all__ = [
 
 _T0 = datetime(2026, 3, 1, 10, 0, tzinfo=timezone.utc)
 _NUM_TEAMS = 24
+# D16's causal season scale (TeamFeatures.score_scale). The ranking model of record (M5 v2,
+# RankingXGBModelV2) divides its in-event features by it; without it every v2 feature is NaN
+# and v2 cannot learn from this fixture at all (found 2026-10-02: v2 then scored a constant
+# rating, so the label-shuffle check could not test it). 1.0 leaves v2's features equal to the
+# raw synthetic values. v1 and M6 do not read it (TEAM_FEATURE_NAMES excludes it).
+_SYNTHETIC_SCORE_SCALE = 1.0
 
 # Fields that would encode a recommendation source or coach-vs-AI
 # distinction if any of them ever appeared -- checked structurally against
@@ -97,6 +104,7 @@ def _team_features(team_number: int, *, average_score: float | None = None) -> T
         epa_total_present=False, epa_auto_present=False, epa_teleop_present=False, epa_endgame_present=False,
         epa_source_event_key=None, epa_withheld_reason=EPA_WITHHELD_NO_PRIOR_EVENT,
         average_score=average_score, average_score_present=average_score is not None,
+        score_scale=_SYNTHETIC_SCORE_SCALE, score_scale_present=True,
         score_stddev_present=False, consistency_rating_present=False, reliability_score_present=False,
         matches_considered=5, matches_used=5,
         average_auto_points_present=False, auto_points_matches_used=0,
@@ -329,10 +337,19 @@ def run_full_audit(
     return AuditReport(checks)
 
 
+RANKING_MODELS = {"v1 (RankingXGBModel, superseded)": RankingXGBModel,
+                  "v2 (RankingXGBModelV2, M5 model of record)": RankingXGBModelV2}
+
+
 def main() -> int:
-    report = run_full_audit()
-    print(report.summary())
-    return 0 if report.passed else 1
+    passed = True
+    for name, factory in RANKING_MODELS.items():
+        report = run_full_audit(ranking_model_factory=factory)
+        print(f"ranking model {name}")
+        print(report.summary())
+        print()
+        passed = passed and report.passed
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":
