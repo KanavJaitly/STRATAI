@@ -1,0 +1,213 @@
+{
+  "calibrated": {
+    "brier": 0.1826049079427865,
+    "ece": 0.037512494909529334,
+    "log_loss": 0.5520300279004974
+  },
+  "calibrator": "SymmetricIsotonicCalibrator",
+  "decision": "D16",
+  "fit_diagnostics": {
+    "calibration_eligible_count": 3937,
+    "calibration_excluded_tie_count": 19,
+    "calibration_row_count": 3956,
+    "model_row_count": 15824
+  },
+  "frame_content_hash": "54e9d54b5ebe6b11b616f4e72cb402ad0a50cbfc89940632deda23ec5b7dc7bc",
+  "gate": {
+    "ece": 0.037512494909529334,
+    "g1_pass": true,
+    "g2": {
+      "bins": [
+        {
+          "count": 974,
+          "expected_wins": 48.60424341499672,
+          "holm_threshold": 0.025,
+          "interval_95": [
+            0.03696098562628337,
+            0.06365503080082136
+          ],
+          "lower": 0.0,
+          "mean_predicted": 0.049901687284390886,
+          "observed_rate": 0.05646817248459959,
+          "observed_wins": 55,
+          "p_value": 0.33525748579624626,
+          "rejected": false,
+          "tested": true,
+          "upper": 0.1
+        },
+        {
+          "count": 1466,
+          "expected_wins": 231.42987176777677,
+          "holm_threshold": 0.00625,
+          "interval_95": [
+            0.13915416098226466,
+            0.1766712141882674
+          ],
+          "lower": 0.1,
+          "mean_predicted": 0.15786485113763762,
+          "observed_rate": 0.19236016371077763,
+          "observed_wins": 282,
+          "p_value": 0.0004385925804802431,
+          "rejected": true,
+          "tested": true,
+          "upper": 0.2
+        },
+        {
+          "count": 1459,
+          "expected_wins": 336.2403898259598,
+          "holm_threshold": 0.008333333333333333,
+          "interval_95": [
+            0.20904729266620972,
+            0.25222755311857437
+          ],
+          "lower": 0.2,
+          "mean_predicted": 0.23045948582999304,
+          "observed_rate": 0.2604523646333105,
+          "observed_wins": 380,
+          "p_value": 0.007297954534164319,
+          "rejected": true,
+          "tested": true,
+          "upper": 0.3
+        },
+        {
+          "count": 1011,
+          "expected_wins": 385.3759963459704,
+          "holm_threshold": 0.0071428571428571435,
+          "interval_95": [
+            0.35113748763600394,
+            0.4114737883283877
+          ],
+          "lower": 0.3,
+          "mean_predicted": 0.3811829835271715,
+          "observed_rate": 0.34025717111770526,
+          "observed_wins": 344,
+          "p_value": 0.007091426344742296,
+          "rejected": true,
+          "tested": true,
+          "upper": 0.4
+        },
+        {
+          "count": 1194,
+          "expected_wins": 520.5819557812256,
+          "holm_threshold": 0.01,
+          "interval_95": [
+            0.40787269681742044,
+            0.4639865996649916
+          ],
+          "lower": 0.4,
+          "mean_predicted": 0.43599828792397455,
+          "observed_rate": 0.41457286432160806,
+          "observed_wins": 495,
+          "p_value": 0.13668383865935146,
+          "rejected": false,
+          "tested": true,
+          "upper": 0.5
+        },
+        {
+          "count": 3420,
+          "expected_wins": 1792.5658309010034,
+          "holm_threshold": 0.005,
+          "interval_95": [
+            0.5073099415204678,
+            0.5409356725146199
+          ],
+          "lower": 0.5,
+          "mean_predicted": 0.5241420558190069,
+          "observed_rate": 0.6067251461988304,
+          "observed_wins": 2075,
+          "p_value": 2.233577546478701e-22,
+          "rejected": true,
+          "tested": true,
+          "upper": 0.6
+        },
+        {
+          "count": 1189,
+          "expected_wins": 736.9758567166041,
+          "holm_threshold": 0.005555555555555556,
+          "interval_95": [
+            0.592094196804037,
+            0.6476030277544155
+          ],
+          "lower": 0.6,
+          "mean_predicted": 0.6198283067423079,
+          "observed_rate": 0.6812447434819175,
+          "observed_wins": 810,
+          "p_value": 1.0598758440294957e-05,
+          "rejected": true,
+          "tested": true,
+          "upper": 0.7
+        },
+        {
+          "count": 1716,
+          "expected_wins": 1321.7766448834557,
+          "holm_threshold": 0.05,
+          "interval_95": [
+            0.75,
+            0.7902097902097902
+          ],
+          "lower": 0.7,
+          "mean_predicted": 0.7702661100719439,
+          "observed_rate": 0.7610722610722611,
+          "observed_wins": 1306,
+          "p_value": 0.37221444386428176,
+          "rejected": false,
+          "tested": true,
+          "upper": 0.8
+        },
+        {
+          "count": 1615,
+          "expected_wins": 1359.62006825322,
+          "holm_threshold": 0.016666666666666666,
+          "interval_95": [
+            0.8241486068111455,
+            0.8594427244582044
+          ],
+          "lower": 0.8,
+          "mean_predicted": 0.8418700113023034,
+          "observed_rate": 0.8520123839009288,
+          "observed_wins": 1376,
+          "p_value": 0.27499598693227506,
+          "rejected": false,
+          "tested": true,
+          "upper": 0.9
+        },
+        {
+          "count": 983,
+          "expected_wins": 933.4019248744063,
+          "holm_threshold": 0.0125,
+          "interval_95": [
+            0.9359104781281791,
+            0.9623601220752798
+          ],
+          "lower": 0.9,
+          "mean_predicted": 0.9495441758640959,
+          "observed_rate": 0.940996948118006,
+          "observed_wins": 925,
+          "p_value": 0.21228218715679792,
+          "rejected": false,
+          "tested": true,
+          "upper": 1.0
+        }
+      ],
+      "eligible_bins": 10,
+      "rejected_bins": 5,
+      "status": "fail"
+    },
+    "g3_max_symmetry_error": 1.1102230246251565e-16,
+    "g3_order_independent": true,
+    "g3_pass": true,
+    "g4_fit_isolated": true,
+    "passed": false
+  },
+  "gate_passed": false,
+  "held_out_rows": 15027,
+  "milestone": "M07",
+  "ran_at": "2026-10-01T01:39:23.092433+00:00",
+  "raw_m6": {
+    "brier": 0.18851186008441828,
+    "ece": 0.07955313485622488,
+    "log_loss": 0.5555480160510043
+  },
+  "spec": ".agent/phase4/M05_M07_REDESIGN_SPEC.md \u00a72",
+  "ties_excluded": 34
+}
