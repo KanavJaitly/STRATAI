@@ -67,9 +67,16 @@ METHODOLOGY_FILES = [
 # The D18 source and feature implementation: pinned to the commit that built the frame.
 IMPLEMENTATION_FILES = [
     "ml/ratings/statbotics_primary.py", "ml/ratings/provider.py", "ml/features/assembler.py",
-    "ml/dataset/builder.py", "scripts/run_phase4_d18.py", "scripts/run_phase4_stratai.py",
-    "scripts/sync_statbotics_snapshot.py",
+    "ml/dataset/builder.py", "scripts/run_phase4_stratai.py", "scripts/sync_statbotics_snapshot.py",
 ]
+# This file is pinned function by function: whatever produced or verified the frame must be
+# byte-identical to the pinned commit. Amended 2026-10-02 (before M11 ran): run_m11's readiness
+# step needed a non-read-only connection (D8's temp tables, as scripts/run_m11_generalization.py
+# uses), which the whole-file pin could not admit; every frame-producing function stays pinned.
+THIS_FILE = "scripts/run_phase4_d18.py"
+PINNED_FUNCTIONS = ["load_source", "verify", "build_frame", "_frame_provenance_counts", "_qual_count",
+                    "_find_key", "_stratai_availability", "_guard", "methodology_check", "_frame_guard",
+                    "run_m04", "run_m05v2", "run_m06", "run_m07"]
 
 APPEARANCES_SQL = """
 SELECT DISTINCT m.season, mt.team_number, m.event_key, m.scheduled_time
@@ -108,12 +115,28 @@ def methodology_check() -> dict[str, Any]:
             "methodology_files_changed_since_freeze": touched, "ok": spec_frozen == spec_now and not touched}
 
 
+def _function_sources(text: str) -> dict[str, str]:
+    import ast
+
+    tree = ast.parse(text)
+    return {node.name: ast.get_source_segment(text, node) for node in tree.body
+            if isinstance(node, (ast.FunctionDef, ast.ClassDef))}
+
+
 def implementation_check(pinned_commit: str | None = None) -> dict[str, Any]:
-    dirty = sorted(set(d15._git("diff", "--name-only", "HEAD").splitlines()) & set(IMPLEMENTATION_FILES))
-    drift = [] if pinned_commit is None else sorted(
-        set(d15._git("diff", "--name-only", pinned_commit, "HEAD").splitlines()) & set(IMPLEMENTATION_FILES))
+    dirty = sorted(set(d15._git("diff", "--name-only", "HEAD").splitlines()) & set(IMPLEMENTATION_FILES + [THIS_FILE]))
+    drift, functions_changed = [], []
+    if pinned_commit is not None:
+        drift = sorted(set(d15._git("diff", "--name-only", pinned_commit, "HEAD").splitlines()) & set(IMPLEMENTATION_FILES))
+        import subprocess
+
+        then = _function_sources(subprocess.run(["git", "show", f"{pinned_commit}:{THIS_FILE}"], capture_output=True,
+                                                check=True).stdout.decode("utf-8"))
+        now = _function_sources(Path(THIS_FILE).read_text(encoding="utf-8"))
+        functions_changed = [name for name in PINNED_FUNCTIONS if then.get(name) != now.get(name)]
     return {"head": _head(), "pinned_commit": pinned_commit, "uncommitted": dirty,
-            "changed_since_pinned_commit": drift, "ok": not dirty and not drift}
+            "changed_since_pinned_commit": drift, "pinned_functions_changed": functions_changed,
+            "ok": not dirty and not drift and not functions_changed}
 
 
 def _guard(*, pinned_commit: str | None = None) -> dict[str, Any]:
@@ -442,8 +465,13 @@ def run_m11(frame_dir: Path) -> dict[str, Any]:
     for dependency in ("m05v2_result.json", "m06_result.json"):
         if not d15._load_json(RESULTS_DIR / dependency)["passed"]:
             raise D18GuardError(f"M11 depends on {dependency}, which did not pass")
+    from data.config import Settings
+    from database.connection import Database, DatabaseConfig
+
+    # D8's readiness builds session temp tables, refused in a read-only session; it writes no
+    # canonical table (scripts/run_m11_generalization.py calls it the same way).
+    readiness = assess_readiness(Database(DatabaseConfig(Settings().database_url)))
     database = d15._database()
-    readiness = assess_readiness(database)
     problems = _non_epa_readiness_problems(readiness)
     if problems or not d15._load_json(VERIFICATION_RECORD)["passed"]:
         raise D18GuardError(f"M11 readiness refused: {problems}")
