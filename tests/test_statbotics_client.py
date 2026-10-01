@@ -363,3 +363,25 @@ def test_http_error_raises_without_retry(monkeypatch, env_settings):
         client.fetch_event_match_stats("2025casj")
 
     assert mock_request.call_count == 1
+
+
+def test_fetch_event_team_metrics_parses_every_record_and_keeps_the_body(monkeypatch, env_settings):
+    client = StatboticsClient(settings=env_settings)
+    body = [real_team_event_payload(), {**real_team_event_payload(), "team": 254}]
+    mock_request = Mock(return_value=DummyResponse(200, body))
+    monkeypatch.setattr(client, "_client", Mock(request=mock_request))
+
+    raw, responses = client.fetch_event_team_metrics("2025casj")
+
+    assert raw == body  # the body lands exactly as sent
+    assert [r.parsed.team for r in responses] == [1114, 254]
+    assert [r.raw for r in responses] == body
+    assert mock_request.call_args.kwargs["params"] == {"event": "2025casj", "limit": 1000}
+
+
+def test_fetch_event_team_metrics_refuses_a_full_page(monkeypatch, env_settings):
+    client = StatboticsClient(settings=env_settings)
+    body = [real_team_event_payload(), {**real_team_event_payload(), "team": 254}]
+    monkeypatch.setattr(client, "_client", Mock(request=Mock(return_value=DummyResponse(200, body))))
+    with pytest.raises(ValueError, match="paginate"):
+        client.fetch_event_team_metrics("2025casj", limit=2)

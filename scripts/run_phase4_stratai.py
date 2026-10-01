@@ -64,12 +64,35 @@ def _load_json(path: Path) -> dict[str, Any]:
 # --- M2 frame ------------------------------------------------------------------------
 
 
-def build_frame(chain: Path, out: Path) -> Path:
+def statbotics_provider(database, snapshot: Path):
+    """The Statbotics reference source (D13 SQL over team_event_stats), refused unless the
+    table is exactly the cached snapshot (scripts/sync_statbotics_snapshot.py)."""
+    from ml.ratings.provider import StatboticsPointInTimeEpa
+    from scripts.sync_statbotics_snapshot import table_fingerprint
+
+    manifest = _load_json(snapshot / "manifest.json")
+    _, fingerprint = table_fingerprint(database, manifest["seasons"])
+    if fingerprint != manifest["team_event_stats"]["sha256"] or manifest["failures"]:
+        raise RuntimeError(f"team_event_stats does not match snapshot {snapshot.name} (or it recorded failures)")
+
+    class _SnapshotStatbotics(StatboticsPointInTimeEpa):
+        def provenance(self):
+            return {**super().provenance(), "snapshot": snapshot.name, "team_event_stats_sha256": fingerprint,
+                    "producing_commit": manifest["producing_commit"], "retrieved": [manifest["started_at"],
+                                                                                   manifest["finished_at"]]}
+
+    return _SnapshotStatbotics(database)
+
+
+def build_frame(chain: Path | None, out: Path, statbotics_snapshot: Path | None = None) -> Path:
     from ml.dataset.builder import _compute_content_hash, build_training_frame, persist_training_frame
     from ml.ratings.provider import StrataiPointInTimeEpa
 
     database = _database()
-    provider = StrataiPointInTimeEpa.from_chain_manifest(database, chain)
+    if (chain is None) == (statbotics_snapshot is None):
+        raise ValueError("give exactly one EPA source: --chain (STRATAI) or --statbotics-snapshot")
+    provider = (StrataiPointInTimeEpa.from_chain_manifest(database, chain) if chain is not None
+                else statbotics_provider(database, statbotics_snapshot))
     started = time.time()
     result = build_training_frame(database, SEASONS, epa_provider=provider)
     elapsed = time.time() - started
@@ -89,7 +112,7 @@ def build_frame(chain: Path, out: Path) -> Path:
         "parquet": persisted.parquet_path.name,
         "cache": FRAME_CACHE,
         "cache_reload_reproduces_content_hash": exact,
-        "provider_diagnostics": dict(provider.diagnostics),
+        "provider_diagnostics": dict(getattr(provider, "diagnostics", {})),
         "excluded": [e.model_dump(mode="json") for e in result.excluded],
     })
     if not exact:
@@ -461,7 +484,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
     b = sub.add_parser("build-frame")
-    b.add_argument("--chain", type=Path, required=True)
+    b.add_argument("--chain", type=Path, help="STRATAI EPA chain manifest")
+    b.add_argument("--statbotics-snapshot", type=Path, help="Statbotics snapshot directory (D17)")
     b.add_argument("--out", type=Path, required=True)
     for name in ("m04", "m05", "m06", "m07", "m05v2-preflight", "m05v2"):
         command = sub.add_parser(name)
@@ -471,7 +495,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "build-frame":
-        build_frame(args.chain, args.out)
+        build_frame(args.chain, args.out, args.statbotics_snapshot)
         return 0
     if args.command == "m04":
         result = run_m04(args.frame)

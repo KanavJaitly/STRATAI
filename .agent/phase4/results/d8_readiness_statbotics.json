@@ -1,0 +1,300 @@
+{
+  "status": "INVALID",
+  "computed_at": "2026-10-01T22:20:29.226549+00:00",
+  "seasons": [
+    2024,
+    2025,
+    2026
+  ],
+  "held_out_season": 2026,
+  "reasons": [
+    "invalid EPA inputs: {'invalid_expected_row': 438}"
+  ],
+  "appearance_counts": {
+    "2024": {
+      "no_prior_event": 45488,
+      "ok": 56385
+    },
+    "2025": {
+      "ok": 101929,
+      "no_prior_event": 5267
+    },
+    "2026": {
+      "invalid_expected_row": 438,
+      "ok": 106091,
+      "missing_expected_row": 12,
+      "no_prior_event": 3691
+    }
+  },
+  "ties_resolved_by_latest_match": 1979,
+  "ties_resolved_by_event_key": 0,
+  "required_source_rows": 19735,
+  "valid_source_rows": 19699,
+  "rankings_events_required": 208,
+  "rankings_missing": [],
+  "examples": {
+    "invalid_expected_row": [
+      {
+        "season": 2026,
+        "team_number": 1574,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T03:09:00-04:00",
+        "expected_source": "2026isde1",
+        "selected_source": "2026isde1"
+      },
+      {
+        "season": 2026,
+        "team_number": 1574,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T03:41:00-04:00",
+        "expected_source": "2026isde1",
+        "selected_source": "2026isde1"
+      },
+      {
+        "season": 2026,
+        "team_number": 1574,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T04:29:00-04:00",
+        "expected_source": "2026isde1",
+        "selected_source": "2026isde1"
+      },
+      {
+        "season": 2026,
+        "team_number": 1574,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T06:25:00-04:00",
+        "expected_source": "2026isde1",
+        "selected_source": "2026isde1"
+      },
+      {
+        "season": 2026,
+        "team_number": 1574,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T06:57:00-04:00",
+        "expected_source": "2026isde1",
+        "selected_source": "2026isde1"
+      },
+      {
+        "season": 2026,
+        "team_number": 1574,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T07:45:00-04:00",
+        "expected_source": "2026isde1",
+        "selected_source": "2026isde1"
+      },
+      {
+        "season": 2026,
+        "team_number": 1574,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T08:41:00-04:00",
+        "expected_source": "2026isde1",
+        "selected_source": "2026isde1"
+      },
+      {
+        "season": 2026,
+        "team_number": 1574,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T09:36:00-04:00",
+        "expected_source": "2026isde1",
+        "selected_source": "2026isde1"
+      },
+      {
+        "season": 2026,
+        "team_number": 1574,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T10:24:00-04:00",
+        "expected_source": "2026isde1",
+        "selected_source": "2026isde1"
+      },
+      {
+        "season": 2026,
+        "team_number": 1574,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-08T02:36:00-04:00",
+        "expected_source": "2026isde1",
+        "selected_source": "2026isde1"
+      }
+    ],
+    "missing_expected_row": [
+      {
+        "season": 2026,
+        "team_number": 4744,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T03:17:00-04:00",
+        "expected_source": "2026isde2",
+        "selected_source": "2025iscmp"
+      },
+      {
+        "season": 2026,
+        "team_number": 4744,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T04:05:00-04:00",
+        "expected_source": "2026isde2",
+        "selected_source": "2025iscmp"
+      },
+      {
+        "season": 2026,
+        "team_number": 4744,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T04:37:00-04:00",
+        "expected_source": "2026isde2",
+        "selected_source": "2025iscmp"
+      },
+      {
+        "season": 2026,
+        "team_number": 4744,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T06:09:00-04:00",
+        "expected_source": "2026isde2",
+        "selected_source": "2025iscmp"
+      },
+      {
+        "season": 2026,
+        "team_number": 4744,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T07:21:00-04:00",
+        "expected_source": "2026isde2",
+        "selected_source": "2025iscmp"
+      },
+      {
+        "season": 2026,
+        "team_number": 4744,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T07:53:00-04:00",
+        "expected_source": "2026isde2",
+        "selected_source": "2025iscmp"
+      },
+      {
+        "season": 2026,
+        "team_number": 4744,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T08:57:00-04:00",
+        "expected_source": "2026isde2",
+        "selected_source": "2025iscmp"
+      },
+      {
+        "season": 2026,
+        "team_number": 4744,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T09:44:00-04:00",
+        "expected_source": "2026isde2",
+        "selected_source": "2025iscmp"
+      },
+      {
+        "season": 2026,
+        "team_number": 4744,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-07T10:24:00-04:00",
+        "expected_source": "2026isde2",
+        "selected_source": "2025iscmp"
+      },
+      {
+        "season": 2026,
+        "team_number": 4744,
+        "target_event": "2026iscmp",
+        "as_of": "2026-07-08T02:28:00-04:00",
+        "expected_source": "2026isde2",
+        "selected_source": "2025iscmp"
+      }
+    ],
+    "no_prior_event": [
+      {
+        "season": 2024,
+        "team_number": 1,
+        "target_event": "2024miket",
+        "as_of": "2024-03-01T11:16:00-05:00",
+        "expected_source": null,
+        "selected_source": null
+      },
+      {
+        "season": 2024,
+        "team_number": 1,
+        "target_event": "2024miket",
+        "as_of": "2024-03-01T12:04:00-05:00",
+        "expected_source": null,
+        "selected_source": null
+      },
+      {
+        "season": 2024,
+        "team_number": 1,
+        "target_event": "2024miket",
+        "as_of": "2024-03-01T12:44:00-05:00",
+        "expected_source": null,
+        "selected_source": null
+      },
+      {
+        "season": 2024,
+        "team_number": 1,
+        "target_event": "2024miket",
+        "as_of": "2024-03-01T14:56:00-05:00",
+        "expected_source": null,
+        "selected_source": null
+      },
+      {
+        "season": 2024,
+        "team_number": 1,
+        "target_event": "2024miket",
+        "as_of": "2024-03-01T15:36:00-05:00",
+        "expected_source": null,
+        "selected_source": null
+      },
+      {
+        "season": 2024,
+        "team_number": 1,
+        "target_event": "2024miket",
+        "as_of": "2024-03-01T16:47:00-05:00",
+        "expected_source": null,
+        "selected_source": null
+      },
+      {
+        "season": 2024,
+        "team_number": 1,
+        "target_event": "2024miket",
+        "as_of": "2024-03-01T17:15:00-05:00",
+        "expected_source": null,
+        "selected_source": null
+      },
+      {
+        "season": 2024,
+        "team_number": 1,
+        "target_event": "2024miket",
+        "as_of": "2024-03-01T18:32:00-05:00",
+        "expected_source": null,
+        "selected_source": null
+      },
+      {
+        "season": 2024,
+        "team_number": 1,
+        "target_event": "2024miket",
+        "as_of": "2024-03-02T09:30:00-05:00",
+        "expected_source": null,
+        "selected_source": null
+      },
+      {
+        "season": 2024,
+        "team_number": 1,
+        "target_event": "2024miket",
+        "as_of": "2024-03-02T10:26:00-05:00",
+        "expected_source": null,
+        "selected_source": null
+      }
+    ]
+  },
+  "statbotics_quality_issues": {},
+  "score_breakdown_counts": {
+    "2024": {
+      "ok": 16977
+    },
+    "2025": {
+      "ok": 17846
+    },
+    "2026": {
+      "ok": 18372
+    }
+  },
+  "score_breakdown_examples": {
+    "ok": []
+  },
+  "team_event_stats_rows": 24022,
+  "team_event_stats_fingerprint": "5e28ddfb8e93cf26677a18ad6dedea4c"
+}
