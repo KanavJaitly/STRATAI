@@ -66,6 +66,7 @@ __all__ = [
     "Calibrator",
     "IsotonicCalibrator",
     "PlattCalibrator",
+    "SymmetricIsotonicCalibrator",
     "ReliabilityBin",
     "apply_calibrated_model",
     "check_calibration_band",
@@ -221,6 +222,69 @@ class PlattCalibrator:
         instance = cls()
         instance._coef = data["coef"]
         instance._intercept = data["intercept"]
+        return instance
+
+
+class SymmetricIsotonicCalibrator:
+    """Isotonic calibration that preserves red/blue symmetry exactly (decision D16 §2.2).
+
+    A win probability p is always P(red beats blue); the same match seen from
+    the other side is 1 - p with the opposite outcome. So the calibration set
+    is augmented with every match from both perspectives, {(p, y)} and
+    {(1 - p, 1 - y)}, and an isotonic g is fit to it. It is then served
+    symmetrized:
+
+        q(p) = (g(p) + 1 - g(1 - p)) / 2
+
+    which gives q(1 - p) = 1 - q(p) for any g, so a symmetric model stays
+    symmetric after calibration (an ordinary isotonic or Platt fit on red-side
+    probabilities can learn a red/blue offset). q is non-decreasing because g
+    is, and stays in [0, 1].
+    """
+
+    def __init__(self) -> None:
+        self._regressor: IsotonicRegression | None = None
+
+    def fit(self, raw_probabilities: Sequence[float], labels: Sequence[bool]) -> None:
+        if not raw_probabilities:
+            raise ValueError("cannot fit SymmetricIsotonicCalibrator on zero examples")
+        if len(raw_probabilities) != len(labels):
+            raise ValueError(f"raw_probabilities ({len(raw_probabilities)}) and labels ({len(labels)}) must match")
+        p = np.asarray(raw_probabilities, dtype=np.float64)
+        y = np.asarray([1.0 if label else 0.0 for label in labels], dtype=np.float64)
+        regressor = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip")
+        regressor.fit(np.concatenate([p, 1.0 - p]), np.concatenate([y, 1.0 - y]))
+        self._regressor = regressor
+
+    def _g(self, p: float) -> float:
+        assert self._regressor is not None
+        return float(self._regressor.predict([p])[0])
+
+    def calibrate(self, raw_probability: float) -> float:
+        if self._regressor is None:
+            raise RuntimeError("calibrate called before fit()")
+        return 0.5 * (self._g(raw_probability) + 1.0 - self._g(1.0 - raw_probability))
+
+    def save(self, path: Path) -> None:
+        if self._regressor is None:
+            raise RuntimeError("cannot save an unfit SymmetricIsotonicCalibrator -- call fit() first")
+        envelope = {
+            "calibrator": "symmetric_isotonic",
+            "version": CALIBRATOR_VERSION,
+            "x_thresholds": self._regressor.X_thresholds_.tolist(),
+            "y_thresholds": self._regressor.y_thresholds_.tolist(),
+        }
+        path.write_text(json.dumps(envelope), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path: Path) -> Self:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("calibrator") != "symmetric_isotonic":
+            raise ValueError(f"{path} does not contain a symmetric isotonic calibrator (found {data.get('calibrator')!r})")
+        regressor = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip")
+        regressor.fit(np.asarray(data["x_thresholds"]), np.asarray(data["y_thresholds"]))
+        instance = cls()
+        instance._regressor = regressor
         return instance
 
 

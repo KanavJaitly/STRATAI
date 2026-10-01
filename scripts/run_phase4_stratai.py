@@ -238,42 +238,51 @@ def run_m06(frame_dir: Path, m04: dict[str, Any]) -> dict[str, Any]:
 
 
 def run_m07(frame_dir: Path) -> dict[str, Any]:
+    """M7 under decision D16 (M05_M07_REDESIGN_SPEC.md §2): the M6 model with the
+    symmetric isotonic calibrator, judged by G1 (ECE < 0.05), G2 (exact per-bin
+    Poisson-binomial test, Holm), G3 (exact symmetry) and G4 (fit isolation)."""
+    from ml.backtest.harness import _match_features
     from ml.backtest.metrics import brier_score, expected_calibration_error, log_loss
-    from ml.calibration.calibrator import (
-        IsotonicCalibrator,
-        apply_calibrated_model,
-        check_calibration_band,
-        compute_reliability_bins,
-        fit_calibrated_win_prob_model,
-    )
+    from ml.calibration.calibrator import SymmetricIsotonicCalibrator, fit_calibrated_win_prob_model
+    from ml.calibration.gate import evaluate_calibration_gate
+    from ml.dataset.builder import LABEL_RED_WIN, LABEL_TIE
     from ml.models.win_prob import WinProbXGBModel
 
     rows = load_frame_rows(frame_dir)
     _, epa_fold, _, _ = _folds(rows)
     model, calibrator, diagnostics = fit_calibrated_win_prob_model(
-        WinProbXGBModel, epa_fold.train_rows, calibrator_factory=IsotonicCalibrator)
-    raw, calibrated, labels = apply_calibrated_model(model, calibrator, epa_fold.test_rows)
-    bins = compute_reliability_bins(calibrated, labels)
-    band = check_calibration_band(bins, target=0.60)
-    near = [(p, y) for p, y in zip(calibrated, labels) if 0.58 <= p <= 0.62]
-    symmetry = max(abs(calibrator.calibrate(p) + calibrator.calibrate(1.0 - p) - 1.0) for p in raw)
-    ece = expected_calibration_error(calibrated, labels)
+        WinProbXGBModel, epa_fold.train_rows, calibrator_factory=SymmetricIsotonicCalibrator)
+    # G4: the model and calibrator only ever received epa_fold.train_rows (2024+2025, strictly before 2026)
+    fit_isolated = (all(r.season in TRAIN_SEASONS for r in epa_fold.train_rows)
+                    and max(r.scheduled_time for r in epa_fold.train_rows)
+                    < min(r.scheduled_time for r in epa_fold.test_rows))
+    raw, q, labels, symmetry, forward = [], [], [], [], []
+    evaluated = [r for r in epa_fold.test_rows if r.label != LABEL_TIE]
+    for row in evaluated:
+        features = _match_features(row)
+        swapped = features.model_copy(update={"red_teams": features.blue_teams, "blue_teams": features.red_teams})
+        p = model.predict_win_prob(features)
+        q_rb = calibrator.calibrate(p)
+        q_br = calibrator.calibrate(model.predict_win_prob(swapped))
+        raw.append(p)
+        q.append(q_rb)
+        labels.append(row.label == LABEL_RED_WIN)
+        symmetry.append(abs(q_rb + q_br - 1.0))
+        forward.append(q_rb)
+    backward = [calibrator.calibrate(model.predict_win_prob(_match_features(r))) for r in reversed(evaluated)]
+    gate = evaluate_calibration_gate(q, labels, symmetry_errors=symmetry,
+                                     order_independent=forward == list(reversed(backward)),
+                                     fit_isolated=fit_isolated)
     return {
-        "milestone": "M07",
+        "milestone": "M07", "decision": "D16", "spec": ".agent/phase4/M05_M07_REDESIGN_SPEC.md §2",
         "frame_content_hash": frame_info(frame_dir)["manifest"]["content_hash"],
-        "calibrator": "isotonic (pre-registered)", "fit_diagnostics": diagnostics,
-        "held_out_rows": len(labels),
-        "raw": {"ece": expected_calibration_error(raw, labels), "log_loss": log_loss(raw, labels),
-                "brier": brier_score(raw, labels)},
-        "calibrated": {"ece": ece, "log_loss": log_loss(calibrated, labels), "brier": brier_score(calibrated, labels)},
-        "gate_d6_ece_below_0_05": ece is not None and ece < 0.05,
-        "reliability_bins": [b.__dict__ for b in bins],
-        "band_check_as_implemented": {"bin": [band.bin.lower, band.bin.upper] if band.bin else None,
-                                      "empirical_rate": band.bin.empirical_rate if band.bin else None,
-                                      "within_band": band.within_band},
-        "diagnostic_predictions_in_0_58_0_62": {
-            "count": len(near), "empirical_rate": (sum(y for _, y in near) / len(near)) if near else None},
-        "calibrated_symmetry_max_abs_error": symmetry,
+        "calibrator": "SymmetricIsotonicCalibrator", "fit_diagnostics": diagnostics,
+        "held_out_rows": len(labels), "ties_excluded": len(epa_fold.test_rows) - len(evaluated),
+        "raw_m6": {"ece": expected_calibration_error(raw, labels), "log_loss": log_loss(raw, labels),
+                   "brier": brier_score(raw, labels)},
+        "calibrated": {"ece": gate.ece, "log_loss": log_loss(q, labels), "brier": brier_score(q, labels)},
+        "gate": gate.to_dict(),
+        "gate_passed": gate.passed,
     }
 
 
