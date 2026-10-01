@@ -684,3 +684,30 @@ def test_load_raises_a_clear_error_for_an_object_type_it_does_not_handle():
     unsupported = pipeline.StagedBatch(source="human_scout", object_type=pipeline.OBJECT_TYPE_SCOUTING_OBSERVATION)
     with pytest.raises(ValueError, match="scouting_observation"):
         pipeline.load(repository=None, staged_batches=[unsupported])
+
+
+class _NoTBA:
+    def __getattr__(self, name):
+        raise AssertionError(f"TBA must not be contacted (called {name})")
+
+
+def test_sync_event_with_a_prebuilt_extraction_never_contacts_tba(database):
+    from data.landing.raw_writer import RawPayloadRecord
+
+    _run(database, statbotics=None)  # the canonical event and teams exist first
+    records = [RawPayloadRecord(pipeline.SOURCE_STATBOTICS, pipeline.OBJECT_TYPE_TEAM_EVENT, f"{t}_{S_EVENT}",
+                                raw_team_event(t)) for t in S_TEAMS]
+    extraction = pipeline.ExtractionResult(S_EVENT, [pipeline.ExtractionBatch(
+        pipeline.SOURCE_STATBOTICS, pipeline.OBJECT_TYPE_TEAM_EVENT, records)])
+
+    result = sync_event(S_EVENT, database=database, tba=_NoTBA(), extraction=extraction,
+                        pipeline_name="statbotics_snapshot")
+
+    assert result.landed == {"statbotics.team_event": 6}
+    assert result.loaded.get("team_event_stats") == 6
+    assert _runs(database)[-1][1:3] == ("statbotics_snapshot", "statbotics")
+
+
+def test_sync_event_needs_tba_unless_an_extraction_is_given(database):
+    with pytest.raises(ValueError, match="TBA client"):
+        sync_event(S_EVENT, database=database, tba=None)

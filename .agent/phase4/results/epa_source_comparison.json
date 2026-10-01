@@ -1,0 +1,42 @@
+{
+  "stratai_team_events": 23969,
+  "statbotics_team_events": 24022,
+  "shared": 23931,
+  "only_stratai": 38,
+  "only_statbotics": 91,
+  "by_season": {
+    "2024": {
+      "team_events": 7664,
+      "pearson": 0.9966,
+      "spearman": 0.9955,
+      "mean_diff_stratai_minus_statbotics": 0.021,
+      "mean_abs_diff": 0.591,
+      "median_abs_diff": 0.4,
+      "exact_to_0.01": 56,
+      "exact_share": 0.0073,
+      "stratai_season_end_flagged": 59
+    },
+    "2025": {
+      "team_events": 8072,
+      "pearson": 0.9996,
+      "spearman": 0.9994,
+      "mean_diff_stratai_minus_statbotics": 0.014,
+      "mean_abs_diff": 0.369,
+      "median_abs_diff": 0.24,
+      "exact_to_0.01": 114,
+      "exact_share": 0.0141,
+      "stratai_season_end_flagged": 59
+    },
+    "2026": {
+      "team_events": 8195,
+      "pearson": 0.9983,
+      "spearman": 0.9985,
+      "mean_diff_stratai_minus_statbotics": 0.069,
+      "mean_abs_diff": 0.299,
+      "median_abs_diff": 0.05,
+      "exact_to_0.01": 610,
+      "exact_share": 0.0744,
+      "stratai_season_end_flagged": 73
+    }
+  }
+}

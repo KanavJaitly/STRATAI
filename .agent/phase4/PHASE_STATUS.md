@@ -1,10 +1,10 @@
 Phase: 4
 
-Current Milestone: M05 v2 — GATE PASSED on its single D16 run (2026-09-30); acceptance pending Kanav's review. M07 FAILED (D16). Stopped for review.
+Current Milestone: D17 (Statbotics as EPA source) — snapshot built; D8 readiness INVALID (2026iscmp); STOPPED before any Statbotics-based M4-M7 run (2026-10-01)
 
-Status: IN_PROGRESS — M04, M06 ACCEPTED. M05 v1 FAILED (record kept); M05 v2 passed: midpoint Spearman 0.6128 vs 0.5951 (same-protocol and frozen baseline), reproducible (M05_ACCEPTANCE.md). M07 FAILED under D16 (G2; M07_ESCALATION.md) — recorded as a real-data generalization/calibration failure, not to be rerun. M06 not reopened (Kanav decision pending). M11 not run; M13 not started. M08/M09/M10/M12 remain ACCEPTED. Phase 4 is NOT complete.
+Status: BLOCKED ON HUMAN DECISION — Statbotics verified working (monitor RECOVERY_PENDING, not confirmed); snapshot of 608 events / 24,022 team-event rows cached with provenance and loaded via the Phase 2 path (TBA not re-fetched). D8 gate INVALID: all 450 appearances at 2026iscmp have unprocessed Statbotics source rows (2026 ISR events listed "Upcoming"). Existing D15 (STRATAI EPA) evidence unchanged: M04, M06 ACCEPTED; M05 v2 gate passed (pending review); M07 FAILED (D16). M11 not run; M13 not started. See D17_STATBOTICS_ESCALATION.md.
 
-Current Stage: Stopped — awaiting Kanav's review of M05 v2 and the decision on an M6 v2 methodology change.
+Current Stage: Stopped — awaiting Kanav decisions A-D in D17_STATBOTICS_ESCALATION.md.
 
 Completed (pre-Phase-Execution-Mode, recorded in RUNNING_NOTES.md only):
 - M01 ACCEPTED (2026-09-21)
