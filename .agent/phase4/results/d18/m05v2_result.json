@@ -1,0 +1,2217 @@
+{
+  "artifact": "C:\\Dev\\StratAI-artifacts\\phase4\\frame_ab1adbf38b43c2f3\\d18_m05v2_result_73510bc143f8.json",
+  "decision": "D16",
+  "fit": {
+    "best_iteration": 7,
+    "labelled_team_events": 15617,
+    "target_exclusions": {
+      "events_zero_sigma": 0,
+      "team_events_below_min_matches": 1
+    },
+    "train_samples": 137246,
+    "validation_samples": 34311
+  },
+  "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+  "gate_beats_frozen_baseline": true,
+  "gate_beats_same_protocol_baseline": true,
+  "gate_passed": true,
+  "guard": {
+    "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+    "implementation": {
+      "changed_since_pinned_commit": [],
+      "head": "77d5423d5f6d810221a64c1b02409516f3ffb9ca",
+      "ok": true,
+      "pinned_commit": "69139f817540638ddd84301917ad51357310ac9a",
+      "uncommitted": []
+    },
+    "methodology": {
+      "freeze_commit": "ec1b0af",
+      "methodology_files_changed_since_freeze": [],
+      "ok": true,
+      "spec_blob_at_freeze": "b578d1639c79e1221c4b99b67619d0c7c5726497",
+      "spec_blob_now": "b578d1639c79e1221c4b99b67619d0c7c5726497"
+    }
+  },
+  "milestone": "M05v2",
+  "passed": true,
+  "population": {
+    "events_scored": 208,
+    "events_skipped": 0,
+    "events_with_snapshots": 208,
+    "team_events": 8160,
+    "teams_scored": 8160
+  },
+  "primary": {
+    "baseline_same_protocol": {
+      "events_scored": 208,
+      "events_skipped": 0,
+      "per_event": {
+        "2026alhu": {
+          "spearman": 0.662613981762918,
+          "teams": 48,
+          "top_k_recall": 0.5
+        },
+        "2026arc": {
+          "spearman": 0.5823044096728307,
+          "teams": 75,
+          "top_k_recall": 0.5
+        },
+        "2026arli": {
+          "spearman": 0.7366801444216685,
+          "teams": 25,
+          "top_k_recall": 0.75
+        },
+        "2026ausc": {
+          "spearman": 0.4978511084824874,
+          "teams": 42,
+          "top_k_recall": 0.75
+        },
+        "2026azfg": {
+          "spearman": 0.39244210223822007,
+          "teams": 55,
+          "top_k_recall": 0.5
+        },
+        "2026bcvi": {
+          "spearman": 0.4567450151250079,
+          "teams": 44,
+          "top_k_recall": 0.75
+        },
+        "2026brba": {
+          "spearman": 0.49219746537517123,
+          "teams": 48,
+          "top_k_recall": 0.5
+        },
+        "2026brsp": {
+          "spearman": 0.6451695198405423,
+          "teams": 49,
+          "top_k_recall": 0.625
+        },
+        "2026caasv": {
+          "spearman": 0.6275498528514336,
+          "teams": 34,
+          "top_k_recall": 0.75
+        },
+        "2026cacac": {
+          "spearman": 0.6862745098039216,
+          "teams": 35,
+          "top_k_recall": 0.75
+        },
+        "2026caclv": {
+          "spearman": 0.6724786324786325,
+          "teams": 26,
+          "top_k_recall": 0.5
+        },
+        "2026caetb": {
+          "spearman": 0.461460600823788,
+          "teams": 39,
+          "top_k_recall": 0.625
+        },
+        "2026cagle": {
+          "spearman": 0.7716927453769559,
+          "teams": 37,
+          "top_k_recall": 0.625
+        },
+        "2026cahal": {
+          "spearman": 0.628034188034188,
+          "teams": 26,
+          "top_k_recall": 0.75
+        },
+        "2026calas": {
+          "spearman": 0.6421683818167085,
+          "teams": 42,
+          "top_k_recall": 0.625
+        },
+        "2026cancmp": {
+          "spearman": 0.7812170047235343,
+          "teams": 60,
+          "top_k_recall": 0.5
+        },
+        "2026caoec": {
+          "spearman": 0.6104788999525842,
+          "teams": 37,
+          "top_k_recall": 0.875
+        },
+        "2026capin": {
+          "spearman": 0.7049808429118773,
+          "teams": 28,
+          "top_k_recall": 0.875
+        },
+        "2026capoh": {
+          "spearman": 0.5587067498581962,
+          "teams": 42,
+          "top_k_recall": 0.5
+        },
+        "2026casac": {
+          "spearman": 0.5677080492165382,
+          "teams": 38,
+          "top_k_recall": 0.625
+        },
+        "2026cascmp": {
+          "spearman": 0.8143373159210892,
+          "teams": 60,
+          "top_k_recall": 0.5
+        },
+        "2026casgv": {
+          "spearman": 0.7364532019704434,
+          "teams": 29,
+          "top_k_recall": 0.875
+        },
+        "2026casnd": {
+          "spearman": 0.5778611632270169,
+          "teams": 40,
+          "top_k_recall": 0.5
+        },
+        "2026casnf": {
+          "spearman": 0.6425522754348708,
+          "teams": 38,
+          "top_k_recall": 0.625
+        },
+        "2026casnv": {
+          "spearman": 0.7526524819101478,
+          "teams": 37,
+          "top_k_recall": 0.625
+        },
+        "2026caven": {
+          "spearman": 0.48330008466125207,
+          "teams": 36,
+          "top_k_recall": 0.5
+        },
+        "2026chcmp": {
+          "spearman": 0.6952925481227368,
+          "teams": 54,
+          "top_k_recall": 0.375
+        },
+        "2026cnsh": {
+          "spearman": 0.3048617500926057,
+          "teams": 50,
+          "top_k_recall": 0.25
+        },
+        "2026code": {
+          "spearman": 0.6926892621845147,
+          "teams": 55,
+          "top_k_recall": 0.75
+        },
+        "2026cosp": {
+          "spearman": 0.5959224598930482,
+          "teams": 33,
+          "top_k_recall": 0.75
+        },
+        "2026cthar": {
+          "spearman": 0.7294926505452821,
+          "teams": 37,
+          "top_k_recall": 0.75
+        },
+        "2026ctwat": {
+          "spearman": 0.6813348459566869,
+          "teams": 32,
+          "top_k_recall": 0.75
+        },
+        "2026cur": {
+          "spearman": 0.5908478341355053,
+          "teams": 74,
+          "top_k_recall": 0.375
+        },
+        "2026dal": {
+          "spearman": 0.6024466571834993,
+          "teams": 75,
+          "top_k_recall": 0.625
+        },
+        "2026flor": {
+          "spearman": 0.574928529949575,
+          "teams": 58,
+          "top_k_recall": 0.75
+        },
+        "2026flta": {
+          "spearman": 0.7208406077891875,
+          "teams": 45,
+          "top_k_recall": 0.625
+        },
+        "2026flwp": {
+          "spearman": 0.6088164850752319,
+          "teams": 47,
+          "top_k_recall": 0.75
+        },
+        "2026gaalb": {
+          "spearman": 0.6732348111658456,
+          "teams": 28,
+          "top_k_recall": 0.625
+        },
+        "2026gacmp": {
+          "spearman": 0.710935441370224,
+          "teams": 45,
+          "top_k_recall": 0.875
+        },
+        "2026gacol": {
+          "spearman": 0.6467980295566502,
+          "teams": 29,
+          "top_k_recall": 0.625
+        },
+        "2026gadal": {
+          "spearman": 0.4427865734771773,
+          "teams": 31,
+          "top_k_recall": 0.625
+        },
+        "2026gagai": {
+          "spearman": 0.6333704115684093,
+          "teams": 30,
+          "top_k_recall": 0.75
+        },
+        "2026gagwi": {
+          "spearman": 0.557285873192436,
+          "teams": 30,
+          "top_k_recall": 0.75
+        },
+        "2026gal": {
+          "spearman": 0.5320056899004267,
+          "teams": 75,
+          "top_k_recall": 0.625
+        },
+        "2026hiho": {
+          "spearman": 0.5831571957322581,
+          "teams": 30,
+          "top_k_recall": 0.875
+        },
+        "2026hop": {
+          "spearman": 0.6798815253609775,
+          "teams": 74,
+          "top_k_recall": 0.625
+        },
+        "2026iacf": {
+          "spearman": 0.6014355539802068,
+          "teams": 53,
+          "top_k_recall": 0.5
+        },
+        "2026idbo": {
+          "spearman": 0.5567386040897853,
+          "teams": 35,
+          "top_k_recall": 0.875
+        },
+        "2026ilch": {
+          "spearman": 0.6759103641456583,
+          "teams": 35,
+          "top_k_recall": 0.75
+        },
+        "2026ilpe": {
+          "spearman": 0.6407258064516129,
+          "teams": 31,
+          "top_k_recall": 0.625
+        },
+        "2026incmp": {
+          "spearman": 0.7785315680052523,
+          "teams": 38,
+          "top_k_recall": 0.75
+        },
+        "2026incol": {
+          "spearman": 0.5412517780938834,
+          "teams": 37,
+          "top_k_recall": 0.625
+        },
+        "2026inlaf": {
+          "spearman": 0.7495798319327731,
+          "teams": 35,
+          "top_k_recall": 0.75
+        },
+        "2026inmis": {
+          "spearman": 0.7295915794555524,
+          "teams": 39,
+          "top_k_recall": 0.5
+        },
+        "2026inwas": {
+          "spearman": 0.7553846153846154,
+          "teams": 25,
+          "top_k_recall": 0.625
+        },
+        "2026iscmp": {
+          "spearman": 0.828056628056628,
+          "teams": 36,
+          "top_k_recall": 0.625
+        },
+        "2026isde1": {
+          "spearman": 0.6472294381620036,
+          "teams": 27,
+          "top_k_recall": 0.875
+        },
+        "2026isde2": {
+          "spearman": 0.49771451935584304,
+          "teams": 24,
+          "top_k_recall": 0.625
+        },
+        "2026joh": {
+          "spearman": 0.7007112375533429,
+          "teams": 75,
+          "top_k_recall": 0.25
+        },
+        "2026ksla": {
+          "spearman": 0.22857142857142856,
+          "teams": 41,
+          "top_k_recall": 0.5
+        },
+        "2026lake": {
+          "spearman": 0.592049030229096,
+          "teams": 53,
+          "top_k_recall": 0.875
+        },
+        "2026mabil": {
+          "spearman": 0.4625615763546798,
+          "teams": 29,
+          "top_k_recall": 0.625
+        },
+        "2026mabos": {
+          "spearman": 0.7330488383119962,
+          "teams": 37,
+          "top_k_recall": 0.625
+        },
+        "2026marea": {
+          "spearman": 0.5650817976395919,
+          "teams": 38,
+          "top_k_recall": 0.625
+        },
+        "2026mawne": {
+          "spearman": 0.5821842888876261,
+          "teams": 38,
+          "top_k_recall": 0.625
+        },
+        "2026mawor": {
+          "spearman": 0.6279352226720648,
+          "teams": 39,
+          "top_k_recall": 0.75
+        },
+        "2026mdbet": {
+          "spearman": 0.749227043645348,
+          "teams": 33,
+          "top_k_recall": 0.875
+        },
+        "2026mdpas": {
+          "spearman": 0.5236058059587472,
+          "teams": 34,
+          "top_k_recall": 0.625
+        },
+        "2026mdsev": {
+          "spearman": 0.6372549019607843,
+          "teams": 35,
+          "top_k_recall": 0.625
+        },
+        "2026mefal": {
+          "spearman": 0.5731478404569678,
+          "teams": 20,
+          "top_k_recall": 0.625
+        },
+        "2026mibat": {
+          "spearman": 0.6018218623481781,
+          "teams": 39,
+          "top_k_recall": 0.875
+        },
+        "2026mibel": {
+          "spearman": 0.5680161943319838,
+          "teams": 39,
+          "top_k_recall": 0.75
+        },
+        "2026miber": {
+          "spearman": 0.5520928382166448,
+          "teams": 36,
+          "top_k_recall": 0.5
+        },
+        "2026mibig": {
+          "spearman": 0.6926829268292682,
+          "teams": 41,
+          "top_k_recall": 0.625
+        },
+        "2026mibkn": {
+          "spearman": 0.7220773264441666,
+          "teams": 37,
+          "top_k_recall": 0.75
+        },
+        "2026mibro": {
+          "spearman": 0.4981238273921201,
+          "teams": 40,
+          "top_k_recall": 0.5
+        },
+        "2026miche": {
+          "spearman": 0.6017412555005704,
+          "teams": 39,
+          "top_k_recall": 0.625
+        },
+        "2026micmp1": {
+          "spearman": 0.7228893058161351,
+          "teams": 40,
+          "top_k_recall": 0.375
+        },
+        "2026micmp2": {
+          "spearman": 0.6645403377110695,
+          "teams": 40,
+          "top_k_recall": 0.875
+        },
+        "2026micmp3": {
+          "spearman": 0.5266550522648084,
+          "teams": 41,
+          "top_k_recall": 0.625
+        },
+        "2026micmp4": {
+          "spearman": 0.5664165103189494,
+          "teams": 40,
+          "top_k_recall": 0.875
+        },
+        "2026midtr": {
+          "spearman": 0.302871088087306,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026miesc": {
+          "spearman": 0.7893058161350844,
+          "teams": 40,
+          "top_k_recall": 0.75
+        },
+        "2026mifen": {
+          "spearman": 0.6657752932817799,
+          "teams": 42,
+          "top_k_recall": 0.75
+        },
+        "2026mifli": {
+          "spearman": 0.4592334494773519,
+          "teams": 41,
+          "top_k_recall": 0.75
+        },
+        "2026miken": {
+          "spearman": 0.7657894736842106,
+          "teams": 39,
+          "top_k_recall": 0.875
+        },
+        "2026mil": {
+          "spearman": 0.6961717882265828,
+          "teams": 74,
+          "top_k_recall": 0.625
+        },
+        "2026milac": {
+          "spearman": 0.48865459688796803,
+          "teams": 34,
+          "top_k_recall": 0.5
+        },
+        "2026milak": {
+          "spearman": 0.6972697936792176,
+          "teams": 38,
+          "top_k_recall": 0.625
+        },
+        "2026miliv": {
+          "spearman": 0.7698606271777003,
+          "teams": 41,
+          "top_k_recall": 0.5
+        },
+        "2026milsu": {
+          "spearman": 0.6848432055749128,
+          "teams": 41,
+          "top_k_recall": 0.625
+        },
+        "2026mimar": {
+          "spearman": 0.474296435272045,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026mimas": {
+          "spearman": 0.6851782363977486,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026mimid": {
+          "spearman": 0.7232233393835927,
+          "teams": 39,
+          "top_k_recall": 0.5
+        },
+        "2026mimil": {
+          "spearman": 0.4018770972750272,
+          "teams": 40,
+          "top_k_recall": 0.75
+        },
+        "2026mimtp": {
+          "spearman": 0.5688555347091933,
+          "teams": 40,
+          "top_k_recall": 0.75
+        },
+        "2026mimus": {
+          "spearman": 0.6836613224973316,
+          "teams": 35,
+          "top_k_recall": 0.5
+        },
+        "2026misal": {
+          "spearman": 0.7489878542510121,
+          "teams": 39,
+          "top_k_recall": 0.875
+        },
+        "2026mitr2": {
+          "spearman": 0.6375234521575985,
+          "teams": 40,
+          "top_k_recall": 0.75
+        },
+        "2026mitry": {
+          "spearman": 0.5507399577167019,
+          "teams": 43,
+          "top_k_recall": 0.75
+        },
+        "2026mitvc": {
+          "spearman": 0.46296093664514715,
+          "teams": 38,
+          "top_k_recall": 0.625
+        },
+        "2026miwmi": {
+          "spearman": 0.7697936210131332,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026mndu": {
+          "spearman": 0.40426221537962886,
+          "teams": 42,
+          "top_k_recall": 0.5
+        },
+        "2026mndu2": {
+          "spearman": 0.34350309983221333,
+          "teams": 42,
+          "top_k_recall": 0.625
+        },
+        "2026mnmi": {
+          "spearman": 0.5632579185520362,
+          "teams": 51,
+          "top_k_recall": 0.625
+        },
+        "2026mnmi2": {
+          "spearman": 0.770316742081448,
+          "teams": 51,
+          "top_k_recall": 0.75
+        },
+        "2026mnum": {
+          "spearman": 0.6711378353376504,
+          "teams": 47,
+          "top_k_recall": 0.875
+        },
+        "2026mnwi": {
+          "spearman": 0.6736933797909408,
+          "teams": 41,
+          "top_k_recall": 0.625
+        },
+        "2026mokc": {
+          "spearman": 0.6810104529616725,
+          "teams": 41,
+          "top_k_recall": 0.875
+        },
+        "2026mose": {
+          "spearman": 0.7365853658536585,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026mosl": {
+          "spearman": 0.30393309841975,
+          "teams": 41,
+          "top_k_recall": 0.875
+        },
+        "2026mrcmp": {
+          "spearman": 0.803068573217827,
+          "teams": 66,
+          "top_k_recall": 0.5
+        },
+        "2026mslr": {
+          "spearman": 0.5980976082056155,
+          "teams": 46,
+          "top_k_recall": 0.5
+        },
+        "2026mxmo": {
+          "spearman": 0.4947519458340069,
+          "teams": 43,
+          "top_k_recall": 0.5
+        },
+        "2026mxto": {
+          "spearman": 0.4530084170159122,
+          "teams": 46,
+          "top_k_recall": 0.75
+        },
+        "2026ncash": {
+          "spearman": 0.2917872534799185,
+          "teams": 30,
+          "top_k_recall": 0.375
+        },
+        "2026nccab": {
+          "spearman": 0.5370193015939383,
+          "teams": 28,
+          "top_k_recall": 0.875
+        },
+        "2026nccmp": {
+          "spearman": 0.7563505402160864,
+          "teams": 50,
+          "top_k_recall": 0.625
+        },
+        "2026ncelo": {
+          "spearman": 0.706737288277333,
+          "teams": 29,
+          "top_k_recall": 0.75
+        },
+        "2026ncpem": {
+          "spearman": 0.5660566577797889,
+          "teams": 33,
+          "top_k_recall": 0.875
+        },
+        "2026ncwak": {
+          "spearman": 0.281134615691701,
+          "teams": 29,
+          "top_k_recall": 0.625
+        },
+        "2026ncwk2": {
+          "spearman": 0.3532019704433498,
+          "teams": 29,
+          "top_k_recall": 0.5
+        },
+        "2026ndgf": {
+          "spearman": 0.4371945701357466,
+          "teams": 51,
+          "top_k_recall": 0.375
+        },
+        "2026necmp1": {
+          "spearman": 0.7442496998799519,
+          "teams": 50,
+          "top_k_recall": 0.5
+        },
+        "2026necmp2": {
+          "spearman": 0.7702761104441777,
+          "teams": 50,
+          "top_k_recall": 0.625
+        },
+        "2026new": {
+          "spearman": 0.6122617354196301,
+          "teams": 75,
+          "top_k_recall": 0.375
+        },
+        "2026nhbed": {
+          "spearman": 0.49587170455155316,
+          "teams": 34,
+          "top_k_recall": 0.5
+        },
+        "2026nhdur": {
+          "spearman": 0.5493124703651019,
+          "teams": 37,
+          "top_k_recall": 0.875
+        },
+        "2026njfla": {
+          "spearman": 0.4963235294117647,
+          "teams": 33,
+          "top_k_recall": 0.625
+        },
+        "2026njrob": {
+          "spearman": 0.45369458128078816,
+          "teams": 29,
+          "top_k_recall": 0.5
+        },
+        "2026njski": {
+          "spearman": 0.7912910618792972,
+          "teams": 34,
+          "top_k_recall": 0.875
+        },
+        "2026njtab": {
+          "spearman": 0.2777268607619018,
+          "teams": 32,
+          "top_k_recall": 0.5
+        },
+        "2026njwas": {
+          "spearman": 0.6662958843159066,
+          "teams": 30,
+          "top_k_recall": 0.375
+        },
+        "2026nvlv": {
+          "spearman": 0.6387351778656126,
+          "teams": 45,
+          "top_k_recall": 0.625
+        },
+        "2026nyli2": {
+          "spearman": 0.5800043421623968,
+          "teams": 48,
+          "top_k_recall": 0.625
+        },
+        "2026nyn2": {
+          "spearman": 0.7503416174395131,
+          "teams": 39,
+          "top_k_recall": 0.75
+        },
+        "2026nyny": {
+          "spearman": 0.4946148993015468,
+          "teams": 51,
+          "top_k_recall": 0.875
+        },
+        "2026nyro": {
+          "spearman": 0.34819624819624817,
+          "teams": 55,
+          "top_k_recall": 0.5
+        },
+        "2026nysu": {
+          "spearman": 0.5610378339698507,
+          "teams": 48,
+          "top_k_recall": 0.5
+        },
+        "2026nytr": {
+          "spearman": 0.6317310363989997,
+          "teams": 60,
+          "top_k_recall": 0.5
+        },
+        "2026ohcl": {
+          "spearman": 0.4970383275261324,
+          "teams": 41,
+          "top_k_recall": 0.875
+        },
+        "2026ohmv": {
+          "spearman": 0.5928113521841282,
+          "teams": 50,
+          "top_k_recall": 0.375
+        },
+        "2026okok": {
+          "spearman": 0.366759173604687,
+          "teams": 46,
+          "top_k_recall": 0.25
+        },
+        "2026oktu": {
+          "spearman": 0.5860622880049337,
+          "teams": 46,
+          "top_k_recall": 0.5
+        },
+        "2026onbar": {
+          "spearman": 0.6455278592375366,
+          "teams": 32,
+          "top_k_recall": 0.625
+        },
+        "2026oncmp1": {
+          "spearman": 0.8166342531586297,
+          "teams": 50,
+          "top_k_recall": 0.75
+        },
+        "2026oncmp2": {
+          "spearman": 0.7105102040816327,
+          "teams": 49,
+          "top_k_recall": 0.625
+        },
+        "2026onham": {
+          "spearman": 0.7204541109950391,
+          "teams": 30,
+          "top_k_recall": 0.75
+        },
+        "2026onnob": {
+          "spearman": 0.6069230769230769,
+          "teams": 25,
+          "top_k_recall": 0.625
+        },
+        "2026onosh": {
+          "spearman": 0.5883962780514504,
+          "teams": 28,
+          "top_k_recall": 0.5
+        },
+        "2026ontor": {
+          "spearman": 0.5738916256157636,
+          "teams": 29,
+          "top_k_recall": 0.875
+        },
+        "2026onwat": {
+          "spearman": 0.7350806451612903,
+          "teams": 31,
+          "top_k_recall": 0.75
+        },
+        "2026onwel": {
+          "spearman": 0.6178266178266179,
+          "teams": 27,
+          "top_k_recall": 0.875
+        },
+        "2026onwin": {
+          "spearman": 0.7033613445378152,
+          "teams": 35,
+          "top_k_recall": 0.625
+        },
+        "2026orore": {
+          "spearman": 0.5865546218487395,
+          "teams": 35,
+          "top_k_recall": 0.625
+        },
+        "2026orsal": {
+          "spearman": 0.6358543417366946,
+          "teams": 35,
+          "top_k_recall": 0.75
+        },
+        "2026orwil": {
+          "spearman": 0.6513929618768328,
+          "teams": 32,
+          "top_k_recall": 0.75
+        },
+        "2026paben": {
+          "spearman": 0.5000763941940413,
+          "teams": 34,
+          "top_k_recall": 0.75
+        },
+        "2026paca": {
+          "spearman": 0.5358017601432308,
+          "teams": 50,
+          "top_k_recall": 0.875
+        },
+        "2026pahat": {
+          "spearman": 0.5884319954420272,
+          "teams": 33,
+          "top_k_recall": 0.625
+        },
+        "2026paphi": {
+          "spearman": 0.6443548387096775,
+          "teams": 31,
+          "top_k_recall": 0.5
+        },
+        "2026pawar": {
+          "spearman": 0.7013735972918813,
+          "teams": 33,
+          "top_k_recall": 0.75
+        },
+        "2026pncmp": {
+          "spearman": 0.6969987995198079,
+          "teams": 50,
+          "top_k_recall": 0.5
+        },
+        "2026qcmo": {
+          "spearman": 0.43243243243243246,
+          "teams": 36,
+          "top_k_recall": 0.5
+        },
+        "2026rikin": {
+          "spearman": 0.6389296187683284,
+          "teams": 32,
+          "top_k_recall": 0.75
+        },
+        "2026sccha": {
+          "spearman": 0.39376383514342617,
+          "teams": 27,
+          "top_k_recall": 0.625
+        },
+        "2026sccmp": {
+          "spearman": 0.7153225806451613,
+          "teams": 31,
+          "top_k_recall": 0.5
+        },
+        "2026schar": {
+          "spearman": 0.5786290322580645,
+          "teams": 31,
+          "top_k_recall": 0.75
+        },
+        "2026schop": {
+          "spearman": 0.4218269889244254,
+          "teams": 26,
+          "top_k_recall": 0.5
+        },
+        "2026tnkn": {
+          "spearman": 0.4499213683222368,
+          "teams": 46,
+          "top_k_recall": 0.75
+        },
+        "2026tuak": {
+          "spearman": 0.5047213187171428,
+          "teams": 33,
+          "top_k_recall": 0.875
+        },
+        "2026tuak2": {
+          "spearman": 0.7948375274182228,
+          "teams": 33,
+          "top_k_recall": 0.875
+        },
+        "2026tuhc": {
+          "spearman": 0.31477068223585186,
+          "teams": 43,
+          "top_k_recall": 0.375
+        },
+        "2026tuis": {
+          "spearman": 0.2546091355043324,
+          "teams": 32,
+          "top_k_recall": 0.5
+        },
+        "2026tuis2": {
+          "spearman": 0.5422290276566836,
+          "teams": 33,
+          "top_k_recall": 0.75
+        },
+        "2026tuis3": {
+          "spearman": 0.36071554652062593,
+          "teams": 43,
+          "top_k_recall": 0.75
+        },
+        "2026tuis4": {
+          "spearman": 0.5160178054019862,
+          "teams": 29,
+          "top_k_recall": 0.75
+        },
+        "2026tuis5": {
+          "spearman": 0.46257990656660136,
+          "teams": 40,
+          "top_k_recall": 0.5
+        },
+        "2026txama": {
+          "spearman": 0.6192156498854333,
+          "teams": 31,
+          "top_k_recall": 0.75
+        },
+        "2026txbel": {
+          "spearman": 0.5556670320594598,
+          "teams": 33,
+          "top_k_recall": 0.625
+        },
+        "2026txcl2": {
+          "spearman": 0.6134453781512605,
+          "teams": 34,
+          "top_k_recall": 0.625
+        },
+        "2026txcle": {
+          "spearman": 0.4701677226235527,
+          "teams": 32,
+          "top_k_recall": 0.5
+        },
+        "2026txcmp1": {
+          "spearman": 0.7469038208168644,
+          "teams": 45,
+          "top_k_recall": 0.625
+        },
+        "2026txcmp2": {
+          "spearman": 0.7998682476943346,
+          "teams": 45,
+          "top_k_recall": 0.5
+        },
+        "2026txdri": {
+          "spearman": 0.5532258064516129,
+          "teams": 31,
+          "top_k_recall": 0.625
+        },
+        "2026txfar": {
+          "spearman": 0.5862903225806452,
+          "teams": 31,
+          "top_k_recall": 0.625
+        },
+        "2026txfor": {
+          "spearman": 0.4226086956521739,
+          "teams": 24,
+          "top_k_recall": 0.5
+        },
+        "2026txhou": {
+          "spearman": 0.42577346751112444,
+          "teams": 30,
+          "top_k_recall": 0.625
+        },
+        "2026txman": {
+          "spearman": 0.7452297446006844,
+          "teams": 27,
+          "top_k_recall": 0.75
+        },
+        "2026txmca": {
+          "spearman": 0.6432628632143425,
+          "teams": 18,
+          "top_k_recall": 0.75
+        },
+        "2026txsan": {
+          "spearman": 0.5524272429833499,
+          "teams": 37,
+          "top_k_recall": 0.625
+        },
+        "2026txwac": {
+          "spearman": 0.7028485531443496,
+          "teams": 25,
+          "top_k_recall": 0.75
+        },
+        "2026utwv": {
+          "spearman": 0.524025605704562,
+          "teams": 42,
+          "top_k_recall": 0.75
+        },
+        "2026vaale": {
+          "spearman": 0.22665228225131265,
+          "teams": 40,
+          "top_k_recall": 0.5
+        },
+        "2026vabla": {
+          "spearman": 0.7343715239154617,
+          "teams": 30,
+          "top_k_recall": 0.75
+        },
+        "2026vache": {
+          "spearman": 0.624541109660606,
+          "teams": 30,
+          "top_k_recall": 0.625
+        },
+        "2026vagle": {
+          "spearman": 0.52880978865406,
+          "teams": 30,
+          "top_k_recall": 0.625
+        },
+        "2026vtbur": {
+          "spearman": 0.6996180290297938,
+          "teams": 34,
+          "top_k_recall": 0.875
+        },
+        "2026waahs": {
+          "spearman": 0.5796653796653797,
+          "teams": 36,
+          "top_k_recall": 0.625
+        },
+        "2026wabon": {
+          "spearman": 0.5541634835752483,
+          "teams": 34,
+          "top_k_recall": 0.625
+        },
+        "2026wasam": {
+          "spearman": 0.6911330049261084,
+          "teams": 29,
+          "top_k_recall": 0.75
+        },
+        "2026wasno": {
+          "spearman": 0.6133481646273637,
+          "teams": 30,
+          "top_k_recall": 0.625
+        },
+        "2026wayak": {
+          "spearman": 0.6263736263736264,
+          "teams": 27,
+          "top_k_recall": 0.5
+        },
+        "2026wiapp": {
+          "spearman": 0.5269782330469942,
+          "teams": 38,
+          "top_k_recall": 0.625
+        },
+        "2026wicmp": {
+          "spearman": 0.7163449163449164,
+          "teams": 36,
+          "top_k_recall": 0.75
+        },
+        "2026wilax": {
+          "spearman": 0.47960275019098547,
+          "teams": 34,
+          "top_k_recall": 0.5
+        },
+        "2026wimuk": {
+          "spearman": 0.6692406692406693,
+          "teams": 36,
+          "top_k_recall": 0.75
+        },
+        "2026wiply": {
+          "spearman": 0.5033422459893048,
+          "teams": 33,
+          "top_k_recall": 0.5
+        }
+      },
+      "spearman": 0.5955333742533729,
+      "teams_scored": 8160,
+      "top_k_recall": 0.6472355769230769
+    },
+    "d18_m04_ranking_spearman": 0.5955333742533729,
+    "model": {
+      "events_scored": 208,
+      "events_skipped": 0,
+      "per_event": {
+        "2026alhu": {
+          "spearman": 0.6673908815807179,
+          "teams": 48,
+          "top_k_recall": 0.5
+        },
+        "2026arc": {
+          "spearman": 0.5643036358442178,
+          "teams": 75,
+          "top_k_recall": 0.5
+        },
+        "2026arli": {
+          "spearman": 0.6996934677110966,
+          "teams": 25,
+          "top_k_recall": 0.625
+        },
+        "2026ausc": {
+          "spearman": 0.546168647415568,
+          "teams": 42,
+          "top_k_recall": 0.75
+        },
+        "2026azfg": {
+          "spearman": 0.4037245710325933,
+          "teams": 55,
+          "top_k_recall": 0.5
+        },
+        "2026bcvi": {
+          "spearman": 0.6680336130683998,
+          "teams": 44,
+          "top_k_recall": 0.875
+        },
+        "2026brba": {
+          "spearman": 0.45936644539039667,
+          "teams": 48,
+          "top_k_recall": 0.5
+        },
+        "2026brsp": {
+          "spearman": 0.6395818341442989,
+          "teams": 49,
+          "top_k_recall": 0.75
+        },
+        "2026caasv": {
+          "spearman": 0.6764034044878176,
+          "teams": 34,
+          "top_k_recall": 0.875
+        },
+        "2026cacac": {
+          "spearman": 0.8208637843875194,
+          "teams": 35,
+          "top_k_recall": 0.75
+        },
+        "2026caclv": {
+          "spearman": 0.6127267941310997,
+          "teams": 26,
+          "top_k_recall": 0.625
+        },
+        "2026caetb": {
+          "spearman": 0.5077640961123188,
+          "teams": 39,
+          "top_k_recall": 0.75
+        },
+        "2026cagle": {
+          "spearman": 0.8312277123709109,
+          "teams": 37,
+          "top_k_recall": 0.875
+        },
+        "2026cahal": {
+          "spearman": 0.6066725915172109,
+          "teams": 26,
+          "top_k_recall": 0.75
+        },
+        "2026calas": {
+          "spearman": 0.4781261687444814,
+          "teams": 42,
+          "top_k_recall": 0.5
+        },
+        "2026cancmp": {
+          "spearman": 0.8023734287582021,
+          "teams": 60,
+          "top_k_recall": 0.75
+        },
+        "2026caoec": {
+          "spearman": 0.6538638754657181,
+          "teams": 37,
+          "top_k_recall": 0.75
+        },
+        "2026capin": {
+          "spearman": 0.7578845877049314,
+          "teams": 28,
+          "top_k_recall": 0.875
+        },
+        "2026capoh": {
+          "spearman": 0.5967830683708806,
+          "teams": 42,
+          "top_k_recall": 0.625
+        },
+        "2026casac": {
+          "spearman": 0.5576176628247981,
+          "teams": 38,
+          "top_k_recall": 0.5
+        },
+        "2026cascmp": {
+          "spearman": 0.8199021892478011,
+          "teams": 60,
+          "top_k_recall": 0.5
+        },
+        "2026casgv": {
+          "spearman": 0.6904928402920976,
+          "teams": 29,
+          "top_k_recall": 0.75
+        },
+        "2026casnd": {
+          "spearman": 0.5351628055796247,
+          "teams": 40,
+          "top_k_recall": 0.5
+        },
+        "2026casnf": {
+          "spearman": 0.5571768332578223,
+          "teams": 38,
+          "top_k_recall": 0.75
+        },
+        "2026casnv": {
+          "spearman": 0.7397569566945975,
+          "teams": 37,
+          "top_k_recall": 0.75
+        },
+        "2026caven": {
+          "spearman": 0.505960898826788,
+          "teams": 36,
+          "top_k_recall": 0.625
+        },
+        "2026chcmp": {
+          "spearman": 0.7415130729520516,
+          "teams": 54,
+          "top_k_recall": 0.375
+        },
+        "2026cnsh": {
+          "spearman": 0.5909472968513969,
+          "teams": 50,
+          "top_k_recall": 0.375
+        },
+        "2026code": {
+          "spearman": 0.6335822431089477,
+          "teams": 55,
+          "top_k_recall": 0.75
+        },
+        "2026cosp": {
+          "spearman": 0.652072192513369,
+          "teams": 33,
+          "top_k_recall": 0.875
+        },
+        "2026cthar": {
+          "spearman": 0.6880960494433837,
+          "teams": 37,
+          "top_k_recall": 0.75
+        },
+        "2026ctwat": {
+          "spearman": 0.5604515546510854,
+          "teams": 32,
+          "top_k_recall": 0.75
+        },
+        "2026cur": {
+          "spearman": 0.6398305589690559,
+          "teams": 74,
+          "top_k_recall": 0.5
+        },
+        "2026dal": {
+          "spearman": 0.6198117872615253,
+          "teams": 75,
+          "top_k_recall": 0.5
+        },
+        "2026flor": {
+          "spearman": 0.55493460711062,
+          "teams": 58,
+          "top_k_recall": 0.625
+        },
+        "2026flta": {
+          "spearman": 0.7505524783408007,
+          "teams": 45,
+          "top_k_recall": 0.75
+        },
+        "2026flwp": {
+          "spearman": 0.6381403984540058,
+          "teams": 47,
+          "top_k_recall": 0.875
+        },
+        "2026gaalb": {
+          "spearman": 0.697926981198086,
+          "teams": 28,
+          "top_k_recall": 0.625
+        },
+        "2026gacmp": {
+          "spearman": 0.768693591496209,
+          "teams": 45,
+          "top_k_recall": 0.75
+        },
+        "2026gacol": {
+          "spearman": 0.7056819988930081,
+          "teams": 29,
+          "top_k_recall": 0.625
+        },
+        "2026gadal": {
+          "spearman": 0.5016161634619529,
+          "teams": 31,
+          "top_k_recall": 0.625
+        },
+        "2026gagai": {
+          "spearman": 0.4674624725586787,
+          "teams": 30,
+          "top_k_recall": 0.75
+        },
+        "2026gagwi": {
+          "spearman": 0.46625125185473715,
+          "teams": 30,
+          "top_k_recall": 0.625
+        },
+        "2026gal": {
+          "spearman": 0.6233060517752835,
+          "teams": 75,
+          "top_k_recall": 0.75
+        },
+        "2026hiho": {
+          "spearman": 0.5409057337876363,
+          "teams": 30,
+          "top_k_recall": 0.75
+        },
+        "2026hop": {
+          "spearman": 0.6919721875664799,
+          "teams": 74,
+          "top_k_recall": 0.625
+        },
+        "2026iacf": {
+          "spearman": 0.5784183728060589,
+          "teams": 53,
+          "top_k_recall": 0.75
+        },
+        "2026idbo": {
+          "spearman": 0.49698253016692656,
+          "teams": 35,
+          "top_k_recall": 0.625
+        },
+        "2026ilch": {
+          "spearman": 0.6506480259015306,
+          "teams": 35,
+          "top_k_recall": 0.5
+        },
+        "2026ilpe": {
+          "spearman": 0.6018556358978681,
+          "teams": 31,
+          "top_k_recall": 0.75
+        },
+        "2026incmp": {
+          "spearman": 0.871463760032149,
+          "teams": 38,
+          "top_k_recall": 0.75
+        },
+        "2026incol": {
+          "spearman": 0.4654441080619805,
+          "teams": 37,
+          "top_k_recall": 0.625
+        },
+        "2026inlaf": {
+          "spearman": 0.7725205813133748,
+          "teams": 35,
+          "top_k_recall": 0.625
+        },
+        "2026inmis": {
+          "spearman": 0.7544686977201116,
+          "teams": 39,
+          "top_k_recall": 0.5
+        },
+        "2026inwas": {
+          "spearman": 0.7358539972728725,
+          "teams": 25,
+          "top_k_recall": 0.625
+        },
+        "2026iscmp": {
+          "spearman": 0.8706027565972884,
+          "teams": 36,
+          "top_k_recall": 0.625
+        },
+        "2026isde1": {
+          "spearman": 0.7264957264957265,
+          "teams": 27,
+          "top_k_recall": 0.875
+        },
+        "2026isde2": {
+          "spearman": 0.4588661239307925,
+          "teams": 24,
+          "top_k_recall": 0.625
+        },
+        "2026joh": {
+          "spearman": 0.7116608995080573,
+          "teams": 75,
+          "top_k_recall": 0.25
+        },
+        "2026ksla": {
+          "spearman": 0.45990248281487706,
+          "teams": 41,
+          "top_k_recall": 0.625
+        },
+        "2026lake": {
+          "spearman": 0.550467812541948,
+          "teams": 53,
+          "top_k_recall": 0.875
+        },
+        "2026mabil": {
+          "spearman": 0.5012321949320152,
+          "teams": 29,
+          "top_k_recall": 0.75
+        },
+        "2026mabos": {
+          "spearman": 0.6348547762456638,
+          "teams": 37,
+          "top_k_recall": 0.625
+        },
+        "2026marea": {
+          "spearman": 0.5299016813367976,
+          "teams": 38,
+          "top_k_recall": 0.75
+        },
+        "2026mawne": {
+          "spearman": 0.5717257274719543,
+          "teams": 38,
+          "top_k_recall": 0.75
+        },
+        "2026mawor": {
+          "spearman": 0.667712899079946,
+          "teams": 39,
+          "top_k_recall": 0.75
+        },
+        "2026mdbet": {
+          "spearman": 0.7799747829186644,
+          "teams": 33,
+          "top_k_recall": 0.875
+        },
+        "2026mdpas": {
+          "spearman": 0.5434786080075023,
+          "teams": 34,
+          "top_k_recall": 0.625
+        },
+        "2026mdsev": {
+          "spearman": 0.6763750654238676,
+          "teams": 35,
+          "top_k_recall": 0.625
+        },
+        "2026mefal": {
+          "spearman": 0.6130124540320587,
+          "teams": 20,
+          "top_k_recall": 0.625
+        },
+        "2026mibat": {
+          "spearman": 0.7044731146383997,
+          "teams": 39,
+          "top_k_recall": 0.75
+        },
+        "2026mibel": {
+          "spearman": 0.4406506407275583,
+          "teams": 39,
+          "top_k_recall": 0.5
+        },
+        "2026miber": {
+          "spearman": 0.5442374342134019,
+          "teams": 36,
+          "top_k_recall": 0.625
+        },
+        "2026mibig": {
+          "spearman": 0.5871255385586409,
+          "teams": 41,
+          "top_k_recall": 0.75
+        },
+        "2026mibkn": {
+          "spearman": 0.7976256975527789,
+          "teams": 37,
+          "top_k_recall": 0.75
+        },
+        "2026mibro": {
+          "spearman": 0.5830479860065845,
+          "teams": 40,
+          "top_k_recall": 0.5
+        },
+        "2026miche": {
+          "spearman": 0.6449947833260927,
+          "teams": 39,
+          "top_k_recall": 0.625
+        },
+        "2026micmp1": {
+          "spearman": 0.7679459814461,
+          "teams": 40,
+          "top_k_recall": 0.375
+        },
+        "2026micmp2": {
+          "spearman": 0.6389905272515456,
+          "teams": 40,
+          "top_k_recall": 0.875
+        },
+        "2026micmp3": {
+          "spearman": 0.5543209152059402,
+          "teams": 41,
+          "top_k_recall": 0.625
+        },
+        "2026micmp4": {
+          "spearman": 0.6185025441981169,
+          "teams": 40,
+          "top_k_recall": 0.875
+        },
+        "2026midtr": {
+          "spearman": 0.306557412001206,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026miesc": {
+          "spearman": 0.8466674052650828,
+          "teams": 40,
+          "top_k_recall": 0.75
+        },
+        "2026mifen": {
+          "spearman": 0.6497359437249441,
+          "teams": 42,
+          "top_k_recall": 0.75
+        },
+        "2026mifli": {
+          "spearman": 0.5963061633755511,
+          "teams": 41,
+          "top_k_recall": 0.625
+        },
+        "2026miken": {
+          "spearman": 0.7280824775671362,
+          "teams": 39,
+          "top_k_recall": 0.875
+        },
+        "2026mil": {
+          "spearman": 0.7607177565043416,
+          "teams": 74,
+          "top_k_recall": 0.5
+        },
+        "2026milac": {
+          "spearman": 0.48760047577447635,
+          "teams": 34,
+          "top_k_recall": 0.75
+        },
+        "2026milak": {
+          "spearman": 0.770984783996452,
+          "teams": 38,
+          "top_k_recall": 0.75
+        },
+        "2026miliv": {
+          "spearman": 0.7691929304082423,
+          "teams": 41,
+          "top_k_recall": 0.625
+        },
+        "2026milsu": {
+          "spearman": 0.531391989558803,
+          "teams": 41,
+          "top_k_recall": 0.625
+        },
+        "2026mimar": {
+          "spearman": 0.5079306049632059,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026mimas": {
+          "spearman": 0.6218427081474636,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026mimid": {
+          "spearman": 0.717268325108595,
+          "teams": 39,
+          "top_k_recall": 0.5
+        },
+        "2026mimil": {
+          "spearman": 0.4970436962093751,
+          "teams": 40,
+          "top_k_recall": 0.875
+        },
+        "2026mimtp": {
+          "spearman": 0.5133736513291826,
+          "teams": 40,
+          "top_k_recall": 0.25
+        },
+        "2026mimus": {
+          "spearman": 0.5581482694316154,
+          "teams": 35,
+          "top_k_recall": 0.5
+        },
+        "2026misal": {
+          "spearman": 0.6867694664547727,
+          "teams": 39,
+          "top_k_recall": 0.875
+        },
+        "2026mitr2": {
+          "spearman": 0.7159279994073531,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026mitry": {
+          "spearman": 0.7210098094315779,
+          "teams": 43,
+          "top_k_recall": 0.875
+        },
+        "2026mitvc": {
+          "spearman": 0.3861612225869379,
+          "teams": 38,
+          "top_k_recall": 0.5
+        },
+        "2026miwmi": {
+          "spearman": 0.767014152257199,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026mndu": {
+          "spearman": 0.3946024851252294,
+          "teams": 42,
+          "top_k_recall": 0.25
+        },
+        "2026mndu2": {
+          "spearman": 0.2676834713487544,
+          "teams": 42,
+          "top_k_recall": 0.625
+        },
+        "2026mnmi": {
+          "spearman": 0.47550487736205316,
+          "teams": 51,
+          "top_k_recall": 0.625
+        },
+        "2026mnmi2": {
+          "spearman": 0.774513011943799,
+          "teams": 51,
+          "top_k_recall": 0.625
+        },
+        "2026mnum": {
+          "spearman": 0.6482184232416105,
+          "teams": 47,
+          "top_k_recall": 0.875
+        },
+        "2026mnwi": {
+          "spearman": 0.746852555290518,
+          "teams": 41,
+          "top_k_recall": 0.875
+        },
+        "2026mokc": {
+          "spearman": 0.666608797374039,
+          "teams": 41,
+          "top_k_recall": 0.875
+        },
+        "2026mose": {
+          "spearman": 0.7034226238662956,
+          "teams": 40,
+          "top_k_recall": 0.75
+        },
+        "2026mosl": {
+          "spearman": 0.290264224644859,
+          "teams": 41,
+          "top_k_recall": 0.5
+        },
+        "2026mrcmp": {
+          "spearman": 0.8246456387789869,
+          "teams": 66,
+          "top_k_recall": 0.625
+        },
+        "2026mslr": {
+          "spearman": 0.5209944480507781,
+          "teams": 46,
+          "top_k_recall": 0.375
+        },
+        "2026mxmo": {
+          "spearman": 0.5725408927092158,
+          "teams": 43,
+          "top_k_recall": 0.625
+        },
+        "2026mxto": {
+          "spearman": 0.544926804163605,
+          "teams": 46,
+          "top_k_recall": 0.75
+        },
+        "2026ncash": {
+          "spearman": 0.15710952872557682,
+          "teams": 30,
+          "top_k_recall": 0.375
+        },
+        "2026nccab": {
+          "spearman": 0.5174738308012595,
+          "teams": 28,
+          "top_k_recall": 0.75
+        },
+        "2026nccmp": {
+          "spearman": 0.808103981381097,
+          "teams": 50,
+          "top_k_recall": 0.875
+        },
+        "2026ncelo": {
+          "spearman": 0.6085532949189087,
+          "teams": 29,
+          "top_k_recall": 0.625
+        },
+        "2026ncpem": {
+          "spearman": 0.6138510277136169,
+          "teams": 33,
+          "top_k_recall": 0.875
+        },
+        "2026ncwak": {
+          "spearman": 0.3401444708126139,
+          "teams": 29,
+          "top_k_recall": 0.5
+        },
+        "2026ncwk2": {
+          "spearman": 0.42860469922722744,
+          "teams": 29,
+          "top_k_recall": 0.5
+        },
+        "2026ndgf": {
+          "spearman": 0.47528965297256065,
+          "teams": 51,
+          "top_k_recall": 0.375
+        },
+        "2026necmp1": {
+          "spearman": 0.767221302053124,
+          "teams": 50,
+          "top_k_recall": 0.625
+        },
+        "2026necmp2": {
+          "spearman": 0.794486999924247,
+          "teams": 50,
+          "top_k_recall": 0.625
+        },
+        "2026new": {
+          "spearman": 0.573391812413821,
+          "teams": 75,
+          "top_k_recall": 0.375
+        },
+        "2026nhbed": {
+          "spearman": 0.5137180352121445,
+          "teams": 34,
+          "top_k_recall": 0.625
+        },
+        "2026nhdur": {
+          "spearman": 0.707100014865168,
+          "teams": 37,
+          "top_k_recall": 0.75
+        },
+        "2026njfla": {
+          "spearman": 0.526053677268115,
+          "teams": 33,
+          "top_k_recall": 0.75
+        },
+        "2026njrob": {
+          "spearman": 0.3172370249500936,
+          "teams": 29,
+          "top_k_recall": 0.375
+        },
+        "2026njski": {
+          "spearman": 0.715855600691495,
+          "teams": 34,
+          "top_k_recall": 0.875
+        },
+        "2026njtab": {
+          "spearman": 0.3352000409131715,
+          "teams": 32,
+          "top_k_recall": 0.5
+        },
+        "2026njwas": {
+          "spearman": 0.5770951761063973,
+          "teams": 30,
+          "top_k_recall": 0.375
+        },
+        "2026nvlv": {
+          "spearman": 0.6343662941452495,
+          "teams": 45,
+          "top_k_recall": 0.625
+        },
+        "2026nyli2": {
+          "spearman": 0.5162571678807901,
+          "teams": 48,
+          "top_k_recall": 0.875
+        },
+        "2026nyn2": {
+          "spearman": 0.7422179566256535,
+          "teams": 39,
+          "top_k_recall": 0.75
+        },
+        "2026nyny": {
+          "spearman": 0.5591982328547617,
+          "teams": 51,
+          "top_k_recall": 0.875
+        },
+        "2026nyro": {
+          "spearman": 0.455171918818759,
+          "teams": 55,
+          "top_k_recall": 0.625
+        },
+        "2026nysu": {
+          "spearman": 0.45197439613857837,
+          "teams": 48,
+          "top_k_recall": 0.5
+        },
+        "2026nytr": {
+          "spearman": 0.6974088190108844,
+          "teams": 60,
+          "top_k_recall": 0.625
+        },
+        "2026ohcl": {
+          "spearman": 0.5102823593343864,
+          "teams": 41,
+          "top_k_recall": 0.75
+        },
+        "2026ohmv": {
+          "spearman": 0.6939295048492151,
+          "teams": 50,
+          "top_k_recall": 0.375
+        },
+        "2026okok": {
+          "spearman": 0.44421827071691755,
+          "teams": 46,
+          "top_k_recall": 0.625
+        },
+        "2026oktu": {
+          "spearman": 0.6599816128572649,
+          "teams": 46,
+          "top_k_recall": 0.5
+        },
+        "2026onbar": {
+          "spearman": 0.5738907609915043,
+          "teams": 32,
+          "top_k_recall": 0.625
+        },
+        "2026oncmp1": {
+          "spearman": 0.8786052413374006,
+          "teams": 50,
+          "top_k_recall": 0.75
+        },
+        "2026oncmp2": {
+          "spearman": 0.7859876603808734,
+          "teams": 49,
+          "top_k_recall": 0.75
+        },
+        "2026onham": {
+          "spearman": 0.7707545833722027,
+          "teams": 30,
+          "top_k_recall": 0.625
+        },
+        "2026onnob": {
+          "spearman": 0.6760349618187689,
+          "teams": 25,
+          "top_k_recall": 0.75
+        },
+        "2026onosh": {
+          "spearman": 0.5855461484111495,
+          "teams": 28,
+          "top_k_recall": 0.625
+        },
+        "2026ontor": {
+          "spearman": 0.6605053625895743,
+          "teams": 29,
+          "top_k_recall": 0.875
+        },
+        "2026onwat": {
+          "spearman": 0.7947166929075874,
+          "teams": 31,
+          "top_k_recall": 0.75
+        },
+        "2026onwel": {
+          "spearman": 0.8196672107522006,
+          "teams": 27,
+          "top_k_recall": 1.0
+        },
+        "2026onwin": {
+          "spearman": 0.8284432750864119,
+          "teams": 35,
+          "top_k_recall": 0.625
+        },
+        "2026orore": {
+          "spearman": 0.7620114936783337,
+          "teams": 35,
+          "top_k_recall": 0.625
+        },
+        "2026orsal": {
+          "spearman": 0.6697961990978635,
+          "teams": 35,
+          "top_k_recall": 0.875
+        },
+        "2026orwil": {
+          "spearman": 0.5911653319378829,
+          "teams": 32,
+          "top_k_recall": 0.625
+        },
+        "2026paben": {
+          "spearman": 0.4888614954381049,
+          "teams": 34,
+          "top_k_recall": 0.75
+        },
+        "2026paca": {
+          "spearman": 0.6018835382761665,
+          "teams": 50,
+          "top_k_recall": 0.75
+        },
+        "2026pahat": {
+          "spearman": 0.6248855790745008,
+          "teams": 33,
+          "top_k_recall": 0.75
+        },
+        "2026paphi": {
+          "spearman": 0.7119003474067831,
+          "teams": 31,
+          "top_k_recall": 0.5
+        },
+        "2026pawar": {
+          "spearman": 0.472669342093712,
+          "teams": 33,
+          "top_k_recall": 0.75
+        },
+        "2026pncmp": {
+          "spearman": 0.7137848428696052,
+          "teams": 50,
+          "top_k_recall": 0.5
+        },
+        "2026qcmo": {
+          "spearman": 0.39594487893072877,
+          "teams": 36,
+          "top_k_recall": 0.625
+        },
+        "2026rikin": {
+          "spearman": 0.6011761879238854,
+          "teams": 32,
+          "top_k_recall": 0.625
+        },
+        "2026sccha": {
+          "spearman": 0.42592503212145905,
+          "teams": 27,
+          "top_k_recall": 0.625
+        },
+        "2026sccmp": {
+          "spearman": 0.7804480658631748,
+          "teams": 31,
+          "top_k_recall": 0.5
+        },
+        "2026schar": {
+          "spearman": 0.6351810438949473,
+          "teams": 31,
+          "top_k_recall": 0.75
+        },
+        "2026schop": {
+          "spearman": 0.45416905632180177,
+          "teams": 26,
+          "top_k_recall": 0.625
+        },
+        "2026tnkn": {
+          "spearman": 0.5194706394652526,
+          "teams": 46,
+          "top_k_recall": 0.625
+        },
+        "2026tuak": {
+          "spearman": 0.6016948197835039,
+          "teams": 33,
+          "top_k_recall": 0.875
+        },
+        "2026tuak2": {
+          "spearman": 0.6662572664198496,
+          "teams": 33,
+          "top_k_recall": 0.875
+        },
+        "2026tuhc": {
+          "spearman": 0.6191598817353215,
+          "teams": 43,
+          "top_k_recall": 0.75
+        },
+        "2026tuis": {
+          "spearman": 0.5192163404137606,
+          "teams": 32,
+          "top_k_recall": 0.5
+        },
+        "2026tuis2": {
+          "spearman": 0.6342323962970611,
+          "teams": 33,
+          "top_k_recall": 0.875
+        },
+        "2026tuis3": {
+          "spearman": 0.5452938596895177,
+          "teams": 43,
+          "top_k_recall": 0.875
+        },
+        "2026tuis4": {
+          "spearman": 0.6407287231050391,
+          "teams": 29,
+          "top_k_recall": 0.75
+        },
+        "2026tuis5": {
+          "spearman": 0.5236768218879739,
+          "teams": 40,
+          "top_k_recall": 0.625
+        },
+        "2026txama": {
+          "spearman": 0.5198927677561289,
+          "teams": 31,
+          "top_k_recall": 0.625
+        },
+        "2026txbel": {
+          "spearman": 0.5694915729711288,
+          "teams": 33,
+          "top_k_recall": 0.625
+        },
+        "2026txcl2": {
+          "spearman": 0.6087897832758151,
+          "teams": 34,
+          "top_k_recall": 0.75
+        },
+        "2026txcle": {
+          "spearman": 0.563726474455563,
+          "teams": 32,
+          "top_k_recall": 0.75
+        },
+        "2026txcmp1": {
+          "spearman": 0.7839894687149394,
+          "teams": 45,
+          "top_k_recall": 0.75
+        },
+        "2026txcmp2": {
+          "spearman": 0.7875354124739186,
+          "teams": 45,
+          "top_k_recall": 0.625
+        },
+        "2026txdri": {
+          "spearman": 0.5371644391638289,
+          "teams": 31,
+          "top_k_recall": 0.75
+        },
+        "2026txfar": {
+          "spearman": 0.6190193947060676,
+          "teams": 31,
+          "top_k_recall": 0.625
+        },
+        "2026txfor": {
+          "spearman": 0.3286182576618829,
+          "teams": 24,
+          "top_k_recall": 0.5
+        },
+        "2026txhou": {
+          "spearman": 0.18620378630325646,
+          "teams": 30,
+          "top_k_recall": 0.375
+        },
+        "2026txman": {
+          "spearman": 0.6051071085233977,
+          "teams": 27,
+          "top_k_recall": 0.75
+        },
+        "2026txmca": {
+          "spearman": 0.5689767951357907,
+          "teams": 18,
+          "top_k_recall": 0.75
+        },
+        "2026txsan": {
+          "spearman": 0.4919851054102613,
+          "teams": 37,
+          "top_k_recall": 0.375
+        },
+        "2026txwac": {
+          "spearman": 0.696920111873486,
+          "teams": 25,
+          "top_k_recall": 0.75
+        },
+        "2026utwv": {
+          "spearman": 0.6058969926429272,
+          "teams": 42,
+          "top_k_recall": 0.625
+        },
+        "2026vaale": {
+          "spearman": 0.2748964700999486,
+          "teams": 40,
+          "top_k_recall": 0.375
+        },
+        "2026vabla": {
+          "spearman": 0.8014249338495806,
+          "teams": 30,
+          "top_k_recall": 0.75
+        },
+        "2026vache": {
+          "spearman": 0.7427656813661837,
+          "teams": 30,
+          "top_k_recall": 0.5
+        },
+        "2026vagle": {
+          "spearman": 0.4329327904149536,
+          "teams": 30,
+          "top_k_recall": 0.25
+        },
+        "2026vtbur": {
+          "spearman": 0.7255066303288068,
+          "teams": 34,
+          "top_k_recall": 0.875
+        },
+        "2026waahs": {
+          "spearman": 0.6111487849357936,
+          "teams": 36,
+          "top_k_recall": 0.625
+        },
+        "2026wabon": {
+          "spearman": 0.5875518607375526,
+          "teams": 34,
+          "top_k_recall": 0.75
+        },
+        "2026wasam": {
+          "spearman": 0.7059113300492611,
+          "teams": 29,
+          "top_k_recall": 0.875
+        },
+        "2026wasno": {
+          "spearman": 0.5963039550702676,
+          "teams": 30,
+          "top_k_recall": 0.5
+        },
+        "2026wayak": {
+          "spearman": 0.7120611018966782,
+          "teams": 27,
+          "top_k_recall": 0.5
+        },
+        "2026wiapp": {
+          "spearman": 0.4583972659648322,
+          "teams": 38,
+          "top_k_recall": 0.625
+        },
+        "2026wicmp": {
+          "spearman": 0.7652207554702463,
+          "teams": 36,
+          "top_k_recall": 0.75
+        },
+        "2026wilax": {
+          "spearman": 0.6693552986640493,
+          "teams": 34,
+          "top_k_recall": 0.5
+        },
+        "2026wimuk": {
+          "spearman": 0.7250111998899359,
+          "teams": 36,
+          "top_k_recall": 0.75
+        },
+        "2026wiply": {
+          "spearman": 0.532664472184474,
+          "teams": 33,
+          "top_k_recall": 0.75
+        }
+      },
+      "spearman": 0.6112440558451762,
+      "teams_scored": 8160,
+      "top_k_recall": 0.6586538461538461
+    }
+  },
+  "recorded_at": "2026-10-01T23:14:49.970577+00:00",
+  "reproducible": true,
+  "secondary": {
+    "feature_gain_share": {
+      "average_auto_points_norm": 0.025827956763133136,
+      "average_score_norm": 0.21510689825559864,
+      "consistency_rating": 0.043611644841063155,
+      "epa_auto_norm": 0.022518606151804198,
+      "epa_endgame_norm": 0.021119007143936965,
+      "epa_teleop_norm": 0.12936155868576474,
+      "epa_total_norm": 0.49457931780865483,
+      "matches_considered": 0.03473226794340413,
+      "score_stddev_norm": 0.013142742406640187
+    },
+    "features": [
+      "epa_total_norm",
+      "epa_auto_norm",
+      "epa_teleop_norm",
+      "epa_endgame_norm",
+      "average_score_norm",
+      "score_stddev_norm",
+      "consistency_rating",
+      "reliability_score",
+      "average_auto_points_norm",
+      "matches_considered",
+      "matches_used",
+      "defense_score",
+      "defense_agreement",
+      "defense_observation_count",
+      "feeding_score",
+      "feeding_agreement",
+      "feeding_observation_count"
+    ],
+    "first": {
+      "baseline_spearman": 0.5955333742533729,
+      "baseline_top8": 0.6472355769230769,
+      "events": 208,
+      "model_spearman": 0.5564604866637514,
+      "model_top8": 0.6183894230769231,
+      "teams": 8160
+    },
+    "label_shuffle_mean": 0.07030859074038734,
+    "label_shuffle_midpoint_spearman": [
+      0.0822878632664047,
+      -0.18027243225939968,
+      0.234769885224853,
+      0.14977711188219095,
+      -0.014669653413244419,
+      -0.04210013996436083,
+      0.27824859307347366,
+      0.05442749811318134
+    ],
+    "last": {
+      "baseline_spearman": 0.5955333742533729,
+      "baseline_top8": 0.6472355769230769,
+      "events": 208,
+      "model_spearman": 0.6313692544613642,
+      "model_top8": 0.6742788461538461,
+      "teams": 8160
+    }
+  },
+  "source_version": "D18",
+  "spec": ".agent/phase4/M05_M07_REDESIGN_SPEC.md \u00a71 + .agent/phase4/D18_SOURCE_SPEC.md \u00a74",
+  "split": {
+    "held_out_season": 2026,
+    "test_rows": 18004,
+    "train_rows": 34465,
+    "train_seasons": [
+      2024,
+      2025
+    ]
+  }
+}

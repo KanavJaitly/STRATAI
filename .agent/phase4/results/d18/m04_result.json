@@ -1,0 +1,174 @@
+{
+  "artifact": "C:\\Dev\\StratAI-artifacts\\phase4\\frame_ab1adbf38b43c2f3\\d18_m04_result_c9ae832867a4.json",
+  "epa_provenance": {
+    "endpoint": "https://api.statbotics.io/v3/team_events",
+    "fallback": {
+      "chain_manifest": "chain_e77d9444c57a7b50.json",
+      "seasons": [
+        {
+          "input_fingerprint": "774a4aea5da9b80c2e1819287be6faed6360963d2625b994d5e229040c43f460",
+          "prior_source": null,
+          "results_fingerprint": "6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+          "season": 2024
+        },
+        {
+          "input_fingerprint": "95c6bfc2eb30677a43c120fef3a7545fbcbbd13ed4349573278bd99f8b8490b5",
+          "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+          "results_fingerprint": "4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+          "season": 2025
+        },
+        {
+          "input_fingerprint": "29357e19e2fc7b12f71efb6ad22d9dcdea9cecad903019c863c8104857349aff",
+          "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7,2025=4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+          "results_fingerprint": "8fa397b25c6f5ff926aef47499fde818746732375245c5f0d0b3a74c5569a9e7",
+          "season": 2026
+        }
+      ],
+      "snapshot_verified": true,
+      "source": "stratai"
+    },
+    "fallback_event": "2026iscmp",
+    "freeze_commit": "ec1b0af",
+    "lookup_diagnostics": {
+      "served:statbotics:A1_season_end": 942,
+      "served:statbotics:A2_week_one": 259241,
+      "served:stratai_fallback": 450,
+      "skipped:A1_season_end": 1053,
+      "skipped:A2_week_one": 755,
+      "withheld:availability": 676,
+      "withheld:no_prior_event": 53505
+    },
+    "params_template": {
+      "event": "<event_key>",
+      "limit": 1000
+    },
+    "retrieved": [
+      "2026-10-01T22:04:23.494400+00:00",
+      "2026-10-01T22:19:51.438243+00:00"
+    ],
+    "schema_version": "statbotics-v3",
+    "season_end": {
+      "2024": "2024-04-20T18:00:00-04:00",
+      "2025": "2025-04-19T18:35:00-04:00",
+      "2026": "2026-07-08T07:30:00-04:00"
+    },
+    "snapshot": "statbotics_snapshot_20261001T220423Z",
+    "snapshot_producing_commit": "575cc4fe76f4d2e3a4adc68c165f4d1cb5abfa1b",
+    "source": "d18_statbotics_primary",
+    "spec": ".agent/phase4/D18_SOURCE_SPEC.md",
+    "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5",
+    "week_one_complete": {
+      "2024": "2024-03-06T16:15:00-05:00",
+      "2025": "2025-03-02T19:15:00-05:00",
+      "2026": "2026-03-09T16:57:00-04:00"
+    }
+  },
+  "epa_source": "d18_statbotics_primary",
+  "final_rank_events": 208,
+  "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+  "guard": {
+    "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+    "implementation": {
+      "changed_since_pinned_commit": [],
+      "head": "77d5423d5f6d810221a64c1b02409516f3ffb9ca",
+      "ok": true,
+      "pinned_commit": "69139f817540638ddd84301917ad51357310ac9a",
+      "uncommitted": []
+    },
+    "methodology": {
+      "freeze_commit": "ec1b0af",
+      "methodology_files_changed_since_freeze": [],
+      "ok": true,
+      "spec_blob_at_freeze": "b578d1639c79e1221c4b99b67619d0c7c5726497",
+      "spec_blob_now": "b578d1639c79e1221c4b99b67619d0c7c5726497"
+    }
+  },
+  "milestone": "M04",
+  "passed": true,
+  "recorded_at": "2026-10-01T23:12:51.008010+00:00",
+  "reproducible": true,
+  "result": {
+    "epa_complete_test_rows": 15061,
+    "epa_complete_train_rows": 19780,
+    "epa_incomplete_excluded": {
+      "test": 2943,
+      "train": 14685
+    },
+    "ranking": {
+      "aggregate": {
+        "accuracy": null,
+        "brier_score": null,
+        "calibration_error": null,
+        "excluded_count": 5,
+        "fold_label": "aggregate",
+        "log_loss": null,
+        "roc_auc": null,
+        "row_count": 208,
+        "season": null,
+        "spearman": 0.5955333742533729,
+        "top_k_recall": 0.6472355769230769
+      },
+      "folds": [
+        {
+          "accuracy": null,
+          "brier_score": null,
+          "calibration_error": null,
+          "excluded_count": 5,
+          "fold_label": "hold_out_season_2026",
+          "log_loss": null,
+          "roc_auc": null,
+          "row_count": 208,
+          "season": 2026,
+          "spearman": 0.5955333742533729,
+          "top_k_recall": 0.6472355769230769
+        }
+      ],
+      "mode": "ranking",
+      "split_strategy": "hold_out_season"
+    },
+    "ranking_summary": "Backtest: ranking (hold_out_season)\n  hold_out_season_2026: n=208, excluded=5, spearman=0.5955, top_k_recall=0.6472\n  aggregate: n=208, excluded=5, spearman=0.5955, top_k_recall=0.6472",
+    "test_rows": 18004,
+    "train_rows": 34465,
+    "win_prob": {
+      "aggregate": {
+        "accuracy": 0.7624941771478007,
+        "brier_score": 0.17826307139450304,
+        "calibration_error": 0.11860367486913315,
+        "excluded_count": 34,
+        "fold_label": "aggregate",
+        "log_loss": 0.6706560908498289,
+        "roc_auc": 0.8422487356987178,
+        "row_count": 15027,
+        "season": null,
+        "spearman": null,
+        "top_k_recall": null
+      },
+      "folds": [
+        {
+          "accuracy": 0.7624941771478007,
+          "brier_score": 0.17826307139450304,
+          "calibration_error": 0.11860367486913315,
+          "excluded_count": 34,
+          "fold_label": "hold_out_season_2026",
+          "log_loss": 0.6706560908498289,
+          "roc_auc": 0.8422487356987178,
+          "row_count": 15027,
+          "season": 2026,
+          "spearman": null,
+          "top_k_recall": null
+        }
+      ],
+      "mode": "win_prob",
+      "split_strategy": "hold_out_season"
+    },
+    "win_prob_summary": "Backtest: win_prob (hold_out_season)\n  hold_out_season_2026: n=15027, excluded=34, accuracy=0.7625, log_loss=0.6707, brier=0.1783, roc_auc=0.8422, ece=0.1186\n  aggregate: n=15027, excluded=34, accuracy=0.7625, log_loss=0.6707, brier=0.1783, roc_auc=0.8422, ece=0.1186"
+  },
+  "source_version": "D18",
+  "split": {
+    "held_out_season": 2026,
+    "train_seasons": [
+      2024,
+      2025
+    ]
+  }
+}
