@@ -2,9 +2,9 @@ Phase: 4
 
 Current Milestone: M06 ACCEPTED (2026-09-30); M05 OPEN (v1 failed; v2 redesign spec drafted, awaiting approval); M07 waiting on its frozen spec
 
-Status: IN_PROGRESS under D16 (Kanav, 2026-09-30) — M04 and M06 ACCEPTED on real data (STRATAI EPA, D15). M05 v1 failed (M05_ESCALATION.md, evidence preserved); one redesign plus one fresh run approved, spec in M05_M07_REDESIGN_SPEC.md (DRAFT). M07 band check replaced by the D16 gate (same spec); not run. M11 may run when its dependencies are met; M13 not started. M08/M09/M10/M12 remain ACCEPTED.
+Status: IN_PROGRESS under D16 (Kanav, 2026-09-30) — M04 and M06 ACCEPTED on real data (STRATAI EPA, D15). M05 v1 failed (M05_ESCALATION.md, evidence preserved); one redesign plus one fresh run approved, spec in M05_M07_REDESIGN_SPEC.md (FROZEN, D16). M07 band check replaced by the D16 gate (same spec); not run. M11 may run when its dependencies are met; M13 not started. M08/M09/M10/M12 remain ACCEPTED.
 
-Current Stage: Waiting on Kanav's approval of M05_M07_REDESIGN_SPEC.md before implementing M5 v2 or the M7 gate.
+Current Stage: D16 frozen; implementing the M7 gate and running synthetic verification V1-V5.
 
 Completed (pre-Phase-Execution-Mode, recorded in RUNNING_NOTES.md only):
 - M01 ACCEPTED (2026-09-21)
@@ -276,6 +276,19 @@ Decisions — Kanav, 2026-09-29 (authoritative for Phase 4 from here on):
   sources; 1,979 same-date ties resolved by latest match, 0 by event_key.
   FLAGGED FOR KANAV'S REVIEW in the PR: it changes accepted M1 behaviour.
 - D14 Data-build dump checkpoint approved (docs/phase4_automation.md §3).
+
+Decision D16 -- Kanav, 2026-09-30 (M5/M7 methodology; frozen spec: M05_M07_REDESIGN_SPEC.md):
+- M6 approved as-is (ACCEPTED, M06_ACCEPTANCE.md).
+- M5 v1 stays FAILED (evidence preserved). Exactly one redesign (v2: event-level ridge
+  CCWM attribution target, causal season-scale feature normalization, halfway-through-
+  qualification decision snapshot) and exactly one run; gate = beat BOTH the same-protocol
+  raw-EPA baseline and the frozen 0.5951. A failure stops and escalates; no second redesign.
+- M7: the [0.60,0.70) -> 58-62% band is rejected. Gate = G1 ECE < 0.05 (D6) + G2 exact
+  Poisson-binomial per-bin test on fixed bins (n >= 30), Holm alpha 0.05, unevaluable if
+  fewer than 2 eligible bins (not a pass), no practical-difference threshold + G3 exact
+  symmetry (symmetric isotonic calibrator) + G4 fit isolation. Synthetic checks V1-V5
+  (criteria fixed in the spec) must pass before real-data M7.
+- Order: M7 (after V1-V5), then M5 v2 once; M11 when its dependencies are met; M13 last.
 
 Decision D15 -- Kanav, 2026-09-30 (supersedes the Statbotics dependency only):
 - EPA provider = STRATAI's own EPA engine (ml/ratings, docs/ratings/). Path:

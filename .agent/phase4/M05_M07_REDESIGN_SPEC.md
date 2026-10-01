@@ -1,10 +1,10 @@
 # Phase 4 — M5 redesign and M7 gate: specifications
 
-Status: **DRAFT — awaiting Kanav's approval. Nothing below is implemented.**
+Status: **FROZEN — decision D16 (Kanav, 2026-09-30).** M6 approved as-is; M5 v2 approved as specified with no changes; M7 approved with the G2 clarification incorporated below (fixed bins, the unevaluable rule, no practical-difference threshold). The commit introducing this status line is the freeze point. Nothing may change below it without a new decision.
 
-On approval, this file is frozen (its git commit is the freeze point). Then:
-- M5 is implemented and run **once**;
-- M7 is implemented and verified against §2, then run.
+Order:
+- M7 is implemented, verified against §2.5's pre-stated criteria, and run only if every check passes;
+- then M5 v2 is implemented and run **once**; a gate failure stops and escalates.
 
 Unchanged:
 - the failed M5 result and its evidence (`M05_ESCALATION.md`, `results/m05_*`);
@@ -182,12 +182,17 @@ The symmetrization guarantees symmetry for any g. The augmentation makes the fit
 - ECE is M3's `expected_calibration_error`, with 10 equal-width bins over [0, 1] and bin index min(⌊10q⌋, 9).
 
 **G2 — per-bin statistical consistency.**
-- **Eligible bins:** the same 10 bins; a bin is eligible if n_b ≥ 30 (`DEFAULT_MIN_BIN_COUNT`).
-- **Hypothesis:** for each eligible bin b, with W_b = observed wins, H₀ is W_b ~ PoissonBinomial({q_i : i ∈ b}). That is, the observed win count is consistent with the bin's own predicted probabilities.
-- **p-value:** the exact two-sided p-value p_b = Σ_{k : P(k) ≤ P(W_b)} P(k), with P the exact Poisson-binomial pmf.
-- **Family correction:** Holm–Bonferroni over the eligible bins at α = 0.05. Sort p_(1) ≤ … ≤ p_(m); reject p_(j) while p_(j) ≤ 0.05 / (m − j + 1).
-- **Pass:** G2 passes iff no bin is rejected.
-- **Report:** every bin's n_b, mean q, observed rate, the central 95% Poisson-binomial interval of the rate under H₀, and p_b. Under-populated bins are listed as untested, never as passing.
+- **Bins, fixed before evaluation:** the 10 boundaries are 0, 0.1, 0.2, …, 1.0. Bin b, for b = 0…9, holds the predictions with min(⌊10q⌋, 9) = b, computed as `min(int(q * 10), 9)` — the same expression as G1's ECE. So bins are [b/10, (b+1)/10), except the last, which also contains q = 1. The boundaries never depend on the data.
+- **Eligible bins:** a bin is eligible if n_b ≥ 30 (`DEFAULT_MIN_BIN_COUNT`). Bins with fewer than 30 predictions are reported as **untested**, never as passing.
+- **Hypothesis:** for each eligible bin b, with W_b = observed wins, H₀ is W_b ~ PoissonBinomial({q_i : i ∈ b}). That is, the observed win count is consistent with the bin's own individual predicted probabilities.
+- **Exact pmf:** P is computed by the exact recursion over the bin's q_i (no approximation).
+- **p-value:** the exact two-sided p-value p_b = Σ_{k : P(k) ≤ P(W_b)·(1 + 10⁻⁷)} P(k). The 10⁻⁷ relative tolerance treats probabilities equal up to floating-point error as tied, the convention of R's `binom.test`. p_b is capped at 1.
+- **Family correction:** Holm–Bonferroni over the m eligible bins at α = 0.05. Sort p_(1) ≤ … ≤ p_(m); reject p_(j) while p_(j) ≤ 0.05 / (m − j + 1), stopping at the first non-rejection.
+- **Outcome:**
+  - **unevaluable** if m < 2. This is not a pass: M7 cannot be accepted, and execution stops and escalates.
+  - Otherwise **pass** iff no bin is rejected, and **fail** if any bin is rejected.
+- **No practical-difference threshold.** The decision is the statistical test alone.
+- **Report:** every bin's boundaries, n_b, mean q, observed wins and rate, expected wins Σq_i, the central 95% Poisson-binomial interval of the rate under H₀ (smallest k with CDF ≥ 0.025 to smallest k with CDF ≥ 0.975, divided by n_b), p_b, Holm threshold and decision; untested bins listed with their counts.
 
 **G3 — exact symmetry.**
 - For every evaluation row, max |q(R, B) + q(B, R) − 1| ≤ 1e-12, computing q(B, R) through the full model on the swapped feature row.
@@ -203,13 +208,31 @@ The symmetrization guarantees symmetry for any g. The augmentation makes the fit
 - **Large bins are sensitive.** Bins near 0 or 1 can hold thousands of predictions (5,118 in M4's [0.9, 1.0) bin), so small real miscalibration is detectable there and G2 will reject it. That is intended: the gate certifies consistency, not approximate closeness. G1 still bounds overall size.
 - On the M4 predictions, a perfectly calibrated model's expected ECE is 0.0059, so G1's threshold is attainable.
 
-### 2.5 Verification before the real-data run
+### 2.5 Verification before the real-data run (criteria fixed here, before any run)
 
-Each check passes on synthetic data before M7 touches 2026:
-- the Poisson-binomial pmf against brute-force enumeration (n ≤ 12) and against simulation;
-- G2's false-failure rate ≈ ≤ 5% on perfectly calibrated synthetic data, and it rejects a deliberately miscalibrated model;
-- symmetry holds to 1e-12 on random rows;
-- the existing fit-isolation and small-bin-honesty tests still pass.
+All synthetic. Every check must pass before M7 touches 2026; any failure stops M7.
+
+**V1 — probability calculation.**
+- (a) The pmf equals brute-force enumeration over all 2ⁿ outcomes for 200 random probability vectors, n = 1…12: max |difference| ≤ 1e-12, and each pmf sums to 1 within 1e-12.
+- (b) For n = 300 random probabilities, 200,000 simulated draws match the pmf: total-variation distance ≤ 0.01, and the simulated mean and variance are within 1% of Σp and Σp(1 − p).
+- (c) p-values agree with SciPy's exact `binomtest` when all probabilities in a bin are equal (n ∈ {30, 100, 500}, several p), within 1e-9.
+
+**V2 — false-failure rate under perfect calibration.**
+- 1,000 synthetic datasets of 15,000 predictions each, drawn from a U-shaped Beta(0.5, 0.5), with labels drawn so the predictions are exactly calibrated.
+- The G2 failure rate must be ≤ 0.05 within sampling error: its 95% Clopper–Pearson lower bound ≤ 0.05.
+- No dataset may be "unevaluable".
+
+**V3 — power to detect miscalibration.** Same design, 200 datasets per scenario. G2 must reject in ≥ 80% of datasets in each:
+- (i) overconfidence: true logit = 0.8 × predicted logit;
+- (ii) a uniform shift: true probability = clip(q + 0.03, 0, 1).
+
+Rejection rates are also reported for (iii) a mild shift of +0.01, for information only.
+
+**V4 — symmetry.**
+- (a) The calibrator alone: |q(p) + q(1 − p) − 1| ≤ 1e-12 for 100,000 random p, plus the endpoints and 0.5. q is non-decreasing on a sorted grid.
+- (b) End to end: M6 trained with the symmetric calibrator via `fit_calibrated_win_prob_model` on synthetic rows. For 1,000 synthetic matches, |q(R, B) + q(B, R) − 1| ≤ 1e-12 through the full model on the swapped rows, and predictions are identical in forward and reversed order.
+
+**V5 — regression.** The existing calibration tests pass, including fit isolation and small-bin honesty, together with new unit tests for the gate's pass, fail and unevaluable outcomes.
 
 ---
 
@@ -221,4 +244,4 @@ Each check passes on synthetic data before M7 touches 2026:
 4. **M11** when its dependencies are met.
 5. **M13** only after all required milestones pass.
 
-This decision is recorded as D16 in `PHASE_STATUS.md` on approval.
+This decision is recorded as D16 in `PHASE_STATUS.md`.
