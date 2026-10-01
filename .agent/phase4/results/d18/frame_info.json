@@ -1,0 +1,138 @@
+{
+  "build_seconds": 372.5,
+  "built_at": "2026-10-01T23:12:15.171123+00:00",
+  "cache": "frame_rows.json.gz",
+  "cache_reload_reproduces_content_hash": true,
+  "d18_appearance_value_sources": {
+    "2024": {
+      "statbotics": 55272,
+      "withheld": 45588
+    },
+    "2025": {
+      "statbotics": 100874,
+      "withheld": 5056
+    },
+    "2026": {
+      "statbotics": 104037,
+      "stratai_fallback": 450,
+      "withheld": 3537
+    },
+    "target_2026iscmp": {
+      "stratai_fallback": 450
+    }
+  },
+  "d18_fallback_outside_scope": 0,
+  "d18_guard": {
+    "implementation": {
+      "changed_since_pinned_commit": [],
+      "head": "69139f817540638ddd84301917ad51357310ac9a",
+      "ok": true,
+      "pinned_commit": null,
+      "uncommitted": []
+    },
+    "methodology": {
+      "freeze_commit": "ec1b0af",
+      "methodology_files_changed_since_freeze": [],
+      "ok": true,
+      "spec_blob_at_freeze": "b578d1639c79e1221c4b99b67619d0c7c5726497",
+      "spec_blob_now": "b578d1639c79e1221c4b99b67619d0c7c5726497"
+    }
+  },
+  "d18_producing_commit": "69139f817540638ddd84301917ad51357310ac9a",
+  "d18_verification_sha256": "a15922174fd49fff783d6e54fe16280b87746718be6f001e1384a7e2364978d5",
+  "excluded_count": 751,
+  "frame_directory": "C:\\Dev\\StratAI-artifacts\\phase4\\frame_ab1adbf38b43c2f3",
+  "manifest": {
+    "build_date": "2026-10-01T23:11:49.297745Z",
+    "code_version": "1.0.0",
+    "content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+    "epa_provenance": {
+      "endpoint": "https://api.statbotics.io/v3/team_events",
+      "fallback": {
+        "chain_manifest": "chain_e77d9444c57a7b50.json",
+        "seasons": [
+          {
+            "input_fingerprint": "774a4aea5da9b80c2e1819287be6faed6360963d2625b994d5e229040c43f460",
+            "prior_source": null,
+            "results_fingerprint": "6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+            "season": 2024
+          },
+          {
+            "input_fingerprint": "95c6bfc2eb30677a43c120fef3a7545fbcbbd13ed4349573278bd99f8b8490b5",
+            "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+            "results_fingerprint": "4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+            "season": 2025
+          },
+          {
+            "input_fingerprint": "29357e19e2fc7b12f71efb6ad22d9dcdea9cecad903019c863c8104857349aff",
+            "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7,2025=4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+            "results_fingerprint": "8fa397b25c6f5ff926aef47499fde818746732375245c5f0d0b3a74c5569a9e7",
+            "season": 2026
+          }
+        ],
+        "snapshot_verified": true,
+        "source": "stratai"
+      },
+      "fallback_event": "2026iscmp",
+      "freeze_commit": "ec1b0af",
+      "lookup_diagnostics": {
+        "served:statbotics:A1_season_end": 942,
+        "served:statbotics:A2_week_one": 259241,
+        "served:stratai_fallback": 450,
+        "skipped:A1_season_end": 1053,
+        "skipped:A2_week_one": 755,
+        "withheld:availability": 676,
+        "withheld:no_prior_event": 53505
+      },
+      "params_template": {
+        "event": "<event_key>",
+        "limit": 1000
+      },
+      "retrieved": [
+        "2026-10-01T22:04:23.494400+00:00",
+        "2026-10-01T22:19:51.438243+00:00"
+      ],
+      "schema_version": "statbotics-v3",
+      "season_end": {
+        "2024": "2024-04-20T18:00:00-04:00",
+        "2025": "2025-04-19T18:35:00-04:00",
+        "2026": "2026-07-08T07:30:00-04:00"
+      },
+      "snapshot": "statbotics_snapshot_20261001T220423Z",
+      "snapshot_producing_commit": "575cc4fe76f4d2e3a4adc68c165f4d1cb5abfa1b",
+      "source": "d18_statbotics_primary",
+      "spec": ".agent/phase4/D18_SOURCE_SPEC.md",
+      "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5",
+      "week_one_complete": {
+        "2024": "2024-03-06T16:15:00-05:00",
+        "2025": "2025-03-02T19:15:00-05:00",
+        "2026": "2026-03-09T16:57:00-04:00"
+      }
+    },
+    "epa_source": "d18_statbotics_primary",
+    "excluded_by_reason": {
+      "dq_affected": 726,
+      "unplayed": 25
+    },
+    "excluded_count": 751,
+    "include_dq_affected": false,
+    "row_count": 52469,
+    "season_keys": [
+      2024,
+      2025,
+      2026
+    ]
+  },
+  "parquet": "training_frame_ab1adbf38b43c2f3.parquet",
+  "provider_diagnostics": {
+    "served:statbotics:A1_season_end": 942,
+    "served:statbotics:A2_week_one": 259241,
+    "served:stratai_fallback": 450,
+    "skipped:A1_season_end": 1053,
+    "skipped:A2_week_one": 755,
+    "withheld:availability": 676,
+    "withheld:no_prior_event": 53505
+  },
+  "recorded_at": "2026-10-01T23:12:16.270566+00:00",
+  "source_version": "D18"
+}

@@ -1,0 +1,181 @@
+{
+  "appearances": 319301,
+  "checks": {
+    "S1_snapshot_integrity": {
+      "a1_team_events": 331,
+      "a1_team_events_valid": 188,
+      "invalid_team_events": 143,
+      "ok": true,
+      "raw_equals_table_epa_total": 24022,
+      "raw_files_verified": 608,
+      "raw_records": 24022,
+      "table_rows": 24022,
+      "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5"
+    },
+    "S2_fallback_scope": {
+      "appearances_targeting_fallback_event": 450,
+      "fallback_event_outcomes": {
+        "stratai_fallback": 450
+      },
+      "fallback_outside_scope": 0,
+      "ok": true
+    },
+    "S3_no_silent_fallback": {
+      "examples": [],
+      "hard_errors": 0,
+      "ok": true
+    },
+    "S4_selection_parity": {
+      "examples": [],
+      "mismatches": 0,
+      "ok": true,
+      "pool": 317034,
+      "sampled": 6000,
+      "seed": 20261001
+    },
+    "S5_leakage": {
+      "a1_served_before_season_end": 0,
+      "examples": [],
+      "ok": true,
+      "served_with_available_at_not_before_as_of": 0
+    },
+    "S6_week_one_cross_check": {
+      "2024": {
+        "statbotics_T_end": "2024-04-20T18:00:00-04:00",
+        "statbotics_T_w1": "2024-03-06T16:15:00-05:00",
+        "stratai_season_final": "2024-04-20T22:00:00+00:00",
+        "stratai_week_one_complete": "2024-03-06T21:15:00+00:00"
+      },
+      "2025": {
+        "statbotics_T_end": "2025-04-19T18:35:00-04:00",
+        "statbotics_T_w1": "2025-03-02T19:15:00-05:00",
+        "stratai_season_final": "2025-04-19T22:35:00+00:00",
+        "stratai_week_one_complete": "2025-03-03T00:15:00+00:00"
+      },
+      "2026": {
+        "statbotics_T_end": "2026-07-08T07:30:00-04:00",
+        "statbotics_T_w1": "2026-03-09T16:57:00-04:00",
+        "stratai_season_final": "2026-07-08T11:30:00+00:00",
+        "stratai_week_one_complete": "2026-03-09T20:57:00+00:00"
+      }
+    }
+  },
+  "guard": {
+    "implementation": {
+      "changed_since_pinned_commit": [],
+      "head": "69139f817540638ddd84301917ad51357310ac9a",
+      "ok": true,
+      "pinned_commit": null,
+      "uncommitted": []
+    },
+    "methodology": {
+      "freeze_commit": "ec1b0af",
+      "methodology_files_changed_since_freeze": [],
+      "ok": true,
+      "spec_blob_at_freeze": "b578d1639c79e1221c4b99b67619d0c7c5726497",
+      "spec_blob_now": "b578d1639c79e1221c4b99b67619d0c7c5726497"
+    }
+  },
+  "lookup_diagnostics": {
+    "served:statbotics:A1_season_end": 962,
+    "served:statbotics:A2_week_one": 262764,
+    "served:stratai_fallback": 450,
+    "skipped:A1_season_end": 1064,
+    "skipped:A2_week_one": 757,
+    "withheld:availability": 679,
+    "withheld:no_prior_event": 54446
+  },
+  "milestone": "D18 source verification (spec \u00a76)",
+  "outcomes_by_season": {
+    "2024": {
+      "statbotics:A2_week_one": 55711,
+      "withheld:availability": 674,
+      "withheld:no_prior_event": 45488
+    },
+    "2025": {
+      "statbotics:A1_season_end": 470,
+      "statbotics:A2_week_one": 101459,
+      "withheld:no_prior_event": 5267
+    },
+    "2026": {
+      "statbotics:A1_season_end": 492,
+      "statbotics:A2_week_one": 105594,
+      "stratai_fallback": 450,
+      "withheld:availability": 5,
+      "withheld:no_prior_event": 3691
+    }
+  },
+  "outcomes_total": {
+    "statbotics:A1_season_end": 962,
+    "statbotics:A2_week_one": 262764,
+    "stratai_fallback": 450,
+    "withheld:availability": 679,
+    "withheld:no_prior_event": 54446
+  },
+  "passed": true,
+  "provenance": {
+    "endpoint": "https://api.statbotics.io/v3/team_events",
+    "fallback": {
+      "chain_manifest": "chain_e77d9444c57a7b50.json",
+      "seasons": [
+        {
+          "input_fingerprint": "774a4aea5da9b80c2e1819287be6faed6360963d2625b994d5e229040c43f460",
+          "prior_source": null,
+          "results_fingerprint": "6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+          "season": 2024
+        },
+        {
+          "input_fingerprint": "95c6bfc2eb30677a43c120fef3a7545fbcbbd13ed4349573278bd99f8b8490b5",
+          "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+          "results_fingerprint": "4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+          "season": 2025
+        },
+        {
+          "input_fingerprint": "29357e19e2fc7b12f71efb6ad22d9dcdea9cecad903019c863c8104857349aff",
+          "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7,2025=4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+          "results_fingerprint": "8fa397b25c6f5ff926aef47499fde818746732375245c5f0d0b3a74c5569a9e7",
+          "season": 2026
+        }
+      ],
+      "snapshot_verified": true,
+      "source": "stratai"
+    },
+    "fallback_event": "2026iscmp",
+    "freeze_commit": "ec1b0af",
+    "lookup_diagnostics": {
+      "served:statbotics:A1_season_end": 962,
+      "served:statbotics:A2_week_one": 262764,
+      "served:stratai_fallback": 450,
+      "skipped:A1_season_end": 1064,
+      "skipped:A2_week_one": 757,
+      "withheld:availability": 679,
+      "withheld:no_prior_event": 54446
+    },
+    "params_template": {
+      "event": "<event_key>",
+      "limit": 1000
+    },
+    "retrieved": [
+      "2026-10-01T22:04:23.494400+00:00",
+      "2026-10-01T22:19:51.438243+00:00"
+    ],
+    "schema_version": "statbotics-v3",
+    "season_end": {
+      "2024": "2024-04-20T18:00:00-04:00",
+      "2025": "2025-04-19T18:35:00-04:00",
+      "2026": "2026-07-08T07:30:00-04:00"
+    },
+    "snapshot": "statbotics_snapshot_20261001T220423Z",
+    "snapshot_producing_commit": "575cc4fe76f4d2e3a4adc68c165f4d1cb5abfa1b",
+    "source": "d18_statbotics_primary",
+    "spec": ".agent/phase4/D18_SOURCE_SPEC.md",
+    "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5",
+    "week_one_complete": {
+      "2024": "2024-03-06T16:15:00-05:00",
+      "2025": "2025-03-02T19:15:00-05:00",
+      "2026": "2026-03-09T16:57:00-04:00"
+    }
+  },
+  "recorded_at": "2026-10-01T23:05:03.851145+00:00",
+  "source_version": "D18"
+}
