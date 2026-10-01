@@ -1,0 +1,93 @@
+{
+  "spec": "M05_M07_REDESIGN_SPEC.md \u00a72.5 (D16)",
+  "V2": {
+    "datasets": 1000,
+    "statuses": {
+      "pass": 956,
+      "fail": 44,
+      "unevaluable": 0
+    },
+    "false_failure_rate": 0.044,
+    "clopper_pearson_95": [
+      0.032149497010871435,
+      0.05862041920633091
+    ],
+    "pass": true,
+    "_seconds": 87.7
+  },
+  "V3": {
+    "i_overconfidence_logit_x0.8": {
+      "statuses": {
+        "pass": 0,
+        "fail": 200,
+        "unevaluable": 0
+      },
+      "rejection_rate": 1.0,
+      "gating": true,
+      "pass": true
+    },
+    "ii_shift_plus_0.03": {
+      "statuses": {
+        "pass": 0,
+        "fail": 200,
+        "unevaluable": 0
+      },
+      "rejection_rate": 1.0,
+      "gating": true,
+      "pass": true
+    },
+    "iii_shift_plus_0.01_information_only": {
+      "statuses": {
+        "pass": 42,
+        "fail": 158,
+        "unevaluable": 0
+      },
+      "rejection_rate": 0.79,
+      "gating": false,
+      "pass": null
+    },
+    "pass": true,
+    "_seconds": 42.3
+  },
+  "V4": {
+    "a_calibrator": {
+      "max_symmetry_error": 1.1102230246251565e-16,
+      "monotone": true,
+      "pass": true
+    },
+    "b_end_to_end": {
+      "matches": 1000,
+      "max_symmetry_error": 0.0,
+      "order_independent": true,
+      "fit_diagnostics": {
+        "model_row_count": 1600,
+        "calibration_row_count": 400,
+        "calibration_eligible_count": 400,
+        "calibration_excluded_tie_count": 0
+      },
+      "pass": true
+    },
+    "pass": true,
+    "_seconds": 43.8
+  },
+  "V1": {
+    "a_brute_force": {
+      "max_abs_difference": 7.216449660063518e-16,
+      "max_sum_error": 4.440892098500626e-16,
+      "pass": true
+    },
+    "b_simulation": {
+      "total_variation": 0.004093248665407583,
+      "relative_mean_error": 7.161458043535523e-05,
+      "relative_variance_error": 0.003067414127142413,
+      "pass": true
+    },
+    "c_equal_probability": {
+      "max_abs_difference_vs_scipy_binomtest": 7.105427357601002e-15,
+      "pass": true
+    },
+    "pass": true,
+    "_seconds": 0.5
+  },
+  "all_pass": true
+}
