@@ -1,10 +1,10 @@
 Phase: 4
 
-Current Milestone: M05 — FAILED its real-data acceptance gate (D5); ESCALATED under D9 (2026-09-30)
+Current Milestone: M06 ACCEPTED (2026-09-30); M05 OPEN (v1 failed; v2 redesign spec drafted, awaiting approval); M07 waiting on its frozen spec
 
-Status: BLOCKED ON HUMAN DECISION — EPA provider switched to STRATAI (D15); integration verified. M04 ACCEPTED on real data (M04_ACCEPTANCE.md). M05 ranking model held-out 2026 Spearman 0.3903 vs frozen raw-EPA baseline 0.5951: gate not met, reproducible, no implementation defect found (M05_ESCALATION.md). Per D9 execution stopped at M05: M06, M07, M11 not run on real data; M13 not started. M08/M09/M10/M12 remain ACCEPTED.
+Status: IN_PROGRESS under D16 (Kanav, 2026-09-30) — M04 and M06 ACCEPTED on real data (STRATAI EPA, D15). M05 v1 failed (M05_ESCALATION.md, evidence preserved); one redesign plus one fresh run approved, spec in M05_M07_REDESIGN_SPEC.md (DRAFT). M07 band check replaced by the D16 gate (same spec); not run. M11 may run when its dependencies are met; M13 not started. M08/M09/M10/M12 remain ACCEPTED.
 
-Current Stage: Stopped — awaiting Kanav's decision on M05 (see M05_ESCALATION.md). Also queued for Kanav: M07's band check cannot pass for a well-calibrated model as implemented (see M05_ESCALATION.md, "Found ahead").
+Current Stage: Waiting on Kanav's approval of M05_M07_REDESIGN_SPEC.md before implementing M5 v2 or the M7 gate.
 
 Completed (pre-Phase-Execution-Mode, recorded in RUNNING_NOTES.md only):
 - M01 ACCEPTED (2026-09-21)
