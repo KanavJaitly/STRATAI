@@ -291,7 +291,7 @@ def sync_event(
     event_key: str,
     *,
     database: Database,
-    tba: TBAClient,
+    tba: TBAClient | None,
     statbotics: StatboticsClient | None = None,
     repository: CanonicalRepository | None = None,
     writer: RawPayloadWriter | None = None,
@@ -300,6 +300,7 @@ def sync_event(
     quality: DataQualityRecorder | None = None,
     lineage: LineageStore | None = None,
     pipeline_name: str = DEFAULT_PIPELINE_NAME,
+    extraction: ExtractionResult | None = None,
 ) -> SyncResult:
     """Run extraction -> landing -> staging -> serving for one event, end to end.
 
@@ -315,7 +316,15 @@ def sync_event(
 
     The collaborator arguments exist so the flow can be driven with test
     doubles; each defaults to the real implementation over `database`.
+
+    `extraction`, when given, replaces the TBA extraction step: the prebuilt
+    batches (e.g. a Statbotics-only snapshot, scripts/sync_statbotics_snapshot.py)
+    go through exactly the same landing, staging, quality, loading, lineage and
+    watermark steps, and TBA is not contacted. The run is recorded with the
+    source of those batches.
     """
+    if extraction is None and tba is None:
+        raise ValueError("sync_event needs a TBA client unless a prebuilt extraction is given")
     writer = writer or RawPayloadWriter(database)
     repository = repository or CanonicalRepository(database)
     recorder = recorder or PipelineRunRecorder(database)
@@ -324,11 +333,15 @@ def sync_event(
     lineage = lineage or LineageStore(database)
 
     with _event_sync_lock(database, event_key):
-        run_id = recorder.start(pipeline_name, source=pipeline.SOURCE_TBA, scope_key=event_key)
+        run_source = (extraction.batches[0].source if extraction is not None and extraction.batches
+                      else pipeline.SOURCE_TBA)
+        run_id = recorder.start(pipeline_name, source=run_source, scope_key=event_key)
         logger.info("Pipeline run %d started: %s for event %s", run_id, pipeline_name, event_key)
 
         try:
-            extraction: ExtractionResult = pipeline.extract_event(event_key, tba=tba, statbotics=statbotics)
+            if extraction is None:
+                assert tba is not None
+                extraction = pipeline.extract_event(event_key, tba=tba, statbotics=statbotics)
             landed = pipeline.land(writer, extraction.batches)
 
             # Referential facts for the quality checks: what will exist canonically
