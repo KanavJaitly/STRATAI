@@ -197,6 +197,11 @@ class TeamFeatures(BaseModel):
     epa_scale: float | None = Field(default=None, gt=0)
     epa_scale_present: bool = False
 
+    # Decision D18 (.agent/phase4/D18_SOURCE_SPEC.md): which source supplied this
+    # appearance's EPA -- the provider's TeamEventEpa.source ("statbotics",
+    # "stratai", or D18's "stratai_fallback"). None whenever EPA is withheld.
+    epa_value_source: str | None = None
+
     @model_validator(mode="after")
     def _check_presence_flags_match_values(self) -> "TeamFeatures":
         pairs = (
@@ -249,6 +254,8 @@ class TeamFeatures(BaseModel):
                 raise ValueError("no EPA field is present but epa_source_event_key is set")
             if self.epa_withheld_reason is None:
                 raise ValueError("no EPA field is present but epa_withheld_reason is None (no reason given)")
+            if self.epa_value_source is not None:
+                raise ValueError("no EPA field is present but epa_value_source is set")
 
         return self
 
@@ -317,6 +324,7 @@ class _EpaLookup:
     epa_endgame: float | None
     source_event_key: str | None
     withheld_reason: str | None
+    value_source: str | None = None
 
 
 def _point_in_time_scores(
@@ -536,7 +544,7 @@ def _point_in_time_epa(
     found = provider.point_in_time_epa(team_number, target_event_key, as_of)
     if not isinstance(found, TeamEventEpa):
         return _EpaLookup(None, None, None, None, None, EPA_WITHHELD_NO_PRIOR_EVENT)
-    return _EpaLookup(found.total, found.auto, found.teleop, found.endgame, found.event_key, None)
+    return _EpaLookup(found.total, found.auto, found.teleop, found.endgame, found.event_key, None, found.source)
 
 
 def build_team_features(
@@ -587,6 +595,7 @@ def build_team_features(
         epa_teleop=epa.epa_teleop, epa_teleop_present=epa.epa_teleop is not None,
         epa_endgame=epa.epa_endgame, epa_endgame_present=epa.epa_endgame is not None,
         epa_source_event_key=epa.source_event_key, epa_withheld_reason=epa.withheld_reason,
+        epa_value_source=epa.value_source,
         average_score=average, average_score_present=average is not None,
         score_stddev=stddev, score_stddev_present=stddev is not None,
         consistency_rating=consistency, consistency_rating_present=consistency is not None,
