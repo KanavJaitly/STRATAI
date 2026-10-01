@@ -1,0 +1,76 @@
+{
+  "purpose": "M5 v2 pre-run record (D16): written and committed before the single evaluation",
+  "commit_before_run": "f393ef09e7b0c841b41f3816829b9ce409f9a0e9",
+  "freeze_commit": "d77ffe4",
+  "spec_blob": "318c20a7401690819001722af3e3c8914ab5d076",
+  "frozen_spec_section_1": "## 1. M5 \u2014 redesigned ranking model (`RANKING_MODEL_VERSION` 2.0.0, a new class; v1 is kept unchanged)\n\n### 1.1 Target: event-level attributed contribution to qualification win margin\n\nFor each training event e (seasons 2024, 2025 only):\n\n**Matches and teams.**\n- Q_e = e's retained qualification rows.\n- T_e = the teams that appear in them.\n- n_i = the number of rows in Q_e containing team i.\n\n**Equations.** For each m \u2208 Q_e, the margin d_m = S_red(m) \u2212 S_blue(m). The design row a_m \u2208 \u211d^{|T_e|} has:\n- a_{m,i} = +1 if i is on the red alliance of m;\n- a_{m,i} = \u22121 if i is on the blue alliance;\n- a_{m,i} = 0 otherwise.\n\n**Attribution** (ridge least squares, \u03bb = 1, fixed in advance):\n\n  \u0109_e = argmin_c \u03a3_{m\u2208Q_e} (d_m \u2212 a_m\u1d40c)\u00b2 + \u03bb\u2016c\u2016\u00b2  =  (A\u1d40A + \u03bbI)\u207b\u00b9 A\u1d40d\n\n**Normalization (label side only).** \u03c3_e = population SD of {S_red(m), S_blue(m) : m \u2208 Q_e}.\n\n**Target.** For team i at event e:\n\n  y_{i,e} = \u0109_{e,i} / \u03c3_e\n\ny_{i,e} is defined only when n_i \u2265 3 and \u03c3_e > 0. Otherwise the team-event contributes no training samples, and the count is reported.\n\nEvery training sample (\u00a71.4) of team i at event e carries the same label y_{i,e}.\n\n**Why it is an individual contribution.**\n- Each team plays with different partners and against different opponents across the schedule. Least squares uses that variation to separate each team's share of its alliances' margins: the standard OPR/CCWM attribution.\n- The v1 target gave all three partners the identical margin of every match. Here two partners receive different values whenever their other matches differ.\n- Margin equations cannot identify a common shift (3 + 3 alliances cancel it). The ridge term fixes it at the minimum-norm solution, so \u0109_e is centred near 0: a contribution relative to that event's field.\n\n**Why it suits final qualification rank.**\n- Rank is ordered by ranking points, and most RP comes from winning qualification matches (win RP is 2 in 2024, 3 in 2025/2026).\n- Winning is decided by the sign of the official margin over exactly the matches Q_e. y_{i,e} is the team's attributed share of that margin over those same matches.\n- Bonus RPs are not modelled. They correlate with scoring but are a documented limitation, as in v1.\n\n**Why it uses no future information.**\n- y is a training label: an outcome of a training-season event, computed after that event, never a model input.\n- Training uses only 2024 and 2025 (D7); no label is ever computed for 2026.\n- Features (\u00a71.2) are snapshots strictly before each sample's as_of.\n- \u03c3_e is label-side only. It is never used to normalize a feature or a prediction.\n\n**Edge cases.**\n- **Ties:** d_m = 0, kept as an equation (it is evidence of equal strength).\n- **Penalties:** official scores are used because they decide the win. Foul points a team concedes reduce its margin and are attributed to it; foul points awarded to it are opponent behaviour and act as noise spread by least squares.\n- **Zero scores** are kept as recorded (9 alliances in training).\n- **DQ-affected and unplayed matches** are absent, by M2's rules (the default `include_dq_affected=False`).\n- **Surrogate appearances** count as played: the robot played, even though FRC excludes the match from that team's ranking (131 training rows).\n- **Short or placeholder alliances:** a missing slot contributes 0 to a_m. Every training qualification row is 3 vs 3.\n- **Replays:** each retained match_key is one equation.\n- **Playoff-only teams** (no qualification rows) get no label.\n\nTraining data: 15,618 team-events in 383 events. Only 1 has n_i < 3.\n\n### 1.2 Features: causally normalized\n\n**Season scale.** S(Y, t) = population SD of every official alliance score in completed matches of season Y (all events) with scheduled_time < t.\n- It is defined only when at least 200 such alliance scores exist; otherwise it is absent.\n- It is read from the canonical `matches` table.\n\nAt a snapshot of team i for target event e (season Y) at time as_of:\n\n**In-event features** (game points), each divided by S(Y, as_of):\n- average_score, score_stddev, average_auto_points.\n\n**EPA features** (game points): epa_total, epa_auto, epa_teleop, epa_endgame, each divided by:\n- S(Y, as_of) if the D13-selected source event is in season Y;\n- S(Y_src, +\u221e) \u2014 the full source season, which is complete before season Y begins \u2014 if it is from an earlier season Y_src.\n\n**Unchanged** (already scale-free or counts): consistency_rating, reliability_score, matches_considered, matches_used, and the defense/feeding fields.\n\n**Missing values.** A normalized feature is NaN (absent) if its raw value is absent or its scale is absent. Nothing is imputed, as in v1.\n\n**Two new TeamFeatures fields**, each with a presence flag: `score_scale` and `epa_scale`.\n- They are filled by the assembler from canonical tables only, and are causal by construction.\n- They are additive: `TEAM_FEATURE_NAMES` is not changed, so M6's inputs are unchanged.\n- M5 v2 builds its own feature vector from them.\n\n### 1.3 What a snapshot may contain (the information set at as_of)\n\n- EPA from D13's selected prior event: concluded before as_of, and its STRATAI value available before as_of.\n- The team's own completed matches at this event strictly before as_of. At a qualification snapshot these can only be earlier qualification matches.\n- S(Y, as_of), from matches strictly before as_of.\n\nNever: playoff results, RP standings, the final rank, or any match at or after as_of.\n\n### 1.4 Training samples\n\n- One sample per (team appearance in a training-season qualification row with a defined label).\n- Features: that row's snapshot (\u00a71.2). Label: y_{i,e}.\n- Playoff rows are not used.\n- XGBoost parameters, rounds and early stopping (temporal last 20% of samples by scheduled_time) are exactly v1's. Nothing is tuned.\n\n### 1.5 Primary evaluation (2026 held-out; the gate)\n\n**Decision point.**\n- For each 2026 team-event: take team i's retained qualification rows at e in scheduled order, n_i of them.\n- The decision snapshot is its k-th row, with k = \u2308n_i / 2\u2309.\n- So the prediction is made halfway through the team's qualification schedule, with k \u2212 1 of its matches known.\n- Every decision snapshot is before qualification ends, so no post-qualification snapshot exists in the evaluation.\n- The schedule (and therefore n_i) is published before the event starts.\n\n**Score.**\n- Per event with real final qualification ranks: the Spearman correlation between predicted rating and \u2212final rank, over teams with both (at least 2).\n- Averaged over events. This is the same statistic and averaging as `run_ranking_backtest`.\n\n**Baseline under the identical protocol.**\n- `RawEpaRankingBaseline` (unchanged), scored on the same snapshots, events and teams.\n- *Documented reason:* the old 0.5951 used the latest snapshot including playoffs, which also adds playoff-only backup teams. A valid comparison needs identical decision points.\n\n**Gate (D5's form, made stricter).** M5 v2 passes iff Spearman(M5 v2) > the same-protocol baseline **and** Spearman(M5 v2) > the frozen 0.5951.\n\n**Secondary diagnostics** (reported, not gating):\n- top-8 recall;\n- the same evaluation at k = 1 (pre-event) and at k = n_i (last qualification snapshot);\n- label shuffle over 8 seeds;\n- retrain reproducibility;\n- feature gain shares.\n\n### 1.6 Then\n\n- Run once.\n- Pass \u2192 `M05_ACCEPTANCE.md`.\n- Fail \u2192 stop and escalate (D9). No second redesign.\n\n---\n\n",
+  "preflight": {
+    "decision_snapshots_2026": {
+      "events": 208,
+      "matches_known_at_snapshot": {
+        "max": 10,
+        "median": 5.0,
+        "min": 2
+      },
+      "n_i": {
+        "max": 13,
+        "median": 12.0,
+        "min": 3
+      },
+      "snapshots_after_qualification": 0,
+      "team_events": 8160
+    },
+    "frame_content_hash": "77ada71a9d8c8c6ef56b87848b8137a2ac6afa3d43dc1550df6073761d0f8213",
+    "frozen_files": {
+      "dataset_builder_additive_scale_only": true,
+      "dataset_builder_changes": [
+        "+from ml.features.scale import ScaleLookup",
+        "+    (\"score_scale\", pa.float64()),",
+        "+    (\"score_scale_present\", pa.bool_()),",
+        "+    (\"epa_scale\", pa.float64()),",
+        "+    (\"epa_scale_present\", pa.bool_()),",
+        "+    scales = ScaleLookup(database)  # one per build: the database is read, never changed, during a build",
+        "-            database, match_key, as_of=scheduled_time, epa_provider=provider,",
+        "+            database, match_key, as_of=scheduled_time, epa_provider=provider, scale_lookup=scales,"
+      ],
+      "freeze_commit": "d77ffe4",
+      "frozen_files_changed_since_freeze": [],
+      "ok": true,
+      "spec_blob_at_freeze": "318c20a7401690819001722af3e3c8914ab5d076",
+      "spec_blob_now": "318c20a7401690819001722af3e3c8914ab5d076",
+      "spec_unchanged": true
+    },
+    "milestone": "M05v2 preflight",
+    "ran_at": "2026-10-01T02:16:10.967417+00:00",
+    "scale_presence": {
+      "2024": {
+        "appearances": 100860,
+        "epa_scale_present_given_epa": 1.0,
+        "score_scale_present": 0.9941
+      },
+      "2025": {
+        "appearances": 105930,
+        "epa_scale_present_given_epa": 1.0,
+        "score_scale_present": 0.9944
+      },
+      "2026": {
+        "appearances": 108024,
+        "epa_scale_present_given_epa": 1.0,
+        "score_scale_present": 0.9952
+      }
+    },
+    "scale_sql_check": {
+      "max_abs_difference": 4.547473508864641e-13,
+      "ok": true,
+      "snapshots_checked": 40
+    },
+    "training_targets": {
+      "exclusions": {
+        "events_zero_sigma": 0,
+        "team_events_below_min_matches": 1
+      },
+      "labelled_team_events": 15617,
+      "training_rows": 34465
+    }
+  }
+}
