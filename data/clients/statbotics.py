@@ -92,6 +92,23 @@ class StatboticsClient(SourceConnector):
         data = self._request("GET", f"/team_event/{team_number}/{event_key}")
         return SourceResponse(data, StatboticsTeamEventMetrics.model_validate(data))
 
+    def fetch_event_team_metrics(
+        self, event_key: str, *, limit: int = 1000,
+    ) -> tuple[Any, list[SourceResponse[StatboticsTeamEventMetrics]]]:
+        """Every team's metrics at one event in one request (``/team_events?event=``).
+
+        Returns (the response body exactly as sent, one SourceResponse per record).
+        Each record is the same body ``/team_event/{team}/{event}`` returns for that
+        team (verified 2026-10-01), parsed through the same model, so it lands and
+        stages exactly as fetch_team_event_metrics's result does. Raises if the
+        event fills a whole page, rather than silently truncating it.
+        """
+        data = self._request("GET", "/team_events", params={"event": event_key, "limit": limit})
+        records = data or []
+        if len(records) >= limit:
+            raise ValueError(f"{event_key}: {len(records)} team-events fill a {limit}-record page; paginate")
+        return data, [SourceResponse(item, StatboticsTeamEventMetrics.model_validate(item)) for item in records]
+
     def close(self) -> None:
         """Close the underlying HTTP client."""
         self._client.close()
