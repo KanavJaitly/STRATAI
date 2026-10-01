@@ -85,7 +85,6 @@ def statbotics_provider(database, snapshot: Path):
 
 
 def build_frame(chain: Path | None, out: Path, statbotics_snapshot: Path | None = None) -> Path:
-    from ml.dataset.builder import _compute_content_hash, build_training_frame, persist_training_frame
     from ml.ratings.provider import StrataiPointInTimeEpa
 
     database = _database()
@@ -93,6 +92,14 @@ def build_frame(chain: Path | None, out: Path, statbotics_snapshot: Path | None 
         raise ValueError("give exactly one EPA source: --chain (STRATAI) or --statbotics-snapshot")
     provider = (StrataiPointInTimeEpa.from_chain_manifest(database, chain) if chain is not None
                 else statbotics_provider(database, statbotics_snapshot))
+    return persist_frame(database, provider, out)
+
+
+def persist_frame(database, provider, out: Path, extra_info: Any = None) -> Path:
+    """Build the M2 frame for SEASONS with ``provider`` and persist it write-once.
+    ``extra_info(rows)`` may add fields to frame_info.json (computed from the built rows)."""
+    from ml.dataset.builder import _compute_content_hash, build_training_frame, persist_training_frame
+
     started = time.time()
     result = build_training_frame(database, SEASONS, epa_provider=provider)
     elapsed = time.time() - started
@@ -114,6 +121,7 @@ def build_frame(chain: Path | None, out: Path, statbotics_snapshot: Path | None 
         "cache_reload_reproduces_content_hash": exact,
         "provider_diagnostics": dict(getattr(provider, "diagnostics", {})),
         "excluded": [e.model_dump(mode="json") for e in result.excluded],
+        **(extra_info(result.rows) if extra_info is not None else {}),
     })
     if not exact:
         raise RuntimeError("the JSON cache does not reproduce the frame's content hash")
@@ -411,16 +419,24 @@ def run_m05v2_preflight(frame_dir: Path) -> dict[str, Any]:
 
 def run_m05v2(frame_dir: Path, m04: dict[str, Any]) -> dict[str, Any]:
     """The single pre-registered M5 v2 evaluation (D16 §1.5). Refuses to run twice."""
-    from ml.backtest.ranking_midpoint import FIRST, LAST, MIDPOINT, decision_snapshots, evaluate_ranking
-    from ml.models.baselines import RawEpaRankingBaseline
-    from ml.models.ranking_xgb_v2 import FEATURE_NAMES_V2, RankingXGBModelV2
-
     existing = list(frame_dir.glob("m05v2_result_*.json")) + ([M05V2_RESULT_RECORD] if M05V2_RESULT_RECORD.exists() else [])
     if existing:
         raise RuntimeError(f"M5 v2 has already been run ({existing[0]}); D16 allows exactly one run")
     frozen = _frozen_file_check()
     if not frozen["ok"]:
         raise RuntimeError(f"frozen methodology changed since {FREEZE_COMMIT}: {frozen}")
+    return {**evaluate_m05v2(frame_dir, m04["result"]["ranking"]["aggregate"]["spearman"]),
+            "spec": f"{SPEC_PATH} §1 (frozen at {FREEZE_COMMIT})", "frozen_files": frozen}
+
+
+def evaluate_m05v2(frame_dir: Path, reference_spearman: float,
+                   reference_key: str = "frozen_baseline_0.5951") -> dict[str, Any]:
+    """D16 §1.5's evaluation, unchanged: the M5 v2 midpoint Spearman must beat the
+    same-protocol raw-EPA baseline and ``reference_spearman`` (the frozen M4 ranking
+    Spearman of the same EPA source version)."""
+    from ml.backtest.ranking_midpoint import FIRST, LAST, MIDPOINT, decision_snapshots, evaluate_ranking
+    from ml.models.baselines import RawEpaRankingBaseline
+    from ml.models.ranking_xgb_v2 import FEATURE_NAMES_V2, RankingXGBModelV2
 
     rows = load_frame_rows(frame_dir)
     fold, _, _, _ = _folds(rows)
@@ -435,7 +451,7 @@ def run_m05v2(frame_dir: Path, m04: dict[str, Any]) -> dict[str, Any]:
     primary = evaluate_ranking(model.predict_rating, snaps["midpoint"], final_ranks)
     primary_twin = evaluate_ranking(twin.predict_rating, snaps["midpoint"], final_ranks)
     base_primary = evaluate_ranking(baseline.predict_rating, snaps["midpoint"], final_ranks)
-    frozen_baseline = m04["result"]["ranking"]["aggregate"]["spearman"]
+    frozen_baseline = reference_spearman
     gate = (primary.spearman is not None and base_primary.spearman is not None
             and primary.spearman > base_primary.spearman and primary.spearman > frozen_baseline)
 
@@ -455,8 +471,7 @@ def run_m05v2(frame_dir: Path, m04: dict[str, Any]) -> dict[str, Any]:
     total_gain = sum(gain.values())
     population = snaps["midpoint"]
     return {
-        "milestone": "M05v2", "decision": "D16", "spec": f"{SPEC_PATH} §1 (frozen at {FREEZE_COMMIT})",
-        "frozen_files": frozen,
+        "milestone": "M05v2", "decision": "D16",
         "frame_content_hash": frame_info(frame_dir)["manifest"]["content_hash"],
         "split": {"train_seasons": TRAIN_SEASONS, "held_out_season": HELD_OUT_SEASON,
                   "train_rows": len(fold.train_rows), "test_rows": len(fold.test_rows)},
@@ -464,7 +479,7 @@ def run_m05v2(frame_dir: Path, m04: dict[str, Any]) -> dict[str, Any]:
                 "train_samples": model.fit_train_sample_count, "validation_samples": model.fit_validation_sample_count,
                 "best_iteration": model.best_iteration},
         "primary": {"model": primary.to_dict(), "baseline_same_protocol": base_primary.to_dict(),
-                    "frozen_baseline_0.5951": frozen_baseline},
+                    reference_key: frozen_baseline},
         "gate_beats_same_protocol_baseline": primary.spearman is not None and base_primary.spearman is not None
         and primary.spearman > base_primary.spearman,
         "gate_beats_frozen_baseline": primary.spearman is not None and primary.spearman > frozen_baseline,
