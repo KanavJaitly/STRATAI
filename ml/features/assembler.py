@@ -65,6 +65,7 @@ from data.metrics.statistics import (
     score_stddev,
 )
 from database.connection import Database
+from ml.features.scale import ScaleLookup
 from ml.features.score_breakdown import auto_points
 from ml.ratings.provider import (
     EPA_SOURCE_SQL,
@@ -186,6 +187,16 @@ class TeamFeatures(BaseModel):
     feeding_observation_count: int = Field(ge=0)
     contributing_scouting_sources: list[str] = Field(default_factory=list)
 
+    # Decision D16 §1.2 (M5 v2 only; not in TEAM_FEATURE_NAMES, so M6's inputs are
+    # unchanged): the causal season scoring scale. score_scale = S(Y, as_of) for this
+    # snapshot's season; epa_scale = the scale for this snapshot's EPA source --
+    # S(Y, as_of) for a same-season source, the source season's full S for an earlier
+    # one. Absent (None) until a season has MIN_ALLIANCE_SCORES completed scores.
+    score_scale: float | None = Field(default=None, gt=0)
+    score_scale_present: bool = False
+    epa_scale: float | None = Field(default=None, gt=0)
+    epa_scale_present: bool = False
+
     @model_validator(mode="after")
     def _check_presence_flags_match_values(self) -> "TeamFeatures":
         pairs = (
@@ -202,6 +213,8 @@ class TeamFeatures(BaseModel):
             ("defense_agreement", "defense_agreement_present"),
             ("feeding_score", "feeding_score_present"),
             ("feeding_agreement", "feeding_agreement_present"),
+            ("score_scale", "score_scale_present"),
+            ("epa_scale", "epa_scale_present"),
         )
         for value_field, present_field in pairs:
             value = getattr(self, value_field)
@@ -220,6 +233,8 @@ class TeamFeatures(BaseModel):
                 f"auto_points_matches_used ({self.auto_points_matches_used}) cannot exceed "
                 f"matches_used ({self.matches_used})"
             )
+        if self.epa_scale_present and self.epa_source_event_key is None:
+            raise ValueError("epa_scale is present but there is no EPA source event")
 
         any_epa_present = self.epa_total_present or self.epa_auto_present or self.epa_teleop_present or (
             self.epa_endgame_present
@@ -526,7 +541,7 @@ def _point_in_time_epa(
 
 def build_team_features(
     database: Database, team_number: int, event_key: str, as_of: datetime,
-    *, epa_provider: PointInTimeEpaProvider | None = None,
+    *, epa_provider: PointInTimeEpaProvider | None = None, scale_lookup: ScaleLookup | None = None,
 ) -> TeamFeatures:
     """Compose one team's point-in-time scoring, defense/feeding, and EPA
     features. Pure composition -- every actual number comes from Phase 3's
@@ -544,6 +559,8 @@ def build_team_features(
 
     epa_provider defaults to the one Settings configures (epa_source,
     stratai_epa_chain); see ml.ratings.provider.default_point_in_time_provider.
+    scale_lookup (ml.features.scale) supplies D16's causal season scales; a fresh
+    one is made per call when not given, so it never outlives the data it read.
     """
     scores, matches_considered = _point_in_time_scores(database, team_number, event_key, as_of)
     matches_used = len(scores)
@@ -557,6 +574,10 @@ def build_team_features(
     profile = aggregate_defense_feeding(observations)
 
     epa = _point_in_time_epa(database, team_number, event_key, as_of, epa_provider)
+    scales = scale_lookup or ScaleLookup(database)
+    season = scales.event_season(event_key)
+    score_scale, epa_scale = (None, None) if season is None else scales.feature_scales(
+        season, as_of, epa.source_event_key)
     average_auto, auto_matches = _point_in_time_auto_points(database, team_number, event_key, as_of)
 
     return TeamFeatures(
@@ -580,11 +601,14 @@ def build_team_features(
         feeding_agreement=profile.feeding_agreement, feeding_agreement_present=profile.feeding_agreement is not None,
         feeding_observation_count=profile.feeding_observation_count,
         contributing_scouting_sources=list(profile.contributing_sources),
+        score_scale=score_scale, score_scale_present=score_scale is not None,
+        epa_scale=epa_scale, epa_scale_present=epa_scale is not None,
     )
 
 
 def build_match_feature_row(
     database: Database, match_key: str, as_of: datetime, *, epa_provider: PointInTimeEpaProvider | None = None,
+    scale_lookup: ScaleLookup | None = None,
 ) -> MatchFeatureRow:
     """Build one match's leakage-safe feature row, as knowable strictly
     before as_of.
@@ -642,10 +666,11 @@ def build_match_feature_row(
     blue_team_numbers = [team_number for team_number, alliance_color in roster if alliance_color == "blue"]
 
     provider = epa_provider or default_point_in_time_provider(database)
-    red_teams = [build_team_features(database, team_number, event_key, as_of, epa_provider=provider)
-                 for team_number in red_team_numbers]
-    blue_teams = [build_team_features(database, team_number, event_key, as_of, epa_provider=provider)
-                  for team_number in blue_team_numbers]
+    scales = scale_lookup or ScaleLookup(database)
+    red_teams = [build_team_features(database, team_number, event_key, as_of, epa_provider=provider,
+                                     scale_lookup=scales) for team_number in red_team_numbers]
+    blue_teams = [build_team_features(database, team_number, event_key, as_of, epa_provider=provider,
+                                      scale_lookup=scales) for team_number in blue_team_numbers]
 
     return MatchFeatureRow(
         match_key=match_key, as_of=as_of, event_key=event_key, season=season,
