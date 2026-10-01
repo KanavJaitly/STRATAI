@@ -14,7 +14,9 @@ Subcommands (each writes a write-once JSON result next to the frame):
     m04 --frame DIR                         M4 baselines through M3 (D7 split), run twice for reproducibility
     m05 --frame DIR --m04 RESULT            M5 ranking model vs the frozen M4 ranking baseline (D5)
     m06 --frame DIR --m04 RESULT            M6 win-prob model vs the frozen M4 win-prob baseline
-    m07 --frame DIR                         M7 calibration of the M6 model (D6), pre-registered isotonic
+    m07 --frame DIR                         M7 under D16 (symmetric isotonic; G1-G4)
+    m05v2-preflight --frame DIR             M5 v2 input checks only: no metric, no ranks
+    m05v2 --frame DIR --m04 RESULT          the single, pre-registered M5 v2 evaluation (D16 §1.5)
 
 Every result records the frame's content hash; the frame records the EPA
 provider's provenance.
@@ -286,16 +288,185 @@ def run_m07(frame_dir: Path) -> dict[str, Any]:
     }
 
 
+FREEZE_COMMIT = "d77ffe4"  # the commit that froze M05_M07_REDESIGN_SPEC.md as D16
+SPEC_PATH = ".agent/phase4/M05_M07_REDESIGN_SPEC.md"
+M05V2_RESULT_RECORD = Path(".agent/phase4/results/m05v2_result.json")
+# Methodology and acceptance files the single M5 v2 run must leave exactly as frozen.
+M05V2_FROZEN_FILES = [
+    SPEC_PATH, "docs/P4Milestones.md", ".agent/phase4/M04_ACCEPTANCE.md", ".agent/phase4/results/m04_result.json",
+    "ml/models/baselines.py", "ml/backtest/harness.py", "ml/backtest/metrics.py", "ml/models/ranking_xgb.py",
+    "scripts/run_m4_baseline_backtest.py",
+]
+
+
+def _git(*args: str) -> str:
+    import subprocess
+
+    return subprocess.run(["git", *args], capture_output=True, text=True, check=True).stdout
+
+
+def _frozen_file_check() -> dict[str, Any]:
+    changed = set(_git("diff", "--name-only", FREEZE_COMMIT, "HEAD").splitlines())
+    changed |= set(_git("diff", "--name-only").splitlines())  # uncommitted changes count too
+    files = list(M05V2_FROZEN_FILES)
+    # the dataset builder changed only to carry D16's scale fields: every changed line must say so
+    builder_diff = [line for line in _git("diff", "-U0", FREEZE_COMMIT, "HEAD", "--", "ml/dataset/builder.py").splitlines()
+                    if line[:1] in "+-" and not line.startswith(("+++", "---"))]
+    removed = [line[1:] for line in builder_diff if line.startswith("-")]
+    added = [line[1:] for line in builder_diff if line.startswith("+")]
+    # a removed line may only come back with " scale_lookup=scales," added; every other added line is scale-only
+    restored = [line.replace(" scale_lookup=scales,", "") for line in added]
+    builder_additive_only = (all(r in restored for r in removed)
+                             and all(("scale" in a.lower()) for a in added))
+    spec_at_freeze = _git("rev-parse", f"{FREEZE_COMMIT}:{SPEC_PATH}").strip()
+    spec_now = _git("hash-object", SPEC_PATH).strip()
+    return {"freeze_commit": FREEZE_COMMIT, "spec_blob_at_freeze": spec_at_freeze, "spec_blob_now": spec_now,
+            "spec_unchanged": spec_at_freeze == spec_now,
+            "frozen_files_changed_since_freeze": sorted(f for f in files if f in changed),
+            "dataset_builder_changes": builder_diff, "dataset_builder_additive_scale_only": builder_additive_only,
+            "ok": spec_at_freeze == spec_now and not any(f in changed for f in files) and builder_additive_only}
+
+
+def run_m05v2_preflight(frame_dir: Path) -> dict[str, Any]:
+    """Inputs only. Computes no metric and reads no final rank."""
+    import statistics as st
+
+    from ml.backtest.ranking_midpoint import MIDPOINT, decision_snapshots
+    from ml.models.ranking_xgb_v2 import event_contribution_targets
+
+    rows = load_frame_rows(frame_dir)
+    fold, _, _, _ = _folds(rows)
+    presence = {}
+    for season in SEASONS:
+        teams = [t for r in rows if r.season == season for t in (*r.red_teams, *r.blue_teams)]
+        with_epa = [t for t in teams if t.epa_total_present]
+        presence[season] = {"appearances": len(teams),
+                            "score_scale_present": round(sum(t.score_scale_present for t in teams) / len(teams), 4),
+                            "epa_scale_present_given_epa": round(sum(t.epa_scale_present for t in with_epa) / len(with_epa), 4)
+                            if with_epa else None}
+    # independent check of S(Y, t) against SQL stddev_pop for random snapshots
+    database = _database()
+    rng = random.Random(20260930)
+    sample = rng.sample([r for r in rows], 40)
+    worst = 0.0
+    checked = 0
+    with database.cursor() as cursor:
+        for r in sample:
+            t = r.red_teams[0] if r.red_teams else None
+            if t is None or not t.score_scale_present:
+                continue
+            cursor.execute(
+                "SELECT stddev_pop(s) FROM (SELECT score_red AS s FROM matches WHERE season = %(y)s AND scheduled_time < %(t)s "
+                "AND score_red IS NOT NULL AND score_blue IS NOT NULL UNION ALL SELECT score_blue FROM matches "
+                "WHERE season = %(y)s AND scheduled_time < %(t)s AND score_red IS NOT NULL AND score_blue IS NOT NULL) x",
+                {"y": r.season, "t": r.scheduled_time})
+            worst = max(worst, abs(float(cursor.fetchone()[0]) - t.score_scale))
+            checked += 1
+    targets, exclusions = event_contribution_targets(fold.train_rows)
+    snaps = decision_snapshots(fold.test_rows, MIDPOINT)
+    last_qual = {}
+    for r in fold.test_rows:
+        if r.comp_level == "qualification":
+            last_qual[r.event_key] = max(last_qual.get(r.event_key, r.scheduled_time), r.scheduled_time)
+    by_key = {r.match_key: r for r in fold.test_rows}
+    after_quals = sum(1 for ev in snaps.values() for sn in ev.values() if by_key[sn.match_key].scheduled_time > last_qual[sn.event_key])
+    n_values = [sn.n for ev in snaps.values() for sn in ev.values()]
+    used = [sn.features.matches_used for ev in snaps.values() for sn in ev.values()]
+    return {
+        "milestone": "M05v2 preflight", "frozen_files": _frozen_file_check(),
+        "frame_content_hash": frame_info(frame_dir)["manifest"]["content_hash"],
+        "scale_presence": presence,
+        "scale_sql_check": {"snapshots_checked": checked, "max_abs_difference": worst, "ok": checked > 0 and worst < 1e-9},
+        "training_targets": {"labelled_team_events": len(targets), "exclusions": exclusions,
+                             "training_rows": len(fold.train_rows)},
+        "decision_snapshots_2026": {"events": len(snaps), "team_events": len(n_values),
+                                    "snapshots_after_qualification": after_quals,
+                                    "n_i": {"min": min(n_values), "median": st.median(n_values), "max": max(n_values)},
+                                    "matches_known_at_snapshot": {"min": min(used), "median": st.median(used), "max": max(used)}},
+    }
+
+
+def run_m05v2(frame_dir: Path, m04: dict[str, Any]) -> dict[str, Any]:
+    """The single pre-registered M5 v2 evaluation (D16 §1.5). Refuses to run twice."""
+    from ml.backtest.ranking_midpoint import FIRST, LAST, MIDPOINT, decision_snapshots, evaluate_ranking
+    from ml.models.baselines import RawEpaRankingBaseline
+    from ml.models.ranking_xgb_v2 import FEATURE_NAMES_V2, RankingXGBModelV2
+
+    existing = list(frame_dir.glob("m05v2_result_*.json")) + ([M05V2_RESULT_RECORD] if M05V2_RESULT_RECORD.exists() else [])
+    if existing:
+        raise RuntimeError(f"M5 v2 has already been run ({existing[0]}); D16 allows exactly one run")
+    frozen = _frozen_file_check()
+    if not frozen["ok"]:
+        raise RuntimeError(f"frozen methodology changed since {FREEZE_COMMIT}: {frozen}")
+
+    rows = load_frame_rows(frame_dir)
+    fold, _, _, _ = _folds(rows)
+    final_ranks = _final_ranks(HELD_OUT_SEASON)
+    model, twin = RankingXGBModelV2(), RankingXGBModelV2()
+    model.fit(fold.train_rows)
+    twin.fit(fold.train_rows)
+    baseline = RawEpaRankingBaseline()
+    snaps = {"midpoint": decision_snapshots(fold.test_rows, MIDPOINT),
+             "first": decision_snapshots(fold.test_rows, FIRST),
+             "last": decision_snapshots(fold.test_rows, LAST)}
+    primary = evaluate_ranking(model.predict_rating, snaps["midpoint"], final_ranks)
+    primary_twin = evaluate_ranking(twin.predict_rating, snaps["midpoint"], final_ranks)
+    base_primary = evaluate_ranking(baseline.predict_rating, snaps["midpoint"], final_ranks)
+    frozen_baseline = m04["result"]["ranking"]["aggregate"]["spearman"]
+    gate = (primary.spearman is not None and base_primary.spearman is not None
+            and primary.spearman > base_primary.spearman and primary.spearman > frozen_baseline)
+
+    secondary = {}
+    for name in ("first", "last"):
+        m = evaluate_ranking(model.predict_rating, snaps[name], final_ranks)
+        b = evaluate_ranking(baseline.predict_rating, snaps[name], final_ranks)
+        secondary[name] = {"model_spearman": m.spearman, "model_top8": m.top_k_recall,
+                           "baseline_spearman": b.spearman, "baseline_top8": b.top_k_recall,
+                           "events": m.events_scored, "teams": m.teams_scored}
+    shuffle = []
+    for seed in range(1, 9):
+        shuffled = RankingXGBModelV2()
+        shuffled.fit(_labels_shuffled(fold.train_rows, seed))
+        shuffle.append(evaluate_ranking(shuffled.predict_rating, snaps["midpoint"], final_ranks).spearman)
+    gain = model.feature_gain()
+    total_gain = sum(gain.values())
+    population = snaps["midpoint"]
+    return {
+        "milestone": "M05v2", "decision": "D16", "spec": f"{SPEC_PATH} §1 (frozen at {FREEZE_COMMIT})",
+        "frozen_files": frozen,
+        "frame_content_hash": frame_info(frame_dir)["manifest"]["content_hash"],
+        "split": {"train_seasons": TRAIN_SEASONS, "held_out_season": HELD_OUT_SEASON,
+                  "train_rows": len(fold.train_rows), "test_rows": len(fold.test_rows)},
+        "fit": {"labelled_team_events": model.labelled_team_events, "target_exclusions": model.target_exclusions,
+                "train_samples": model.fit_train_sample_count, "validation_samples": model.fit_validation_sample_count,
+                "best_iteration": model.best_iteration},
+        "primary": {"model": primary.to_dict(), "baseline_same_protocol": base_primary.to_dict(),
+                    "frozen_baseline_0.5951": frozen_baseline},
+        "gate_beats_same_protocol_baseline": primary.spearman is not None and base_primary.spearman is not None
+        and primary.spearman > base_primary.spearman,
+        "gate_beats_frozen_baseline": primary.spearman is not None and primary.spearman > frozen_baseline,
+        "gate_passed": gate,
+        "reproducible": primary.to_dict() == primary_twin.to_dict(),
+        "secondary": {**secondary, "label_shuffle_midpoint_spearman": shuffle,
+                      "label_shuffle_mean": sum(x for x in shuffle if x is not None) / len(shuffle),
+                      "feature_gain_share": {k: v / total_gain for k, v in sorted(gain.items(), key=lambda kv: -kv[1])},
+                      "features": list(FEATURE_NAMES_V2)},
+        "population": {"events_with_snapshots": len(population), "team_events": sum(len(v) for v in population.values()),
+                       "events_scored": primary.events_scored, "events_skipped": primary.events_skipped,
+                       "teams_scored": primary.teams_scored},
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
     b = sub.add_parser("build-frame")
     b.add_argument("--chain", type=Path, required=True)
     b.add_argument("--out", type=Path, required=True)
-    for name in ("m04", "m05", "m06", "m07"):
+    for name in ("m04", "m05", "m06", "m07", "m05v2-preflight", "m05v2"):
         command = sub.add_parser(name)
         command.add_argument("--frame", type=Path, required=True)
-        if name in ("m05", "m06"):
+        if name in ("m05", "m06", "m05v2"):
             command.add_argument("--m04", type=Path, required=True, help="the frozen M4 result JSON")
     args = parser.parse_args(argv)
 
@@ -308,11 +479,17 @@ def main(argv: list[str] | None = None) -> int:
         result = run_m05(args.frame, _load_json(args.m04))
     elif args.command == "m06":
         result = run_m06(args.frame, _load_json(args.m04))
+    elif args.command == "m05v2-preflight":
+        result = run_m05v2_preflight(args.frame)
+    elif args.command == "m05v2":
+        result = run_m05v2(args.frame, _load_json(args.m04))
     else:
         result = run_m07(args.frame)
     digest = hashlib.sha256(json.dumps(result, sort_keys=True, default=str).encode()).hexdigest()[:12]
-    path = args.frame / f"{args.command}_result_{digest}.json"
+    path = args.frame / f"{args.command.replace('-', '_')}_result_{digest}.json"
     _write_once(path, {**result, "ran_at": datetime.now(timezone.utc).isoformat()})
+    if args.command == "m05v2":
+        _write_once(M05V2_RESULT_RECORD, {**result, "artifact": str(path)})  # the in-repo record; blocks a second run
     shown = {k: v for k, v in result.items() if not isinstance(v, (dict, list))}
     print(json.dumps(shown, indent=2, default=str))
     print(f"-> {path}")
