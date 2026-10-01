@@ -1,10 +1,10 @@
 Phase: 4
 
-Current Milestone: M06 ACCEPTED (2026-09-30); M05 OPEN (v1 failed; v2 redesign spec drafted, awaiting approval); M07 waiting on its frozen spec
+Current Milestone: M07 — FAILED the D16 real-data gate (G2: 5 of 10 bins rejected); ESCALATED under D9 (2026-09-30)
 
-Status: IN_PROGRESS under D16 (Kanav, 2026-09-30) — M04 and M06 ACCEPTED on real data (STRATAI EPA, D15). M05 v1 failed (M05_ESCALATION.md, evidence preserved); one redesign plus one fresh run approved, spec in M05_M07_REDESIGN_SPEC.md (FROZEN, D16). M07 band check replaced by the D16 gate (same spec); not run. M11 may run when its dependencies are met; M13 not started. M08/M09/M10/M12 remain ACCEPTED.
+Status: BLOCKED ON HUMAN DECISION — M04, M06 ACCEPTED (real data, STRATAI EPA). M05 v1 FAILED; M05 v2 spec frozen (D16), NOT run. M07 gate implemented, synthetic verification V1-V5 passed, real-data run: G1 PASS (ECE 0.0375), G2 FAIL, G3 PASS, G4 PASS (M07_ESCALATION.md). No implementation defect: cause is a 2026-specific compression of raw M6 output (raw game-point features vs the 2026 scoring scale). M11 depends on M5; M13 not started. M08/M09/M10/M12 remain ACCEPTED.
 
-Current Stage: D16 frozen; implementing the M7 gate and running synthetic verification V1-V5.
+Current Stage: Stopped — awaiting Kanav: (1) may M5 v2 run now (independent of M7)? (2) M7 path.
 
 Completed (pre-Phase-Execution-Mode, recorded in RUNNING_NOTES.md only):
 - M01 ACCEPTED (2026-09-21)
