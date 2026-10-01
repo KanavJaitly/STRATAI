@@ -1,0 +1,230 @@
+{
+  "artifact": "C:\\Dev\\StratAI-artifacts\\phase4\\frame_ab1adbf38b43c2f3\\d18_m07_result_2b433252a256.json",
+  "calibrated": {
+    "brier": 0.1763338025719056,
+    "ece": 0.02316275652450326,
+    "log_loss": 0.5459124568773297
+  },
+  "calibrator": "SymmetricIsotonicCalibrator",
+  "decision": "D16",
+  "fit_diagnostics": {
+    "calibration_eligible_count": 3937,
+    "calibration_excluded_tie_count": 19,
+    "calibration_row_count": 3956,
+    "model_row_count": 15824
+  },
+  "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+  "gate": {
+    "ece": 0.02316275652450326,
+    "g1_pass": true,
+    "g2": {
+      "bins": [
+        {
+          "count": 1010,
+          "expected_wins": 53.07673582307376,
+          "holm_threshold": 0.016666666666666666,
+          "interval_95": [
+            0.039603960396039604,
+            0.06633663366336634
+          ],
+          "lower": 0.0,
+          "mean_predicted": 0.05255122358720175,
+          "observed_rate": 0.0594059405940594,
+          "observed_wins": 60,
+          "p_value": 0.3195206713120692,
+          "rejected": false,
+          "tested": true,
+          "upper": 0.1
+        },
+        {
+          "count": 2164,
+          "expected_wins": 353.2975113275638,
+          "holm_threshold": 0.00625,
+          "interval_95": [
+            0.1478743068391867,
+            0.1788354898336414
+          ],
+          "lower": 0.1,
+          "mean_predicted": 0.1632613268611663,
+          "observed_rate": 0.1963955637707948,
+          "observed_wins": 425,
+          "p_value": 4.521348392117994e-05,
+          "rejected": true,
+          "tested": true,
+          "upper": 0.2
+        },
+        {
+          "count": 1273,
+          "expected_wins": 323.11572398656534,
+          "holm_threshold": 0.0125,
+          "interval_95": [
+            0.23016496465043204,
+            0.27808326787117044
+          ],
+          "lower": 0.2,
+          "mean_predicted": 0.25382224979305995,
+          "observed_rate": 0.27101335428122547,
+          "observed_wins": 345,
+          "p_value": 0.16556712622856468,
+          "rejected": false,
+          "tested": true,
+          "upper": 0.3
+        },
+        {
+          "count": 2133,
+          "expected_wins": 769.9240530412629,
+          "holm_threshold": 0.005555555555555556,
+          "interval_95": [
+            0.3408345053914674,
+            0.38115330520393814
+          ],
+          "lower": 0.3,
+          "mean_predicted": 0.3609582995974041,
+          "observed_rate": 0.42756680731364277,
+          "observed_wins": 912,
+          "p_value": 2.2998842752968247e-10,
+          "rejected": true,
+          "tested": true,
+          "upper": 0.4
+        },
+        {
+          "count": 14,
+          "expected_wins": null,
+          "holm_threshold": null,
+          "interval_95": null,
+          "lower": 0.4,
+          "mean_predicted": null,
+          "observed_rate": null,
+          "observed_wins": null,
+          "p_value": null,
+          "rejected": null,
+          "tested": false,
+          "upper": 0.5
+        },
+        {
+          "count": 984,
+          "expected_wins": 492.78627272305914,
+          "holm_threshold": 0.0071428571428571435,
+          "interval_95": [
+            0.4695121951219512,
+            0.532520325203252
+          ],
+          "lower": 0.5,
+          "mean_predicted": 0.5007990576453853,
+          "observed_rate": 0.5416666666666666,
+          "observed_wins": 533,
+          "p_value": 0.010730393084651138,
+          "rejected": false,
+          "tested": true,
+          "upper": 0.6
+        },
+        {
+          "count": 2408,
+          "expected_wins": 1545.4070752811733,
+          "holm_threshold": 0.01,
+          "interval_95": [
+            0.6225083056478405,
+            0.6607142857142857
+          ],
+          "lower": 0.6,
+          "mean_predicted": 0.6417803468775637,
+          "observed_rate": 0.6602990033222591,
+          "observed_wins": 1590,
+          "p_value": 0.057830576568148634,
+          "rejected": false,
+          "tested": true,
+          "upper": 0.7
+        },
+        {
+          "count": 1581,
+          "expected_wins": 1179.682933123062,
+          "holm_threshold": 0.05,
+          "interval_95": [
+            0.7248576850094877,
+            0.767235926628716
+          ],
+          "lower": 0.7,
+          "mean_predicted": 0.7461625130443149,
+          "observed_rate": 0.7463630613535737,
+          "observed_wins": 1180,
+          "p_value": 0.9999999999999996,
+          "rejected": false,
+          "tested": true,
+          "upper": 0.8
+        },
+        {
+          "count": 2451,
+          "expected_wins": 2051.0230439511906,
+          "holm_threshold": 0.025,
+          "interval_95": [
+            0.8221134230926153,
+            0.8514891880864953
+          ],
+          "lower": 0.8,
+          "mean_predicted": 0.8368107074464262,
+          "observed_rate": 0.8376172990616075,
+          "observed_wins": 2053,
+          "p_value": 0.934600625064642,
+          "rejected": false,
+          "tested": true,
+          "upper": 0.9
+        },
+        {
+          "count": 1009,
+          "expected_wins": 956.3429883185637,
+          "holm_threshold": 0.008333333333333333,
+          "interval_95": [
+            0.933597621407334,
+            0.9613478691774033
+          ],
+          "lower": 0.9,
+          "mean_predicted": 0.9478126742503109,
+          "observed_rate": 0.9326065411298315,
+          "observed_wins": 941,
+          "p_value": 0.032095543796134184,
+          "rejected": false,
+          "tested": true,
+          "upper": 1.0
+        }
+      ],
+      "eligible_bins": 9,
+      "rejected_bins": 2,
+      "status": "fail"
+    },
+    "g3_max_symmetry_error": 0.0,
+    "g3_order_independent": true,
+    "g3_pass": true,
+    "g4_fit_isolated": true,
+    "passed": false
+  },
+  "gate_passed": false,
+  "guard": {
+    "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+    "implementation": {
+      "changed_since_pinned_commit": [],
+      "head": "77d5423d5f6d810221a64c1b02409516f3ffb9ca",
+      "ok": true,
+      "pinned_commit": "69139f817540638ddd84301917ad51357310ac9a",
+      "uncommitted": []
+    },
+    "methodology": {
+      "freeze_commit": "ec1b0af",
+      "methodology_files_changed_since_freeze": [],
+      "ok": true,
+      "spec_blob_at_freeze": "b578d1639c79e1221c4b99b67619d0c7c5726497",
+      "spec_blob_now": "b578d1639c79e1221c4b99b67619d0c7c5726497"
+    }
+  },
+  "held_out_rows": 15027,
+  "milestone": "M07",
+  "passed": false,
+  "raw_m6": {
+    "brier": 0.18370681614151574,
+    "ece": 0.07719969319432146,
+    "log_loss": 0.5444564622067674
+  },
+  "recorded_at": "2026-10-01T23:20:57.768570+00:00",
+  "source_version": "D18",
+  "spec": ".agent/phase4/M05_M07_REDESIGN_SPEC.md \u00a72",
+  "ties_excluded": 34
+}

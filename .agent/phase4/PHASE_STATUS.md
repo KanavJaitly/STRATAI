@@ -1,10 +1,10 @@
 Phase: 4
 
-Current Milestone: D17 (Statbotics as EPA source) — snapshot built; D8 readiness INVALID (2026iscmp); STOPPED before any Statbotics-based M4-M7 run (2026-10-01)
+Current Milestone: D18 (Statbotics-primary EPA, STRATAI fallback for 2026iscmp only) — controlled run M04/M05 v2/M06 PASSED, M07 FAILED; STOPPED (2026-10-01)
 
-Status: BLOCKED ON HUMAN DECISION — Statbotics verified working (monitor RECOVERY_PENDING, not confirmed); snapshot of 608 events / 24,022 team-event rows cached with provenance and loaded via the Phase 2 path (TBA not re-fetched). D8 gate INVALID: all 450 appearances at 2026iscmp have unprocessed Statbotics source rows (2026 ISR events listed "Upcoming"). Existing D15 (STRATAI EPA) evidence unchanged: M04, M06 ACCEPTED; M05 v2 gate passed (pending review); M07 FAILED (D16). M11 not run; M13 not started. See D17_STATBOTICS_ESCALATION.md.
+Status: BLOCKED ON HUMAN DECISION — D18 spec frozen at ec1b0af before any D18 data or metric; source verification S1-S5 PASS (450 fallback appearances, all target 2026iscmp; 0 hard errors; 0 leakage). D18 results (results/d18/): M04 frozen baseline (LL 0.6707, Brier 0.1783; Spearman 0.5955) PASS; M05 v2 gate PASSED 0.6112 (pending review); M06 PASS (LL 0.5209, Brier 0.1749); M07 FAILED the D16 gate (G2: 2/9 bins rejected; G1 ECE 0.0232 pass). M11 resolved to M5 v2 (D18 §5) but not run (D9 stop); M13 not started. D15 (STRATAI EPA) evidence unchanged and kept for comparison. See D18_RESULTS.md.
 
-Current Stage: Stopped — awaiting Kanav decisions A-D in D17_STATBOTICS_ESCALATION.md.
+Current Stage: Stopped — awaiting Kanav decisions in D18_RESULTS.md (M7 path; M5 v2 review; M11 run authorization).
 
 Completed (pre-Phase-Execution-Mode, recorded in RUNNING_NOTES.md only):
 - M01 ACCEPTED (2026-09-21)
@@ -289,6 +289,8 @@ Decision D16 -- Kanav, 2026-09-30 (M5/M7 methodology; frozen spec: M05_M07_REDES
   symmetry (symmetric isotonic calibrator) + G4 fit isolation. Synthetic checks V1-V5
   (criteria fixed in the spec) must pass before real-data M7.
 - Order: M7 (after V1-V5), then M5 v2 once; M11 when its dependencies are met; M13 last.
+- D17 (2026-10-01): Statbotics recovered; provenanced snapshot (608 events, 24,022 rows); D8 INVALID at 2026iscmp; stopped (D17_STATBOTICS_ESCALATION.md).
+- D18 (Kanav, 2026-10-01; spec D18_SOURCE_SPEC.md frozen at ec1b0af): Statbotics is the primary EPA source; STRATAI fallback only for target event 2026iscmp, labelled per appearance (epa_value_source); availability A1 (record.qual.count = 0 -> season end) and A2 (week-1 statistics); no silent fallback; new controlled runs of M04-M07 with gates referenced to the D18 M4 baseline; D15 results kept; M11 evaluates the M5 model of record (v2).
 
 Decision D15 -- Kanav, 2026-09-30 (supersedes the Statbotics dependency only):
 - EPA provider = STRATAI's own EPA engine (ml/ratings, docs/ratings/). Path:

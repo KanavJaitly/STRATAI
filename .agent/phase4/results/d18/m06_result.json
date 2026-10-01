@@ -1,0 +1,103 @@
+{
+  "artifact": "C:\\Dev\\StratAI-artifacts\\phase4\\frame_ab1adbf38b43c2f3\\d18_m06_result_514642f26d03.json",
+  "baseline": {
+    "accuracy": 0.7624941771478007,
+    "brier_score": 0.17826307139450304,
+    "calibration_error": 0.11860367486913315,
+    "log_loss": 0.6706560908498289,
+    "roc_auc": 0.8422487356987178,
+    "row_count": 15027
+  },
+  "diagnostic_full_held_out_fold": {
+    "aggregate": {
+      "accuracy": 0.7140311804008909,
+      "brier_score": 0.18137339774925054,
+      "calibration_error": 0.049867132424484754,
+      "excluded_count": 44,
+      "fold_label": "aggregate",
+      "log_loss": 0.5384808248305303,
+      "roc_auc": 0.8100013107396277,
+      "row_count": 17960,
+      "season": null,
+      "spearman": null,
+      "top_k_recall": null
+    },
+    "folds": [
+      {
+        "accuracy": 0.7140311804008909,
+        "brier_score": 0.18137339774925054,
+        "calibration_error": 0.049867132424484754,
+        "excluded_count": 44,
+        "fold_label": "hold_out_season_2026",
+        "log_loss": 0.5384808248305303,
+        "roc_auc": 0.8100013107396277,
+        "row_count": 17960,
+        "season": 2026,
+        "spearman": null,
+        "top_k_recall": null
+      }
+    ],
+    "mode": "win_prob",
+    "split_strategy": "hold_out_season"
+  },
+  "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+  "gate_brier_beats_or_matches": true,
+  "gate_log_loss_beats_or_matches": true,
+  "guard": {
+    "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+    "implementation": {
+      "changed_since_pinned_commit": [],
+      "head": "77d5423d5f6d810221a64c1b02409516f3ffb9ca",
+      "ok": true,
+      "pinned_commit": "69139f817540638ddd84301917ad51357310ac9a",
+      "uncommitted": []
+    },
+    "methodology": {
+      "freeze_commit": "ec1b0af",
+      "methodology_files_changed_since_freeze": [],
+      "ok": true,
+      "spec_blob_at_freeze": "b578d1639c79e1221c4b99b67619d0c7c5726497",
+      "spec_blob_now": "b578d1639c79e1221c4b99b67619d0c7c5726497"
+    }
+  },
+  "held_out_order_independent": true,
+  "held_out_symmetry_max_abs_error": 0.0,
+  "milestone": "M06",
+  "model": {
+    "aggregate": {
+      "accuracy": 0.7161775470819192,
+      "brier_score": 0.17486699273543369,
+      "calibration_error": 0.04084057930870948,
+      "excluded_count": 34,
+      "fold_label": "aggregate",
+      "log_loss": 0.5208923942373159,
+      "roc_auc": 0.8202670796399423,
+      "row_count": 15027,
+      "season": null,
+      "spearman": null,
+      "top_k_recall": null
+    },
+    "folds": [
+      {
+        "accuracy": 0.7161775470819192,
+        "brier_score": 0.17486699273543369,
+        "calibration_error": 0.04084057930870948,
+        "excluded_count": 34,
+        "fold_label": "hold_out_season_2026",
+        "log_loss": 0.5208923942373159,
+        "roc_auc": 0.8202670796399423,
+        "row_count": 15027,
+        "season": 2026,
+        "spearman": null,
+        "top_k_recall": null
+      }
+    ],
+    "mode": "win_prob",
+    "split_strategy": "hold_out_season"
+  },
+  "model_summary": "Backtest: win_prob (hold_out_season)\n  hold_out_season_2026: n=15027, excluded=34, accuracy=0.7162, log_loss=0.5209, brier=0.1749, roc_auc=0.8203, ece=0.0408\n  aggregate: n=15027, excluded=34, accuracy=0.7162, log_loss=0.5209, brier=0.1749, roc_auc=0.8203, ece=0.0408",
+  "passed": true,
+  "recorded_at": "2026-10-01T23:18:38.887261+00:00",
+  "reproducible": true,
+  "source_version": "D18"
+}
