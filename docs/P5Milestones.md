@@ -27,9 +27,15 @@ The pre-season pipeline runs **end-to-end within 5 days of a game reveal**, demo
 
 ### DM2 — in-season learning loop
 
-Ratings **visibly update as new matches flow in**, without manual retraining. New match data causes the appropriate ratings, features and forecasts to update through the designed pipeline. It is demonstrated twice; both are required:
-- **(a) Replay.** A replay of real 2026 events whose match results enter through the production ingestion path (raw landing → staging → canonical load) in an isolated, non-serving database.
-- **(b) Live.** A live confirmation at the first live official events the pipeline can sync. That is 2027 Week 0/1 at the latest; the roadmap says "mid-season".
+Ratings **visibly update as new matches flow in**, without manual retraining. New match data causes the appropriate ratings, features and forecasts to update through the designed pipeline.
+
+**How it is demonstrated.**
+- Real mid-season 2026 events are replayed match by match.
+- Each result enters through the **production ingestion path** (raw landing → staging → canonical load) into an isolated, non-serving database.
+- The **production serving path** then shows the affected ratings and forecasts updating after each match, with provenance and no retraining (P5-M6 criteria a–e).
+- Components exercised separately, or test-only shortcuts, do not count.
+
+**A live confirmation is not required by the original requirement.** A confirmation at the first live official events (2027 Week 0/1) is a recommended operational follow-up. It is **not** a Phase 5 done-means gate (P5-D8, revised).
 
 ---
 
@@ -158,7 +164,7 @@ The 80% range inherits M7's limitation: probabilities are not certified calibrat
 | **Acceptance criteria** | (a) After every completed match, the affected teams' served features change exactly as the assembler computes, traced to the new row. (b) Zero changes without a new input. (c) Bit-for-bit reproducible. (d) `team_metrics` equals a fresh recompute after every match. (e) The 2026iscmp replay serves its fallback teams as `fallback_stratai` with provenance |
 | **Leakage constraints** | A point-in-time sentinel is inserted mid-replay; no future row is ever visible |
 | **Reproducibility** | Replay log (as_of, snapshot_id, STRATAI replay fingerprint, model sha256s, commit) |
-| **Done-means** | **DM2(a)** by replay. **DM2(b)** at the first live official events (2027). Phase 5 cannot be signed off before DM2(b) |
+| **Done-means** | **DM2**, by the replay above with (a)–(e) passing. A live confirmation at the first 2027 events is recommended, but not a gate |
 
 ## P5-M7 — Meta tracking (Week 0/1 onward)
 
@@ -182,7 +188,7 @@ The 80% range inherits M7's limitation: probabilities are not certified calibrat
 | **Outputs** | A scoring-action value table. Similarity to a catalog of past games. Candidate archetypes, with **historical design examples** retrieved from the curated reference by codebook labels, every example labelled `curated_reference_unverified` (no success rate, no performance ranking). Expected scoring ranges derived from catalog seasons with breakdown data (2024–2026) |
 | **Data dependencies** | the game-spec catalog; P5-M7 adapters |
 | **Evaluation population** | used by DM1's dry run (P5-M9) |
-| **Frozen methodology** | Similarity and archetype rules are fixed before the dry run. **Reference taxonomy:** a human, multi-label codebook (a set of functions, and a family per function), frozen before coding; every curated row double-coded independently; micro-archetype text always kept verbatim. Keyword auto-labelling is not used: the audit found about 20% clear misassignments |
+| **Frozen methodology** | Similarity and archetype rules are fixed before the dry run. **Reference taxonomy:** a human, multi-label codebook (a set of functions, and a family per function), frozen before coding; every curated row double-coded independently; micro-archetype text always kept verbatim. Keyword auto-labelling is not used: the audit found 19 of 77 rows (25%) misassigned |
 | **Acceptance criteria** | Schema, determinism and catalog-integrity tests. The reference file's sha256 is verified at load. **Codebook agreement:** Cohen's κ on function labels is reported; labels are used as categories only if κ ≥ 0.6, otherwise served as `provisional`. Outputs are `descriptive`, `curated_reference_unverified`, or `not_validated` for any forward-looking claim |
 | **Leakage constraints** | In the dry run the catalog **and the curated reference** contain only games and rows from **before** the simulated reveal year. For the 2026 dry run, the 10 REBUILT rows are excluded |
 | **Reproducibility** | Spec, catalog and outputs are versioned and hashed |
@@ -209,7 +215,7 @@ The 80% range inherits M7's limitation: probabilities are not certified calibrat
 - contract tests pin it to code and records;
 - `scripts/phase5_done_means.py` reads the records and reports DM1 and DM2.
 
-**Done-means:** DM1 and DM2 (both parts) recorded with real evidence, or Phase 5 stays open.
+**Done-means:** DM1 and DM2 recorded with real evidence, or Phase 5 stays open.
 
 ---
 
