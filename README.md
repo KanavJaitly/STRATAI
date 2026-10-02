@@ -19,6 +19,10 @@ how a scouting observation and a match score become one served `TeamMetrics` obj
 rating scale, the aggregation methodology, the API contract, and the limits on what the
 served numbers may be used to claim.
 
+**[docs/ml_models.md](docs/ml_models.md)** is the reference for Phase 4: features, the
+backtest method, the models and their held-out results, the calibration evidence, and
+which predictions can and cannot be trusted. Phase 4's done-means is not met (M7 failed).
+
 [RUNNING_NOTES.md](RUNNING_NOTES.md) tracks milestone status and the design-decision log.
 
 ## Project layout
