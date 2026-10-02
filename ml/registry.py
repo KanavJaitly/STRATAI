@@ -37,6 +37,7 @@ per-request.
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
@@ -81,6 +82,9 @@ class ModelManifest(BaseModel):
     random_seed: int | None = None
     metrics: dict[str, float | None] = Field(default_factory=dict)
     created_at: datetime
+    # Additive (2026-10-02): where the artifact comes from -- e.g. the evaluated source
+    # version, frame hash and result record it reproduces (scripts/register_d18_production_models.py).
+    provenance: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _check_created_at_is_timezone_aware(self) -> "ModelManifest":
@@ -93,6 +97,7 @@ def register_model(
     model: Model, *, registry_dir: Path, model_type: str, model_version: str, version_tag: str,
     training_dataset_hash: str, feature_list: Sequence[str], created_at: datetime,
     metrics: Mapping[str, float | None] | None = None, random_seed: int | None = None,
+    provenance: Mapping[str, Any] | None = None,
 ) -> Path:
     """Save `model` plus a manifest under
     registry_dir/model_type/version_tag/. Returns that directory's path.
@@ -122,6 +127,7 @@ def register_model(
         model_type=model_type, model_version=model_version, registry_version=REGISTRY_MANIFEST_VERSION,
         training_dataset_hash=training_dataset_hash, feature_list=list(feature_list),
         random_seed=random_seed, metrics=dict(metrics) if metrics else {}, created_at=created_at,
+        provenance=dict(provenance) if provenance else {},
     )
     (target_dir / MANIFEST_FILENAME).write_text(manifest.model_dump_json(), encoding="utf-8")
     return target_dir
@@ -129,6 +135,7 @@ def register_model(
 
 def load_registered_model(
     model_class: Any, *, registry_dir: Path, model_type: str, version_tag: str, current_feature_list: Sequence[str],
+    expected_sha256: str | None = None,
 ) -> tuple[Model, ModelManifest]:
     """Load a previously-registered model, refusing to load if its
     manifest's own recorded feature_list does not match
@@ -157,8 +164,21 @@ def load_registered_model(
             "no longer match what this code computes"
         )
 
+    if expected_sha256 is not None:
+        actual = model_file_sha256(registry_dir, model_type, version_tag)
+        if actual != expected_sha256:
+            raise ValueError(
+                f"registered model at {target_dir} has sha256 {actual}, not the pinned {expected_sha256} -- "
+                "refusing to load an artifact other than the one configured"
+            )
+
     model = model_class.load(target_dir / MODEL_FILENAME)
     return model, manifest
+
+
+def model_file_sha256(registry_dir: Path, model_type: str, version_tag: str) -> str:
+    """sha256 of a registered model's own saved file: the artifact's identity."""
+    return hashlib.sha256((registry_dir / model_type / version_tag / MODEL_FILENAME).read_bytes()).hexdigest()
 
 
 def list_registered_versions(registry_dir: Path, model_type: str) -> list[str]:

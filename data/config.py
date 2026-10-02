@@ -83,13 +83,26 @@ class Settings(BaseSettings):
     # at startup; until then, every prediction endpoint correctly reports
     # model_not_loaded rather than serving from an unaccepted model by default.
     ml_registry_dir: str = str(PROJECT_ROOT / "ml_registry")
+    # Which model types may be served (2026-10-02). Each is a single-value Literal: the
+    # evaluated D18 model of record. M5 v1 ("ranking_xgb", FAILED) and raw M6 without
+    # its evaluated calibrator ("win_prob_xgb") are not servable, so the API can never
+    # fall back to them; serving a different model requires changing this code-level
+    # allow-list and the pins below, i.e. an explicit configuration change.
+    ml_ranking_model_type: Literal["ranking_xgb_v2"] = "ranking_xgb_v2"
     ml_ranking_model_version_tag: str | None = None
+    ml_ranking_model_sha256: str | None = None
+    ml_win_prob_model_type: Literal["win_prob_xgb_calibrated"] = "win_prob_xgb_calibrated"
     ml_win_prob_model_version_tag: str | None = None
-    # EPA source for Phase 4 features (ml.ratings.provider). "stratai" is STRATAI's
-    # own EPA, read from a chained replay (python -m scripts.run_epa_replay --chain);
-    # "statbotics" reads team_event_stats and is kept as an optional reference.
-    epa_source: Literal["stratai", "statbotics"] = "stratai"
+    ml_win_prob_model_sha256: str | None = None
+    # EPA source for Phase 4 features (ml.ratings.provider). The default is the evaluated
+    # production configuration, D18: Statbotics primary from a verified snapshot
+    # (STATBOTICS_SNAPSHOT_DIR), STRATAI fallback for 2026iscmp only (STRATAI_EPA_CHAIN).
+    # Unconfigured, it fails loudly rather than silently using another source.
+    # "stratai" (D15, historical) and "statbotics" (plain D13 over team_event_stats, no
+    # availability rule or fallback) remain selectable as non-evaluated references.
+    epa_source: Literal["d18_statbotics_primary", "stratai", "statbotics"] = "d18_statbotics_primary"
     stratai_epa_chain: str | None = None
+    statbotics_snapshot_dir: str | None = None
 
     model_config = ConfigDict(
         case_sensitive=False,
@@ -98,6 +111,16 @@ class Settings(BaseSettings):
     def __init__(self, **values: Any) -> None:
         _ensure_env_loaded()
         super().__init__(**values)
+
+    @model_validator(mode="after")
+    def require_artifact_hash_with_a_pinned_model(self) -> "Settings":
+        """A pinned model version must also pin its artifact's sha256, so the served
+        artifact is exactly the configured one (ml.registry.model_file_sha256)."""
+        for kind in ("ranking", "win_prob"):
+            if getattr(self, f"ml_{kind}_model_version_tag") and not getattr(self, f"ml_{kind}_model_sha256"):
+                raise ValueError(f"ML_{kind.upper()}_MODEL_VERSION_TAG is set but ML_{kind.upper()}_MODEL_SHA256 "
+                                 "is not: pin the registered artifact's sha256 too")
+        return self
 
     @field_validator("env")
     def validate_env(cls, value: str) -> str:

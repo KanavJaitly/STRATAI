@@ -20,6 +20,7 @@ from database.connection import Database
 __all__ = [
     "event_exists",
     "get_event_season",
+    "get_match_competition_level",
     "get_match_event_and_scheduled_time",
     "list_teams_at_event",
 ]
@@ -81,3 +82,12 @@ def get_match_event_and_scheduled_time(database: Database, match_key: str) -> tu
     if row is None:
         return None
     return row[0], row[1]
+
+
+def get_match_competition_level(database: Database, match_key: str) -> str | None:
+    """matches.competition_level ('qualification', 'semifinal', 'final') for a real
+    match_key, or None if the match does not exist or has no recorded level."""
+    with database.cursor() as cursor:
+        cursor.execute("SELECT competition_level FROM matches WHERE match_key = %s", (match_key,))
+        row = cursor.fetchone()
+    return None if row is None else row[0]
