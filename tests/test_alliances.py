@@ -33,8 +33,10 @@ _PAYLOAD = [
 
 def test_parse_seeds_captain_picks_backup_declines():
     first, second = parse_alliances_payload(_PAYLOAD)
-    assert first == Alliance(seed=1, captain=190, picks=(190, 1218, 5732, 8704), backup=None, declines=())
-    assert second == Alliance(seed=2, captain=254, picks=(254, 1678, 971), backup=604, declines=(111,))
+    assert first == Alliance(seed=1, position=1, name="Alliance 1", captain=190, picks=(190, 1218, 5732, 8704),
+                             backup=None, declines=())
+    assert second == Alliance(seed=2, position=2, name="Alliance 2", captain=254, picks=(254, 1678, 971),
+                              backup=604, declines=(111,))
 
 
 def test_seed_falls_back_to_list_order_without_names():
@@ -44,6 +46,19 @@ def test_seed_falls_back_to_list_order_without_names():
 
 def test_names_contradicting_list_order_reject_the_payload():
     payload = [{"name": "Alliance 2", "picks": ["frc1"]}, {"name": "Alliance 1", "picks": ["frc2"]}]
+    assert parse_alliances_payload(payload) == []
+
+
+def test_division_named_alliances_are_unseeded():
+    """Einstein and multi-division DCMP finals name alliances after divisions: no seed."""
+    payload = [{"name": "Archimedes", "picks": ["frc1", "frc2", "frc3"]},
+               {"name": "Curie", "picks": ["frc4", "frc5", "frc6"]}]
+    alliances = parse_alliances_payload(payload)
+    assert [(a.seed, a.position, a.name) for a in alliances] == [(None, 1, "Archimedes"), (None, 2, "Curie")]
+
+
+def test_partially_seeded_names_reject_the_payload():
+    payload = [{"name": "Alliance 1", "picks": ["frc1"]}, {"name": "Curie", "picks": ["frc2"]}]
     assert parse_alliances_payload(payload) == []
 
 
