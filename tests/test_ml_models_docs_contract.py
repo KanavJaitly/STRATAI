@@ -66,7 +66,34 @@ def test_documented_endpoints_and_codes_are_exactly_the_live_ones(docs_text):
     assert documented == live
     codes = {getattr(predictions, n) for n in dir(predictions) if n.startswith("CODE_")}
     assert all(f"`{code}`" in docs_text for code in codes)
-    assert f"`{predictions.CALIBRATION_STATUS_UNCALIBRATED}`" in docs_text
+
+
+def test_documented_serving_contract_matches_the_code(docs_text):
+    from api import ml_loading
+    from api.routes import predictions
+
+    statuses = [predictions.CALIBRATION_STATUS_M7_FAILED, predictions.VALIDATION_NOT_VALIDATED,
+                predictions.VALIDATION_QUALIFICATION_APPROXIMATELY_CALIBRATED, predictions.RANKING_VALIDATION_STATUS,
+                predictions.SYNERGY_VALIDATION_STATUS]
+    assert all(f"`{status}`" in docs_text for status in statuses)
+    match = re.search(r"`PROBABILITY_DISPLAY_STEP` = ([0-9.]+)", docs_text)
+    assert match and float(match.group(1)) == predictions.PROBABILITY_DISPLAY_STEP
+    assert (f"[{predictions.PROBABILITY_DISPLAY_MIN}, {predictions.PROBABILITY_DISPLAY_MAX}]" in docs_text)
+    for model_type in (*ml_loading.SERVABLE_RANKING_MODELS, *ml_loading.SERVABLE_WIN_PROB_MODELS,
+                       *ml_loading.NOT_SERVABLE_MODEL_TYPES):
+        assert f"`{model_type}`" in docs_text, model_type
+    for setting in ("ML_RANKING_MODEL_VERSION_TAG", "ML_RANKING_MODEL_SHA256", "ML_WIN_PROB_MODEL_VERSION_TAG",
+                    "ML_WIN_PROB_MODEL_SHA256", "ML_REGISTRY_DIR", "STATBOTICS_SNAPSHOT_DIR", "STRATAI_EPA_CHAIN"):
+        assert f"`{setting}`" in docs_text, setting
+
+
+def test_documented_default_epa_source_is_the_evaluated_one(docs_text):
+    from data.config import Settings
+    from ml.ratings.d18_source import D18_EPA_SOURCE
+
+    assert Settings.model_fields["epa_source"].default == D18_EPA_SOURCE
+    assert f"`EPA_SOURCE` = `{D18_EPA_SOURCE}` (the default)" in docs_text
+    assert "Phase 4 evaluation complete; acceptance criteria not fully met" in docs_text
 
 
 def test_referenced_modules_exist(docs_text):

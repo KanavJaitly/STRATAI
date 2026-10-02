@@ -2,11 +2,19 @@
 
 This page is the reference for STRATAI's Phase 4 ML layer: features, dataset, backtest method, models, calibration, guarantees, evaluated results, and what is and is not trustworthy. `tests/test_ml_models_docs_contract.py` pins every feature name, constant, endpoint, exclusion rule and frozen number quoted here to the live code and the write-once result records.
 
-**Status: Phase 4's done-means is NOT MET.**
+**Status: Phase 4 evaluation complete; acceptance criteria not fully met. Phase 4's done-means is NOT MET.**
 - Ranking beats the naive baseline: **MET**.
 - Win probability calibrated: **NOT MET** (M7 failed).
 
 `python -m scripts.phase4_done_means` reads the records and reports this. The evaluation is complete, so what can and cannot be trusted is known (§10).
+
+**In short:**
+- **Ranking:** performance is moderate and not guaranteed.
+- **Qualification win probabilities:** reasonably calibrated within the tested population (2026, held out).
+- **Playoff probabilities:** NOT currently validated. The higher-seed playoff effect is a known systematic limitation (§7).
+- **Precision:** unsupported statistics must not be presented with false precision.
+
+**D18 is the evaluated production-source configuration.** The production API serves exactly the D18 models and EPA source (§9).
 
 ---
 
@@ -136,7 +144,7 @@ From `.agent/phase4/D18_M07_DIAGNOSTIC.md`:
 - **One-command audit (M8).** `python -m scripts.ml_bias_audit` checks symmetry, order invariance, strategy leakage, as-of integrity and label-shuffle collapse, for both ranking models. M5 v2: true-label correlation 0.759, shuffled 0.010.
 - **Load-time guard (M10).** The registry refuses a model whose feature list differs from the current one. Round trip on the D18 models: 0 mismatches.
 
-## 9. API (M12)
+## 9. Production serving (M12, aligned with D18 on 2026-10-02)
 
 The four routes:
 - `GET /predictions/matches/{match_key}/win-probability`
@@ -144,18 +152,88 @@ The four routes:
 - `GET /predictions/events/{event_key}/ranking`
 - `POST /predictions/alliance-synergy`
 
+### Models served
+
+`api/ml_loading.py` serves only the D18 models of record.
+
+| Use | Model type | What it is |
+|---|---|---|
+| Ranking | `ranking_xgb_v2` | M5 v2, `RankingXGBModelV2` |
+| Win probability | `win_prob_xgb_calibrated` | the D18 M7 pair: M6 plus its symmetric isotonic calibrator (`ml/models/calibrated_win_prob.py`) |
+
+`ranking_xgb` (M5 v1, FAILED) and raw `win_prob_xgb` are refused by name. The model-type settings are single-value literals, so nothing falls back to them.
+
+**Pins.** Each served model is pinned by type, version tag and artifact sha256:
+- `ML_RANKING_MODEL_VERSION_TAG` with `ML_RANKING_MODEL_SHA256`;
+- `ML_WIN_PROB_MODEL_VERSION_TAG` with `ML_WIN_PROB_MODEL_SHA256`;
+- `ML_REGISTRY_DIR` for the registry location.
+
+The sha256 is checked against the registered file before loading, and a tag without its sha256 is a configuration error. Replacing a served model therefore requires an explicit configuration change.
+
+**Artifacts.** `scripts/register_d18_production_models.py` built the artifacts by the evaluation's own deterministic fits. It refuses to register unless they reproduce the D18 records exactly:
+- M5 v2: Spearman 0.6112 bit for bit;
+- the M7 pair: ECE and every G2 bin identical.
+
+Its record is `.agent/production/d18_model_registration.json`. Every response echoes `model` (type, version, tag, `model_sha256`, `training_dataset_hash`, provenance).
+
+### EPA source
+
+`EPA_SOURCE` = `d18_statbotics_primary` (the default) builds the D18 source with its snapshot-integrity checks (`ml/ratings/d18_source.py`). It needs:
+- `STATBOTICS_SNAPSHOT_DIR`, the verified snapshot;
+- `STRATAI_EPA_CHAIN`, the fallback chain.
+
+Unconfigured or failing a check, it serves `epa_source_not_loaded`, never a substitute source. `stratai` and `statbotics` stay selectable as non-evaluated references, and responses then report `evaluated_configuration` = false.
+
+Every response carries `epa` (source, `evaluated_configuration`, snapshot provenance) and per-team `epa_value_source` / `epa_source_event_key` / `epa_withheld_reason`.
+
+### Win-probability gating (M7 FAILED)
+
+| Scope | `validation_status` | `red_win_probability` |
+|---|---|---|
+| Qualification match (`competition_level` = qualification), or ad-hoc with `match_context` = qualification | `approximately_calibrated_qualification` | rounded to `PROBABILITY_DISPLAY_STEP` = 0.05 and clipped to [0.05, 0.95]; never a precise decimal, never 0% or 100% |
+| Playoff match, ad-hoc `match_context` = playoff, or no stated context | `not_validated` | **null** |
+
+- In the not-validated case the model output appears only as `unvalidated_red_win_probability`, with a `warning` that it must not be presented as a probability.
+- Every win-probability response carries `calibration_status` = `m7_gate_failed`.
+- No series, bracket or playoff-success probability is served anywhere.
+- Ranking responses carry `validation_status` = `moderate_held_out`; `predicted_rating` is a relative score, so only the ordering is meaningful.
+- Synergy responses carry `not_validated_against_outcomes`.
+
 **Error codes:**
 - `model_not_loaded`
+- `epa_source_not_loaded`
+- `epa_source_incomplete` — the D18 source lacks a valid row for a required prior event; it never silently uses an older one
 - `event_not_found`
 - `match_not_found`
 - `team_not_found`
 - `insufficient_features`
 
-Win-probability responses carry `calibration_status` = `uncalibrated`.
+### Verified
 
-**Known gaps before Phase 5:**
-- The ranking loader serves M5 **v1** (`RankingXGBModel`). It refuses to load the v2 model of record.
-- `Settings.epa_source` selects `stratai` or `statbotics` (plain D13). The D18 composite provider is not selectable there.
+`scripts/verify_d18_production.py` (record `.agent/production/d18_integration_check.json`) checks the real application against the D18 frame:
+- the served models and their hashes;
+- the EPA source and snapshot;
+- served features equal to the evaluated features match by match, including every 2026iscmp qualification match;
+- provenance labels;
+- playoff gating.
+
+`tests/test_d18_production_source.py` checks that the production D18 loader equals the evaluation's loader on the real snapshot.
+
+### Production limitations
+
+1. **The snapshot is fixed.** A live Statbotics sync changes `team_event_stats`, so the snapshot fingerprint no longer matches and the D18 source refuses to load (`epa_source_not_loaded`). A new snapshot must be taken with `scripts/sync_statbotics_snapshot.py` and configured explicitly.
+2. **It loads once.** The EPA source reads canonical facts on first use. Events completed after that are not candidates until the process restarts.
+3. **The STRATAI fallback covers 2026iscmp only.** A future event whose prior event Statbotics has not processed returns `epa_source_incomplete`.
+4. **Different decision points.** The ranking endpoint scores teams as of the request. The evaluated decision point was each team's mid-qualification snapshot.
+5. **Some "as of now" requests are refused, by design.**
+   - **The cause.** D18 refuses (`epa_source_incomplete`) when a team's latest prior event has no valid Statbotics row outside the 2026iscmp fallback scope.
+   - **Where it hits.** After the 2026 season, any event whose roster includes a team whose latest event was an unprocessed 2026 Israeli event. Example: `2026dal` ranking, because its Israeli teams last played `2026iscmp`.
+   - **Why the evaluation never hit it.** It always predicted at match time.
+   - **Behaviour.** This is the no-silent-fallback rule working; nothing is substituted. Widening the fallback scope would be a new pre-registered source decision.
+6. **Never run the test suite against a serving database.**
+   - **The risk.** Its database fixtures insert and delete sentinel rows in whatever `DATABASE_URL` names, including 2026-season matches (`tests/test_live_watch.py`).
+   - **What it does.** While a test runs, those rows can shift the causal season scale for served features.
+   - **Observed.** It happened once during verification: run 2 of `scripts/verify_d18_production.py`, run concurrently with the suite, saw one transient feature mismatch. That match is identical on a quiet database.
 
 ## 10. What to trust
 
@@ -187,6 +265,8 @@ python -m scripts.run_phase4_d18 m04|m05v2|m06|m07|m11 --frame <frame>          
 python .agent/phase4/results/d18/m07_diagnostics.py <frame> <snapshot> <out.json>
 python -m scripts.ml_bias_audit
 python -m scripts.phase4_done_means
+python -m scripts.register_d18_production_models --frame <frame> --registry <dir>  # once; refuses unless it reproduces D18
+python -m scripts.verify_d18_production --frame <frame>                            # production == evaluated D18
 ```
 
 ## 13. Extending
