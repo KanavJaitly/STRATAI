@@ -2,9 +2,9 @@ Phase: 4
 
 Current Milestone: M13 sign-off — evaluation complete under D18; done-means NOT MET (M7 FAILED); sign-off package prepared (2026-10-02)
 
-Status: BLOCKED ON HUMAN DECISION — every executable Phase 4 milestone has been evaluated. D18 (results/d18/): M04 PASS (frozen bar LL 0.6707 / Brier 0.1783 / Spearman 0.5955); M05 v2 gate PASSED 0.6112 (acceptance pending review); M06 PASS (0.5209 / 0.1749); M07 FAILED (G2 2/9; criterion kept — D18_M07_DIAGNOSTIC.md: qualification near-calibrated ECE 0.015, playoffs not, ECE 0.119, higher seed 77.3% vs 62.4%); M11 PASS (single frozen run vs M5 v2). M08 re-run vs v2 (fixture fixed, PASS); M10 real-model round trip exact. M12 gaps: ranking loader serves v1, D18 source not selectable. scripts/phase4_done_means.py: NOT MET. See M13_SIGNOFF_PACKAGE.md.
+Status: BLOCKED ON HUMAN DECISION — every executable Phase 4 milestone has been evaluated. D18 (results/d18/): M04 PASS (frozen bar LL 0.6707 / Brier 0.1783 / Spearman 0.5955); M05 v2 ACCEPTED 2026-10-02 (0.6112; M05_V2_D18_ACCEPTANCE.md); M06 PASS (0.5209 / 0.1749); M07 FAILED (G2 2/9; criterion kept — D18_M07_DIAGNOSTIC.md: qualification near-calibrated ECE 0.015, playoffs not, ECE 0.119, higher seed 77.3% vs 62.4%); M11 PASS (single frozen run vs M5 v2). M08 re-run vs v2 (fixture fixed, PASS); M10 real-model round trip exact. M12 gaps: ranking loader serves v1, D18 source not selectable. scripts/phase4_done_means.py: NOT MET. See M13_SIGNOFF_PACKAGE.md.
 
-Current Stage: Stopped — awaiting Kanav: M5 v2 acceptance; M7 path; Phase 5 scope; PR #28/#29.
+Current Stage: Phase 4 experimentation closed (M7 FAILED, done-means NOT MET); production aligned with D18; Phase 5 specification and live-EPA design awaiting Kanav's review. PR #28/#29 untouched.
 
 Completed (pre-Phase-Execution-Mode, recorded in RUNNING_NOTES.md only):
 - M01 ACCEPTED (2026-09-21)
@@ -293,6 +293,7 @@ Decision D16 -- Kanav, 2026-09-30 (M5/M7 methodology; frozen spec: M05_M07_REDES
 - D18 (Kanav, 2026-10-01; spec D18_SOURCE_SPEC.md frozen at ec1b0af): Statbotics is the primary EPA source; STRATAI fallback only for target event 2026iscmp, labelled per appearance (epa_value_source); availability A1 (record.qual.count = 0 -> season end) and A2 (week-1 statistics); no silent fallback; new controlled runs of M04-M07 with gates referenced to the D18 M4 baseline; D15 results kept; M11 evaluates the M5 model of record (v2).
 - D18 M7 criterion decision (2026-10-02, D18_M07_DIAGNOSTIC.md §5): the D16 M7 gate is appropriate for STRATAI's use and stays frozen; M07 remains FAILED; no replacement specification or run.
 - Production alignment (Kanav, 2026-10-02; .agent/production/D18_PRODUCTION_ALIGNMENT.md): Phase 4 experimentation closed; M7 stays FAILED. The API now serves only the D18 models of record (M5 v2; the M6 + symmetric-isotonic pair) pinned by type/tag/sha256, uses the D18 EPA source by default, returns model and EPA provenance, and serves win probability only for qualification scope (rounded); playoff/unstated contexts get no validated value. No Phase 4 record changed.
+- M5 v2 (D18) ACCEPTED (Kanav, 2026-10-02): M05_V2_D18_ACCEPTANCE.md. Phase 4 remains NOT complete (M7 FAILED).
 
 Decision D15 -- Kanav, 2026-09-30 (supersedes the Statbotics dependency only):
 - EPA provider = STRATAI's own EPA engine (ml/ratings, docs/ratings/). Path:
