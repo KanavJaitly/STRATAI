@@ -190,9 +190,10 @@ Every response carries `epa` (source, `evaluated_configuration`, snapshot proven
 
 | Scope | `validation_status` | `red_win_probability` |
 |---|---|---|
-| Qualification match (`competition_level` = qualification), or ad-hoc with `match_context` = qualification | `approximately_calibrated_qualification` | rounded to `PROBABILITY_DISPLAY_STEP` = 0.05 and clipped to [0.05, 0.95]; never a precise decimal, never 0% or 100% |
-| Playoff match, ad-hoc `match_context` = playoff, or no stated context | `not_validated` | **null** |
+| Qualification match (`competition_level` = qualification), or ad-hoc with `match_context` = qualification, **and every team has prior EPA** (M7's evaluated population, EPA-complete) | `approximately_calibrated_qualification` | rounded to `PROBABILITY_DISPLAY_STEP` = 0.05 and clipped to [0.05, 0.95]; never a precise decimal, never 0% or 100% |
+| Playoff match, ad-hoc `match_context` = playoff, no stated context, or any team without prior EPA | `not_validated`, with `not_validated_reason` = `playoff_scope` / `unspecified_context` / `epa_incomplete` | **null** |
 
+- **Corrected 2026-10-02:** the EPA-complete condition was missing from the first aligned version, which labelled EPA-incomplete qualification matches as calibrated although M7 never evaluated them (about 16% of held-out 2026 matches).
 - In the not-validated case the model output appears only as `unvalidated_red_win_probability`, with a `warning` that it must not be presented as a probability.
 - Every win-probability response carries `calibration_status` = `m7_gate_failed`.
 - No series, bracket or playoff-success probability is served anywhere.
@@ -240,7 +241,7 @@ Every response carries `epa` (source, `evaluated_configuration`, snapshot proven
 | Output | Trust | How to present it |
 |---|---|---|
 | Team ranking within an event (M5 v2) | Moderate: per-event Spearman median 0.61 (10th–90th percentile 0.46–0.78); only slightly better than raw EPA | An ordering with uncertainty. Do not present rank gaps of a few places as meaningful. |
-| Qualification win probability (M6 + M7) | Approximately calibrated (ECE 0.015, unbiased, bins within ±3 pts) | Rounded to about 5 pts, or as bands ("~65%"). Never as "63.4%". |
+| Qualification win probability (M6 + M7), EPA-complete matches | Approximately calibrated (ECE 0.015, unbiased, bins within ±3 pts); EPA-incomplete matches not evaluated | Rounded to about 5 pts, or as bands ("~65%"). Never as "63.4%". |
 | Expected qualification wins | Unbiased; about 1.1 wins mean absolute error per event (0.96 is irreducible) | As a range. |
 | Playoff win probability or series odds | **Not trustworthy.** Higher seed underestimated by about 15 pts per match | Do not present as a probability, and do not feed it to bracket simulation. |
 | Early-season (weeks 1–3) probabilities | Worse calibrated (ECE 0.046–0.068) | With a visible low-confidence label. |

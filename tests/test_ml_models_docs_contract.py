@@ -74,7 +74,8 @@ def test_documented_serving_contract_matches_the_code(docs_text):
 
     statuses = [predictions.CALIBRATION_STATUS_M7_FAILED, predictions.VALIDATION_NOT_VALIDATED,
                 predictions.VALIDATION_QUALIFICATION_APPROXIMATELY_CALIBRATED, predictions.RANKING_VALIDATION_STATUS,
-                predictions.SYNERGY_VALIDATION_STATUS]
+                predictions.SYNERGY_VALIDATION_STATUS, predictions.NOT_VALIDATED_PLAYOFF,
+                predictions.NOT_VALIDATED_UNSPECIFIED, predictions.NOT_VALIDATED_EPA_INCOMPLETE]
     assert all(f"`{status}`" in docs_text for status in statuses)
     match = re.search(r"`PROBABILITY_DISPLAY_STEP` = ([0-9.]+)", docs_text)
     assert match and float(match.group(1)) == predictions.PROBABILITY_DISPLAY_STEP

@@ -11,14 +11,17 @@ cannot support (docs/ml_models.md §10; .agent/phase4/D18_M07_DIAGNOSTIC.md):
   identity, with per-team EPA provenance (epa_value_source, source event).
 * Win probability. M7 FAILED: probabilities are not certified calibrated. In the
   D18 held-out season, qualification probabilities were approximately calibrated
-  (ECE 0.015, bins within +-3.2 pts); playoff probabilities were not (the higher
-  seed was underestimated by ~15 pts). So:
-    - qualification scope: ``red_win_probability`` is served, rounded to
+  (ECE 0.015, bins within +-3.2 pts) -- measured on EPA-complete matches only (all
+  six teams with prior EPA, M7's evaluation population); playoff probabilities were
+  not (the higher seed was underestimated by ~15 pts). So:
+    - qualification scope with every team EPA-present: ``red_win_probability`` is served, rounded to
       PROBABILITY_DISPLAY_STEP and clipped to [0.05, 0.95] -- never a precise
       decimal, never 0% or 100% -- with validation_status
       approximately_calibrated_qualification;
-    - playoff scope, or an ad-hoc pairing whose context the caller does not
-      state: ``red_win_probability`` is null; the model output is returned only
+    - playoff scope, an ad-hoc pairing whose context the caller does not state, or
+      any match with a team lacking prior EPA (outside the evaluated population;
+      corrected 2026-10-02): ``red_win_probability`` is null, with
+      ``not_validated_reason``; the model output is returned only
       as ``unvalidated_red_win_probability`` (same rounding) with
       validation_status not_validated and a warning. It must not be presented
       as a probability.
@@ -81,6 +84,9 @@ SCOPE_PLAYOFF = "playoff"
 SCOPE_UNSPECIFIED = "unspecified"
 VALIDATION_QUALIFICATION_APPROXIMATELY_CALIBRATED = "approximately_calibrated_qualification"
 VALIDATION_NOT_VALIDATED = "not_validated"
+NOT_VALIDATED_PLAYOFF = "playoff_scope"
+NOT_VALIDATED_UNSPECIFIED = "unspecified_context"
+NOT_VALIDATED_EPA_INCOMPLETE = "epa_incomplete"
 CALIBRATION_STATUS_M7_FAILED = "m7_gate_failed"
 RANKING_VALIDATION_STATUS = "moderate_held_out"
 SYNERGY_VALIDATION_STATUS = "not_validated_against_outcomes"
@@ -91,9 +97,9 @@ WIN_PROBABILITY_EVIDENCE = (
     "calibration gate FAILED overall. See docs/ml_models.md sections 7 and 10."
 )
 UNVALIDATED_WARNING = (
-    "Not a validated probability. Playoff (and unspecified-context) win probabilities were not calibrated in "
-    "Phase 4's held-out evaluation; do not present this value as a probability or use it for series, bracket "
-    "or playoff-success estimates."
+    "Not a validated probability. Phase 4 validated qualification probabilities only for matches where every "
+    "team has prior EPA; playoff, unspecified-context and EPA-incomplete probabilities were not validated. Do "
+    "not present this value as a probability or use it for series, bracket or playoff-success estimates."
 )
 RANKING_EVIDENCE = (
     "D18 held-out 2026: per-event Spearman vs final qualification rank median 0.61 (10th-90th pct 0.46-0.78), "
@@ -142,6 +148,8 @@ class WinProbabilityResponse(BaseModel):
     probability_scope: str = Field(description="qualification, playoff, or unspecified")
     competition_level: str | None = Field(default=None, description="matches.competition_level for a real match")
     validation_status: str
+    not_validated_reason: str | None = Field(
+        default=None, description="playoff_scope, unspecified_context or epa_incomplete; null when validated")
     red_win_probability: float | None = Field(
         default=None, ge=0.0, le=1.0,
         description="Served only for qualification scope, rounded to probability_rounding; null otherwise.")
@@ -326,7 +334,19 @@ def _win_probability_response(
         raise _insufficient_features_error()
 
     shown = display_probability(served.model.predict_win_prob(match_features))
-    validated = scope == SCOPE_QUALIFICATION
+    # M7's evaluated population: qualification matches whose two non-empty alliances all have
+    # prior EPA (scripts/run_m4_baseline_backtest._team_epa_complete). Anything else is outside it.
+    epa_complete = bool(match_features.red_teams) and bool(match_features.blue_teams) and all(
+        team.epa_total_present for team in all_teams)
+    if scope == SCOPE_PLAYOFF:
+        reason = NOT_VALIDATED_PLAYOFF
+    elif scope != SCOPE_QUALIFICATION:
+        reason = NOT_VALIDATED_UNSPECIFIED
+    elif not epa_complete:
+        reason = NOT_VALIDATED_EPA_INCOMPLETE
+    else:
+        reason = None
+    validated = reason is None
     identity = served.identity()
     return WinProbabilityResponse(
         match_key=match_key, event_key=event_key,
@@ -334,6 +354,7 @@ def _win_probability_response(
         blue_team_numbers=[team.team_number for team in match_features.blue_teams],
         as_of=as_of, probability_scope=scope, competition_level=competition_level,
         validation_status=VALIDATION_QUALIFICATION_APPROXIMATELY_CALIBRATED if validated else VALIDATION_NOT_VALIDATED,
+        not_validated_reason=reason,
         red_win_probability=shown if validated else None,
         unvalidated_red_win_probability=None if validated else shown,
         probability_rounding=PROBABILITY_DISPLAY_STEP, calibration_status=CALIBRATION_STATUS_M7_FAILED,
