@@ -292,6 +292,7 @@ Decision D16 -- Kanav, 2026-09-30 (M5/M7 methodology; frozen spec: M05_M07_REDES
 - D17 (2026-10-01): Statbotics recovered; provenanced snapshot (608 events, 24,022 rows); D8 INVALID at 2026iscmp; stopped (D17_STATBOTICS_ESCALATION.md).
 - D18 (Kanav, 2026-10-01; spec D18_SOURCE_SPEC.md frozen at ec1b0af): Statbotics is the primary EPA source; STRATAI fallback only for target event 2026iscmp, labelled per appearance (epa_value_source); availability A1 (record.qual.count = 0 -> season end) and A2 (week-1 statistics); no silent fallback; new controlled runs of M04-M07 with gates referenced to the D18 M4 baseline; D15 results kept; M11 evaluates the M5 model of record (v2).
 - D18 M7 criterion decision (2026-10-02, D18_M07_DIAGNOSTIC.md §5): the D16 M7 gate is appropriate for STRATAI's use and stays frozen; M07 remains FAILED; no replacement specification or run.
+- Production alignment (Kanav, 2026-10-02; .agent/production/D18_PRODUCTION_ALIGNMENT.md): Phase 4 experimentation closed; M7 stays FAILED. The API now serves only the D18 models of record (M5 v2; the M6 + symmetric-isotonic pair) pinned by type/tag/sha256, uses the D18 EPA source by default, returns model and EPA provenance, and serves win probability only for qualification scope (rounded); playoff/unstated contexts get no validated value. No Phase 4 record changed.
 
 Decision D15 -- Kanav, 2026-09-30 (supersedes the Statbotics dependency only):
 - EPA provider = STRATAI's own EPA engine (ml/ratings, docs/ratings/). Path:

@@ -68,7 +68,7 @@ def test_lookups_are_identical_including_every_fallback_appearance(providers):
         cursor.execute(APPEARANCES_SQL, {"seasons": [2024, 2025, 2026]})
         appearances = cursor.fetchall()
     sample = random.Random(20261002).sample(appearances, 5000)
-    sample += [a for a in appearances if a[2] == "2026iscmp"]
-    for _, team, target, as_of in sample:
+    fallback_appearances = [a for a in appearances if a[2] == "2026iscmp"]
+    assert len(fallback_appearances) == 450  # D18's recorded fallback scope
+    for _, team, target, as_of in sample + fallback_appearances:
         assert production.point_in_time_epa(team, target, as_of) == evaluated.point_in_time_epa(team, target, as_of)
-    assert sum(a[2] == "2026iscmp" for a in sample) == 450
