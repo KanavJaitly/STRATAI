@@ -5,7 +5,7 @@
 A manually curated set of FRC robot-design observations, supplied by Kanav on 2026-10-02. It was transcribed verbatim from the attached CSV "FRC Game Archtype Data - Take this date and put it into a spreadsheet, but....csv".
 
 - **sha256:** `40aef13982eba6589136806150d9f1e5f92ce49bea588e1ee561ca44c77139e1`
-- **Size:** 77 rows; 6 columns: `Year`, `Team`, `Game Name`, `Robot Micro-Archetype`, `Technical Specifications`, `Key Characteristic & Competitive Advantage`. The request described 78 observations; the file has 77.
+- **Size:** 77 rows; 6 columns: `Year`, `Team`, `Game Name`, `Robot Micro-Archetype`, `Technical Specifications`, `Key Characteristic & Competitive Advantage`. The request described 78 observations; the file has 77. **Decision (Kanav, 2026-10-02): the attached CSV, 77 rows, is authoritative for this checkpoint.** No row was reconstructed; the 78 → 77 discrepancy is documented, not resolved.
 
 **Status: curated design metadata, unverified.**
 - The technical and "competitive advantage" text is not sourced, and its numeric claims (e.g. "85% volume", "100ms", "18 ft/s") are unverified.

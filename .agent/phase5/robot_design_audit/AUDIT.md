@@ -11,7 +11,7 @@
 
 | Item | Finding |
 |---|---|
-| Rows / columns | **77** rows (the request stated 78; one is missing or the count was off) / 6 columns |
+| Rows / columns | **77** rows / 6 columns. The request stated 78. **Kanav (2026-10-02): the attached 77-row CSV is authoritative; no row is reconstructed.** The discrepancy stays documented |
 | Columns | `Year`, `Team`, `Game Name`, `Robot Micro-Archetype`, `Technical Specifications`, `Key Characteristic & Competitive Advantage` |
 | Completeness | every field populated; 0 exact duplicates; no repeated (year, team) |
 | Seasons | 18 games, 1996–2026. Years and game names all agree. 2026–2022: 10 rows each; 2019: 5; 2018 and 2017: 4 each; then 2, 2, 2, 1, 1, 1, 1, 2, 1, 1. Absent: 1992–95, 1997–2001, 2003–07, 2009, 2020–21 |
