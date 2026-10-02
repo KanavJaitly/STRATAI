@@ -1,0 +1,1438 @@
+{
+ "csv": {
+  "path": "data\\reference\\frc_robot_design_curated.csv",
+  "sha256": "40aef13982eba6589136806150d9f1e5f92ce49bea588e1ee561ca44c77139e1",
+  "rows": 77,
+  "columns": [
+   "Year",
+   "Team",
+   "Game Name",
+   "Robot Micro-Archetype",
+   "Technical Specifications",
+   "Key Characteristic & Competitive Advantage"
+  ],
+  "stated_rows_in_request": 78
+ },
+ "structure": {
+  "rows_by_year": {
+   "1996": 1,
+   "2002": 1,
+   "2008": 2,
+   "2010": 1,
+   "2011": 1,
+   "2012": 1,
+   "2013": 1,
+   "2014": 2,
+   "2015": 2,
+   "2016": 2,
+   "2017": 4,
+   "2018": 4,
+   "2019": 5,
+   "2022": 10,
+   "2023": 10,
+   "2024": 10,
+   "2025": 10,
+   "2026": 10
+  },
+  "distinct_teams": 25,
+  "team_repeats": {
+   "254": 12,
+   "1323": 7,
+   "1678": 6,
+   "118": 6,
+   "4414": 4,
+   "2910": 4,
+   "2056": 4,
+   "1114": 4,
+   "148": 4,
+   "1690": 3,
+   "971": 3,
+   "6045": 3,
+   "179": 2,
+   "2767": 2,
+   "973": 2,
+   "71": 2
+  },
+  "distinct_micro_archetypes": 76,
+  "seasons_absent": [
+   1992,
+   1993,
+   1994,
+   1995,
+   1997,
+   1998,
+   1999,
+   2000,
+   2001,
+   2003,
+   2004,
+   2005,
+   2006,
+   2007,
+   2009,
+   2020,
+   2021
+  ]
+ },
+ "joinability": {
+  "rows_in_stratai_seasons": 30,
+  "rows_joined": 30,
+  "rows_outside_stratai_seasons": 47
+ },
+ "selection": {
+  "season_max_epa_percentile": {
+   "min": 79.6,
+   "median": 99.7,
+   "max": 100.0,
+   "n": 30
+  },
+  "rows_with_best_qual_rank_1": 22,
+  "rows_captain_at_least_once": 29
+ },
+ "draft_taxonomy": {
+  "function_counts": {
+   "scoring_placer": 31,
+   "scoring_launcher": 25,
+   "indexing_storage": 7,
+   "acquisition": 6,
+   "drivetrain_defense": 5,
+   "endgame_climb": 3
+  },
+  "family_counts": {
+   "elevator_other": 10,
+   "flywheel_turret": 9,
+   "flywheel_fixed": 8,
+   "effector_roller": 7,
+   "flywheel_adjustable_hood": 6,
+   "storage_passive": 5,
+   "elevator_continuous": 5,
+   "arm_four_bar": 4,
+   "arm_telescoping": 4,
+   "arm_single_pivot": 4,
+   "elastic_launcher": 4,
+   "catapult_pneumatic": 3,
+   "elevator_cascade": 3,
+   "arm_multi_joint": 3,
+   "effector_pneumatic_jaw": 1,
+   "drivetrain": 1
+  },
+  "largest_function_x_game_cell": 7
+ },
+ "attributes": {
+  "coverage": {
+   "actuation_pneumatic": 15,
+   "has_turret": 8,
+   "actuation_elastic_or_spring": 7,
+   "material_steel": 7,
+   "material_carbon_fiber": 5,
+   "has_sensors": 5,
+   "actuation_passive_gravity": 4,
+   "has_vision_or_localization": 4,
+   "drivetrain_swerve": 3,
+   "drivetrain_tank_or_tracks": 3,
+   "material_polycarbonate": 2
+  },
+  "rows_with_no_attribute": 32
+ },
+ "claims": {
+  "rows_with_unsourced_numeric_claims": 23
+ },
+ "observations": [
+  {
+   "row": 1,
+   "year": 2026,
+   "team": 4414,
+   "game": "REBUILT",
+   "micro_archetype": "Central Turret Vector Shooter",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_turret",
+   "attributes": [
+    "actuation_passive_gravity",
+    "has_turret"
+   ],
+   "unsourced_numeric_claims": [
+    "360\u00b0"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 5,
+   "season_max_epa": 376.64,
+   "season_max_epa_percentile": 100.0,
+   "best_qual_rank": 1,
+   "captain_events": 5,
+   "picked_events": 0
+  },
+  {
+   "row": 2,
+   "year": 2026,
+   "team": 1323,
+   "game": "REBUILT",
+   "micro_archetype": "Symmetrical Bi-Directional Fixed Hood",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_adjustable_hood",
+   "attributes": [
+    "has_turret"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 5,
+   "season_max_epa": 329.65,
+   "season_max_epa_percentile": 99.8,
+   "best_qual_rank": 1,
+   "captain_events": 2,
+   "picked_events": 3
+  },
+  {
+   "row": 3,
+   "year": 2026,
+   "team": 254,
+   "game": "REBUILT",
+   "micro_archetype": "Pre-Compressed Accelerator Tower",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_fixed",
+   "attributes": [],
+   "unsourced_numeric_claims": [
+    "1x",
+    "85%"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 5,
+   "season_max_epa": 343.41,
+   "season_max_epa_percentile": 99.9,
+   "best_qual_rank": 1,
+   "captain_events": 2,
+   "picked_events": 3
+  },
+  {
+   "row": 4,
+   "year": 2026,
+   "team": 4065,
+   "game": "REBUILT",
+   "micro_archetype": "Perimeter-Wide Gravity Dump Hopper",
+   "draft_function": "indexing_storage",
+   "draft_family": "storage_passive",
+   "attributes": [
+    "material_carbon_fiber",
+    "material_polycarbonate"
+   ],
+   "unsourced_numeric_claims": [
+    "10 balls/sec"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 5,
+   "season_max_epa": 147.96,
+   "season_max_epa_percentile": 92.2,
+   "best_qual_rank": 3,
+   "captain_events": 1,
+   "picked_events": 4
+  },
+  {
+   "row": 5,
+   "year": 2026,
+   "team": 1678,
+   "game": "REBUILT",
+   "micro_archetype": "Serpentine Indexer / Single-Pivot Launcher",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_fixed",
+   "attributes": [
+    "has_sensors"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 5,
+   "season_max_epa": 358.75,
+   "season_max_epa_percentile": 99.9,
+   "best_qual_rank": 1,
+   "captain_events": 4,
+   "picked_events": 1
+  },
+  {
+   "row": 6,
+   "year": 2026,
+   "team": 2910,
+   "game": "REBUILT",
+   "micro_archetype": "Under-Bumper Continuous Roller Sweeper",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_fixed",
+   "attributes": [
+    "actuation_elastic_or_spring"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 5,
+   "season_max_epa": 303.84,
+   "season_max_epa_percentile": 99.7,
+   "best_qual_rank": 1,
+   "captain_events": 2,
+   "picked_events": 3
+  },
+  {
+   "row": 7,
+   "year": 2026,
+   "team": 2056,
+   "game": "REBUILT",
+   "micro_archetype": "High-Pressure Pneumatic Punch Catapult",
+   "draft_function": "scoring_launcher",
+   "draft_family": "catapult_pneumatic",
+   "attributes": [
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 6,
+   "season_max_epa": 319.41,
+   "season_max_epa_percentile": 99.8,
+   "best_qual_rank": 1,
+   "captain_events": 3,
+   "picked_events": 3
+  },
+  {
+   "row": 8,
+   "year": 2026,
+   "team": 1690,
+   "game": "REBUILT",
+   "micro_archetype": "Low-Profile Tilting Pitch-Adjust Shooter",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_adjustable_hood",
+   "attributes": [
+    "has_vision_or_localization"
+   ],
+   "unsourced_numeric_claims": [
+    "12\"",
+    "15\u00b0",
+    "75\u00b0",
+    "100ms"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 4,
+   "season_max_epa": 309.29,
+   "season_max_epa_percentile": 99.7,
+   "best_qual_rank": 1,
+   "captain_events": 2,
+   "picked_events": 2
+  },
+  {
+   "row": 9,
+   "year": 2026,
+   "team": 581,
+   "game": "REBUILT",
+   "micro_archetype": "Bi-Directional Over-Bumper Collector Hopper",
+   "draft_function": "acquisition",
+   "draft_family": "effector_roller",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 4,
+   "season_max_epa": 251.27,
+   "season_max_epa_percentile": 99.1,
+   "best_qual_rank": 2,
+   "captain_events": 1,
+   "picked_events": 3
+  },
+  {
+   "row": 10,
+   "year": 2026,
+   "team": 118,
+   "game": "REBUILT",
+   "micro_archetype": "Monolithic Sky-Hook Launcher Matrix",
+   "draft_function": "endgame_climb",
+   "draft_family": "flywheel_fixed",
+   "attributes": [
+    "actuation_pneumatic",
+    "material_carbon_fiber"
+   ],
+   "unsourced_numeric_claims": [
+    "12 lbs"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 9,
+   "season_max_epa": 199.0,
+   "season_max_epa_percentile": 97.4,
+   "best_qual_rank": 1,
+   "captain_events": 6,
+   "picked_events": 3
+  },
+  {
+   "row": 11,
+   "year": 2025,
+   "team": 2910,
+   "game": "REEFSCAPE",
+   "micro_archetype": "Multi-Tiered Lift / Single-Axis Wrist",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_continuous",
+   "attributes": [
+    "has_sensors"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 5,
+   "season_max_epa": 116.73,
+   "season_max_epa_percentile": 99.9,
+   "best_qual_rank": 1,
+   "captain_events": 3,
+   "picked_events": 2
+  },
+  {
+   "row": 12,
+   "year": 2025,
+   "team": 1690,
+   "game": "REEFSCAPE",
+   "micro_archetype": "Virtual Four-Bar Parallel Linkage Arm",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_four_bar",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 5,
+   "season_max_epa": 107.72,
+   "season_max_epa_percentile": 99.9,
+   "best_qual_rank": 1,
+   "captain_events": 4,
+   "picked_events": 1
+  },
+  {
+   "row": 13,
+   "year": 2025,
+   "team": 254,
+   "game": "REEFSCAPE",
+   "micro_archetype": "Concentric Dual-Carriage Stacking Lift",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_other",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 3,
+   "season_max_epa": 92.77,
+   "season_max_epa_percentile": 99.5,
+   "best_qual_rank": 1,
+   "captain_events": 1,
+   "picked_events": 2
+  },
+  {
+   "row": 14,
+   "year": 2025,
+   "team": 4414,
+   "game": "REEFSCAPE",
+   "micro_archetype": "Pass-Through Open-Chassis Coral Shuttle",
+   "draft_function": "indexing_storage",
+   "draft_family": "storage_passive",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 5,
+   "season_max_epa": 94.24,
+   "season_max_epa_percentile": 99.6,
+   "best_qual_rank": 1,
+   "captain_events": 1,
+   "picked_events": 4
+  },
+  {
+   "row": 15,
+   "year": 2025,
+   "team": 1678,
+   "game": "REEFSCAPE",
+   "micro_archetype": "Pneumatic Dual-Jaw Rigid Clamping Grabber",
+   "draft_function": "acquisition",
+   "draft_family": "effector_pneumatic_jaw",
+   "attributes": [
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [
+    "1.5\"",
+    "100%"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 4,
+   "season_max_epa": 105.74,
+   "season_max_epa_percentile": 99.8,
+   "best_qual_rank": 1,
+   "captain_events": 4,
+   "picked_events": 0
+  },
+  {
+   "row": 16,
+   "year": 2025,
+   "team": 1323,
+   "game": "REEFSCAPE",
+   "micro_archetype": "Turreted Telescoping Boom Extender",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_turret",
+   "attributes": [
+    "has_turret",
+    "material_carbon_fiber"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 4,
+   "season_max_epa": 118.81,
+   "season_max_epa_percentile": 99.9,
+   "best_qual_rank": 1,
+   "captain_events": 3,
+   "picked_events": 1
+  },
+  {
+   "row": 17,
+   "year": 2025,
+   "team": 2056,
+   "game": "REEFSCAPE",
+   "micro_archetype": "Industrial Steel Slide Cascading Mast",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_cascade",
+   "attributes": [
+    "material_steel"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 6,
+   "season_max_epa": 120.05,
+   "season_max_epa_percentile": 100.0,
+   "best_qual_rank": 1,
+   "captain_events": 4,
+   "picked_events": 2
+  },
+  {
+   "row": 18,
+   "year": 2025,
+   "team": 971,
+   "game": "REEFSCAPE",
+   "micro_archetype": "Double-Jointed Carbon Arm with Vision Network",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_multi_joint",
+   "attributes": [
+    "has_sensors",
+    "has_vision_or_localization"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 3,
+   "season_max_epa": 77.75,
+   "season_max_epa_percentile": 97.5,
+   "best_qual_rank": 7,
+   "captain_events": 1,
+   "picked_events": 2
+  },
+  {
+   "row": 19,
+   "year": 2025,
+   "team": 1114,
+   "game": "REEFSCAPE",
+   "micro_archetype": "Passive Inclined Gravity-Slide Dropper",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_telescoping",
+   "attributes": [
+    "actuation_passive_gravity"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 4,
+   "season_max_epa": 82.72,
+   "season_max_epa_percentile": 98.6,
+   "best_qual_rank": 4,
+   "captain_events": 2,
+   "picked_events": 2
+  },
+  {
+   "row": 20,
+   "year": 2025,
+   "team": 5990,
+   "game": "REEFSCAPE",
+   "micro_archetype": "Inverted Lower-Chassis Algae Harvester",
+   "draft_function": "acquisition",
+   "draft_family": "effector_roller",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 4,
+   "season_max_epa": 87.23,
+   "season_max_epa_percentile": 99.2,
+   "best_qual_rank": 2,
+   "captain_events": 1,
+   "picked_events": 2
+  },
+  {
+   "row": 21,
+   "year": 2024,
+   "team": 1690,
+   "game": "CRESCENDO",
+   "micro_archetype": "Under-Bumper Flush Intake / Low Pivot",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_fixed",
+   "attributes": [
+    "actuation_passive_gravity"
+   ],
+   "unsourced_numeric_claims": [
+    "18 ft/s"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 5,
+   "season_max_epa": 54.39,
+   "season_max_epa_percentile": 99.8,
+   "best_qual_rank": 1,
+   "captain_events": 5,
+   "picked_events": 0
+  },
+  {
+   "row": 22,
+   "year": 2024,
+   "team": 254,
+   "game": "CRESCENDO",
+   "micro_archetype": "Over-and-Under Hand-Off Jaw / Swivel Hood",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_adjustable_hood",
+   "attributes": [],
+   "unsourced_numeric_claims": [
+    "80ms"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 4,
+   "season_max_epa": 58.73,
+   "season_max_epa_percentile": 99.9,
+   "best_qual_rank": 1,
+   "captain_events": 3,
+   "picked_events": 1
+  },
+  {
+   "row": 23,
+   "year": 2024,
+   "team": 1323,
+   "game": "CRESCENDO",
+   "micro_archetype": "Large-Bore Hollow-Axis Turret Launcher",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_turret",
+   "attributes": [
+    "has_turret"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 4,
+   "season_max_epa": 59.12,
+   "season_max_epa_percentile": 99.9,
+   "best_qual_rank": 1,
+   "captain_events": 2,
+   "picked_events": 2
+  },
+  {
+   "row": 24,
+   "year": 2024,
+   "team": 2910,
+   "game": "CRESCENDO",
+   "micro_archetype": "Single-Jointed Amp \"Slam-Dunk\" Arm",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_single_pivot",
+   "attributes": [],
+   "unsourced_numeric_claims": [
+    "180-degree"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 4,
+   "season_max_epa": 50.25,
+   "season_max_epa_percentile": 99.6,
+   "best_qual_rank": 1,
+   "captain_events": 1,
+   "picked_events": 3
+  },
+  {
+   "row": 25,
+   "year": 2024,
+   "team": 3255,
+   "game": "CRESCENDO",
+   "micro_archetype": "Linear Elevating Shooter Carriage",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_adjustable_hood",
+   "attributes": [],
+   "unsourced_numeric_claims": [
+    "2-foot"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 2,
+   "season_max_epa": 26.94,
+   "season_max_epa_percentile": 85.3,
+   "best_qual_rank": 2,
+   "captain_events": 1,
+   "picked_events": 1
+  },
+  {
+   "row": 26,
+   "year": 2024,
+   "team": 118,
+   "game": "CRESCENDO",
+   "micro_archetype": "Split-Roller Variable Differential Launcher",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_adjustable_hood",
+   "attributes": [],
+   "unsourced_numeric_claims": [
+    "15%"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 8,
+   "season_max_epa": 41.24,
+   "season_max_epa_percentile": 97.7,
+   "best_qual_rank": 1,
+   "captain_events": 4,
+   "picked_events": 4
+  },
+  {
+   "row": 27,
+   "year": 2024,
+   "team": 4414,
+   "game": "CRESCENDO",
+   "micro_archetype": "Rigid Coaxial Frame-Fixed Flywheel Array",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_fixed",
+   "attributes": [
+    "drivetrain_swerve",
+    "has_vision_or_localization"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 4,
+   "season_max_epa": 49.54,
+   "season_max_epa_percentile": 99.5,
+   "best_qual_rank": 1,
+   "captain_events": 2,
+   "picked_events": 2
+  },
+  {
+   "row": 28,
+   "year": 2024,
+   "team": 179,
+   "game": "CRESCENDO",
+   "micro_archetype": "Vertical Side-Pocket Indexing Channel",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_other",
+   "attributes": [
+    "material_carbon_fiber",
+    "material_polycarbonate"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 3,
+   "season_max_epa": 34.97,
+   "season_max_epa_percentile": 94.3,
+   "best_qual_rank": 1,
+   "captain_events": 1,
+   "picked_events": 2
+  },
+  {
+   "row": 29,
+   "year": 2024,
+   "team": 6045,
+   "game": "CRESCENDO",
+   "micro_archetype": "Passive-Handoff Upward Launch Basket",
+   "draft_function": "indexing_storage",
+   "draft_family": "effector_roller",
+   "attributes": [],
+   "unsourced_numeric_claims": [
+    "45\u00b0"
+   ],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 3,
+   "season_max_epa": 24.2,
+   "season_max_epa_percentile": 79.6,
+   "best_qual_rank": 19,
+   "captain_events": 0,
+   "picked_events": 2
+  },
+  {
+   "row": 30,
+   "year": 2024,
+   "team": 971,
+   "game": "CRESCENDO",
+   "micro_archetype": "Multi-Axis Trajectory-Tracking Wrist",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_multi_joint",
+   "attributes": [
+    "has_sensors"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": true,
+   "joined": true,
+   "events": 3,
+   "season_max_epa": 32.69,
+   "season_max_epa_percentile": 92.1,
+   "best_qual_rank": 5,
+   "captain_events": 3,
+   "picked_events": 0
+  },
+  {
+   "row": 31,
+   "year": 2023,
+   "team": 1323,
+   "game": "CHARGED UP",
+   "micro_archetype": "Telescoping Carbon Boom on Swerve Module",
+   "draft_function": "drivetrain_defense",
+   "draft_family": "arm_telescoping",
+   "attributes": [
+    "material_carbon_fiber"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 32,
+   "year": 2023,
+   "team": 4414,
+   "game": "CHARGED UP",
+   "micro_archetype": "Virtual Four-Bar Parallel Linkage Arm",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_four_bar",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 33,
+   "year": 2023,
+   "team": 254,
+   "game": "CHARGED UP",
+   "micro_archetype": "Vertical Mast Lift with Horizontal Probe",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_other",
+   "attributes": [
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 34,
+   "year": 2023,
+   "team": 2056,
+   "game": "CHARGED UP",
+   "micro_archetype": "Static 45-Degree Inclined Telescoping Rail",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_telescoping",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 35,
+   "year": 2023,
+   "team": 1678,
+   "game": "CHARGED UP",
+   "micro_archetype": "Turreted Cascading Mast Elevator",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_turret",
+   "attributes": [
+    "has_turret"
+   ],
+   "unsourced_numeric_claims": [
+    "5-foot",
+    "360-degree"
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 36,
+   "year": 2023,
+   "team": 2910,
+   "game": "CHARGED UP",
+   "micro_archetype": "Single-Pivot Arm / Compliant Wheel Grabber",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_single_pivot",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 37,
+   "year": 2023,
+   "team": 118,
+   "game": "CHARGED UP",
+   "micro_archetype": "Under-Chassis Internal Cone Up-Righter",
+   "draft_function": "acquisition",
+   "draft_family": "effector_roller",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 38,
+   "year": 2023,
+   "team": 5406,
+   "game": "CHARGED UP",
+   "micro_archetype": "Gas-Spring Counterweighted Single-Pivot Arm",
+   "draft_function": "scoring_placer",
+   "draft_family": "elastic_launcher",
+   "attributes": [
+    "actuation_elastic_or_spring"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 39,
+   "year": 2023,
+   "team": 6045,
+   "game": "CHARGED UP",
+   "micro_archetype": "Telescoping Slide with Pneumatic Flip-Wrist",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_telescoping",
+   "attributes": [
+    "has_sensors"
+   ],
+   "unsourced_numeric_claims": [
+    "180\u00b0",
+    "180\u00b0"
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 40,
+   "year": 2023,
+   "team": 2767,
+   "game": "CHARGED UP",
+   "micro_archetype": "Venturi Vacuum Suction Cup Matrix Arm",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_single_pivot",
+   "attributes": [
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 41,
+   "year": 2022,
+   "team": 254,
+   "game": "RAPID REACT",
+   "micro_archetype": "Differential Dual-Motor Flywheel Turret",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_turret",
+   "attributes": [],
+   "unsourced_numeric_claims": [
+    "360\u00b0"
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 42,
+   "year": 2022,
+   "team": 1619,
+   "game": "RAPID REACT",
+   "micro_archetype": "Full-Width Wide-Mouth Static Shooter",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_turret",
+   "attributes": [
+    "drivetrain_swerve",
+    "has_turret"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 43,
+   "year": 2022,
+   "team": 1323,
+   "game": "RAPID REACT",
+   "micro_archetype": "Dual-Stage Vertical Twin Flywheel Turret",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_turret",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 44,
+   "year": 2022,
+   "team": 179,
+   "game": "RAPID REACT",
+   "micro_archetype": "Overlapping Polycord Linear Lift Indexer",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_other",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 45,
+   "year": 2022,
+   "team": 6045,
+   "game": "RAPID REACT",
+   "micro_archetype": "Deployable Active-Roller Intake Extension Wings",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_continuous",
+   "attributes": [
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [
+    "8 inch"
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 46,
+   "year": 2022,
+   "team": 1678,
+   "game": "RAPID REACT",
+   "micro_archetype": "Concentric Horizontal Internal Spindexer Plate",
+   "draft_function": "indexing_storage",
+   "draft_family": "storage_passive",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 47,
+   "year": 2022,
+   "team": 2056,
+   "game": "RAPID REACT",
+   "micro_archetype": "High-Mass Heavy Solid-Steel Flywheel Array",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_fixed",
+   "attributes": [
+    "material_steel"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 48,
+   "year": 2022,
+   "team": 3310,
+   "game": "RAPID REACT",
+   "micro_archetype": "High-Angle Vertical Chimney Catapult",
+   "draft_function": "scoring_launcher",
+   "draft_family": "catapult_pneumatic",
+   "attributes": [
+    "actuation_elastic_or_spring",
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 49,
+   "year": 2022,
+   "team": 973,
+   "game": "RAPID REACT",
+   "micro_archetype": "Internal Helical Sheet-Polycarbonate Auger",
+   "draft_function": "indexing_storage",
+   "draft_family": "storage_passive",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 50,
+   "year": 2022,
+   "team": 118,
+   "game": "RAPID REACT",
+   "micro_archetype": "Segmented Flexible Sheet-Steel Spring Hood",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_adjustable_hood",
+   "attributes": [
+    "actuation_elastic_or_spring",
+    "actuation_pneumatic",
+    "material_steel"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 51,
+   "year": 2019,
+   "team": 1323,
+   "game": "DEEP SPACE",
+   "micro_archetype": "Turreted Cascading Elevator / Pass-Through Jaw",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_turret",
+   "attributes": [
+    "has_turret"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 52,
+   "year": 2019,
+   "team": 254,
+   "game": "DEEP SPACE",
+   "micro_archetype": "Parallel Linkage Arm with Active Suction Cups",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_four_bar",
+   "attributes": [
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 53,
+   "year": 2019,
+   "team": 973,
+   "game": "DEEP SPACE",
+   "micro_archetype": "Minimalist Single-Stage Elevator with Beak Clasp",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_other",
+   "attributes": [
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 54,
+   "year": 2019,
+   "team": 148,
+   "game": "DEEP SPACE",
+   "micro_archetype": "Dual-Clutch Single-Motor Lifting Winch",
+   "draft_function": "endgame_climb",
+   "draft_family": "elevator_other",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 55,
+   "year": 2019,
+   "team": 118,
+   "game": "DEEP SPACE",
+   "micro_archetype": "Overhead Sweeping Parallel Linkage Carrier",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_four_bar",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 56,
+   "year": 2018,
+   "team": 254,
+   "game": "POWER UP",
+   "micro_archetype": "Cable-Rigged Continuous Cascading Elevator",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_cascade",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 57,
+   "year": 2018,
+   "team": 148,
+   "game": "POWER UP",
+   "micro_archetype": "Double-Box Cascade / Side-Shifting Claw Tray",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_cascade",
+   "attributes": [
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [
+    "4 inch"
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 58,
+   "year": 2018,
+   "team": 1678,
+   "game": "POWER UP",
+   "micro_archetype": "Continuous Elevator / Top-Down Roller Flap",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_continuous",
+   "attributes": [
+    "material_steel"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 59,
+   "year": 2018,
+   "team": 1323,
+   "game": "POWER UP",
+   "micro_archetype": "Broad-Stance Dual-Mast Elevator Assembly",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_other",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 60,
+   "year": 2017,
+   "team": 2767,
+   "game": "STEAMWORKS",
+   "micro_archetype": "Coaxial Swerve Module / Custom Boiler Hopper",
+   "draft_function": "drivetrain_defense",
+   "draft_family": "storage_passive",
+   "attributes": [
+    "drivetrain_swerve",
+    "drivetrain_tank_or_tracks"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 61,
+   "year": 2017,
+   "team": 254,
+   "game": "STEAMWORKS",
+   "micro_archetype": "Passive Spring-Steel Side-Loading Gear Pocket",
+   "draft_function": "indexing_storage",
+   "draft_family": "elastic_launcher",
+   "attributes": [
+    "actuation_elastic_or_spring",
+    "material_steel"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 62,
+   "year": 2017,
+   "team": 1678,
+   "game": "STEAMWORKS",
+   "micro_archetype": "Active Floor Gear Sweeper / Orientation Flip",
+   "draft_function": "acquisition",
+   "draft_family": "effector_roller",
+   "attributes": [
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [
+    "0.5 seconds"
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 63,
+   "year": 2017,
+   "team": 118,
+   "game": "STEAMWORKS",
+   "micro_archetype": "Central Archimedes Screw Fuel Elevator",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_other",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 64,
+   "year": 2016,
+   "team": 330,
+   "game": "STRONGHOLD",
+   "micro_archetype": "Monolithic Box-Tube Single-Jointed Pivot Arm",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_single_pivot",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 65,
+   "year": 2016,
+   "team": 971,
+   "game": "STRONGHOLD",
+   "micro_archetype": "Counter-Rotating Concentric Dual-Joint Arm",
+   "draft_function": "scoring_placer",
+   "draft_family": "arm_multi_joint",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 66,
+   "year": 2015,
+   "team": 1114,
+   "game": "RECYCLE RUSH",
+   "micro_archetype": "Bottom-Up Stack-Building Dual Elevator",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_other",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 67,
+   "year": 2015,
+   "team": 148,
+   "game": "RECYCLE RUSH",
+   "micro_archetype": "Symmetrical Tape-Measure \"Can Burglar\"",
+   "draft_function": "acquisition",
+   "draft_family": "elastic_launcher",
+   "attributes": [
+    "actuation_elastic_or_spring",
+    "material_steel"
+   ],
+   "unsourced_numeric_claims": [
+    "15-foot",
+    "200 milliseconds"
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 68,
+   "year": 2014,
+   "team": 254,
+   "game": "AERIAL ASSIST",
+   "micro_archetype": "Dual-Piston Under-Bumper Pneumatic Catapult",
+   "draft_function": "scoring_launcher",
+   "draft_family": "catapult_pneumatic",
+   "attributes": [
+    "actuation_pneumatic"
+   ],
+   "unsourced_numeric_claims": [
+    "2\""
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 69,
+   "year": 2014,
+   "team": 1114,
+   "game": "AERIAL ASSIST",
+   "micro_archetype": "Surgical Tubing Winch-Released Slingshot",
+   "draft_function": "endgame_climb",
+   "draft_family": "elastic_launcher",
+   "attributes": [
+    "actuation_elastic_or_spring"
+   ],
+   "unsourced_numeric_claims": [
+    "30x"
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 70,
+   "year": 2013,
+   "team": 254,
+   "game": "ULTIMATE ASCENT",
+   "micro_archetype": "Horizontal Single-Wheel Friction Flywheel",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_fixed",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 71,
+   "year": 2012,
+   "team": 254,
+   "game": "REBOUND RUMBLE",
+   "micro_archetype": "Vision-Tracked Adjustable-Hood Turret",
+   "draft_function": "scoring_launcher",
+   "draft_family": "flywheel_turret",
+   "attributes": [
+    "actuation_pneumatic",
+    "has_turret",
+    "has_vision_or_localization"
+   ],
+   "unsourced_numeric_claims": [
+    "360\u00b0"
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 72,
+   "year": 2011,
+   "team": 254,
+   "game": "LOGO MOTION",
+   "micro_archetype": "Continuous Lift Mast / Motorized Wrist Joint",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_continuous",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 73,
+   "year": 2010,
+   "team": 469,
+   "game": "BREAKAWAY",
+   "micro_archetype": "Continuous Overhead Open Diverter Funnel",
+   "draft_function": "indexing_storage",
+   "draft_family": "elevator_continuous",
+   "attributes": [
+    "actuation_passive_gravity"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 74,
+   "year": 2008,
+   "team": 1114,
+   "game": "OVERDRIVE",
+   "micro_archetype": "High-Torque Roller Forklift / Arm Combo",
+   "draft_function": "scoring_placer",
+   "draft_family": "elevator_other",
+   "attributes": [],
+   "unsourced_numeric_claims": [
+    "8-foot"
+   ],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 75,
+   "year": 2008,
+   "team": 148,
+   "game": "OVERDRIVE",
+   "micro_archetype": "Hexagonal Omnidirectional Pure Kinetic Shunt",
+   "draft_function": "drivetrain_defense",
+   "draft_family": "effector_roller",
+   "attributes": [],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 76,
+   "year": 2002,
+   "team": 71,
+   "game": "ZONE ZEAL",
+   "micro_archetype": "Floor-Locking Industrial Walking Shunt",
+   "draft_function": "drivetrain_defense",
+   "draft_family": "drivetrain",
+   "attributes": [
+    "actuation_pneumatic",
+    "drivetrain_tank_or_tracks"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  },
+  {
+   "row": 77,
+   "year": 1996,
+   "team": 71,
+   "game": "HEXAGON HAVOC",
+   "micro_archetype": "Monolithic Heavy Steel Floor-Sweeper Wedge",
+   "draft_function": "drivetrain_defense",
+   "draft_family": "effector_roller",
+   "attributes": [
+    "drivetrain_tank_or_tracks",
+    "material_steel"
+   ],
+   "unsourced_numeric_claims": [],
+   "in_stratai_seasons": false
+  }
+ ]
+}

@@ -1,6 +1,6 @@
 Phase 5 — Pre-Season & In-Season Intelligence: Milestone Specification
 
-Status: **PROPOSED (revision 2, 2026-10-02) — EPA decisions resolved and consistency review applied; freeze (P5-M0) pending the robot-design dataset audit.** The P5-M0 approval commit is the freeze point. After it, methodology and acceptance criteria change only by a recorded decision made **before the affected result exists**. Decisions: `.agent/phase5/P5_M0_DECISIONS.md`.
+Status: **PROPOSED (revision 3, 2026-10-02) — EPA decisions resolved, consistency review applied, robot-design dataset audit incorporated (P5-D10); awaiting Kanav's freeze approval.** The P5-M0 approval commit is the freeze point. After it, methodology and acceptance criteria change only by a recorded decision made **before the affected result exists**. Decisions: `.agent/phase5/P5_M0_DECISIONS.md`.
 
 Source: `docs/ROADMAP.md` Phase 5. The Phase 4 contracts are as they stand (`docs/ml_models.md`):
 - Phase 4 evaluation complete; acceptance criteria not fully met (M7 FAILED; done-means NOT MET);
@@ -59,7 +59,7 @@ Ratings **visibly update as new matches flow in**, without manual retraining. Ne
 |  | Alliance synergy (M9) as a predictor |
 |  | Feeding ratings (Phase 3 M14 open) |
 |  | Live-refreshed EPA: `live_refresh_not_yet_validated` until P5-M2 L6 |
-|  | Robot-design / archetype outcome claims (see the audit decision) |
+|  | Any archetype/mechanism success rate, performance ranking or effect: the curated design dataset is unverified, elite-only metadata (`.agent/phase5/robot_design_audit/AUDIT.md`) |
 
 - **Moving an item left:** a milestone may move an item to the left column only by meeting its own pre-registered criteria.
 - **Live-refreshed inputs:** an output built from live-refreshed inputs keeps its base status and adds `live_refresh_not_yet_validated`.
@@ -72,7 +72,7 @@ Ratings **visibly update as new matches flow in**, without manual retraining. Ne
 - this document;
 - `.agent/phase5/LIVE_EPA_REFRESH_DESIGN.md`;
 - `.agent/phase5/P5_M0_DECISIONS.md`;
-- the robot-design dataset audit.
+- the robot-design dataset audit (`.agent/phase5/robot_design_audit/AUDIT.md`).
 
 **Done-means:**
 - an approval commit naming them;
@@ -172,19 +172,19 @@ The 80% range inherits M7's limitation: probabilities are not certified calibrat
 | **Acceptance criteria** | (a) **Adapter parity:** components + fouls + adjustments = official score for 100% of valid rows. (b) **False alarms:** 1,000 within-season week-label permutations give a family-wise flag rate ≤ 0.05, with the 95% Clopper–Pearson upper bound ≤ 0.07. (c) Real 2024–2026 flags recorded descriptively; no accuracy claim |
 | **Leakage constraints** | Week w uses only weeks ≤ w |
 | **Reproducibility** | Recomputable from raw payloads |
-| **Done-means** | (a) and (b) pass; (c) recorded. Robot-design meta (archetypes, mechanisms) is not observable from match data; see the audit decision |
+| **Done-means** | (a) and (b) pass; (c) recorded. **Documented gap (P5-D10):** archetype or mechanism meta is not observable from match data, and the curated design dataset has no per-week or per-event labels. Archetype-level Week 0/1 meta needs at-event mechanism labels (e.g. a scouting field), a future data-collection extension outside Phase 5 |
 
 ## P5-M8 — Game-rule analysis
 
 | | |
 |---|---|
-| **Inputs** | A **structured, human-entered game specification** (versioned schema): scoring actions and points by period, endgame, RP rules, field elements, match length. Entered from the game manual only. No LLM parses the manual in the core |
-| **Outputs** | A scoring-action value table; similarity to a catalog of past games; candidate archetypes; expected scoring ranges derived from catalog seasons with breakdown data (2024–2026) |
+| **Inputs** | A **structured, human-entered game specification** (versioned schema): scoring actions and points by period, endgame, RP rules, field elements, match length. Entered from the game manual only. No LLM parses the manual in the core. **The curated design reference** `data/reference/frc_robot_design_curated.csv` (77 rows, sha256 `40aef139…139e1`), used only as historical design examples (P5-D10) |
+| **Outputs** | A scoring-action value table. Similarity to a catalog of past games. Candidate archetypes, with **historical design examples** retrieved from the curated reference by codebook labels, every example labelled `curated_reference_unverified` (no success rate, no performance ranking). Expected scoring ranges derived from catalog seasons with breakdown data (2024–2026) |
 | **Data dependencies** | the game-spec catalog; P5-M7 adapters |
 | **Evaluation population** | used by DM1's dry run (P5-M9) |
-| **Frozen methodology** | Similarity and archetype rules are fixed before the dry run |
-| **Acceptance criteria** | Schema, determinism and catalog-integrity tests. Outputs are `descriptive`, or `not_validated` for any forward-looking claim |
-| **Leakage constraints** | In the dry run the catalog contains only games before the simulated reveal |
+| **Frozen methodology** | Similarity and archetype rules are fixed before the dry run. **Reference taxonomy:** a human, multi-label codebook (a set of functions, and a family per function), frozen before coding; every curated row double-coded independently; micro-archetype text always kept verbatim. Keyword auto-labelling is not used: the audit found about 20% clear misassignments |
+| **Acceptance criteria** | Schema, determinism and catalog-integrity tests. The reference file's sha256 is verified at load. **Codebook agreement:** Cohen's κ on function labels is reported; labels are used as categories only if κ ≥ 0.6, otherwise served as `provisional`. Outputs are `descriptive`, `curated_reference_unverified`, or `not_validated` for any forward-looking claim |
+| **Leakage constraints** | In the dry run the catalog **and the curated reference** contain only games and rows from **before** the simulated reveal year. For the 2026 dry run, the 10 REBUILT rows are excluded |
 | **Reproducibility** | Spec, catalog and outputs are versioned and hashed |
 | **Done-means** | Built and tested; exercised by DM1 |
 
@@ -193,10 +193,10 @@ The 80% range inherits M7's limitation: probabilities are not certified calibrat
 | | |
 |---|---|
 | **Inputs** | budget, manufacturing, programming and mentor resources (form; raw-first storage); P5-M8 outputs |
-| **Outputs** | A realistic robot ceiling, a recommended archetype and achievable features, with an explanation, labelled `heuristic_not_validated_against_outcomes`. **The DM1 dry-run record** |
+| **Outputs** | A realistic robot ceiling, a recommended archetype and achievable features, with an explanation, labelled `heuristic_not_validated_against_outcomes`. It may cite curated historical examples (labelled `curated_reference_unverified`). **The DM1 dry-run record** |
 | **Data dependencies** | P5-M8 |
 | **Evaluation population** | **The 2026 reveal.** The 2026 game spec is entered from the manual only; the catalog is limited to pre-2026 games; at least 10 sample team profiles, fixed before the dry run |
-| **Frozen methodology** | Deterministic rule mapping; no LLM; rules fixed before the dry run |
+| **Frozen methodology** | A deterministic, **human-authored capability→archetype feasibility rubric**: the curated dataset has no resource, cost or complexity data, so the rubric is not derived from it. No LLM. Rules fixed before the dry run |
 | **Acceptance criteria** | (a) **DM1:** one run from spec entry to every documented output (P5-M8 analysis, comparison and archetypes, plus P5-M9 recommendations for the sample profiles). Elapsed time recorded; it must be ≤ 5 days. (b) Predictions are recorded write-once before any 2026 match data is read, then scored once against 2026 weeks 1–3: predicted vs actual dominant scoring components, and the coverage of expected scoring ranges. Labelled `not_validated` regardless of score, because one game cannot validate a predictive claim. (c) A mentor review of the sample recommendations is recorded |
 | **Leakage constraints** | Human input is limited to manual facts. No human judgment step uses knowledge of how 2026 played out. Spec entry is audited against the manual |
 | **Reproducibility** | Everything versioned and hashed; the dry run is re-executable |
