@@ -1,6 +1,6 @@
 # Phase 5 — P5-M0 decision log
 
-Every decision was made **before any Phase 5 result exists**. Status: decisions P5-D1 to P5-D10 recorded 2026-10-02. **Awaiting Kanav's freeze approval.**
+Every decision was made **before any Phase 5 result exists**. Status: decisions P5-D1 to P5-D10 recorded 2026-10-02. **FROZEN with P5-M0 (Kanav, 2026-10-02);** see `.agent/phase5/P5_M0_FREEZE.md`. Any later change needs a new, dated decision row made before the affected result exists.
 
 | ID | Decision | By | Rationale / evidence |
 |---|---|---|---|

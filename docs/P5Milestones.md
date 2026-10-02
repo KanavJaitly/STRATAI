@@ -1,6 +1,6 @@
 Phase 5 — Pre-Season & In-Season Intelligence: Milestone Specification
 
-Status: **PROPOSED (revision 3, 2026-10-02) — EPA decisions resolved, consistency review applied, robot-design dataset audit incorporated (P5-D10); awaiting Kanav's freeze approval.** The P5-M0 approval commit is the freeze point. After it, methodology and acceptance criteria change only by a recorded decision made **before the affected result exists**. Decisions: `.agent/phase5/P5_M0_DECISIONS.md`.
+Status: **FROZEN / APPROVED — P5-M0 (Kanav, 2026-10-02), revision 3.** Freeze record: `.agent/phase5/P5_M0_FREEZE.md`. The commit introducing this status line is the freeze point. After it, methodology and acceptance criteria change only by a recorded decision made **before the affected result exists**. Decisions: `.agent/phase5/P5_M0_DECISIONS.md`.
 
 Source: `docs/ROADMAP.md` Phase 5. The Phase 4 contracts are as they stand (`docs/ml_models.md`):
 - Phase 4 evaluation complete; acceptance criteria not fully met (M7 FAILED; done-means NOT MET);
