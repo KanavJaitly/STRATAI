@@ -1,0 +1,40 @@
+{
+ "registered_at": "2026-10-02T00:59:20.202894+00:00",
+ "registry": "C:\\Dev\\StratAI-artifacts\\ml_registry",
+ "version_tag": "d18",
+ "producing_commit": "863377a92aa0ebdeab8891b0f2e124367f364aad",
+ "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+ "ranking": {
+  "model_type": "ranking_xgb_v2",
+  "sha256": "1f0fe5aae90244e2736950928a88e733c85214b8def547b399b87c0cdd136312",
+  "round_trip_predictions_compared": 108024,
+  "round_trip_mismatches": 0,
+  "reproduction": {
+   "midpoint_spearman": 0.6112440558451762,
+   "recorded": 0.6112440558451762,
+   "top8_recall": 0.6586538461538461,
+   "recorded_top8": 0.6586538461538461
+  }
+ },
+ "win_prob": {
+  "model_type": "win_prob_xgb_calibrated",
+  "sha256": "c76d329918e1667ae6f641ae6023e0649f34feb7c35064dea8b3db5cd1a8b0a2",
+  "round_trip_predictions_compared": 15027,
+  "round_trip_mismatches": 0,
+  "reproduction": {
+   "ece": 0.02316275652450326,
+   "recorded_ece": 0.02316275652450326,
+   "g2_bins_identical": true,
+   "fit_diagnostics_identical": true,
+   "g2_status": "fail",
+   "recorded_g2_status": "fail"
+  }
+ },
+ "settings": {
+  "ML_REGISTRY_DIR": "C:\\Dev\\StratAI-artifacts\\ml_registry",
+  "ML_RANKING_MODEL_VERSION_TAG": "d18",
+  "ML_RANKING_MODEL_SHA256": "1f0fe5aae90244e2736950928a88e733c85214b8def547b399b87c0cdd136312",
+  "ML_WIN_PROB_MODEL_VERSION_TAG": "d18",
+  "ML_WIN_PROB_MODEL_SHA256": "c76d329918e1667ae6f641ae6023e0649f34feb7c35064dea8b3db5cd1a8b0a2"
+ }
+}
