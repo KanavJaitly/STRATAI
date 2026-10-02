@@ -15,7 +15,7 @@
 | Columns | `Year`, `Team`, `Game Name`, `Robot Micro-Archetype`, `Technical Specifications`, `Key Characteristic & Competitive Advantage` |
 | Completeness | every field populated; 0 exact duplicates; no repeated (year, team) |
 | Seasons | 18 games, 1996–2026. Years and game names all agree. 2026–2022: 10 rows each; 2019: 5; 2018 and 2017: 4 each; then 2, 2, 2, 1, 1, 1, 1, 2, 1, 1. Absent: 1992–95, 1997–2001, 2003–07, 2009, 2020–21 |
-| Teams | 25 distinct. Repeats: 254 ×12, 1323 ×7, 1678 ×6, 118 ×6, then 4414, 2910, 2056, 1114 and 148 ×4 each, and more |
+| Teams | 25 distinct. Repeats: 254 ×12, 1323 ×7, 1678 ×6, 118 ×6, then 4414, 2910, 2056, 1114 and 148 ×4 each, then 1690, 971 and 6045 ×3 each. Every repeat is the same team in a *different* game (254 appears in 12 different games). The dataset is concentrated on a few teams across many games, not many teams within a game |
 | Micro-archetypes | 76 distinct names for 77 rows; only "Virtual Four-Bar Parallel Linkage Arm" repeats (1690 2025, 4414 2023) |
 
 ## 2. Joinability to STRATAI data
@@ -52,11 +52,18 @@ These are mostly the strongest teams in the world. The dataset has no ordinary o
 - **A draft two-level taxonomy was tried with transparent keyword rules:**
   - function: scoring_launcher, scoring_placer, acquisition, indexing_storage, endgame_climb, drivetrain_defense;
   - family: 16 families, e.g. flywheel_turret, elevator_cascade, arm_four_bar, effector_suction.
-- **Automatic keyword assignment is not reliable.** About 15 of 77 rows (~20%) are clearly misassigned. Examples:
-  - "Non-**turret**ed" shooter tagged as a turret;
-  - turreted placing mechanisms tagged as launchers;
-  - a boom tagged as drivetrain because it mentions a swerve module.
-- **Single labels lose information:** about 13 rows describe several functions ("X / Y").
+- **Automatic keyword assignment is not reliable.** A row-by-row review found **19 of 77 rows (25%)** where the keyword label contradicts the row's own description. (The first, quick estimate was "about 15, ~20%"; corrected 2026-10-02 after the full review.)
+  - Rows: 6, 10, 16, 28, 29, 31, 35, 38, 42, 44, 45, 51, 61, 63, 67, 69, 73, 75, 77.
+  - Examples:
+    - row 42, "Non-**turret**ed" shooter, tagged as a turret;
+    - rows 16, 35 and 51, turreted *placing* mechanisms, tagged as launchers;
+    - row 31, a telescoping boom, tagged as drivetrain because it mentions a swerve module;
+    - row 69, a slingshot, tagged as an endgame climb because it mentions a winch;
+    - rows 61 and 67, a gear pocket and a tape-measure hook, tagged as elastic launchers because they mention springs.
+  - This is one reviewer's judgment, which is itself evidence for double coding.
+- **Single labels lose information:**
+  - 12 names explicitly combine functions with "/" (rows 5, 11, 21, 22, 36, 51, 57, 58, 60, 62, 72, 74);
+  - more describe several functions in their text (e.g. row 10, launcher plus climb; row 6, sweeper plus launcher).
 - **Even well labelled, the cells are tiny:** the largest (function × game) cell has 7 rows.
 
 **Recommendation:**
@@ -148,3 +155,58 @@ These are mostly the strongest teams in the world. The dataset has no ordinary o
 - No game rules.
 - No at-event mechanism labels.
 - Backups unknown in alliance data (P5-M1).
+
+## Appendix A — the 30 joined rows and their outcome data (descriptive, labels only)
+
+"Captain at" and "Picked at" count events, including division-champion playoffs. No archetype statistic is derived from this table.
+
+| Row | Year | Team | Events | Best qual rank | Captain at | Picked at | Season-max EPA percentile |
+|---|---|---|---|---|---|---|---|
+| 1 | 2026 | 4414 | 5 | 1 | 5 | 0 | 100.0 |
+| 2 | 2026 | 1323 | 5 | 1 | 2 | 3 | 99.8 |
+| 3 | 2026 | 254 | 5 | 1 | 2 | 3 | 99.9 |
+| 4 | 2026 | 4065 | 5 | 3 | 1 | 4 | 92.2 |
+| 5 | 2026 | 1678 | 5 | 1 | 4 | 1 | 99.9 |
+| 6 | 2026 | 2910 | 5 | 1 | 2 | 3 | 99.7 |
+| 7 | 2026 | 2056 | 6 | 1 | 3 | 3 | 99.8 |
+| 8 | 2026 | 1690 | 4 | 1 | 2 | 2 | 99.7 |
+| 9 | 2026 | 581 | 4 | 2 | 1 | 3 | 99.1 |
+| 10 | 2026 | 118 | 9 | 1 | 6 | 3 | 97.4 |
+| 11 | 2025 | 2910 | 5 | 1 | 3 | 2 | 99.9 |
+| 12 | 2025 | 1690 | 5 | 1 | 4 | 1 | 99.9 |
+| 13 | 2025 | 254 | 3 | 1 | 1 | 2 | 99.5 |
+| 14 | 2025 | 4414 | 5 | 1 | 1 | 4 | 99.6 |
+| 15 | 2025 | 1678 | 4 | 1 | 4 | 0 | 99.8 |
+| 16 | 2025 | 1323 | 4 | 1 | 3 | 1 | 99.9 |
+| 17 | 2025 | 2056 | 6 | 1 | 4 | 2 | 100.0 |
+| 18 | 2025 | 971 | 3 | 7 | 1 | 2 | 97.5 |
+| 19 | 2025 | 1114 | 4 | 4 | 2 | 2 | 98.6 |
+| 20 | 2025 | 5990 | 4 | 2 | 1 | 2 | 99.2 |
+| 21 | 2024 | 1690 | 5 | 1 | 5 | 0 | 99.8 |
+| 22 | 2024 | 254 | 4 | 1 | 3 | 1 | 99.9 |
+| 23 | 2024 | 1323 | 4 | 1 | 2 | 2 | 99.9 |
+| 24 | 2024 | 2910 | 4 | 1 | 1 | 3 | 99.6 |
+| 25 | 2024 | 3255 | 2 | 2 | 1 | 1 | 85.3 |
+| 26 | 2024 | 118 | 8 | 1 | 4 | 4 | 97.7 |
+| 27 | 2024 | 4414 | 4 | 1 | 2 | 2 | 99.5 |
+| 28 | 2024 | 179 | 3 | 1 | 1 | 2 | 94.3 |
+| 29 | 2024 | 6045 | 3 | 19 | 0 | 2 | 79.6 |
+| 30 | 2024 | 971 | 3 | 5 | 3 | 0 | 92.1 |
+
+## Appendix B — the 47 rows not joined (seasons before STRATAI data)
+
+- **2023:** 1323 (row 31), 4414 (row 32), 254 (row 33), 2056 (row 34), 1678 (row 35), 2910 (row 36), 118 (row 37), 5406 (row 38), 6045 (row 39), 2767 (row 40)
+- **2022:** 254 (row 41), 1619 (row 42), 1323 (row 43), 179 (row 44), 6045 (row 45), 1678 (row 46), 2056 (row 47), 3310 (row 48), 973 (row 49), 118 (row 50)
+- **2019:** 1323 (row 51), 254 (row 52), 973 (row 53), 148 (row 54), 118 (row 55)
+- **2018:** 254 (row 56), 148 (row 57), 1678 (row 58), 1323 (row 59)
+- **2017:** 2767 (row 60), 254 (row 61), 1678 (row 62), 118 (row 63)
+- **2016:** 330 (row 64), 971 (row 65)
+- **2015:** 1114 (row 66), 148 (row 67)
+- **2014:** 254 (row 68), 1114 (row 69)
+- **2013:** 254 (row 70)
+- **2012:** 254 (row 71)
+- **2011:** 254 (row 72)
+- **2010:** 469 (row 73)
+- **2008:** 1114 (row 74), 148 (row 75)
+- **2002:** 71 (row 76)
+- **1996:** 71 (row 77)
