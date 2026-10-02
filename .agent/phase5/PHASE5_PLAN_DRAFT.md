@@ -1,4 +1,4 @@
-# Phase 5 — Implementation plan (DRAFT for Kanav's review; nothing built)
+# Phase 5 — Implementation plan (DRAFT; superseded 2026-10-02 by the formal proposed specification in docs/P5Milestones.md, kept as history)
 
 2026-10-02. Based on `docs/ROADMAP.md` Phase 5 (`docs/P5Milestones.md` is empty) and the Phase 4 contracts as they actually stand:
 - **Status:** Phase 4 evaluation complete; acceptance criteria not fully met (M7 failed).
