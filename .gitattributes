@@ -1,0 +1,2 @@
+# Reference data is sha256-pinned: store and check out byte-exact (no line-ending conversion).
+data/reference/*.csv -text
