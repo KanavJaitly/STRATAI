@@ -1,6 +1,6 @@
 # Live EPA refresh — pre-registered design
 
-Status: **PROPOSED — decisions resolved (Kanav, 2026-10-02); freeze pending the P5-M0 checklist.** The P5-M0 approval commit is the freeze point. After it, nothing below changes except by a recorded decision made before the affected result exists. **No live refresh code exists.**
+Status: **FROZEN / APPROVED — P5-M0 (Kanav, 2026-10-02).** Freeze record: `.agent/phase5/P5_M0_FREEZE.md`. The commit introducing this status line is the freeze point. After it, nothing below changes except by a recorded decision made before the affected result exists. **No live refresh code exists.**
 
 Decisions recorded in `.agent/phase5/P5_M0_DECISIONS.md`:
 - **P5-D1:** fallback Option A with a 72 h threshold;
