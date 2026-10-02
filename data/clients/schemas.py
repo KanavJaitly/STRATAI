@@ -142,6 +142,22 @@ class EventRankings(BaseModel):
     rankings: list[TeamRanking] = Field(default_factory=list)
 
 
+class EventAlliance(BaseModel):
+    """One playoff alliance per TBA's /event/{event_key}/alliances.
+
+    TBA returns the alliances as a list in seed order ("Alliance 1" first), or a
+    bare `null` for an event with no alliance selection yet. picks[0] is the
+    captain. ``status`` (the alliance's playoff record and result) is an
+    *outcome* and is deliberately not modeled: it stays only in the landed raw
+    payload, where data.alliances keeps it apart from the seed/pick data.
+    """
+
+    name: str | None = None
+    picks: list[str] = Field(default_factory=list)
+    declines: list[str] = Field(default_factory=list)
+    backup: dict[str, Any] | None = None
+
+
 class ScoutRadiozMatchScoutingRow(BaseModel):
     """One row of a ScoutRadioz match-scouting CSV export -- the platform's own
     stable, cross-season metadata columns only.

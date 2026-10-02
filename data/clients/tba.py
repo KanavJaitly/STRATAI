@@ -7,7 +7,7 @@ from typing import Any, ClassVar
 import httpx
 
 from data.clients.http_retry import request_with_retries
-from data.clients.schemas import EventRankings, EventSummary, Match, TeamInfo
+from data.clients.schemas import EventAlliance, EventRankings, EventSummary, Match, TeamInfo
 from data.clients.source_connector import SourceConnector, SourceResponse
 from data.config import Settings
 
@@ -91,6 +91,13 @@ class TBAClient(SourceConnector):
         data = self._request("GET", f"/event/{event_key}/rankings")
         parsed = EventRankings.model_validate(data) if data is not None else EventRankings(rankings=[])
         return SourceResponse(data, parsed)
+
+    def fetch_event_alliances(self, event_key: str) -> SourceResponse[list[EventAlliance]]:
+        """Fetch an event's playoff alliances (seed order). TBA's bare `null` for an
+        event without alliance selection is preserved in SourceResponse.raw; `parsed`
+        is then an empty list."""
+        data = self._request("GET", f"/event/{event_key}/alliances")
+        return SourceResponse(data, [EventAlliance.model_validate(item) for item in (data or [])])
 
     def fetch_team_info(self, team_number: int) -> SourceResponse[TeamInfo]:
         """Fetch team information by team number."""
