@@ -9,6 +9,13 @@ Same design as data.rankings: TBA's /event/{event_key}/alliances, landed raw thr
 RawPayloadWriter (source="tba", object_type=OBJECT_TYPE_EVENT_ALLIANCES, id=event
 key, checksum-deduplicated), read back from raw_source_payloads. No canonical table.
 
+Seeds: an alliance named "Alliance N" has seed N (cross-checked against list order).
+Some events are not seeded playoffs: Einstein (``*cmptx``) and the multi-division
+district championship finals (``*micmp``, ``*necmp``, ``*oncmp``, ``*txcmp``) list
+division-champion alliances named after their divisions. Those alliances get
+``seed=None``; list ``position`` is kept but is not a seed.
+TBA's ``backup`` field was null for every 2024-2026 alliance at ingestion (2026-10-02).
+
 Two readers, deliberately separate, because the payload mixes two kinds of data:
 
 * read_event_alliances -> seed, captain, picks, backup, declines. Known once
@@ -53,7 +60,9 @@ _ALLIANCE_NAME = re.compile(r"^Alliance (\d+)$")
 
 @dataclass(frozen=True)
 class Alliance:
-    seed: int
+    seed: int | None  # None for a division-champion (unseeded) alliance
+    position: int  # 1-based list position in TBA's payload
+    name: str | None
     captain: int | None
     picks: tuple[int, ...]  # in pick order, captain first
     backup: int | None
@@ -62,7 +71,8 @@ class Alliance:
 
 @dataclass(frozen=True)
 class AllianceOutcome:
-    seed: int
+    seed: int | None
+    position: int
     status: str | None
     level: str | None
     wins: int | None
@@ -142,10 +152,14 @@ def _team(key: Any) -> int | None:
         return None
 
 
-def _seed(entry: dict[str, Any], index: int) -> int:
-    """The seed: from "Alliance N" when present (it must agree with list order), else list order."""
-    match = _ALLIANCE_NAME.match(str(entry.get("name") or ""))
-    return int(match.group(1)) if match else index + 1
+def _seed(entry: dict[str, Any], index: int) -> int | None:
+    """The seed: N for "Alliance N"; list order when the payload names no alliance; None for
+    a division-named (unseeded) alliance."""
+    name = entry.get("name")
+    if not name:
+        return index + 1
+    match = _ALLIANCE_NAME.match(str(name))
+    return int(match.group(1)) if match else None
 
 
 def parse_alliances_payload(payload: Any) -> list[Alliance]:
@@ -160,11 +174,12 @@ def parse_alliances_payload(payload: Any) -> list[Alliance]:
         picks = tuple(t for t in (_team(k) for k in entry["picks"]) if t is not None)
         backup = entry.get("backup") if isinstance(entry.get("backup"), dict) else None
         declines = tuple(t for t in (_team(k) for k in entry.get("declines") or []) if t is not None)
-        alliances.append(Alliance(seed=_seed(entry, index), captain=picks[0] if picks else None, picks=picks,
+        alliances.append(Alliance(seed=_seed(entry, index), position=index + 1, name=entry.get("name"),
+                                  captain=picks[0] if picks else None, picks=picks,
                                   backup=_team(backup.get("in")) if backup else None, declines=declines))
-    seeds = [a.seed for a in alliances]
-    if len(set(seeds)) != len(seeds) or seeds != sorted(seeds):
-        return []
+    seeds = [a.seed for a in alliances if a.seed is not None]
+    if seeds and (len(seeds) != len(alliances) or len(set(seeds)) != len(seeds) or seeds != sorted(seeds)):
+        return []  # seeded names that are partial, duplicated or out of list order: reject the event
     return alliances
 
 
@@ -178,7 +193,7 @@ def parse_alliance_outcomes_payload(payload: Any) -> list[AllianceOutcome]:
             continue
         status = entry.get("status") if isinstance(entry.get("status"), dict) else {}
         record = status.get("record") if isinstance(status.get("record"), dict) else {}
-        out.append(AllianceOutcome(seed=_seed(entry, index), status=status.get("status"), level=status.get("level"),
+        out.append(AllianceOutcome(seed=_seed(entry, index), position=index + 1, status=status.get("status"), level=status.get("level"),
                                    wins=record.get("wins"), losses=record.get("losses"), ties=record.get("ties")))
     return out
 
