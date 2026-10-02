@@ -1,81 +1,139 @@
-"""Load whichever model versions Settings pins, once, at application startup.
+"""Load the pinned models and the configured EPA source, once, at application startup.
 
-Phase 4 Milestone 12. Deliberately separate from api.dependencies (which only
-reads app.state back) and from api.app (which stays focused on assembling
-middleware and routers) -- this is the one place "pinned version tag ->
-actual loaded model" logic lives, so it is independently testable without
-building a whole FastAPI app.
+Phase 4 Milestone 12, aligned on 2026-10-02 with what Phase 4 actually evaluated (D18):
 
-Settings.ml_ranking_model_version_tag / ml_win_prob_model_version_tag default
-to None, which is this project's real current state: M4-M7's real, dated
-backtest numbers are blocked on a Statbotics outage (.agent/phase4/
-PHASE_STATUS.md), so no model has been accepted for production serving yet.
-None here means "nothing pinned", not "the registry is broken" -- the two
-are kept distinguishable in the log (see the two log lines below) even
-though both resolve to the same None returned to app.state, since a route
-serving model_not_loaded needs no finer distinction than that to answer a
-request correctly, but an operator debugging why does.
+* Ranking: only ``ranking_xgb_v2`` (M5 v2, RankingXGBModelV2) is servable. M5 v1
+  (``ranking_xgb``) FAILED its gate and is refused by name -- there is no path that
+  falls back to it.
+* Win probability: only ``win_prob_xgb_calibrated`` (M6 + its symmetric isotonic
+  calibrator, the pair D18 M7 evaluated) is servable. Raw M6 (``win_prob_xgb``) is
+  refused: the calibration evidence belongs to the calibrated pair.
+* Each pin is (model type, version tag, artifact sha256), all from Settings. The
+  sha256 is checked against the registered file before it is loaded, so the served
+  artifact is exactly the configured one; replacing it means changing the pins.
+* EPA: the source Settings selects; ``d18_statbotics_primary`` is the evaluated
+  configuration (ml.ratings.d18_source), loaded with its snapshot-integrity checks.
 
-A failure to load a *configured* pin (missing registry entry, corrupted
-manifest, feature-list mismatch) is logged as an error and also resolves to
-None rather than raising and failing application startup -- the same
-"the API still boots with PostgreSQL down" posture api.app.create_app
-already takes for the database, applied here to the ML layer: a bad ML
-pin should degrade the prediction endpoints, not take down /health and
-/ready along with them.
+Nothing pinned is a real, representable state (model_not_loaded), distinct in the
+log from a pin that failed to load. A failed load is logged and resolves to None
+rather than failing startup, so /health and /ready stay up (api.app's posture for
+the database, applied to the ML layer).
 """
 
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from data.config import Settings
-from ml.models.ranking_xgb import FEATURE_NAMES as RANKING_FEATURE_NAMES
-from ml.models.ranking_xgb import RankingXGBModel
+from database.connection import Database
+from ml.models.calibrated_win_prob import CALIBRATED_WIN_PROB_MODEL_TYPE, CalibratedWinProbModel
+from ml.models.ranking_xgb_v2 import FEATURE_NAMES_V2, RankingXGBModelV2
 from ml.models.win_prob import FEATURE_NAMES as WIN_PROB_FEATURE_NAMES
-from ml.models.win_prob import WinProbXGBModel
-from ml.registry import ModelManifest, load_registered_model
+from ml.registry import ModelManifest, load_registered_model, model_file_sha256
 
 __all__ = [
+    "NOT_SERVABLE_MODEL_TYPES",
+    "SERVABLE_RANKING_MODELS",
+    "SERVABLE_WIN_PROB_MODELS",
+    "ServedEpaSource",
+    "ServedModel",
+    "load_epa_source",
     "load_pinned_ranking_model",
     "load_pinned_win_prob_model",
 ]
 
+logger = logging.getLogger(__name__)
 
-def _load_pinned_model(
-    model_class: Any, *, model_type: str, settings: Settings, version_tag: str | None,
-    current_feature_list: list[str], logger: logging.Logger,
-) -> tuple[Any | None, ModelManifest | None]:
+SERVABLE_RANKING_MODELS: dict[str, tuple[type, tuple[str, ...]]] = {
+    "ranking_xgb_v2": (RankingXGBModelV2, tuple(FEATURE_NAMES_V2)),
+}
+SERVABLE_WIN_PROB_MODELS: dict[str, tuple[type, tuple[str, ...]]] = {
+    CALIBRATED_WIN_PROB_MODEL_TYPE: (CalibratedWinProbModel, tuple(WIN_PROB_FEATURE_NAMES)),
+}
+NOT_SERVABLE_MODEL_TYPES = {
+    "ranking_xgb": "M5 v1 FAILED its held-out gate (D5) and is superseded by ranking_xgb_v2 (D16)",
+    "win_prob_xgb": "raw M6 without its evaluated calibrator; serve win_prob_xgb_calibrated",
+}
+
+
+@dataclass(frozen=True)
+class ServedModel:
+    """A loaded model and everything needed to trace it to its evaluated artifact."""
+
+    model: Any
+    manifest: ModelManifest
+    version_tag: str
+    sha256: str
+
+    def identity(self) -> dict[str, Any]:
+        return {"model_type": self.manifest.model_type, "model_version": self.manifest.model_version,
+                "model_version_tag": self.version_tag, "model_sha256": self.sha256,
+                "training_dataset_hash": self.manifest.training_dataset_hash,
+                "provenance": self.manifest.provenance}
+
+
+@dataclass(frozen=True)
+class ServedEpaSource:
+    provider: Any
+    epa_source: str
+    evaluated_configuration: bool  # True only for the D18 configuration Phase 4 evaluated
+    provenance: dict[str, Any]
+
+
+def _load(kind: str, servable: dict[str, tuple[type, tuple[str, ...]]], model_type: str, version_tag: str | None,
+          sha256: str | None, settings: Settings) -> ServedModel | None:
+    if model_type in NOT_SERVABLE_MODEL_TYPES or model_type not in servable:
+        logger.error("Refusing to serve %s model type %r: %s -- serving model_not_loaded", kind, model_type,
+                     NOT_SERVABLE_MODEL_TYPES.get(model_type, "not a servable type"))
+        return None
     if not version_tag:
-        logger.info("No %s model version pinned (ML_%s_MODEL_VERSION_TAG unset) -- serving model_not_loaded", model_type, model_type.upper())
-        return None, None
+        logger.info("No %s model version pinned (ML_%s_MODEL_VERSION_TAG unset) -- serving model_not_loaded",
+                    kind, kind.upper())
+        return None
+    model_class, feature_list = servable[model_type]
+    registry = Path(settings.ml_registry_dir)
     try:
-        model, manifest = load_registered_model(
-            model_class, registry_dir=Path(settings.ml_registry_dir), model_type=model_type,
-            version_tag=version_tag, current_feature_list=current_feature_list,
-        )
+        model, manifest = load_registered_model(model_class, registry_dir=registry, model_type=model_type,
+                                                version_tag=version_tag, current_feature_list=list(feature_list),
+                                                expected_sha256=sha256)
     except (FileNotFoundError, ValueError) as exc:
-        logger.error("Failed to load pinned %s model version_tag=%r: %s -- serving model_not_loaded", model_type, version_tag, exc)
-        return None, None
-    logger.info("Loaded pinned %s model version_tag=%r (model_version=%s)", model_type, version_tag, manifest.model_version)
-    return model, manifest
+        logger.error("Failed to load pinned %s model %s/%s: %s -- serving model_not_loaded",
+                     kind, model_type, version_tag, exc)
+        return None
+    if not isinstance(model, model_class):  # defensive: the registry returned what the allow-list names
+        logger.error("Loaded %s model is %s, not %s -- serving model_not_loaded", kind, type(model), model_class)
+        return None
+    actual = model_file_sha256(registry, model_type, version_tag)
+    logger.info("Loaded pinned %s model %s/%s (model_version=%s, sha256=%s)", kind, model_type, version_tag,
+                manifest.model_version, actual)
+    return ServedModel(model, manifest, version_tag, actual)
 
 
-def load_pinned_ranking_model(settings: Settings) -> tuple[RankingXGBModel | None, ModelManifest | None]:
-    logger = logging.getLogger(__name__)
-    return _load_pinned_model(
-        RankingXGBModel, model_type="ranking_xgb", settings=settings,
-        version_tag=settings.ml_ranking_model_version_tag, current_feature_list=list(RANKING_FEATURE_NAMES),
-        logger=logger,
-    )
+def load_pinned_ranking_model(settings: Settings) -> ServedModel | None:
+    return _load("ranking", SERVABLE_RANKING_MODELS, settings.ml_ranking_model_type,
+                 settings.ml_ranking_model_version_tag, settings.ml_ranking_model_sha256, settings)
 
 
-def load_pinned_win_prob_model(settings: Settings) -> tuple[WinProbXGBModel | None, ModelManifest | None]:
-    logger = logging.getLogger(__name__)
-    return _load_pinned_model(
-        WinProbXGBModel, model_type="win_prob_xgb", settings=settings,
-        version_tag=settings.ml_win_prob_model_version_tag, current_feature_list=list(WIN_PROB_FEATURE_NAMES),
-        logger=logger,
-    )
+def load_pinned_win_prob_model(settings: Settings) -> ServedModel | None:
+    return _load("win_prob", SERVABLE_WIN_PROB_MODELS, settings.ml_win_prob_model_type,
+                 settings.ml_win_prob_model_version_tag, settings.ml_win_prob_model_sha256, settings)
+
+
+def load_epa_source(settings: Settings, database: Database) -> ServedEpaSource | None:
+    """The EPA provider Settings selects, built once (ml.ratings.provider.default_point_in_time_provider)."""
+    from ml.ratings.d18_source import D18_EPA_SOURCE
+    from ml.ratings.provider import default_point_in_time_provider
+
+    try:
+        provider = default_point_in_time_provider(database, settings)
+        provenance = provider.provenance()
+    except Exception as exc:  # integrity failures, missing config, database down: never a silent substitute
+        logger.error("Failed to load EPA source %r: %s -- prediction endpoints serve epa_source_not_loaded",
+                     settings.epa_source, exc)
+        return None
+    provenance = {k: v for k, v in provenance.items() if k != "lookup_diagnostics"}
+    logger.info("Loaded EPA source %r", settings.epa_source)
+    return ServedEpaSource(provider, settings.epa_source, settings.epa_source == D18_EPA_SOURCE, provenance)

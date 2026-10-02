@@ -43,7 +43,9 @@ from ml.ratings.epa.season import SeasonResult
 logger = logging.getLogger(__name__)
 
 EpaSource = Literal["statbotics", "stratai"]
-EPA_SOURCES: tuple[str, ...] = ("stratai", "statbotics")
+# "d18_statbotics_primary" is the evaluated production configuration (D18): Statbotics primary,
+# STRATAI fallback for 2026iscmp only (ml.ratings.statbotics_primary, ml.ratings.d18_source).
+EPA_SOURCES: tuple[str, ...] = ("d18_statbotics_primary", "stratai", "statbotics")
 
 UNAVAILABLE_NOT_RUN = "season_not_run"
 UNAVAILABLE_NO_TEAM_EVENT = "team_did_not_play_event"
@@ -339,8 +341,25 @@ def default_point_in_time_provider(database: Database, settings: Any | None = No
 
         settings = Settings()
     source = settings.epa_source
+    if source == "d18_statbotics_primary":
+        from ml.ratings.d18_source import load_d18_provider
+
+        if settings.statbotics_snapshot_dir is None or settings.stratai_epa_chain is None:
+            raise EpaSourceNotConfigured(
+                "epa_source is 'd18_statbotics_primary' (the evaluated D18 configuration) but "
+                "STATBOTICS_SNAPSHOT_DIR and STRATAI_EPA_CHAIN are not both set: point them at the verified "
+                "snapshot directory (scripts/sync_statbotics_snapshot.py) and the STRATAI chain_<hash>.json"
+            )
+        key: tuple = ("d18", str(Path(settings.statbotics_snapshot_dir).resolve()),
+                      str(Path(settings.stratai_epa_chain).resolve()), id(database))
+        if key not in _DEFAULT_CACHE:
+            logger.info("loading D18 EPA source: snapshot %s, fallback chain %s",
+                        settings.statbotics_snapshot_dir, settings.stratai_epa_chain)
+            _DEFAULT_CACHE[key] = load_d18_provider(database, Path(settings.statbotics_snapshot_dir),
+                                                    Path(settings.stratai_epa_chain))[0]
+        return _DEFAULT_CACHE[key]
     if source == "statbotics":
-        key: tuple = ("statbotics", id(database))
+        key = ("statbotics", id(database))
         if key not in _DEFAULT_CACHE:
             _DEFAULT_CACHE[key] = StatboticsPointInTimeEpa(database)
         return _DEFAULT_CACHE[key]

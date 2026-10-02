@@ -10,6 +10,7 @@ second env-loading mechanism.
 from __future__ import annotations
 
 import logging
+import threading
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -73,15 +74,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.database = Database(DatabaseConfig(settings.database_url))
 
-    # ML models (Phase 4 Milestone 12): loaded once here, exactly like the
-    # database above never opens a connection at this point -- these two
-    # calls only read small local JSON files, so this stays fast and cannot
-    # itself depend on any external service (Statbotics, TBA) being up.
-    # Either resolves to (None, None) if nothing is pinned or loadable,
-    # which is this project's real current state -- see api.ml_loading's
-    # own docstring for why that must not fail application startup.
-    app.state.ranking_model, app.state.ranking_model_manifest = load_pinned_ranking_model(settings)
-    app.state.win_prob_model, app.state.win_prob_model_manifest = load_pinned_win_prob_model(settings)
+    # ML models (Phase 4 Milestone 12; aligned with D18 on 2026-10-02): loaded once here
+    # from the registry pins in Settings (type, version tag, sha256) -- small local
+    # files, no external service. Each resolves to None if nothing is pinned or the pin
+    # fails its checks, which must not fail startup (see api.ml_loading).
+    app.state.ranking_model = load_pinned_ranking_model(settings)
+    app.state.win_prob_model = load_pinned_win_prob_model(settings)
+    # The EPA source reads the database (and, for D18, verifies its snapshot), so it is
+    # loaded lazily on first use by api.dependencies.get_epa_source, never at startup:
+    # the API still boots with PostgreSQL down.
+    app.state.epa_source = None
+    app.state.epa_source_lock = threading.Lock()
 
     # add_middleware inserts at the front of the stack, so the last one added is
     # the outermost. CORS must be outermost: RequestLoggingMiddleware catches
