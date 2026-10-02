@@ -1,0 +1,16 @@
+# Phase 5 — P5-M0 decision log
+
+Every decision was made **before any Phase 5 result exists**. Status: decisions P5-D1 to P5-D9 recorded 2026-10-02. **P5-D10 (the robot-design dataset audit) is pending.** The freeze waits on it.
+
+| ID | Decision | By | Rationale / evidence |
+|---|---|---|---|
+| P5-D1 | **Fallback:** Option A — STRATAI fallback when Statbotics has not processed a team's prior event 72 h after it ends | Kanav | No contradiction found. In 0.55% of qualification transitions the next event starts within 72 h of the prior one (back-to-back Turkish regionals); a slow Statbotics then means `pending`, not fallback. L1 equivalence is achievable: all 450 D18 fallback appearances use their first D13 candidate, and the shortest gap from 2026isde1/2 to 2026iscmp is 136.8 h |
+| P5-D2 | **Source states:** `current` / `stale` / `pending` / `fallback_stratai` / `unavailable` / `withheld_no_prior_event`. An unprocessed Statbotics record is never a valid Statbotics value | Kanav | Makes "why this source" explicit (`LIVE_EPA_REFRESH_DESIGN.md` §5) |
+| P5-D3 | **Adoption:** the frozen D18 provider stays in production until L1–L4 pass and a recorded decision switches it. Live-refreshed outputs carry `live_refresh_not_yet_validated` until L6 | consistency review | Phase 4 claims apply to the evaluated configuration only |
+| P5-D4 | **Playoff track** (model → playoff-only calibration → simulator → simulator validation → only then validated probabilities) is a Phase 6 alliance-selection prerequisite, not part of Phase 5 | Kanav / review | Keeps the qualification model from being treated as a playoff model |
+| P5-D5 | **M12 correction:** qualification probabilities are validated only for EPA-complete matches (commit b13d085) | consistency review | M7's population was EPA-complete only; the API had overclaimed for about 16% of rows |
+| P5-D6 | **P5-M4 ordering:** an event-level switch from raw EPA to M5 v2 once every team has passed its own midpoint, with the switch measured once and M5 v2 served only if it beats raw EPA there | consistency review | The earlier per-team policy would have mixed two scales in one ordering. D18 validated the per-team protocol, not the served one, so the served policy is measured |
+| P5-D7 | **DM1** must be one end-to-end run covering P5-M8 and P5-M9. Human input is limited to manual facts. The dry-run catalog is pre-reveal only. Forward-looking outputs stay `not_validated` (one game cannot validate) | Kanav / review | Prevents "components ran separately" from counting as end-to-end, and prevents hindsight leakage through human input |
+| P5-D8 | **DM2** requires a replay through the production ingestion path *and* a live confirmation at the first live official events (2027) | review (literal "mid-season") | A replay alone does not show ratings updating "mid-season as new matches flow in". The stricter reading is chosen; it does not weaken the requirement |
+| P5-D9 | **P5-M5:** expected records that touch EPA-incomplete matches are `not_validated`. The 80% range coverage bar is [0.75, 0.85], measured once | consistency review | Consistent with P5-D5 and M7's limitation |
+| P5-D10 | **Robot-design dataset (78 observations, 1996–2026):** audit result and its effect on P5-M7/M8/M9 | **pending** | The dataset was not found on this machine; audit blocked |

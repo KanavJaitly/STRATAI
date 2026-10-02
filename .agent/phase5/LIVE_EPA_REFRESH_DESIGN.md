@@ -1,6 +1,11 @@
-# Live EPA refresh — pre-registered design (PROPOSED; not frozen, not implemented)
+# Live EPA refresh — pre-registered design
 
-Status: **PROPOSED for Kanav's review, 2026-10-02.** It becomes frozen only by an explicit decision. The commit that records the approval will be the freeze point, and nothing below may change after any live or replay result exists. **No live refresh code exists.**
+Status: **PROPOSED — decisions resolved (Kanav, 2026-10-02); freeze pending the P5-M0 checklist.** The P5-M0 approval commit is the freeze point. After it, nothing below changes except by a recorded decision made before the affected result exists. **No live refresh code exists.**
+
+Decisions recorded in `.agent/phase5/P5_M0_DECISIONS.md`:
+- **P5-D1:** fallback Option A with a 72 h threshold;
+- **P5-D2:** explicit EPA source states;
+- **P5-D3:** adoption gate.
 
 ## 0. Problem and constraints
 
@@ -10,165 +15,173 @@ Status: **PROPOSED for Kanav's review, 2026-10-02.** It becomes frozen only by a
 - D13 selection;
 - availability rules A1 / A2.
 
-The snapshot is fixed and loaded once. A live Statbotics sync changes `team_event_stats`, after which the D18 loader refuses to load. Ratings therefore cannot use newly concluded events. That blocks the roadmap's "ratings visibly update as new matches flow in".
+The snapshot is fixed and loaded once. A live Statbotics sync changes `team_event_stats`, after which the D18 loader refuses to load. Ratings therefore cannot use newly concluded events.
 
-**Constraints, all carried over unchanged:**
-- **D13 selection** is unchanged: only the team's other events that concluded before as_of, with the same ordering.
-- **A1 / A2** are unchanged.
+**Constraints, all unchanged:**
+- **D13 selection:** only the team's other events that concluded before as_of, with the same ordering.
+- **A1 / A2** availability rules.
 - **No silent fallback** to an older event.
-- **Models stay frozen:** the D18 M5 v2 and M7-pair artifacts. A refresh changes *inputs*, never models.
+- **Frozen models:** the D18 M5 v2 and M7-pair artifacts. A refresh changes inputs, never models.
 - **$0 cost; no LLM.**
 
-**Why only prior events matter.** The target event's own EPA is never used (D13 excludes the target). In-event information comes from canonical match rows strictly before as_of. So a refresh only matters for **prior events that have concluded**. Live freshness means picking up a team's just-finished previous event, not tracking mid-event EPA.
+**Why only prior events matter.** The target event's own EPA is never used (D13 excludes the target), and in-event information comes from canonical rows strictly before as_of. So a refresh only matters for **prior events that have concluded**.
 
-## 1. Source and refresh cadence
+## 1. Source, event end, and refresh cadence
 
-- **Source:** Statbotics `GET /v3/team_events?event=<key>&limit=1000`. This is the D18 endpoint and schema (`statbotics-v3`), through the existing client (`fetch_event_team_metrics`) and the Phase 2 landing path.
-- **Trigger:** event conclusion, not a clock.
-  - An event becomes due when its canonical end date has passed and its last scheduled match is completed. Detected by the existing `--watch` sync.
-  - A due event is fetched at +1 h, then every 2 h, until it is **processed** or 72 h have passed.
-- **Processed** (an objective test, checked against the D18 snapshot on 2026-10-02):
-  - every record's `status` is `"Completed"`;
-  - every team on the canonical roster has a record.
-- **Not usable as the test:** the per-team `record.total.count`. It equals the canonical completed-match count for only 96.6% of completed team-events (it is usually off by one), so it is too inexact.
-- **The 2026 Israeli events** are exactly the records with `status` `"Upcoming"` (140), so the test separates them correctly.
-- **Daily sweep:** one re-fetch per day of every event concluded in the last 14 days, to detect late corrections (§9 measures drift).
-- **Rate:** at least 0.25 s between requests (as D17). Expected volume is about 30–60 requests per event week.
+- **Source:** Statbotics `GET /v3/team_events?event=<key>&limit=1000`. This is the D18 endpoint and schema (`statbotics-v3`), through the existing client and the Phase 2 landing path.
+- **Event end.** `event_end(e)` = the scheduled time of the event's last completed match (canonical). This is more precise than `end_date`, a date with no time. The 72 h clock starts here.
+- **Trigger.** An event becomes **due** when it has ended: `end_date` has passed and every scheduled match is completed, as detected by `--watch`.
+  - A due event is fetched at +1 h, then every 2 h, until its records are processed, and at least once more after 72 h.
+- **Processed** is defined per team-event.
+  - A record counts as processed when its event's records all have `status` = `"Completed"` and the team's record exists.
+  - Checked on the D18 snapshot (2026-10-02), this definition cleanly separates the 140 unprocessed 2026 Israeli records (`"Upcoming"`).
+  - It also catches team 4744, which has no 2026isde2 record.
+  - `record.total.count` is not used: it matches the canonical completed-match count for only 96.6% of completed team-events (usually off by 1).
+- **Daily sweep:** one re-fetch per day of every event ended in the last 14 days, to detect late corrections (L5).
+- **Rate:** at least 0.25 s between requests.
 
 ## 2. Snapshots and versioning
 
-- **Each fetch** writes an immutable raw file: the canonical JSON, gzip, sha256, `retrieved_at`, endpoint and parameters. It also lands each record in `raw_source_payloads` (Statbotics team_event, `{team}_{event}`) through the Phase 2 path, as D17 did.
-- **A snapshot** is a manifest mapping event_key → (raw file sha256, `retrieved_at`, processed true/false). Each refresh creates a new manifest equal to the previous one plus the changed events (copy-on-write).
+- **Each fetch** writes an immutable raw file: the canonical JSON, gzip, sha256, `retrieved_at`, endpoint and parameters. It also lands each record in `raw_source_payloads` through the Phase 2 path, as D17 did.
+- **A snapshot** is a manifest: event_key → (raw sha256, `retrieved_at`, per-team processed flags). Each refresh writes a new manifest equal to the previous one plus the changed events (copy-on-write).
 - **Snapshot identity:** `snapshot_id` = sha256 of the canonical manifest. Manifests form an append-only log, each recording its parent.
-- **Nothing is ever deleted or overwritten.** The frozen D18 snapshot is the log's first entry (its root).
+- **The frozen D18 snapshot is the log's first entry (its root).** Nothing is ever deleted or overwritten.
 
-## 3. as_of semantics (the core leakage rule)
+## 3. as_of semantics (the leakage rule)
 
 For a lookup (team, target event, as_of):
 
-1. **Snapshot.** Use the latest snapshot whose creation time is before as_of. Within it, an event's record counts only if that event's raw file has `retrieved_at` < as_of and processed = true.
-2. **Selection.** Run D13 over canonical facts as of as_of. Facts are re-read at every refresh, which fixes today's load-once gap.
-3. **Value availability.** `available_at(value) = max(D18 available_at (A1/A2), retrieved_at of the record)`. A value is servable only when `available_at` < as_of. Otherwise the next D13 candidate is considered, as in D18.
-4. **Candidate failure.** A D13 candidate that concluded before as_of but has no processed Statbotics record by as_of is handled by §6. It is never silently skipped to an older event.
+1. **Snapshot.** Use the newest snapshot created before as_of. A record counts only if its `retrieved_at` < as_of.
+2. **Selection.** Run D13 over canonical facts as of as_of. Facts are re-read at every refresh, fixing today's load-once gap.
+3. **Statbotics value.** `available_at` = max(D18 `available_at` (A1/A2), `retrieved_at`), and the value is servable only if `available_at` < as_of.
+4. **Fallback value.** For a STRATAI fallback value, `available_at` = max(STRATAI `available_at`, `event_end` + 72 h). The fallback can never be used earlier than the rule allows.
+5. **Missing candidate.** A D13 candidate with no servable value takes the §5 state for its situation. It never silently becomes "use an older event".
 
-**Why replays are honest.** A historical replay through this provider, using real `retrieved_at` values, serves nothing that had not actually been retrieved by then. So replays cannot leak. Validation uses an explicitly labelled *simulated-retrieval* mode instead (§9).
+**Why replays are honest.** A historical replay with real `retrieved_at` values cannot use anything that had not been retrieved. Validation therefore uses an explicitly labelled *simulated-retrieval* mode (§9).
 
 ## 4. Incremental update behaviour
 
 - **Each refresh:**
   - fetch the due events;
-  - verify each raw file's sha256;
-  - apply the Phase 2 normalizer and confirm, for every record, that normalized `epa.total_points` equals the `team_event_stats` row (D18's S1 check, per event);
-  - write the new manifest;
+  - verify each raw sha256;
+  - normalize with the Phase 2 normalizer and confirm normalized `epa.total_points` equals the `team_event_stats` row (D18's S1 check, per event);
+  - write the manifest;
   - re-read canonical facts;
   - swap the in-memory provider atomically.
-- **In-flight requests** keep the provider they started with. Every response names its `snapshot_id`.
+- **In-flight requests** keep the provider they started with.
 - **A refresh that fails any check** writes no manifest. The previous snapshot stays in service.
-- **The live provider reads values from snapshot files, not the mutable table.** So a later `team_event_stats` change cannot alter what a past snapshot served. The table is still kept current for other consumers.
+- **Values are read from snapshot files**, not the mutable table, so a later table change never alters what a past snapshot served.
 
-## 5. Statbotics outage behaviour
+## 5. EPA source states (P5-D2)
 
-- **Requests that fail** (5xx, timeout, schema error) are retried with the existing backoff. Failure is per event: one failed event never blocks others, and no partial file is written.
-- **During an outage** the latest good snapshot keeps serving. Responses carry `snapshot_retrieved_at` and `stale_events`: due events not yet processed.
-- **A lookup whose needed prior event is due but unprocessed:**
-  - within the 72 h window it is refused as `epa_source_pending` (a new code);
-  - after 72 h, §6 applies.
-- **Outages are counted** in a refresh log. Recovery needs no manual action.
+Every served team appearance carries `epa_source_state` and `epa_value_source`:
 
-## 6. STRATAI fallback behaviour — **decision needed**
+| `epa_source_state` | Meaning | Value served | `epa_value_source` |
+|---|---|---|---|
+| `current` | The D13 candidate has a processed Statbotics record, from a snapshot whose refresh cycle is healthy | yes | `statbotics` |
+| `stale` | A processed Statbotics record for the D13 candidate, served from the last valid snapshot, while refreshes of *other* events are failing (Statbotics outage). The value is still correct for this candidate | yes, with `snapshot_retrieved_at` | `statbotics` |
+| `pending` | The D13 candidate has ended but is not processed, and it ended less than 72 h before as_of | **no**: the lookup is refused (`epa_source_pending`, 422). No older event is used | — |
+| `fallback_stratai` | The D13 candidate ended at least 72 h before as_of and is still unprocessed by Statbotics; STRATAI's independent EPA for that team-event is used | yes, labelled **STRATAI EPA** | `stratai_fallback`, with `fallback_reason` = `statbotics_unprocessed_72h` |
+| `unavailable` | The D13 candidate has no servable value from either source (e.g. STRATAI has no value or it is not yet available) | **no**: refused (`epa_source_incomplete`, 422) | — |
+| `withheld_no_prior_event` | No D13 candidate exists (legitimate absence, as D13 today) | EPA absent (null + reason), not refused | — |
 
-D18's fallback covers one event, 2026iscmp, chosen by a human after Statbotics never processed the 2026 Israeli events. Live operation needs a rule for the next such event. Options:
+**Rules:**
+- A Statbotics record that exists but is unprocessed (e.g. `"Upcoming"`, `matches_played = 0`) is **never** treated as a valid Statbotics value. It is `pending` or `fallback_stratai` by the clock.
+- STRATAI never replaces a processed Statbotics value.
+- Fallback is decided per team-event and is always labelled.
+- **Output level:** a response is `degraded` if any team is `stale` or `fallback_stratai`, and refused if any required team is `pending` or `unavailable`. It lists `stale_events` and `fallback_events`.
 
-**A (recommended).** Objective fallback with a 72 h trigger.
-- **Trigger:** a prior event concluded more than 72 h before as_of and still has no processed Statbotics record (§1).
-- **Value:** STRATAI's own EPA for that team-event, from the STRATAI engine replayed over the canonical season. It has its own `available_at`, as in D15, and is labelled `stratai_fallback` with `fallback_reason` = `statbotics_unprocessed_72h`.
-- **Evidence for it:** STRATAI and Statbotics EPA agree closely (Pearson 0.9966–0.9996, mean absolute difference 0.3–0.6 points).
-- **Cost:** it requires an incremental STRATAI season replay, about 30 min per season today, run when the trigger fires.
-- **Nature:** this is a **new source rule**. It generalizes D18's single-event decision.
+## 6. STRATAI fallback (P5-D1: Option A, 72 h)
 
-**B. No automatic fallback.** The lookup is refused (`epa_source_incomplete`) until a human adds the event to a fallback list, as D18 did.
+- **When:** a D13 candidate event ended at least 72 h before as_of and the team's Statbotics record is still unprocessed.
+- **What:** STRATAI's independent EPA for that team-event, from the STRATAI engine replayed over the canonical season (`scripts/run_epa_replay`, chained from the previous season as in D15), with STRATAI's own `available_at`.
+- **Labelling:** labelled `stratai_fallback` / "STRATAI EPA", with `fallback_reason`.
+- **Refresh:** the STRATAI season replay is rerun when a fallback first becomes needed and after each later sync while any fallback is in use. Each replay is a versioned artifact; the fallback value records its replay fingerprint.
+- **Before 72 h:** an unprocessed candidate is `pending` and refused. Temporary Statbotics outages never switch methodology early.
+- **Evidence:** STRATAI and Statbotics EPA agree closely on shared team-events (Pearson 0.9966–0.9996, mean absolute difference 0.3–0.6 points; `results/epa_source_comparison.json`). This is not a parity claim.
 
-**C. Fallback immediately** on outage. *Not recommended:* it mixes sources whenever Statbotics has a bad hour.
+**Consistency with D18.**
+- **Historical population:** D18's fallback, for target 2026iscmp, covers appearances whose source events (2026isde1 / 2026isde2) Statbotics never processed. In the historical population (as_of = match time), Option A reaches STRATAI for exactly those cases, and L1 must show identical results on all 319,301 appearances.
+- **As-of-now requests:** Option A *does* change behaviour for "as of now" requests. 2026dal, refused today, would be served with the Israeli teams labelled `fallback_stratai`. That is the intended generalization.
 
-Whatever is chosen, fallback values never replace a processed Statbotics value. They are per team-event and always labelled.
+**72 h — checked for technical contradictions, none found.**
+- In 2024–2026, 107 of 19,554 team transitions into a qualification-bearing event (0.55%) start within 72 h of the team's prior event. Almost all are back-to-back Turkish regionals (2024–2026 tuis2/3/4/5, tuhc).
+- For these, a slow Statbotics means `pending` (refused), not fallback. That is a coverage cost, not an inconsistency.
+- 167 transitions into playoff-only events (Einstein, DCMP finals) start within 24 h, so they may often be `pending`. They are playoff-scope, which is unvalidated anyway.
 
 ## 7. Provenance
 
-**Every served appearance records:**
-- `epa_value_source` (`statbotics` / `stratai_fallback`);
-- `snapshot_id`;
-- the record's `retrieved_at` and raw sha256;
-- the D18 rule (A1 / A2);
-- `fallback_reason` when it applies.
-
-**Every response records:** `snapshot_id`, `snapshot_retrieved_at`, `stale_events`, and the model sha256 values (unchanged).
-
-**Every refresh writes a log entry:** events fetched, outcomes, checks passed or failed, parent and new `snapshot_id`.
+- **Per team appearance:**
+  - `epa_value_source`, `epa_source_state`, `fallback_reason`;
+  - `snapshot_id`, the record's `retrieved_at` and raw sha256;
+  - the D18 rule (A1 / A2);
+  - for fallbacks, the STRATAI replay fingerprint.
+- **Per response:** `snapshot_id`, `snapshot_retrieved_at`, `stale_events`, `fallback_events`, and the model sha256 values.
+- **Per refresh:** a log entry with events fetched, outcomes, checks, and parent and new `snapshot_id`.
 
 ## 8. Leakage prevention and reproducibility
 
 **Leakage:**
-- **Strict:** `retrieved_at < as_of`, plus D13's conclusion rule, plus A1 / A2.
-- **Target event excluded:** the target's own (live, in-event) Statbotics EPA is never used.
-- **Point in time:** in-event features come from canonical rows strictly before as_of (unchanged).
-- **Outcomes stay out:** alliance outcomes are never features (`data.alliances`).
+- **Strict:** `retrieved_at` < as_of; fallback not before `event_end` + 72 h; D13's conclusion rule; A1 / A2.
+- **Target event excluded:** the target's own (in-event) Statbotics EPA is never used.
+- **Point in time:** in-event features come from canonical rows strictly before as_of.
+- **Outcomes stay out:** alliance outcomes are never features.
 
 **Reproducibility:**
-- `(as_of, snapshot_id, model sha256s, code commit)` fully determines every output.
-- A prediction log stores these per response, and a replay tool re-serves any logged prediction bit for bit.
-- Snapshots are immutable and content-addressed.
+- `(as_of, snapshot_id, STRATAI replay fingerprint, model sha256s, commit)` determines every output.
+- A prediction log stores these per response; a replay tool re-serves any logged prediction bit for bit.
 
-## 9. Validation — pre-registered (criteria fixed here, before any result)
+## 9. Adoption and validation status (P5-D3)
 
-Historical Statbotics values *as they were in-season* cannot be retrieved: the API serves current values only. So validation has two parts, kept apart.
+**Adoption.** Production keeps the frozen D18 provider until L1–L4 pass and a recorded decision switches it.
 
-**Historical part (before any live use; every check must pass):**
+**Validation status after adoption.**
+- The Phase 4 validation claims apply to the D18-evaluated configuration.
+- An output that uses any value from a non-root snapshot, or any `fallback_stratai` value, keeps its base `validation_status` and adds `live_refresh_not_yet_validated`, until L6 passes.
+- During 2027 that is every output: a new season is also outside M11's single held-out season.
+
+## 10. Validation — pre-registered (criteria fixed here, before any result)
+
+In-season Statbotics values as they were at the time cannot be retrieved: the API serves current values only. Validation is in two parts.
+
+**Historical part (before adoption; every check must pass):**
 
 - **L1 — equivalence.**
-  - **Setup:** the live provider in frozen mode (root snapshot only, with `retrieved_at` replaced by the D18 snapshot's availability, so the provider behaves exactly as D18).
-  - **Pass:** it returns results identical to the D18 provider on all 319,301 appearances of 2024–2026.
+  - **Setup:** the live provider in frozen mode (root snapshot, with `retrieved_at` set to the D18 availability and STRATAI from the D15 chain).
+  - **Pass:** results identical to the D18 provider on all 319,301 appearances of 2024–2026, including the 450 `stratai_fallback` appearances.
   - **Tolerance:** none (exact equality).
-- **L2 — simulated cadence.** Simulated retrieval: an event's record becomes retrieved at its conclusion + lag, with lag ∈ {6 h, 24 h, 72 h}, values taken from the root snapshot.
+- **L2 — simulated cadence.** A record becomes retrieved at `event_end` + lag, for lag ∈ {6 h, 24 h, 72 h}, with values from the root snapshot.
   - **Pass (each lag):**
-    - 0 served values with `available_at ≥ as_of`;
-    - every appearance whose served EPA differs from D18 is explained by the lag (its D18 source event concluded within `lag` of as_of);
-    - the number of such appearances is reported per lag.
-  - **Diagnostic only:** the M5 v2 midpoint Spearman and the qualification ECE are recomputed on the lag-24 h features with the frozen models, and reported next to D18. No gate; no model change.
+    - 0 served values with `available_at` ≥ as_of;
+    - every appearance whose result differs from D18 is explained by the lag;
+    - per-state counts are reported.
+  - **Diagnostic only:** the M5 v2 midpoint Spearman and the qualification ECE on EPA-complete matches, at lag 24 h, with the frozen models.
 - **L3 — outage drill.**
-  - **Setup:** injected 5xx and timeouts during refresh.
+  - **Setup:** injected 5xx and timeouts.
   - **Pass:**
     - no manifest written for a failed refresh;
-    - the previous snapshot keeps serving;
-    - `epa_source_pending` inside the window;
-    - §6 behaviour after it;
-    - 0 unlabelled source mixing.
+    - the previous snapshot serves, with `stale` labels;
+    - `pending` before 72 h;
+    - `fallback_stratai` after 72 h;
+    - 0 unlabelled source mixing;
+    - an unprocessed record is never served as `statbotics`.
 - **L4 — atomicity and reproducibility.**
   - **Setup:** a match-by-match replay of a 2026 event under simulated retrieval.
   - **Pass:**
     - each response names one `snapshot_id`;
-    - re-serving every logged prediction reproduces it bit for bit;
-    - ratings change only when new canonical matches or new snapshots arrive.
+    - re-serving every logged prediction is bit-for-bit identical;
+    - ratings change only with new canonical rows or new snapshots.
 
-**Prospective part (2027 season; cannot be done earlier):**
+**Prospective part (2027 season):**
 
 - **L5 — value drift.**
-  - **Measured:** for every event, the difference between the first processed value and the value 14 days later.
-  - **Reported:** the distribution.
-  - **Material drift (proposed, to freeze with this design):** median |Δ| > 0.5 EPA points, or more than 5% of team-events with |Δ| > 2 points. If drift is material, ratings that use first-processed values are labelled `provisional` for 14 days.
+  - **Measured:** first processed value vs the value 14 days later, per team-event.
+  - **Material drift:** median |Δ| > 0.5 EPA points, or more than 5% of team-events with |Δ| > 2 points.
+  - **If material:** first-processed values are labelled `provisional` for 14 days.
 - **L6 — live shadow evaluation.**
-  - **Setup:** from 2027 week 1, every qualification prediction is logged with its as_of.
-  - **Evaluation:** after the season's regional and district qualification matches, the D18 methodology is applied *unchanged* to the logged live predictions:
-    - qualification ECE, plus the per-bin table;
-    - the M5 v2 midpoint Spearman against the raw-EPA baseline under the same live inputs.
-  - **Proposed criteria for the label `live_validated`:**
+  - **Setup:** every qualification prediction logged from 2027 week 1.
+  - **Evaluation:** after the 2027 regional and district qualification matches, the D18 methodology is applied *unchanged* to the logged EPA-complete live predictions.
+  - **`live_validated` requires all of:**
     - qualification ECE < 0.05 (D6);
     - no qualification bin with ≥ 30 predictions deviating by more than 0.05;
-    - M5 v2 midpoint Spearman > live raw-EPA baseline.
-  - **Until then:** live-refreshed outputs carry `live_refresh_not_yet_validated`.
-
-## 10. Decisions needed before freezing
-
-1. The §6 fallback option: A, B or C.
-2. The 72 h window and the fetch schedule (§1).
-3. The L5 drift thresholds and L6 criteria as proposed.
-4. Whether `epa_source_pending` should be a 404 or a 422 (follow the existing convention: 422 for an input state, as `epa_source_incomplete`).
+    - M5 v2 midpoint Spearman > the live raw-EPA baseline under the same inputs.
