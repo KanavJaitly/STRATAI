@@ -1,0 +1,76 @@
+{
+ "checked_at": "2026-10-02T23:06:57.935378+00:00",
+ "frame": "C:\\Dev\\StratAI-artifacts\\phase4\\frame_ab1adbf38b43c2f3",
+ "checks": {
+  "1_models": {
+   "ranking_class": "RankingXGBModelV2",
+   "ranking_model_type": "ranking_xgb_v2",
+   "ranking_sha256_matches_registration": true,
+   "win_prob_class": "CalibratedWinProbModel",
+   "win_prob_model_type": "win_prob_xgb_calibrated",
+   "win_prob_sha256_matches_registration": true,
+   "ranking_provenance_source_version": "D18",
+   "ok": true
+  },
+  "2_epa_source": {
+   "epa_source": "d18_statbotics_primary",
+   "evaluated_configuration": true,
+   "snapshot": "statbotics_snapshot_20261001T220423Z",
+   "recorded_snapshot": "statbotics_snapshot_20261001T220423Z",
+   "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5",
+   "recorded_team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5",
+   "ok": true
+  },
+  "3_served_features_equal_evaluated": {
+   "matches_compared": 360,
+   "of_which_2026iscmp": 60,
+   "feature_mismatches": [],
+   "feature_mismatch_count": 0,
+   "served_value_mismatch_count": 0,
+   "ok": true
+  },
+  "4_provenance": {
+   "labels_seen": {
+    "statbotics": 1746,
+    "None": 54,
+    "stratai_fallback": 360
+   },
+   "mismatch_count": 0,
+   "ok": true
+  },
+  "5_gating": {
+   "playoff_matches": 25,
+   "playoff_validated_values_served": 0,
+   "playoff_all_not_validated": true,
+   "ranking_attempts": [
+    {
+     "event_key": "2026dal",
+     "status": 422,
+     "code": "epa_source_incomplete"
+    },
+    {
+     "event_key": "2026onnob",
+     "status": 200,
+     "code": null
+    }
+   ],
+   "refusals_all_epa_source_incomplete": true,
+   "adhoc_unstated_context": {
+    "red_win_probability": null,
+    "unvalidated_red_win_probability": 0.75,
+    "validation_status": "not_validated"
+   },
+   "ranking": {
+    "event_key": "2026onnob",
+    "model_type": "ranking_xgb_v2",
+    "teams": 25,
+    "validation_status": "moderate_held_out",
+    "epa_value_sources": [
+     "statbotics"
+    ]
+   },
+   "ok": true
+  }
+ },
+ "passed": true
+}
