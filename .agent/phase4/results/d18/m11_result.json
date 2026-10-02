@@ -1,0 +1,94 @@
+{
+  "artifact": "C:\\Dev\\StratAI-artifacts\\phase4\\frame_ab1adbf38b43c2f3\\d18_m11_result_0c9b2ea3c8ef.json",
+  "checks": [
+    {
+      "bars": {
+        "baseline": 0.6706560908498289,
+        "chance": 0.6931471805599453
+      },
+      "line": "[PASS] held-out win-prob log-loss: 0.5209 (< baseline 0.6707, chance 0.6931)",
+      "lower_is_better": true,
+      "name": "held-out win-prob log-loss",
+      "passed": true,
+      "value": 0.5208923942373159
+    },
+    {
+      "bars": {
+        "baseline": 0.17826307139450304,
+        "chance": 0.25
+      },
+      "line": "[PASS] held-out win-prob Brier: 0.1749 (< baseline 0.1783, chance 0.2500)",
+      "lower_is_better": true,
+      "name": "held-out win-prob Brier",
+      "passed": true,
+      "value": 0.17486699273543369
+    },
+    {
+      "bars": {
+        "baseline": 0.5955333742533729,
+        "chance": 0.0
+      },
+      "line": "[PASS] held-out ranking Spearman: 0.6112 (> baseline 0.5955, chance 0.0000)",
+      "lower_is_better": false,
+      "name": "held-out ranking Spearman",
+      "passed": true,
+      "value": 0.6112440558451762
+    },
+    {
+      "bars": {
+        "none present": 0.0
+      },
+      "line": "[PASS] average_auto_points resolves in the held-out season: 100396.0000 (> none present 0.0000)",
+      "lower_is_better": false,
+      "name": "average_auto_points resolves in the held-out season",
+      "passed": true,
+      "value": 100396.0
+    }
+  ],
+  "consistent_with_d18_records": {
+    "baseline_midpoint_spearman": true,
+    "m4_win_prob_log_loss": true,
+    "m5v2_midpoint_spearman": true,
+    "m6_log_loss": true
+  },
+  "guard": {
+    "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+    "implementation": {
+      "changed_since_pinned_commit": [],
+      "head": "4ef55a756d4052aa29beb7da38b9ad14f9fb672e",
+      "ok": true,
+      "pinned_commit": "69139f817540638ddd84301917ad51357310ac9a",
+      "pinned_functions_changed": [],
+      "uncommitted": []
+    },
+    "methodology": {
+      "freeze_commit": "ec1b0af",
+      "methodology_files_changed_since_freeze": [],
+      "ok": true,
+      "spec_blob_at_freeze": "b578d1639c79e1221c4b99b67619d0c7c5726497",
+      "spec_blob_now": "b578d1639c79e1221c4b99b67619d0c7c5726497"
+    }
+  },
+  "milestone": "M11",
+  "passed": true,
+  "ranking_model": "RankingXGBModelV2 (M5 model of record), midpoint snapshot",
+  "readiness": {
+    "non_epa_problems": [],
+    "status": "INVALID"
+  },
+  "recorded_at": "2026-10-01T23:55:41.807699+00:00",
+  "source_version": "D18",
+  "spec": ".agent/phase4/D18_SOURCE_SPEC.md \u00a75",
+  "split": {
+    "epa_complete": [
+      19780,
+      15061
+    ],
+    "epa_incomplete_excluded": [
+      14685,
+      2943
+    ],
+    "test_rows": 18004,
+    "train_rows": 34465
+  }
+}
