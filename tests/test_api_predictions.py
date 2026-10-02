@@ -52,6 +52,10 @@ _MATCH_PRIOR = f"{_S_EVENT}_qm1"
 _MATCH_PLAYED = f"{_S_EVENT}_qm2"
 _MATCH_UNPLAYED = f"{_S_EVENT}_qm3"
 _MATCH_PLAYOFF = f"{_S_EVENT}_sf1m1"
+# A concluded prior event giving the red/blue teams real prior EPA, so their matches are
+# EPA-complete (M7's evaluated population); _TEAM_EMPTY has none.
+_S_PRIOR_EVENT = "9997zzzpredprior"
+_MATCH_PRIOR_EVENT = f"{_S_PRIOR_EVENT}_qm1"
 
 # Red/blue in the one played match -- real scores, so these six teams have
 # real average_score data (and are the ones used for happy-path/symmetry).
@@ -90,12 +94,13 @@ pytestmark = requires_db
 def _cleanup(database: Database) -> None:
     with database.cursor() as cursor:
         cursor.execute(
-            "DELETE FROM match_teams WHERE match_key IN (%s, %s, %s, %s)",
-            (_MATCH_PRIOR, _MATCH_PLAYED, _MATCH_UNPLAYED, _MATCH_PLAYOFF),
+            "DELETE FROM match_teams WHERE match_key IN (%s, %s, %s, %s, %s)",
+            (_MATCH_PRIOR, _MATCH_PLAYED, _MATCH_UNPLAYED, _MATCH_PLAYOFF, _MATCH_PRIOR_EVENT),
         )
-        cursor.execute("DELETE FROM matches WHERE event_key = %s", (_S_EVENT,))
+        cursor.execute("DELETE FROM matches WHERE event_key IN (%s, %s)", (_S_EVENT, _S_PRIOR_EVENT))
+        cursor.execute("DELETE FROM team_event_stats WHERE event_key = %s", (_S_PRIOR_EVENT,))
         cursor.execute("DELETE FROM teams WHERE team_number = ANY(%s::int[])", (_ALL_SENTINEL_TEAMS,))
-        cursor.execute("DELETE FROM events WHERE event_key = %s", (_S_EVENT,))
+        cursor.execute("DELETE FROM events WHERE event_key IN (%s, %s)", (_S_EVENT, _S_PRIOR_EVENT))
 
 
 @pytest.fixture
@@ -115,6 +120,25 @@ def database() -> Generator[Database, None, None]:
             "INSERT INTO teams (team_number, name) VALUES " + ", ".join(["(%s, %s)"] * len(_ALL_SENTINEL_TEAMS)),
             [value for team in _ALL_SENTINEL_TEAMS for value in (team, f"Team {team}")],
         )
+        cursor.execute(
+            "INSERT INTO events (event_key, season, name, end_date) VALUES (%s, %s, %s, %s)",
+            (_S_PRIOR_EVENT, _S_SEASON, "Sentinel Predictions Prior Event", datetime(2026, 2, 20).date()),
+        )
+        cursor.execute(
+            "INSERT INTO matches (match_key, event_key, season, competition_level, match_number, "
+            "scheduled_time, score_red, score_blue) VALUES (%s, %s, %s, 'qualification', 1, %s, 70, 60)",
+            (_MATCH_PRIOR_EVENT, _S_PRIOR_EVENT, _S_SEASON, datetime(2026, 2, 19, 10, 0, tzinfo=timezone.utc)),
+        )
+        for index, team in enumerate(_TEAM_RED + _TEAM_BLUE):
+            cursor.execute(
+                "INSERT INTO match_teams (match_key, team_number, alliance_color) VALUES (%s, %s, %s)",
+                (_MATCH_PRIOR_EVENT, team, "red" if team in _TEAM_RED else "blue"),
+            )
+            cursor.execute(
+                "INSERT INTO team_event_stats (team_number, event_key, season, epa_total, epa_auto, epa_teleop, "
+                "epa_endgame, matches_played) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                (team, _S_PRIOR_EVENT, _S_SEASON, 20.0 + index, 5.0, 10.0, 5.0 + index, 1),
+            )
         # A prior, already-played match for the same six red/blue teams --
         # point-in-time correctness (ml.features.assembler) means a match's
         # OWN outcome never counts toward its own teams' average_score, so
@@ -563,3 +587,24 @@ def test_a_wrong_artifact_sha256_is_refused(database: Database, registry_dir: Pa
 def test_display_probability_rounds_symmetrically_and_never_reads_as_certain(probability, shown):
     assert display_probability(probability) == shown
     assert display_probability(1.0 - probability) == pytest.approx(1.0 - shown, abs=1e-12)
+
+
+def test_epa_incomplete_qualification_matches_are_not_validated(client: TestClient):
+    """M7 validated qualification probabilities only on EPA-complete matches (every team with prior
+    EPA). A qualification pairing including teams without prior EPA is outside that population."""
+    body = client.post("/predictions/win-probability", json={
+        "event_key": _S_EVENT, "red_team_numbers": _TEAM_RED, "blue_team_numbers": _TEAM_EMPTY,
+        "match_context": "qualification"}).json()
+    assert body["validation_status"] == "not_validated" and body["not_validated_reason"] == "epa_incomplete"
+    assert body["red_win_probability"] is None and body["unvalidated_red_win_probability"] is not None
+
+
+def test_not_validated_reasons_are_explicit(client: TestClient):
+    playoff = client.get(f"/predictions/matches/{_MATCH_PLAYOFF}/win-probability").json()
+    unspecified = client.post("/predictions/win-probability", json={
+        "event_key": _S_EVENT, "red_team_numbers": _TEAM_RED, "blue_team_numbers": _TEAM_BLUE}).json()
+    validated = client.get(f"/predictions/matches/{_MATCH_PLAYED}/win-probability").json()
+    assert playoff["not_validated_reason"] == "playoff_scope"
+    assert unspecified["not_validated_reason"] == "unspecified_context"
+    assert validated["not_validated_reason"] is None
+    assert all(t["epa_source_event_key"] == _S_PRIOR_EVENT for t in validated["teams"])

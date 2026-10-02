@@ -52,9 +52,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--frame", type=Path, required=True)
     parser.add_argument("--sample", type=int, default=300)
+    parser.add_argument("--record", type=Path, default=RECORD, help="write-once output path")
     args = parser.parse_args(argv)
-    if RECORD.exists():
-        raise SystemExit(f"{RECORD} exists: verification records are write-once")
+    record_path = args.record
+    if record_path.exists():
+        raise SystemExit(f"{record_path} exists: verification records are write-once")
 
     settings = Settings()
     registration = json.loads(REGISTRATION.read_text(encoding="utf-8"))
@@ -111,7 +113,13 @@ def main(argv: list[str] | None = None) -> int:
             if expected != actual:
                 feature_mismatches.append(row.match_key)
             body = client.get(f"/predictions/matches/{row.match_key}/win-probability").json()
-            if body.get("red_win_probability") != display_probability(win.model.predict_win_prob(_match_features(row))):
+            shown = body.get("red_win_probability")
+            if shown is None:
+                shown = body.get("unvalidated_red_win_probability")
+            # validated exactly when the match is in M7's evaluated population (every team EPA-present)
+            epa_complete = all(t.epa_total_present for t in (*row.red_teams, *row.blue_teams))
+            gated_right = (body.get("validation_status") == "approximately_calibrated_qualification") == epa_complete
+            if shown != display_probability(win.model.predict_win_prob(_match_features(row))) or not gated_right:
                 value_mismatches.append(row.match_key)
             api_teams = {t["team_number"]: (t["epa_value_source"], t["epa_source_event_key"]) for t in body["teams"]}
             frame_teams = {t.team_number: (t.epa_value_source, t.epa_source_event_key)
@@ -175,14 +183,14 @@ def main(argv: list[str] | None = None) -> int:
                                     and adhoc.get("validation_status") == "not_validated"
                                     and ranking_body is not None and ranking_body.get("model_type") == "ranking_xgb_v2")
 
-    if RECORD.exists():
-        raise SystemExit(f"{RECORD} exists: verification records are write-once")
+    if record_path.exists():
+        raise SystemExit(f"{record_path} exists: verification records are write-once")
     result = {"checked_at": datetime.now(timezone.utc).isoformat(), "frame": str(args.frame),
               "checks": checks, "passed": all(c["ok"] for c in checks.values())}
-    RECORD.parent.mkdir(parents=True, exist_ok=True)
-    RECORD.write_text(json.dumps(result, indent=1, default=str) + "\n", encoding="utf-8")
+    record_path.parent.mkdir(parents=True, exist_ok=True)
+    record_path.write_text(json.dumps(result, indent=1, default=str) + "\n", encoding="utf-8")
     print(json.dumps({name: check["ok"] for name, check in checks.items()}, indent=1))
-    print("D18 production alignment:", "VERIFIED" if result["passed"] else "FAILED", f"-> {RECORD}")
+    print("D18 production alignment:", "VERIFIED" if result["passed"] else "FAILED", f"-> {record_path}")
     return 0 if result["passed"] else 1
 
 
