@@ -32,7 +32,7 @@ COVERAGE_BAND = (0.75, 0.85)  # P5-D9
 LOW_CONFIDENCE_WEEKS = frozenset({1, 2, 3})
 # Criterion (b)'s single measurement (scripts/phase5_m5_qualification_forecast.py). None means not measured, so
 # the range is served not_validated. tests/test_qualification_forecast.py pins it to the record.
-RANGE_COVERAGE_VALIDATED: bool | None = None
+RANGE_COVERAGE_VALIDATED: bool | None = False  # p5_m5_qualification_forecast.json: coverage 0.8532
 RECORD = ".agent/phase5/results/p5_m5_qualification_forecast.json"
 
 RECORD_VALIDATED = "validated"
@@ -124,3 +124,32 @@ def by_team_event(rows: Iterable[tuple[str, Sequence[int], Sequence[int], float,
                 probabilities.append(p)
                 out[(event_key, team)] = (probabilities, wins + int(won))
     return dict(out)
+
+
+# --- serving helpers ------------------------------------------------------------------------------
+
+STATBOTICS_WEEK_SQL = """
+SELECT payload_json->>'week' FROM raw_source_payloads
+WHERE source = 'statbotics' AND source_object_type = 'team_event'
+  AND right(source_object_id, length(%(event)s) + 1) = '_' || %(event)s
+ORDER BY id DESC LIMIT 1
+"""
+QUAL_MATCHES_SQL = """
+SELECT m.match_key, m.scheduled_time FROM matches m
+WHERE m.event_key = %(event)s AND m.competition_level = 'qualification' AND m.scheduled_time IS NOT NULL
+ORDER BY m.scheduled_time, m.match_key
+"""
+
+
+def statbotics_event_week(database, event_key: str) -> int | None:
+    """The event's Statbotics week, from the latest landed Statbotics record (None when none is landed)."""
+    with database.cursor() as cursor:
+        cursor.execute(STATBOTICS_WEEK_SQL, {"event": event_key})
+        row = cursor.fetchone()
+    return int(row[0]) if row and row[0] is not None else None
+
+
+def qualification_matches(database, event_key: str) -> list[tuple[str, object]]:
+    with database.cursor() as cursor:
+        cursor.execute(QUAL_MATCHES_SQL, {"event": event_key})
+        return cursor.fetchall()
