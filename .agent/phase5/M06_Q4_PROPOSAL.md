@@ -1,6 +1,6 @@
 # P5-M6 — Q4 proposal: a seeded, stratified verification population within the 45-minute rule
 
-**Status: PROPOSAL for Kanav's review (2026-10-03). Not adopted, not implemented, not run.**
+**Status: APPROVED by Kanav 2026-10-03 with one modification (the synthetic score-correction case is removed) — recorded as P5-D14.** Earlier status: proposal for review.
 
 If approved, it is recorded as a dated decision (P5-D14) in `P5_M0_DECISIONS.md` **before** the sample is drawn or
 any recorded check runs.
@@ -102,11 +102,7 @@ as_of.
 **End of run:**
 - **(c)** Re-request a seeded sample of 150 logged strength responses, plus every sentinel step's, at their as_of
   on the final database. All must be identical.
-- **Optional targeted edge case (recommended), a TBA score correction.** No recorded payload history exists, so
-  this one case is synthetic and labelled so.
-  - At E2's last qualification step, re-land that match with a corrected score, through the same path.
-  - Check that the affected features and `team_metrics` change, traced to the new raw payload.
-  - Re-land the original and check they return to their prior values.
+- *(Removed by P5-D14: no synthetic score-correction case is part of the recorded verification. A correction, if tested, is a separate targeted test.)*
 
 ## 6. Runtime estimate (from the measured 2026arli costs)
 
@@ -122,8 +118,8 @@ as_of.
 | E5 8 steps (~40) | ~4.1 min |
 | 10 bulk catch-up syncs plus follow-ons | ~1.7 min |
 | Endpoints: E1 and E2 at window end; E4 before and after switch | ~6 min |
-| (c) re-requests (~160) and the correction case | ~2.5 min |
-| **Total** | **~36 min** |
+| (c) re-requests (~160) | ~2 min |
+| **Total** | **~35.5 min** |
 
 - **Hard budget:** 45 min, enforced by the harness.
 - **If the budget is hit**, the run stops and is recorded as **incomplete (a failure)**, never as a partial pass.
@@ -138,7 +134,7 @@ as_of.
 | Early-week event / season start | E2 (TBA week 0; teams without prior EPA) |
 | Championship / division | E1 (district championship), E3 (championship division) |
 | EPA fallback path (e) | E1, 2026iscmp |
-| Missing or repeated data | E5's DQ / surrogate rows; E2's withheld EPA; every step's repeat poll; bulk catch-up; the correction case |
+| Missing or repeated data | E5's DQ / surrogate rows; E2's withheld EPA; every step's repeat poll; bulk catch-up |
 | Future-row leakage | 10 targeted sentinels (2 types × 5 events) |
 | Per-match equality, increment, stability, metrics recompute, final re-request | every checked step, and (c) at the end |
 | Analysis and forecast endpoints, including the policy switch | E1, E2 and E4 |
