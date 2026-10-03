@@ -120,7 +120,9 @@ class EventAnalysisResponse(BaseModel):
     response_model=EventAnalysisResponse,
     summary="Event analysis: ordering, captain candidates, strongest teams, team comparison",
     description="The frozen P5-M4 ordering policy as of a point in time. Every element carries its validation "
-                "status; no playoff probability is served.",
+                "status; no playoff probability is served. The team comparison's reliability_score is an INTERIM "
+                "placeholder (100 * matches_used / matches_scheduled, an attendance ratio, not a robot-failure "
+                "measure; docs/metrics_pipeline.md section 6.3).",
     responses={HTTPStatus.NOT_FOUND: {"model": ErrorResponse}, HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse}},
 )
 def event_analysis(
