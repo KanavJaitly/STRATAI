@@ -1,0 +1,51 @@
+{
+ "additional_equality_with_d18_frame": {
+  "examples": [],
+  "fields_excluded": [
+   "epa_source_state"
+  ],
+  "mismatches": 0
+ },
+ "criterion_contracts": {
+  "examples": [],
+  "failures": 0
+ },
+ "criterion_exact_equality_with_assembler": {
+  "examples": [],
+  "mismatches": 0
+ },
+ "epa_source": {
+  "provider": "d18_statbotics_primary",
+  "snapshot_integrity": {
+   "a1_team_events": 331,
+   "invalid_team_events": 143,
+   "ok": true,
+   "raw_equals_table_epa_total": 24022,
+   "raw_files_verified": 608,
+   "raw_records": 24022,
+   "table_rows": 24022,
+   "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5"
+  }
+ },
+ "epa_source_states": {
+  "current": 963,
+  "fallback_stratai": 4,
+  "withheld_no_prior_event": 33
+ },
+ "milestone": "P5-M3",
+ "passed": true,
+ "population": {
+  "distinct_appearances": 108024,
+  "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+  "frame_info_sha256": "64fa2fd358bd7b8cf9010ca00273ce340897b992e4518cdaccff82cf748d1f19",
+  "sampled": 1000,
+  "season": 2026,
+  "seed": 20261003
+ },
+ "provenance": {
+  "commit": "e8ade96dc2b10cc70b5bca053458518f2504c75a",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-03T02:14:21.597194+00:00"
+ },
+ "spec": "docs/P5Milestones.md (frozen P5-M0)"
+}
