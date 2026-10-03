@@ -117,3 +117,12 @@ Phase 5 builds on the Phase 4 contracts in `docs/ml_models.md`:
 | (b) 80% range coverage, measured once | 0.8532 (6,693 / 7,845), **outside [0.75, 0.85]**, so the range is served `not_validated` |
 
 The range is slightly conservative (its integer bounds cover more than 80%). Nothing was adjusted after the result.
+
+## P5-M7 — Meta tracking (partial; one decision open)
+
+- **Components** (`ml/features/score_components.py`):
+  - auto, teleop (excluding the endgame), endgame, fouls and adjustments, per season, as TBA labels them;
+  - they sum to the official score on **106,390 of 106,390** alliance rows (criterion (a), passed).
+- **Weekly distributions** (descriptive): per season, TBA week and component. Recorded in `.agent/phase5/results/p5_m7_adapter_parity.json`.
+- **Change-point detector** (`ml/meta/weekly.py`): a share test of week w against earlier weeks, Holm across components. The exact test and its unit of analysis are **open decision Q2** (`.agent/phase5/M07_DECISION_REQUIRED.md`), so the false-alarm check (b) and the real 2024–2026 flags (c) are not yet run.
+- **Not observable (P5-D10):** archetype or mechanism meta. It needs at-event mechanism labels, which would be a future data-collection extension.
