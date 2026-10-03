@@ -95,3 +95,25 @@ Phase 5 builds on the Phase 4 contracts in `docs/ml_models.md`:
 | (b) Ordering at the switch point (208 events) | M5 v2 0.6138 vs raw EPA 0.5955; paired +0.0183, 95% CI [0.0082, 0.0288]. M5 v2 is served after the switch | raw EPA `validated`; M5 v2 after the switch `validated_as_measured` |
 | (c) Captain hit rate, pre-event | 0.4207 (95% CI 0.4056–0.4357) | `validated_as_measured` |
 | (c) Captain hit rate, switch point | 0.4255 vs raw EPA 0.4207; paired CI [−0.0126, 0.0198]. **No improvement claimed** | `validated_as_measured` |
+
+## P5-M5 — Qualification forecasts and expected records
+
+- **Endpoint:** `GET /events/{event_key}/qualification-forecast?as_of=`. Qualification matches only.
+- **Per match:** the frozen M7 pair's q, built at min(as_of, the match's time). It is gated exactly as M12:
+  - EPA-complete matches show a rounded probability, labelled `approximately_calibrated_qualification`;
+  - other matches show only an unvalidated value, labelled `not_validated` (`epa_incomplete`).
+- **Per team:**
+  - expected qualification wins = Σ q (shown to 1 dp);
+  - the central 80% Poisson-binomial range;
+  - a record label, which is `not_validated` if any of its matches is EPA-incomplete;
+  - a range label;
+  - `low_confidence` for Statbotics weeks 1–3.
+- **Not provided:** any ranking-point projection.
+- **Record:** `.agent/phase5/results/p5_m5_qualification_forecast.json` (commit 2ebd83a).
+
+| Criterion | Result |
+|---|---|
+| (a) Reproduction (12,245 matches, 7,845 team-events) | mean actual − expected 0.0000; mean \|actual − expected\| 1.1207: exact |
+| (b) 80% range coverage, measured once | 0.8532 (6,693 / 7,845), **outside [0.75, 0.85]**, so the range is served `not_validated` |
+
+The range is slightly conservative (its integer bounds cover more than 80%). Nothing was adjusted after the result.
