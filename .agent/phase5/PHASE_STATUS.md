@@ -19,5 +19,5 @@ human_decisions_required:
   - P5-M9 human-authored feasibility rubric; mentor review
   - DM1 2026 game spec entered from the manual by a person (no hindsight)
 known_risks: see PHASE_PLAN.md
-last_verified: mid-phase full suite 1,732 passed / 2 failed then fixed; checkpoint suite: see below
+last_verified: checkpoint full suite at 393d7ee on stratai_test: 1,748 passed, 3 skipped, 0 failed (549 s)
 last_checkpoint: CHECKPOINT_2026-10-03.md
