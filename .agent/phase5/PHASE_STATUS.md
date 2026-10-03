@@ -2,7 +2,7 @@ phase: 5
 branch: phase5/build (from origin/main 369687f)
 current_milestone: P5-M6 (STOPPED at checkpoint for human review)
 status: CHECKPOINT_STOPPED (see CHECKPOINT_2026-10-03.md)
-stage: P5-M6 debug replay done; recorded replay NOT run
+stage: P5-M6 harness fixed; 2026arli debug rerun clean (0 problems, 30.1 min); recorded replay disabled pending a design within the 45-min rule
 accepted: [P5-M1, P5-M3, P5-M4, P5-M5]
 blocked:
   - P5-M8/P5-M9 (DM1): open decision Q3 + human inputs (M08_DECISION_REQUIRED.md)
@@ -11,7 +11,7 @@ blocked:
   - P5-M2: open decision Q1 (M02_DECISION_REQUIRED.md), then L1/L2, then adoption (P5-D3)
 human_decisions_required:
   - P5-M8/M9 Q3: similarity/archetype/expected-range/dominant-component rules, kappa gate, coding reconciliation
-  - P5-M6: form of the recorded replay's reproducibility check (second full replay vs cheaper equivalent)
+  - P5-M6: design of the recorded replay within the 45-minute verification rule (CLAUDE.md)
   - P5-M7 Q2: detector test statistic and unit (M07_DECISION_REQUIRED.md)
   - P5-M2 Q1: A1/A2 skip vs literal state (M02_DECISION_REQUIRED.md)
   - P5-M2 adoption decision (P5-D3)
