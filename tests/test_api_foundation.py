@@ -258,7 +258,8 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     only endpoints ("the metrics endpoint is Milestone 13"). Milestone 13 landed
     that endpoint, so the metrics path joins the list -- the pin doing exactly
     its job. Phase 4 Milestone 12 added the four ML prediction endpoints the
-    same way: a deliberate, reviewed addition, not a silent one. It still
+    same way: a deliberate, reviewed addition, not a silent one. Phase 5
+    adds its endpoints the same way (P5-M3: the strength view). It still
     guards the other direction, which has not changed: a test-only
     forced-error route (/_test_boom and friends, registered on locally built
     apps in this module) must never reach the shipped application.
@@ -272,6 +273,7 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
         "/predictions/win-probability",
         "/ready",
         "/teams/{team_number}/events/{event_key}/metrics",
+        "/teams/{team_number}/events/{event_key}/strength",
     ]
 
 

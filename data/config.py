@@ -100,9 +100,18 @@ class Settings(BaseSettings):
     # Unconfigured, it fails loudly rather than silently using another source.
     # "stratai" (D15, historical) and "statbotics" (plain D13 over team_event_stats, no
     # availability rule or fallback) remain selectable as non-evaluated references.
-    epa_source: Literal["d18_statbotics_primary", "stratai", "statbotics"] = "d18_statbotics_primary"
+    #
+    # "p5_live_statbotics" is the P5-M2 live-refreshed provider (ml.ratings.live_epa). It is
+    # not the evaluated configuration: adoption is a recorded human decision (P5-D3), and it
+    # loads only with LIVE_EPA_LOG_DIR (a snapshot log rooted at STATBOTICS_SNAPSHOT_DIR) and an
+    # explicit LIVE_EPA_A1A2_POLICY (open decision Q1, .agent/phase5/M02_DECISION_REQUIRED.md).
+    epa_source: Literal["d18_statbotics_primary", "stratai", "statbotics", "p5_live_statbotics"] = (
+        "d18_statbotics_primary")
     stratai_epa_chain: str | None = None
     statbotics_snapshot_dir: str | None = None
+    live_epa_log_dir: str | None = None
+    live_epa_a1a2_policy: Literal["d18_skip", "literal_state"] | None = None
+    live_epa_concluded_seasons: list[int] = []
 
     model_config = ConfigDict(
         case_sensitive=False,
