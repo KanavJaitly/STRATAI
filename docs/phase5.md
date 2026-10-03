@@ -41,3 +41,36 @@ Phase 5 builds on the Phase 4 contracts in `docs/ml_models.md`:
 | n, uncertainty, absent reasons, EPA provenance | 0 failures |
 | Equality with the D18 frame's own features | 0 mismatches |
 | EPA source states seen | current 963, withheld 33, fallback_stratai 4 |
+
+## P5-M2 — Live EPA refresh (built; not adopted)
+
+- **Status:** implemented to `.agent/phase5/LIVE_EPA_REFRESH_DESIGN.md`. Production still serves the frozen D18 source (P5-D3).
+- **Open decision Q1** (`.agent/phase5/M02_DECISION_REQUIRED.md`): the design's §3.5 and its L1 criterion disagree about D18's A1/A2 availability skip (1,817 of 319,301 appearances). L1 and L2 run only after it is decided.
+- **Snapshot log** (`ml/ratings/live_snapshots.py`):
+  - append-only manifests, rooted at the D18 snapshot;
+  - each refresh writes the parent manifest plus its changed events;
+  - `snapshot_id` is the manifest's sha256.
+- **Provider** (`ml/ratings/live_epa.py`):
+  - every served value names its `epa_source_state`, `snapshot_id`, `retrieved_at` and raw sha256;
+  - a STRATAI fallback also names its `fallback_reason` and replay.
+- **Refusals:**
+  - `pending` → `epa_source_pending` (422);
+  - `unavailable` → `epa_source_incomplete` (422);
+  - an older event is never substituted.
+- **Refresh** (`ml/ratings/live_source.py`, `scripts/live_epa_refresh.py`):
+  - fetch, then raw file, Phase 2 landing, the S1 check, and a manifest;
+  - a failed cycle writes no manifest, and the previous snapshot keeps serving, labelled `stale`.
+  - **Warning:** refreshing changes `team_event_stats`, after which the D18 loader refuses that database. Never run it against the serving database before adoption.
+- **Selecting it:** `EPA_SOURCE=p5_live_statbotics` with `LIVE_EPA_LOG_DIR`, `STATBOTICS_SNAPSHOT_DIR`, `STRATAI_EPA_CHAIN`, `LIVE_EPA_A1A2_POLICY` (Q1) and `LIVE_EPA_CONCLUDED_SEASONS`. It reports `evaluated_configuration: false` and `live_refresh_not_yet_validated`.
+
+| Check | Result |
+|---|---|
+| L1 equivalence with D18 | not run (waits for Q1) |
+| L2 simulated cadence | not run (waits for Q1) |
+| L3 outage drill (injected 503s and timeouts) | **passed**: pending → fallback_stratai → current; stale while failing; no manifest from a failed refresh |
+| L4 atomicity (2026iscmp, 24 h lag) | **passed** on the labelled rerun (the first run's only failure was a defect in an extra sub-check) |
+| Root equals D18 (24,022 values; T_w1, T_end) | passed (test) |
+
+**L5 and L6, scheduled for 2027:**
+- **L5:** the daily sweep re-fetches events for 14 days, so value drift is measurable from the log.
+- **L6:** log every qualification prediction from 2027 week 1 (`ml/ratings/prediction_log.py`). After the 2027 qualification season, apply the D18 methodology unchanged to the logged EPA-complete predictions.
