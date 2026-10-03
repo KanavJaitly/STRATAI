@@ -101,3 +101,14 @@
 - Fix the three harness defects (verification-harness bugs only; no criterion changes) and commit.
 - Rerun `--debug-event 2026arli` and confirm a clean result.
 - Only then launch the recorded P5-M6 replay.
+
+## Update — 2026-10-03, after review (Kanav)
+
+- **New permanent rule (CLAUDE.md):** no verification run may exceed about 45 minutes; use seeded samples plus
+  edge cases.
+- **Harness defects:** fixed at commit baf8144.
+- **The recorded six-event run is disabled** in the script until a design within the rule is approved.
+- **2026arli debug rerun:** 0 problems in 30.1 min. Per-match equality, the leakage sentinel, the final
+  re-request and A1/A2-rule agreement all pass. See `debug/M06_DEBUG_2026ARLI.md`.
+- **Q1, Q2 and Q3:** still OPEN. Their details were reported to Kanav; nothing is decided.
+- **Next step:** Kanav's decisions on Q1, Q2 and Q3, and approval of a recorded P5-M6 design within 45 minutes.

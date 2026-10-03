@@ -57,3 +57,33 @@ establish (a), (b), (c), the sentinel and the policy agreement for this event.**
 - The STRATAI chain correctly refuses to load against the replay database. Its raw payloads were re-landed with
   new ids, so `StaleEpaArtifacts` fires. That is why the harness loads STRATAI from the serving database: correct
   behaviour.
+
+---
+
+# Rerun after the harness fixes — 2026-10-03 (commit baf8144; debug, unrecorded)
+
+- **Changes:** the three harness defects are fixed, and sampling plus a time budget follow CLAUDE.md's 45-minute
+  rule.
+- **Full result:** `m6_debug_2026arli_20261003T222611Z.json`. Stdout: `m6_debug_2026arli_run2_stdout.txt`.
+
+| Check | Scope | Result |
+|---|---|---|
+| Runtime | budget 45 min | **30.1 min**, 65 / 65 steps, not stopped by the budget |
+| Production ingestion (`sync_event`) plus the watch follow-on | every match (65) | 65 syncs, no failures |
+| (a) Per-match equality: served strength view = assembler `TeamFeatures` | 6 affected teams plus 2 seeded controls per step | **520 / 520 equal** |
+| (a) An affected team's match count rises by exactly 1, traced to the new row's raw payload | all 390 affected-team views | **390 / 390** |
+| (b) No-op re-poll lands nothing, and the re-request is identical | every step | **65 / 65** |
+| (b) Control teams: no in-event change since their latest served state | 127 comparisons | **0 changes** |
+| (d) `team_metrics` = a fresh recompute (excluding `computed_at`) | step teams; every team at the last step | **537 / 537** |
+| Planted future-row (leakage) sentinel: a scored match 1 h after as_of, at step 32 | 1 | **no served change** |
+| (c) Final re-request equality on the final database | seeded sample of 150 plus the sentinel step's (155 of 520 logged) | **155 / 155 identical** |
+| Candidate EPA-rule agreement (Q1: `d18_skip` vs `literal_state`) at the EPA lookup | 520 | **520 / 520 identical** |
+| End-of-event analysis and qualification-forecast endpoints | once | 200 (no problem logged) |
+
+- **Problems:** 0.
+- **Replay-log context:**
+  - snapshot `c7bcc3cc…ef69`;
+  - simulated lag 24 h;
+  - model sha256s `1f0fe5aa…6312` and `c76d3299…b0a2`;
+  - STRATAI fingerprints recorded in the result file.
+- **Not covered by this event:** criterion (e) (2026iscmp fallback teams) does not apply to 2026arli.
