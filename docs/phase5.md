@@ -74,3 +74,24 @@ Phase 5 builds on the Phase 4 contracts in `docs/ml_models.md`:
 **L5 and L6, scheduled for 2027:**
 - **L5:** the daily sweep re-fetches events for 14 days, so value drift is measurable from the log.
 - **L6:** log every qualification prediction from 2027 week 1 (`ml/ratings/prediction_log.py`). After the 2027 qualification season, apply the D18 methodology unchanged to the logged EPA-complete predictions.
+
+## P5-M4 — Event analysis
+
+- **Endpoint:** `GET /events/{event_key}/analysis?as_of=`.
+- **Ordering policy (P5-D6, measured once):**
+  - Raw EPA until every rostered team has played its ⌈n_i/2⌉-th qualification match (the event switch point).
+  - M5 v2 from then on.
+  - Never a mix of the two.
+- **What the response contains:**
+  - the ordering;
+  - captain candidates (its top 8);
+  - strongest teams (the same top 8, with no playoff probability);
+  - each attending team's strength view (P5-M3, descriptive).
+- **Record:** `.agent/phase5/results/p5_m4_event_analysis.json` (commit 4cc3792).
+
+| Criterion | Result | Label |
+|---|---|---|
+| (a) Reproduction | raw EPA 0.5955, M5 v2 midpoint 0.6112: exact | — |
+| (b) Ordering at the switch point (208 events) | M5 v2 0.6138 vs raw EPA 0.5955; paired +0.0183, 95% CI [0.0082, 0.0288]. M5 v2 is served after the switch | raw EPA `validated`; M5 v2 after the switch `validated_as_measured` |
+| (c) Captain hit rate, pre-event | 0.4207 (95% CI 0.4056–0.4357) | `validated_as_measured` |
+| (c) Captain hit rate, switch point | 0.4255 vs raw EPA 0.4207; paired CI [−0.0126, 0.0198]. **No improvement claimed** | `validated_as_measured` |

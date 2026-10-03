@@ -41,7 +41,7 @@ BOOTSTRAP_SEED = 20261004  # pre-declared for P5-M4
 
 # Criterion (b)'s single measurement decides this (scripts/phase5_m4_event_analysis.py). None means not yet
 # measured, which serves raw EPA throughout. tests/test_event_analysis.py pins it to the record.
-SERVE_M5V2_AFTER_SWITCH: bool | None = None
+SERVE_M5V2_AFTER_SWITCH: bool | None = True  # p5_m4_event_analysis.json: +0.0183, CI [0.0082, 0.0288]
 RECORD = ".agent/phase5/results/p5_m4_event_analysis.json"
 
 VALIDATED_RAW_EPA = "validated"  # the M4 raw-EPA baseline, pre-event included (0.5955)
@@ -101,3 +101,40 @@ def paired_bootstrap(differences: Sequence[float], *, resamples: int = BOOTSTRAP
     return {"events": len(values), "mean_difference": float(values.mean()),
             "ci95": [float(np.quantile(means, 0.025)), float(np.quantile(means, 0.975))],
             "resamples": resamples, "seed": seed}
+
+
+# --- serving: the switch point from the canonical schedule ------------------------------------
+
+QUAL_SCHEDULE_SQL = """
+SELECT mt.team_number, m.scheduled_time, (m.score_red IS NOT NULL AND m.score_blue IS NOT NULL) AS completed
+FROM matches m JOIN match_teams mt ON mt.match_key = m.match_key
+WHERE m.event_key = %(event)s AND m.competition_level = 'qualification' AND m.scheduled_time IS NOT NULL
+ORDER BY mt.team_number, m.scheduled_time, m.match_key
+"""
+
+
+@dataclass(frozen=True)
+class SwitchState:
+    passed: bool
+    switch_time: datetime | None  # the last team's ⌈n_i/2⌉-th scheduled qualification match
+    teams: int
+
+
+def serving_switch(database, event_key: str, as_of: datetime) -> SwitchState:
+    """Whether every rostered team has played its ⌈n_i/2⌉-th qualification match before as_of.
+
+    n_i counts the team's scheduled qualification matches in the canonical schedule. The evaluation counted the
+    frame's retained rows instead (DQ'd and unplayed matches excluded), so the two can differ by a match at
+    events with DQs.
+    """
+    schedule: dict[int, list[tuple[datetime, bool]]] = {}
+    with database.cursor() as cursor:
+        cursor.execute(QUAL_SCHEDULE_SQL, {"event": event_key})
+        for team, when, completed in cursor.fetchall():
+            schedule.setdefault(team, []).append((when, completed))
+    if not schedule:
+        return SwitchState(False, None, 0)
+    midpoints = [matches[midpoint_index(len(matches)) - 1] for matches in schedule.values()]
+    switch = max(when for when, _ in midpoints)
+    passed = all(completed and when < as_of for when, completed in midpoints)
+    return SwitchState(passed, switch, len(schedule))
