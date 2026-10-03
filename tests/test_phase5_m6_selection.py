@@ -98,12 +98,10 @@ def test_estimate_is_within_budget_for_the_approved_shape():
     assert estimate["total"] < sel.BUDGET_MINUTES
 
 
-def test_recorded_run_is_disabled():
-    assert replay.RECORDED_RUN_ENABLED is False
-    args = ["--snapshot", "s", "--chain", "c", "--registry", "r", "--ranking-tag", "t", "--ranking-sha256", "x",
-            "--win-prob-tag", "t", "--win-prob-sha256", "y", "--recorded"]
-    with pytest.raises(SystemExit, match="disabled"):
-        replay.main(args)
+def test_recorded_run_requires_the_recorded_selection(monkeypatch, tmp_path):
+    """Enabled by Kanav's approval (2026-10-03); it still runs only from the write-once selection record."""
+    assert replay.RECORDED_RUN_ENABLED is True
+    assert replay.SELECTION_RECORD == "p5_m6_selection.json" and replay.RECORD == "p5_m6_replay.json"
 
 
 def test_no_synthetic_case_in_the_harness():
