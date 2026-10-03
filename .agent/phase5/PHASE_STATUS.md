@@ -1,9 +1,9 @@
 phase: 5
 branch: phase5/build (from origin/main 369687f)
-current_milestone: P5-M1
+current_milestone: P5-M2
 status: IN_PROGRESS
 stage: Understand
-accepted: []
+accepted: [P5-M1, P5-M3]
 blocked: []
 human_decisions_required:
   - P5-M2 adoption decision (P5-D3)
