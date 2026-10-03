@@ -104,6 +104,14 @@ Unit and integration tests
 * Keep functions reasonably small.
 * Write tests for backend features whenever practical.
 * Never hardcode secrets or API keys.
+* **Verification runtime limit (Kanav, 2026-10-03; permanent).** No test, simulation, replay,
+  verification harness or other non-production validation run may be designed or allowed to run longer
+  than about 45 minutes.
+  * If a run is expected to exceed that, redesign it before running it; never let it run for hours.
+  * For expensive replay or simulation testing, use a seeded random or stratified representative sample of
+    matches/events plus targeted edge cases, not the whole historical dataset.
+  * Testing establishes that the system works correctly; it is not an exhaustive execution of history.
+  * Harnesses should carry their own time budget and stop, reporting partial results, when they hit it.
 
 ---
 
