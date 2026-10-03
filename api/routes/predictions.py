@@ -57,6 +57,20 @@ from starlette.requests import Request
 
 from api.dependencies import get_database, get_epa_source, get_ranking_model, get_win_prob_model
 from api.errors import ApiError, ErrorResponse
+from api.routes.common import (
+    CODE_EPA_SOURCE_INCOMPLETE,
+    CODE_EPA_SOURCE_NOT_LOADED,
+    CODE_EVENT_NOT_FOUND,
+    CODE_TEAM_NOT_FOUND,
+    EpaSourceInfo,
+    epa_info,
+    epa_source_incomplete_error,
+    epa_source_not_loaded_error,
+    event_not_found_error,
+    require_epa_source,
+    require_teams_rostered,
+    team_not_found_error,
+)
 from api.ml_loading import ServedEpaSource, ServedModel
 from database.connection import Database
 from ml.features.assembler import MatchFeatureRow, TeamFeatures, build_match_feature_row, build_team_features
@@ -108,11 +122,7 @@ RANKING_EVIDENCE = (
 )
 
 CODE_MODEL_NOT_LOADED = "model_not_loaded"
-CODE_EPA_SOURCE_NOT_LOADED = "epa_source_not_loaded"
-CODE_EPA_SOURCE_INCOMPLETE = "epa_source_incomplete"
-CODE_EVENT_NOT_FOUND = "event_not_found"
 CODE_MATCH_NOT_FOUND = "match_not_found"
-CODE_TEAM_NOT_FOUND = "team_not_found"
 CODE_INSUFFICIENT_FEATURES = "insufficient_features"
 
 
@@ -125,16 +135,11 @@ class ServedModelInfo(BaseModel):
     provenance: dict[str, Any] = Field(description="Where the artifact comes from (source version, frame, record)")
 
 
-class EpaSourceInfo(BaseModel):
-    epa_source: str
-    evaluated_configuration: bool = Field(description="True only for d18_statbotics_primary, the evaluated source")
-    provenance: dict[str, Any]
-
-
 class TeamEpaProvenance(BaseModel):
     team_number: int
     alliance: str | None = None
     epa_value_source: str | None = Field(description="statbotics, stratai_fallback, ... ; null when EPA is withheld")
+    epa_source_state: str | None = Field(description="current / stale / fallback_stratai / withheld_no_prior_event")
     epa_source_event_key: str | None
     epa_withheld_reason: str | None
 
@@ -238,27 +243,6 @@ def _model_not_loaded_error(model_type: str) -> ApiError:
     )
 
 
-def _epa_source_not_loaded_error() -> ApiError:
-    return ApiError(
-        status_code=HTTPStatus.NOT_FOUND, code=CODE_EPA_SOURCE_NOT_LOADED,
-        message="The configured EPA source is not loaded (unconfigured or failed its integrity checks).",
-    )
-
-
-def _event_not_found_error(event_key: str) -> ApiError:
-    return ApiError(
-        status_code=HTTPStatus.NOT_FOUND, code=CODE_EVENT_NOT_FOUND,
-        message=f"Event '{event_key}' is not known to StratAI.",
-    )
-
-
-def _team_not_found_error(team_number: int, event_key: str) -> ApiError:
-    return ApiError(
-        status_code=HTTPStatus.NOT_FOUND, code=CODE_TEAM_NOT_FOUND,
-        message=f"Team {team_number} is not rostered in any match at event '{event_key}'.",
-    )
-
-
 def _insufficient_features_error() -> ApiError:
     return ApiError(
         status_code=HTTPStatus.UNPROCESSABLE_ENTITY, code=CODE_INSUFFICIENT_FEATURES,
@@ -266,31 +250,13 @@ def _insufficient_features_error() -> ApiError:
     )
 
 
-def _epa_source_incomplete_error(exc: SilentFallbackError) -> ApiError:
-    return ApiError(
-        status_code=HTTPStatus.UNPROCESSABLE_ENTITY, code=CODE_EPA_SOURCE_INCOMPLETE,
-        message=f"The EPA source has no valid value for a required prior event ({exc.record['candidate']}); "
-                "it does not silently substitute an older event.",
-    )
-
-
-def _require_epa_source(epa_source: ServedEpaSource | None) -> ServedEpaSource:
-    if epa_source is None:
-        raise _epa_source_not_loaded_error()
-    return epa_source
-
-
 def _model_info(served: ServedModel) -> ServedModelInfo:
     return ServedModelInfo(**served.identity())
 
 
-def _epa_info(epa_source: ServedEpaSource) -> EpaSourceInfo:
-    return EpaSourceInfo(epa_source=epa_source.epa_source, evaluated_configuration=epa_source.evaluated_configuration,
-                         provenance=epa_source.provenance)
-
-
 def _team_provenance(team: TeamFeatures, alliance: str | None = None) -> TeamEpaProvenance:
     return TeamEpaProvenance(team_number=team.team_number, alliance=alliance, epa_value_source=team.epa_value_source,
+                             epa_source_state=team.epa_source_state,
                              epa_source_event_key=team.epa_source_event_key, epa_withheld_reason=team.epa_withheld_reason)
 
 
@@ -307,22 +273,13 @@ def _team_features_are_fully_absent(team_features: TeamFeatures) -> bool:
     ))
 
 
-def _require_teams_rostered(database: Database, event_key: str, team_numbers: list[int]) -> None:
-    """Raises team_not_found for the first supplied team_number not on
-    event_key's own roster (ml.features.roster.list_teams_at_event)."""
-    roster = set(list_teams_at_event(database, event_key))
-    for team_number in team_numbers:
-        if team_number not in roster:
-            raise _team_not_found_error(team_number, event_key)
-
-
 def _teams(database: Database, team_numbers: list[int], event_key: str, as_of: datetime,
            epa_source: ServedEpaSource, scales: ScaleLookup) -> list[TeamFeatures]:
     try:
         return [build_team_features(database, team_number, event_key, as_of, epa_provider=epa_source.provider,
                                     scale_lookup=scales) for team_number in team_numbers]
     except SilentFallbackError as exc:
-        raise _epa_source_incomplete_error(exc) from exc
+        raise epa_source_incomplete_error(exc) from exc
 
 
 def _win_probability_response(
@@ -360,7 +317,7 @@ def _win_probability_response(
         probability_rounding=PROBABILITY_DISPLAY_STEP, calibration_status=CALIBRATION_STATUS_M7_FAILED,
         evidence=WIN_PROBABILITY_EVIDENCE, warning=None if validated else UNVALIDATED_WARNING,
         model_type=identity["model_type"], model_version=identity["model_version"],
-        model_version_tag=identity["model_version_tag"], model=_model_info(served), epa=_epa_info(epa_source),
+        model_version_tag=identity["model_version_tag"], model=_model_info(served), epa=epa_info(epa_source),
         teams=[_team_provenance(t, "red") for t in match_features.red_teams]
         + [_team_provenance(t, "blue") for t in match_features.blue_teams],
     )
@@ -389,7 +346,7 @@ def match_win_probability(
 ) -> WinProbabilityResponse:
     if served is None:
         raise _model_not_loaded_error("win_prob_xgb_calibrated")
-    epa_source = _require_epa_source(epa_source)
+    epa_source = require_epa_source(epa_source)
 
     context = get_match_event_and_scheduled_time(database, match_key)
     if context is None:
@@ -410,7 +367,7 @@ def match_win_probability(
         match_features = build_match_feature_row(database, match_key, as_of=scheduled_time,
                                                  epa_provider=epa_source.provider, scale_lookup=ScaleLookup(database))
     except SilentFallbackError as exc:
-        raise _epa_source_incomplete_error(exc) from exc
+        raise epa_source_incomplete_error(exc) from exc
     return _win_probability_response(match_key, event_key, match_features, scheduled_time, served, epa_source,
                                      scope, level)
 
@@ -438,10 +395,10 @@ def win_probability_for_alliances(
 ) -> WinProbabilityResponse:
     if served is None:
         raise _model_not_loaded_error("win_prob_xgb_calibrated")
-    epa_source = _require_epa_source(epa_source)
+    epa_source = require_epa_source(epa_source)
     if not event_exists(database, body.event_key):
-        raise _event_not_found_error(body.event_key)
-    _require_teams_rostered(database, body.event_key, body.red_team_numbers + body.blue_team_numbers)
+        raise event_not_found_error(body.event_key)
+    require_teams_rostered(database, body.event_key, body.red_team_numbers + body.blue_team_numbers)
 
     as_of = datetime.now(timezone.utc)
     season = get_event_season(database, body.event_key)
@@ -479,9 +436,9 @@ def event_team_ranking(
 ) -> TeamRankingResponse:
     if served is None:
         raise _model_not_loaded_error("ranking_xgb_v2")
-    epa_source = _require_epa_source(epa_source)
+    epa_source = require_epa_source(epa_source)
     if not event_exists(database, event_key):
-        raise _event_not_found_error(event_key)
+        raise event_not_found_error(event_key)
 
     as_of = datetime.now(timezone.utc)
     teams = _teams(database, list_teams_at_event(database, event_key), event_key, as_of, epa_source,
@@ -491,7 +448,7 @@ def event_team_ranking(
     return TeamRankingResponse(
         event_key=event_key, as_of=as_of, validation_status=RANKING_VALIDATION_STATUS, evidence=RANKING_EVIDENCE,
         model_type=identity["model_type"], model_version=identity["model_version"],
-        model_version_tag=identity["model_version_tag"], model=_model_info(served), epa=_epa_info(epa_source),
+        model_version_tag=identity["model_version_tag"], model=_model_info(served), epa=epa_info(epa_source),
         rankings=[TeamRankingEntry(rank=position, team_number=team.team_number, predicted_rating=rating,
                                    epa_value_source=team.epa_value_source,
                                    epa_source_event_key=team.epa_source_event_key,
@@ -519,10 +476,10 @@ def alliance_synergy_score(
     database: Database = Depends(get_database),
     epa_source: ServedEpaSource | None = Depends(get_epa_source),
 ) -> AllianceSynergyResponse:
-    epa_source = _require_epa_source(epa_source)
+    epa_source = require_epa_source(epa_source)
     if not event_exists(database, body.event_key):
-        raise _event_not_found_error(body.event_key)
-    _require_teams_rostered(database, body.event_key, body.team_numbers)
+        raise event_not_found_error(body.event_key)
+    require_teams_rostered(database, body.event_key, body.team_numbers)
 
     as_of = datetime.now(timezone.utc)
     team_a, team_b, team_c = _teams(database, body.team_numbers, body.event_key, as_of, epa_source,
@@ -538,6 +495,6 @@ def alliance_synergy_score(
         scoring_distribution_axes_used=result.scoring_distribution_axes_used,
         defense_feeding_coverage_term=result.defense_feeding_coverage_term,
         defense_feeding_coverage_present_count=result.defense_feeding_coverage_present_count,
-        confidence=result.confidence, epa=_epa_info(epa_source),
+        confidence=result.confidence, epa=epa_info(epa_source),
         teams=[_team_provenance(t) for t in (team_a, team_b, team_c)],
     )

@@ -66,6 +66,13 @@ from data.metrics.statistics import (
 )
 from database.connection import Database
 from ml.features.scale import ScaleLookup
+from ml.ratings.epa_states import (
+    FALLBACK_STRATAI,
+    SERVED_STATES,
+    STRATAI_FALLBACK_SOURCE,
+    WITHHELD_NO_PRIOR_EVENT,
+    served_state,
+)
 from ml.features.score_breakdown import auto_points
 from ml.ratings.provider import (
     EPA_SOURCE_SQL,
@@ -201,6 +208,10 @@ class TeamFeatures(BaseModel):
     # appearance's EPA -- the provider's TeamEventEpa.source ("statbotics",
     # "stratai", or D18's "stratai_fallback"). None whenever EPA is withheld.
     epa_value_source: str | None = None
+    # Phase 5 (P5-D2; ml.ratings.epa_states): why this EPA was or was not served --
+    # current / stale / fallback_stratai with a value, withheld_no_prior_event without.
+    # None only on rows built before Phase 5.
+    epa_source_state: str | None = None
 
     @model_validator(mode="after")
     def _check_presence_flags_match_values(self) -> "TeamFeatures":
@@ -256,6 +267,13 @@ class TeamFeatures(BaseModel):
                 raise ValueError("no EPA field is present but epa_withheld_reason is None (no reason given)")
             if self.epa_value_source is not None:
                 raise ValueError("no EPA field is present but epa_value_source is set")
+            if self.epa_source_state not in (None, WITHHELD_NO_PRIOR_EVENT):
+                raise ValueError(f"no EPA field is present but epa_source_state is {self.epa_source_state!r}")
+        if any_epa_present and self.epa_source_state is not None:
+            if self.epa_source_state not in SERVED_STATES:
+                raise ValueError(f"an EPA field is present but epa_source_state is {self.epa_source_state!r}")
+            if (self.epa_source_state == FALLBACK_STRATAI) != (self.epa_value_source == STRATAI_FALLBACK_SOURCE):
+                raise ValueError("epa_source_state fallback_stratai must accompany exactly the stratai_fallback source")
 
         return self
 
@@ -325,6 +343,7 @@ class _EpaLookup:
     source_event_key: str | None
     withheld_reason: str | None
     value_source: str | None = None
+    source_state: str | None = None
 
 
 def _point_in_time_scores(
@@ -543,8 +562,10 @@ def _point_in_time_epa(
     provider = epa_provider or default_point_in_time_provider(database)
     found = provider.point_in_time_epa(team_number, target_event_key, as_of)
     if not isinstance(found, TeamEventEpa):
-        return _EpaLookup(None, None, None, None, None, EPA_WITHHELD_NO_PRIOR_EVENT)
-    return _EpaLookup(found.total, found.auto, found.teleop, found.endgame, found.event_key, None, found.source)
+        return _EpaLookup(None, None, None, None, None, EPA_WITHHELD_NO_PRIOR_EVENT,
+                          source_state=WITHHELD_NO_PRIOR_EVENT)
+    return _EpaLookup(found.total, found.auto, found.teleop, found.endgame, found.event_key, None, found.source,
+                      served_state(found.source, found.provenance))
 
 
 def build_team_features(
@@ -595,7 +616,7 @@ def build_team_features(
         epa_teleop=epa.epa_teleop, epa_teleop_present=epa.epa_teleop is not None,
         epa_endgame=epa.epa_endgame, epa_endgame_present=epa.epa_endgame is not None,
         epa_source_event_key=epa.source_event_key, epa_withheld_reason=epa.withheld_reason,
-        epa_value_source=epa.value_source,
+        epa_value_source=epa.value_source, epa_source_state=epa.source_state,
         average_score=average, average_score_present=average is not None,
         score_stddev=stddev, score_stddev_present=stddev is not None,
         consistency_rating=consistency, consistency_rating_present=consistency is not None,
@@ -685,3 +706,19 @@ def build_match_feature_row(
         match_key=match_key, as_of=as_of, event_key=event_key, season=season,
         red_teams=red_teams, blue_teams=blue_teams,
     )
+
+
+def point_in_time_scores(
+    database: Database, team_number: int, event_key: str, as_of: datetime,
+) -> tuple[list[int], int]:
+    """Public name for the exact point-in-time score read build_team_features uses
+    (Phase 5 views reuse it; see _point_in_time_scores for the contract)."""
+    return _point_in_time_scores(database, team_number, event_key, as_of)
+
+
+def point_in_time_auto_points(
+    database: Database, team_number: int, event_key: str, as_of: datetime,
+) -> tuple[float | None, int]:
+    """Public name for the exact Phase 4 auto-points feature build_team_features uses
+    (Phase 5 views reuse it; see _point_in_time_auto_points for the contract)."""
+    return _point_in_time_auto_points(database, team_number, event_key, as_of)

@@ -336,6 +336,7 @@ _TEAM_FEATURES_ARROW_TYPE = pa.struct([
     ("epa_scale", pa.float64()),
     ("epa_scale_present", pa.bool_()),
     ("epa_value_source", pa.string()),
+    ("epa_source_state", pa.string()),
 ])
 
 TRAINING_ROW_ARROW_SCHEMA = pa.schema([

@@ -22,6 +22,7 @@ from api.request_id import REQUEST_ID_HEADER
 from api.routes.health import router as health_router
 from api.routes.metrics import router as metrics_router
 from api.routes.predictions import router as predictions_router
+from api.routes.strength import router as strength_router
 from data.config import Settings
 from database.connection import Database, DatabaseConfig
 
@@ -111,6 +112,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # is served at the path the milestone documents it at.
     app.include_router(metrics_router, prefix=settings.api_prefix)
     app.include_router(predictions_router, prefix=settings.api_prefix)
+    app.include_router(strength_router, prefix=settings.api_prefix)
 
     logger.info(
         "Application created: env=%s prefix=%r cors_origins=%s",
