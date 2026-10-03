@@ -1,6 +1,6 @@
 # P5-M7 — flagged decision Q2 (human decision required; raised 2026-10-03, before any (b) or (c) result)
 
-**Status: OPEN.** Criterion (a), adapter parity, is run and recorded. Criteria (b) (false alarms) and (c) (real
+**Status: DECIDED 2026-10-03 by Kanav: Option 1 (event-level Welch; `test="event_welch"`). Recorded as P5-D12 in `P5_M0_DECISIONS.md`.** Earlier status: OPEN. Criterion (a), adapter parity, is run and recorded. Criteria (b) (false alarms) and (c) (real
 flags) are not run until Q2 is decided. The decision must be made before their results exist (P5-M0 freeze rule).
 
 ## What the frozen spec leaves open

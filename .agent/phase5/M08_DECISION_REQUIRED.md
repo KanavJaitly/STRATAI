@@ -1,6 +1,6 @@
 # P5-M8 / P5-M9 / DM1 — flagged decision Q3 and the human inputs DM1 needs (raised 2026-10-03)
 
-**Status: OPEN.** The DM1 dry run (P5-M9 (a)–(c)) cannot run until the rules below are decided and the human
+**Status: DECIDED 2026-10-03 by Kanav: the proposed rules, with a pooled-κ gate, per-function `provisional` labels below 0.6, and consensus reconciliation. Recorded as P5-D13 in `P5_M0_DECISIONS.md`.** Earlier status: OPEN. The DM1 dry run (P5-M9 (a)–(c)) cannot run until the rules below are decided and the human
 inputs exist. No dry-run result exists, and none is simulated.
 
 ## Q3: rules the frozen spec requires but does not define
