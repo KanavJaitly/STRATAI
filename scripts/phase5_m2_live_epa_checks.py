@@ -47,6 +47,18 @@ L4_EVENT = "2026iscmp"
 L4_LAG_HOURS = 24
 L3_SEASON = 9983
 POLICIES = ("d18_skip", "literal_state")
+# The first L4 record (p5_m2_l4_atomicity.json, commit 7b2d29c) failed only on an additional EPA-stability
+# sub-check, which wrongly counted epa_scale as a provider output. epa_scale is the causal season scale, which
+# moves with canonical rows: an allowed input change under L4's criterion. That record is kept unchanged. Its
+# L4 criteria all passed: 0 re-serve mismatches, 0 feature changes without an input change, one snapshot_id.
+L4_RECORD = "p5_m2_l4_atomicity_rerun1.json"
+L4_SUPERSEDES = {
+    "record": "p5_m2_l4_atomicity.json",
+    "commit": "7b2d29c",
+    "reason": "check defect: epa_scale (a canonical-row-dependent season scale) was counted as an EPA provider "
+              "output in the additional EPA-stability sub-check; on the first run it was the only field that "
+              "changed (324 times), and every L4 criterion passed",
+}
 
 
 # --- L3 ------------------------------------------------------------------------------------------
@@ -319,7 +331,9 @@ def run_l4(snapshot: Path, chain: Path, registry: Path, tag: str, sha256: str) -
             if previous is not None and previous[0] == sig and previous[1] != team:
                 unexplained.append([number, match_key])
             last[number] = (sig, team)
-            epa = {k: v for k, v in team.items() if k.startswith("epa_")}
+            # provider outputs only: epa_scale / epa_scale_present are the causal season scale
+            # (ml/features/scale.py), which moves with canonical rows and is covered by `sig` above
+            epa = {k: v for k, v in team.items() if k.startswith("epa_") and not k.startswith("epa_scale")}
             previous_epa = last_epa.get(number)
             if previous_epa is not None and previous_epa[0] == epa_sig and previous_epa[1] != epa:
                 epa_unexplained.append([number, match_key])
@@ -360,7 +374,8 @@ def main(argv: list[str] | None = None) -> int:
         result, name = run_l3(args.isolated_db), "p5_m2_l3_outage_drill.json"
     else:
         result, name = run_l4(args.snapshot, args.chain, args.registry, args.win_prob_tag,
-                              args.win_prob_sha256), "p5_m2_l4_atomicity.json"
+                              args.win_prob_sha256), L4_RECORD
+        result["supersedes"] = L4_SUPERSEDES
     path = write_once(name, result)
     print(json.dumps({k: v for k, v in result.items() if k in ("problems", "passed", "timeline", "served",
                                                                 "refused", "team_epa_states")}, indent=1, default=str))
