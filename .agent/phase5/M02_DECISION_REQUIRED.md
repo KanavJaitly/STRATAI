@@ -1,6 +1,6 @@
 # P5-M2 — flagged decision Q1 (human decision required; raised 2026-10-02, before any L1–L4 result)
 
-**Status: OPEN.** No L1 or L2 result has been computed. L1 and L2 are not run until this is decided, so that the
+**Status: DECIDED 2026-10-03 by Kanav: Option 1 (A1/A2 keeps D18's skip; `a1a2_policy="d18_skip"`). Recorded as P5-D11 in `P5_M0_DECISIONS.md`.** Earlier status: OPEN. No L1 or L2 result has been computed. L1 and L2 are not run until this is decided, so that the
 decision is made before the affected result exists (P5-M0 freeze rule).
 
 ## The inconsistency in the frozen design
