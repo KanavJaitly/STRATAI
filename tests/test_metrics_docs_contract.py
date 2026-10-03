@@ -85,6 +85,16 @@ ML_PREDICTION_PATHS = {
     "/predictions/alliance-synergy",
 }
 
+# Phase 5's endpoints are documented in docs/phase5.md and pinned by
+# tests/test_phase5_contract.py (P5-M10) -- out of this page's scope for the
+# same reason as ML_PREDICTION_PATHS. The ones serving Phase 3's
+# reliability_score still carry its INTERIM caveat (checked there).
+PHASE5_PATHS = {
+    "/teams/{team_number}/events/{event_key}/strength",
+    "/events/{event_key}/analysis",
+    "/events/{event_key}/qualification-forecast",
+}
+
 
 @pytest.fixture(scope="module")
 def docs_text() -> str:
@@ -347,7 +357,7 @@ def monkeypatch_module_env():
 
 
 def test_documented_endpoints_are_exactly_the_live_ones(docs_text: str, openapi_schema: dict):
-    live = set(openapi_schema["paths"]) - PROBE_PATHS - ML_PREDICTION_PATHS
+    live = set(openapi_schema["paths"]) - PROBE_PATHS - ML_PREDICTION_PATHS - PHASE5_PATHS
     documented = set(re.findall(r"^GET (/\S+)$", docs_text, flags=re.MULTILINE))
     assert documented, "section 8 documents no endpoint"
     assert live == documented, (
@@ -384,7 +394,7 @@ def test_reliability_score_placeholder_caveat_reaches_the_served_schema(openapi_
     endpoints = [
         operation["description"]
         for path, item in openapi_schema["paths"].items()
-        if path not in PROBE_PATHS and path not in ML_PREDICTION_PATHS
+        if path not in PROBE_PATHS and path not in ML_PREDICTION_PATHS and path not in PHASE5_PATHS
         for operation in item.values()
     ]
     assert endpoints, "no non-probe endpoint to check"

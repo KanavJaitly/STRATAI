@@ -62,7 +62,9 @@ def parse_as_of(value: str | None) -> datetime:
     response_model=TeamStrengthResponse,
     summary="Team and robot strength view (descriptive)",
     description="EPA (with provenance), Phase 3 scoring statistics, auto points and scouting ratings for one team "
-                "at one event as of a point in time. Every numeric field has n and an explicit uncertainty.",
+                "at one event as of a point in time. Every numeric field has n and an explicit uncertainty."
+                " reliability_score is an INTERIM placeholder (100 * matches_used / matches_scheduled, an attendance "
+                "ratio, not a robot-failure measure; docs/metrics_pipeline.md section 6.3).",
     responses={HTTPStatus.NOT_FOUND: {"model": ErrorResponse}, HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse}},
 )
 def team_strength(

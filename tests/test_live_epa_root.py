@@ -21,18 +21,9 @@ CHAIN = Path(os.environ.get("STRATAI_EPA_CHAIN",
 
 
 def _isolated() -> bool:
-    try:
-        import psycopg
+    from tests.test_live_epa import _isolated_db_name
 
-        from data.config import Settings
-        from scripts.phase5_isolated_db import serving_name
-
-        if not serving_name(str(Settings().database_url)).startswith("stratai_"):
-            return False
-        with psycopg.connect(str(Settings().database_url), connect_timeout=3):
-            return True
-    except Exception:
-        return False
+    return _isolated_db_name() is not None
 
 
 @pytest.mark.skipif(not (SNAPSHOT.exists() and CHAIN.exists() and _isolated()),

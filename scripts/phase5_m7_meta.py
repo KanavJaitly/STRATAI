@@ -19,7 +19,7 @@ import sys
 from collections import Counter
 
 
-def load_rows(database) -> tuple[list, Counter, list]:
+def load_rows(database, seasons: list[int] | None = None) -> tuple[list, Counter, list]:
     from ml.features.score_breakdown import ScoreBreakdownSchemaError, UnsupportedSeasonError
     from ml.features.score_components import score_components
     from ml.meta.weekly import ROWS_SQL, ComponentRow
@@ -27,7 +27,7 @@ def load_rows(database) -> tuple[list, Counter, list]:
     counts: Counter = Counter()
     failures, rows = [], []
     with database.cursor() as cursor:
-        cursor.execute(ROWS_SQL, {"seasons": [2024, 2025, 2026]})
+        cursor.execute(ROWS_SQL, {"seasons": seasons or [2024, 2025, 2026]})
         fetched = cursor.fetchall()
     for season, event_key, week, match_key, score_red, score_blue, breakdown in fetched:
         counts[f"{season}:completed_matches"] += 1

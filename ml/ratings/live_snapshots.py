@@ -45,7 +45,10 @@ class SnapshotIntegrityError(RuntimeError):
 
 
 def canonical(value: Any) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    """The canonical JSON bytes every D18 and Phase 5 fingerprint uses (one implementation)."""
+    from ml.ratings.d18_source import _canonical
+
+    return _canonical(value)
 
 
 def snapshot_id_of(manifest: dict[str, Any]) -> str:
