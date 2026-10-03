@@ -112,3 +112,22 @@
   re-request and A1/A2-rule agreement all pass. See `debug/M06_DEBUG_2026ARLI.md`.
 - **Q1, Q2 and Q3:** still OPEN. Their details were reported to Kanav; nothing is decided.
 - **Next step:** Kanav's decisions on Q1, Q2 and Q3, and approval of a recorded P5-M6 design within 45 minutes.
+
+## New open decision Q4: P5-M6's frozen population vs the 45-minute rule (raised 2026-10-03)
+
+**The conflict.** P5-M6 freezes the six-event replay (559 matches), with (a) and (d) checked "after every completed
+match". Ingestion plus the production watch follow-on alone costs about 8 s per match:
+- `sync_event` about 0.9 s;
+- the `team_metrics` recompute about 7 s, which is production behaviour and must not be shortcut.
+
+That is about 75 min for 559 matches before any serving check. 2026arc alone (141 matches, a larger roster) would
+exceed 45 min. No sampling of serving checks can bring the frozen population under the rule. So either the
+evaluation population is amended by a dated decision (a spec change), or the rule is applied per run (several
+budgeted runs). Not decided.
+
+**Options:**
+1. **Per-event budgeted runs.** Each run stays ≤ 45 min, with sampled serving checks. 2026arc needs splitting by
+   time window, which is still the full population.
+2. **Amend P5-M6's evaluation population** (a decision row before the result) to a seeded, stratified sample of
+   events or windows plus the fixed edge cases: 2026iscmp for (e), a championship division, an early-week event.
+3. **Engineering speedups that leave behaviour unchanged,** then re-estimate.
