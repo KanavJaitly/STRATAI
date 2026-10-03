@@ -101,11 +101,32 @@ def test_estimate_is_within_budget_for_the_approved_shape():
 def test_recorded_run_requires_the_recorded_selection(monkeypatch, tmp_path):
     """Enabled by Kanav's approval (2026-10-03); it still runs only from the write-once selection record."""
     assert replay.RECORDED_RUN_ENABLED is True
-    assert replay.SELECTION_RECORD == "p5_m6_selection.json" and replay.RECORD == "p5_m6_replay.json"
+    assert replay.SELECTION_RECORD == "p5_m6_selection.json" and replay.RECORD == "p5_m6_replay_rerun1.json"
+    assert replay.SUPERSEDES["record"] == "p5_m6_replay.json" and replay.SUPERSEDES["commit"] == "eafba43"
 
 
 def test_no_synthetic_case_in_the_harness():
     import inspect
 
     code = inspect.getsource(replay).replace(replay.__doc__ or "", "")  # the docstring says it is excluded
-    assert "correction" not in code.lower() and "unplayed(" not in code
+    assert "score correction" not in code.lower() and "score-correction" not in code.lower()
+    assert "unplayed(" not in code and "model_copy" not in code  # no edited payloads
+
+
+def test_schedule_is_globally_chronological_and_bulk_covers_everything_else():
+    from data.replay import RecordedEvent
+
+    def rec(key: str, times: dict[str, int]) -> RecordedEvent:
+        return RecordedEvent(key, {"key": key}, {k: {"key": k, "time": t, "comp_level": k.split("_")[1][:2]}
+                                                 for k, t in times.items()}, {})
+
+    late = rec("2026late", {"2026late_qm1": 500, "2026late_qm2": 600, "2026late_qm3": 700, "2026late_sf1": 800})
+    early = rec("2026early", {"2026early_qm1": 100, "2026early_qm2": 200, "2026early_sf1": 300, "2026early_sf2": 400})
+    plans = [  # listed late-first, as E1 (July) precedes E2 (March) in the selection
+        {"event_key": "2026late", "qual_window": [["2026late_qm2"]], "playoff_window": [["2026late_sf1"]]},
+        {"event_key": "2026early", "qual_window": [["2026early_qm1"]], "playoff_window": [["2026early_sf1"]]},
+    ]
+    steps, bulk = replay.schedule(plans, {"2026late": late, "2026early": early})
+    assert [s[5] for s in steps] == [["2026early_qm1"], ["2026early_sf1"], ["2026late_qm2"], ["2026late_sf1"]]
+    assert bulk == {"2026late": ["2026late_qm1", "2026late_qm3"], "2026early": ["2026early_qm2", "2026early_sf2"]}
+    assert all(s[6] == 2 for s in steps)

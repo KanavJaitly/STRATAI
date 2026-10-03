@@ -25,12 +25,18 @@ ARGS = --snapshot DIR --chain CHAIN --registry DIR --ranking-tag d18 --ranking-s
   match, ranking and alliance payloads, and watermarks are removed.
 - **Payloads:** recorded payloads enter through `data.orchestrator.sync_event`, with only HTTP replaced
   (data.replay.ReplayTBAClient). The watch follow-on (`after_watch_sync`) recomputes `team_metrics`.
-- **Event order:** each event's qualification schedule is landed first. Then, per event:
-  - a bulk catch-up sync of the matches before the window;
-  - the qualification window, one step at a time;
-  - a bulk sync of the remaining qualification matches;
-  - the playoff window, one step at a time.
-  A step is the event's matches sharing a scheduled time. Serving is read at as_of = the step's time + 1 µs.
+- **Order (corrected for the labelled rerun, `p5_m6_replay_rerun1.json`):**
+  - every event's qualification schedule is landed first;
+  - every planned checked step of every event then runs in **global chronological order**;
+  - before each step, every selected event's other matches whose time has passed land as a bulk catch-up sync,
+    one per event, through the same production path.
+  So each as_of sees exactly the selected events' earlier rows.
+- **Steps:** a step is the event's matches sharing a scheduled time. Serving is read at as_of = the step's time
+  + 1 µs.
+- **Baselines:** a bulk sync is a new input, so it resets the control baseline of every team in it.
+- **Re-requests:** each one uses the EPA settings its response was served under.
+- **Log:** the complete response log is recorded write-once (`p5_m6_replay_rerun1_log.json`). The original failed
+  record (`p5_m6_replay.json`, commit eafba43) is kept unchanged.
 - **EPA:** P5-M2's simulated retrieval at a 24 h lag, with concluded seasons before the event's own season. The
   production rule is `d18_skip` (P5-D11). `literal_state` is still computed, and the two are compared at the EPA
   lookup as a diagnostic.
@@ -84,7 +90,15 @@ FINAL_RESERVE_MINUTES = 6.0  # kept back for the end-of-run checks
 DEBUG_DIR = Path(".agent/phase5/debug")
 RESULTS_DIR = Path(".agent/phase5/results")
 SELECTION_RECORD = "p5_m6_selection.json"
-RECORD = "p5_m6_replay.json"
+RECORD = "p5_m6_replay_rerun1.json"  # the labelled rerun (harness corrections approved 2026-10-03)
+LOG_RECORD = "p5_m6_replay_rerun1_log.json"  # the complete response log, write-once
+SUPERSEDES = {
+    "record": "p5_m6_replay.json", "commit": "eafba43",
+    "reason": "harness defects, approved for correction by Kanav 2026-10-03 (.agent/phase5/M06_RECORDED_RUN_FAILURE.md): "
+              "(1) control baselines now reset after a bulk sync that lands the team's matches; (2) each re-request "
+              "uses the EPA settings it was served under; (3) planned actions run in global chronological order, so "
+              "every as_of sees the selected events' earlier rows. Population, selection, criteria unchanged",
+}
 RECORDED_RUN_ENABLED = True  # Kanav approved executing the P5-D14 verification (2026-10-03)
 FALLBACK_EVENT = "2026iscmp"
 ENDPOINT_AT_END = ("E1", "E2")
@@ -149,6 +163,21 @@ def full_event_plan(recorded, stratum: str = "debug") -> dict[str, Any]:
             "qual_window": [list(s.match_keys) for s in q_steps], "post_window_bulk": [],
             "playoff_window": [list(s.match_keys) for s in p_steps], "switch_step_in_window": None,
             "sentinel_steps": [len(q_steps) // 2]}
+
+
+def schedule(plans: list[dict[str, Any]], recorded: dict) -> tuple[list[tuple], dict[str, list[str]]]:
+    """Correction (3): every planned checked step in global chronological order (ties: plan order, then position),
+    and, per event, the matches outside its windows, which land as bulk catch-up once their time has passed."""
+    steps, bulk_pending = [], {}
+    for p_index, plan in enumerate(plans):
+        rec = recorded[plan["event_key"]]
+        windows = [("qual", i, keys) for i, keys in enumerate(plan["qual_window"])]
+        windows += [("playoff", i, keys) for i, keys in enumerate(plan["playoff_window"])]
+        for position, (kind, index, keys) in enumerate(windows):
+            steps.append((max(rec.matches[k]["time"] for k in keys), p_index, position, kind, index, keys, len(windows)))
+        windowed = {k for _, _, keys in windows for k in keys}
+        bulk_pending[plan["event_key"]] = sorted(k for k in rec.matches if k not in windowed)
+    return sorted(steps, key=lambda step: (step[0], step[1], step[2])), bulk_pending
 
 
 def run_plans(args, plans: list[dict[str, Any]], recorded: dict, stratai: tuple, run_name: str,
@@ -284,127 +313,146 @@ def run_plans(args, plans: list[dict[str, Any]], recorded: dict, stratai: tuple,
     with client:
         for plan in plans:  # the qualification schedule is published before each event
             sync_event(plan["event_key"], database=database, tba=tba, pipeline_name="p5_m6_replay")
-        for plan in plans:
+        # (3) every planned checked step, in global chronological order; every other match of a selected event is
+        # landed through the same production path once its scheduled time has passed (bulk catch-up per event)
+        steps, bulk_pending = schedule(plans, recorded)
+        fallback_served: dict[str, int] = defaultdict(int)
+
+        def catch_up(as_of: datetime) -> bool:
+            landed_any = False
+            for other in plans:
+                key_event, rec_other = other["event_key"], recorded[other["event_key"]]
+                due = [k for k in bulk_pending[key_event]
+                       if datetime.fromtimestamp(rec_other.matches[k]["time"], timezone.utc) < as_of]
+                if not due:
+                    continue
+                bulk_pending[key_event] = [k for k in bulk_pending[key_event] if k not in set(due)]
+                land(key_event, due, "bulk_syncs")
+                landed_any = True
+                counts["bulk_matches"] += len(due)
+                for key in due:  # (1) a bulk sync is a new input for every team in it: reset its baseline
+                    for alliance in rec_other.matches[key]["alliances"].values():
+                        for team_key in alliance["team_keys"]:
+                            last_state.pop((key_event, int(team_key[3:])), None)
+            return landed_any
+
+        for _, p_index, position, kind, index, keys, n_windows in steps:
+            plan = plans[p_index]
             event_key, rec = plan["event_key"], recorded[plan["event_key"]]
-            holder["providers"] = providers(plan["season"])
-            fallback_served = 0
-            if plan["pre_window_bulk"]:
-                land(event_key, plan["pre_window_bulk"], "bulk_syncs")
-            windows = [("qual", i, keys) for i, keys in enumerate(plan["qual_window"])]
-            windows += [("playoff", i, keys) for i, keys in enumerate(plan["playoff_window"])]
-            for position, (kind, index, keys) in enumerate(windows):
-                elapsed = (time.monotonic() - started) / 60
-                if elapsed > budget_minutes - FINAL_RESERVE_MINUTES:
-                    incomplete = f"time budget reached at {elapsed:.1f} min before {event_key} {kind} step {index}"
-                    break
-                if kind == "playoff" and index == 0 and plan["post_window_bulk"]:
-                    land(event_key, plan["post_window_bulk"], "bulk_syncs")
-                    holder["providers"] = providers(plan["season"])
-                global_step += 1
-                as_of = datetime.fromtimestamp(max(rec.matches[k]["time"] for k in keys), timezone.utc) \
-                    + timedelta(microseconds=1)
-                affected = [int(k[3:]) for key in keys for a in rec.matches[key]["alliances"].values()
-                            for k in a["team_keys"]]
-                before = {t: build_team_features(database, t, event_key, as_of - timedelta(microseconds=2),
-                                                 epa_provider=holder["providers"][PRODUCTION_POLICY]).matches_used
-                          for t in affected}
-                land(event_key, keys, "step_syncs")
-                holder["providers"] = providers(plan["season"])  # canonical facts re-read: the atomic swap
-                scales = ScaleLookup(database)
-                teams = roster(event_key)
-                others = [t for t in teams if t not in affected]
-                control = sorted(rng.sample(others, min(CONTROL_TEAMS, len(others))))
-                for team in affected + control:
-                    role = "affected" if team in affected else "control"
-                    view = serve_strength(team, event_key, as_of)
-                    entry = {"step": global_step, "stratum": plan["stratum"], "as_of": as_of.isoformat(),
-                             "event": event_key, "team": team, "role": role, "response": view}
-                    log.append(entry)
-                    if "strength" not in view:
-                        problems.append(f"step {global_step} {event_key} {team}: refused {view}")
-                        continue
-                    features = build_team_features(database, team, event_key, as_of,
-                                                   epa_provider=holder["providers"][PRODUCTION_POLICY],
-                                                   scale_lookup=scales)
-                    outcomes = {p: epa_outcome(prov, team, event_key, as_of) for p, prov in holder["providers"].items()}
-                    counts["policy_checks"] += 1
-                    if outcomes["d18_skip"] != outcomes["literal_state"]:
-                        counts["policy_differences"] += 1  # diagnostic: production is d18_skip (P5-D11)
-                    counts["equality_checks"] += 1
-                    mismatch = matches_features(TeamStrengthView.model_validate(view["strength"]), features)
-                    if mismatch:
-                        problems.append(f"(a) step {global_step} {event_key} {team}: served != assembler {mismatch}")
-                    if role == "affected":
-                        counts["affected_checks"] += 1
-                        if features.matches_used != before[team] + 1:
-                            problems.append(f"(a) step {global_step} {event_key} {team}: matches_used "
-                                            f"{before[team]} -> {features.matches_used}")
-                        with database.cursor() as c:
-                            c.execute("SELECT max(id) FROM raw_source_payloads WHERE source = 'tba' AND "
-                                      "source_object_type = 'match' AND source_object_id = ANY(%s)", (keys,))
-                            entry["trace"] = {"match_keys": keys, "raw_payload_id": c.fetchone()[0]}
-                            if entry["trace"]["raw_payload_id"] is None:
-                                problems.append(f"(a) step {global_step} {event_key}: no raw payload for {keys}")
-                    current = view["strength"]
-                    in_event = {k: current[k] for k in IN_EVENT}
-                    previous = last_state.get((event_key, team))
-                    if role == "control" and previous is not None:
-                        counts["control_checks"] += 1
-                        if in_event != previous["in_event"]:
-                            problems.append(f"(b) step {global_step} {event_key} control {team}: in-event change "
-                                            f"since step {previous['step']}")
-                        if current["epa"] != previous["epa"]:
-                            counts["control_epa_changes"] += 1
-                    last_state[(event_key, team)] = {"step": global_step, "in_event": in_event, "epa": current["epa"]}
-                    if event_key == FALLBACK_EVENT and current["epa"]["total"]["value"] is not None:
-                        epa = current["epa"]
-                        counts["fallback_views"] += 1
-                        if (epa["epa_source_state"] == "fallback_stratai" and epa["epa_value_source"] == "stratai_fallback"
-                                and epa["source_event_key"] in ("2026isde1", "2026isde2")):
-                            fallback_served += 1
-                        else:
-                            problems.append(f"(e) step {global_step} {team}: {epa['epa_source_state']}")
-                last_of_window = (kind == "qual" and index == len(plan["qual_window"]) - 1) or (
-                    kind == "playoff" and index == len(plan["playoff_window"]) - 1)
-                for team in teams if last_of_window else affected + control:  # (d)
-                    stored = look_up_team_metrics(database, team, event_key).metrics
-                    fresh = compute_team_metrics(database, team, event_key)
-                    counts["metrics_checks"] += 1
-                    if stored is None or stored.model_dump(exclude=METRICS_TIMESTAMP_FIELDS) != fresh.model_dump(
-                            exclude=METRICS_TIMESTAMP_FIELDS):
-                        problems.append(f"(d) step {global_step} {event_key} {team}: team_metrics != recompute")
-                again = sync_event(event_key, database=database, tba=tba, pipeline_name="p5_m6_replay")  # (b)
-                counts["noop_polls"] += 1
-                if sum(again.loaded.values()) or sum(again.landed.values()):
-                    problems.append(f"(b) step {global_step} {event_key}: re-poll landed {again.landed}")
-                if serve_strength(affected[0], event_key, as_of) != next(
-                        e["response"] for e in reversed(log) if e.get("team") == affected[0] and e["event"] == event_key):
-                    problems.append(f"(b) step {global_step} {event_key}: re-serve after a no-op poll changed")
-                if kind == "qual" and index in plan["sentinel_steps"]:
-                    sentinels(event_key, affected[0], keys, as_of, global_step)
-                switch = plan.get("switch_step_in_window")
-                if kind == "qual" and switch is not None and index == switch - 1:
-                    endpoints(plan, as_of, "before_switch", ("raw_epa", False))
-                if kind == "qual" and switch is not None and index == switch:
-                    endpoints(plan, as_of, "after_switch", ("ranking_xgb_v2", True))
-                if position == len(windows) - 1 and plan["stratum"] in ENDPOINT_AT_END:
-                    endpoints(plan, as_of, "end_of_window")
-            if incomplete:
+            elapsed = (time.monotonic() - started) / 60
+            if elapsed > budget_minutes - FINAL_RESERVE_MINUTES:
+                incomplete = f"time budget reached at {elapsed:.1f} min before {event_key} {kind} step {index}"
                 break
-            if event_key == FALLBACK_EVENT and not fallback_served:
-                problems.append("(e) no fallback_stratai value was served at 2026iscmp")
-            counts["fallback_served"] += fallback_served
-            print(f"[{run_name}] {plan['stratum']} {event_key} done at {(time.monotonic() - started) / 60:.1f} min, "
-                  f"problems={len(problems)}", flush=True)
+            global_step += 1
+            as_of = datetime.fromtimestamp(max(rec.matches[k]["time"] for k in keys), timezone.utc) \
+                + timedelta(microseconds=1)
+            if catch_up(as_of) or holder.get("season") != plan["season"]:
+                holder["providers"], holder["season"] = providers(plan["season"]), plan["season"]
+            affected = [int(k[3:]) for key in keys for a in rec.matches[key]["alliances"].values()
+                        for k in a["team_keys"]]
+            before = {t: build_team_features(database, t, event_key, as_of - timedelta(microseconds=2),
+                                             epa_provider=holder["providers"][PRODUCTION_POLICY]).matches_used
+                      for t in affected}
+            land(event_key, keys, "step_syncs")
+            holder["providers"], holder["season"] = providers(plan["season"]), plan["season"]  # the atomic swap
+            scales = ScaleLookup(database)
+            teams = roster(event_key)
+            others = [t for t in teams if t not in affected]
+            control = sorted(rng.sample(others, min(CONTROL_TEAMS, len(others))))
+            for team in affected + control:
+                role = "affected" if team in affected else "control"
+                view = serve_strength(team, event_key, as_of)
+                entry = {"step": global_step, "stratum": plan["stratum"], "season": plan["season"],
+                         "as_of": as_of.isoformat(), "event": event_key, "team": team, "role": role,
+                         "response": view}
+                log.append(entry)
+                if "strength" not in view:
+                    problems.append(f"step {global_step} {event_key} {team}: refused {view}")
+                    continue
+                features = build_team_features(database, team, event_key, as_of,
+                                               epa_provider=holder["providers"][PRODUCTION_POLICY],
+                                               scale_lookup=scales)
+                outcomes = {p: epa_outcome(prov, team, event_key, as_of) for p, prov in holder["providers"].items()}
+                counts["policy_checks"] += 1
+                if outcomes["d18_skip"] != outcomes["literal_state"]:
+                    counts["policy_differences"] += 1  # diagnostic: production is d18_skip (P5-D11)
+                counts["equality_checks"] += 1
+                mismatch = matches_features(TeamStrengthView.model_validate(view["strength"]), features)
+                if mismatch:
+                    problems.append(f"(a) step {global_step} {event_key} {team}: served != assembler {mismatch}")
+                if role == "affected":
+                    counts["affected_checks"] += 1
+                    if features.matches_used != before[team] + 1:
+                        problems.append(f"(a) step {global_step} {event_key} {team}: matches_used "
+                                        f"{before[team]} -> {features.matches_used}")
+                    with database.cursor() as c:
+                        c.execute("SELECT max(id) FROM raw_source_payloads WHERE source = 'tba' AND "
+                                  "source_object_type = 'match' AND source_object_id = ANY(%s)", (keys,))
+                        entry["trace"] = {"match_keys": keys, "raw_payload_id": c.fetchone()[0]}
+                        if entry["trace"]["raw_payload_id"] is None:
+                            problems.append(f"(a) step {global_step} {event_key}: no raw payload for {keys}")
+                current = view["strength"]
+                in_event = {k: current[k] for k in IN_EVENT}
+                previous = last_state.get((event_key, team))
+                if role == "control" and previous is not None:
+                    counts["control_checks"] += 1
+                    if in_event != previous["in_event"]:
+                        problems.append(f"(b) step {global_step} {event_key} control {team}: in-event change "
+                                        f"since step {previous['step']}")
+                    if current["epa"] != previous["epa"]:
+                        counts["control_epa_changes"] += 1
+                last_state[(event_key, team)] = {"step": global_step, "in_event": in_event, "epa": current["epa"]}
+                if event_key == FALLBACK_EVENT and current["epa"]["total"]["value"] is not None:
+                    epa = current["epa"]
+                    counts["fallback_views"] += 1
+                    if (epa["epa_source_state"] == "fallback_stratai" and epa["epa_value_source"] == "stratai_fallback"
+                            and epa["source_event_key"] in ("2026isde1", "2026isde2")):
+                        fallback_served[event_key] += 1
+                    else:
+                        problems.append(f"(e) step {global_step} {team}: {epa['epa_source_state']}")
+            last_of_window = (kind == "qual" and index == len(plan["qual_window"]) - 1) or (
+                kind == "playoff" and index == len(plan["playoff_window"]) - 1)
+            for team in teams if last_of_window else affected + control:  # (d)
+                stored = look_up_team_metrics(database, team, event_key).metrics
+                fresh = compute_team_metrics(database, team, event_key)
+                counts["metrics_checks"] += 1
+                if stored is None or stored.model_dump(exclude=METRICS_TIMESTAMP_FIELDS) != fresh.model_dump(
+                        exclude=METRICS_TIMESTAMP_FIELDS):
+                    problems.append(f"(d) step {global_step} {event_key} {team}: team_metrics != recompute")
+            again = sync_event(event_key, database=database, tba=tba, pipeline_name="p5_m6_replay")  # (b)
+            counts["noop_polls"] += 1
+            if sum(again.loaded.values()) or sum(again.landed.values()):
+                problems.append(f"(b) step {global_step} {event_key}: re-poll landed {again.landed}")
+            if serve_strength(affected[0], event_key, as_of) != next(
+                    e["response"] for e in reversed(log) if e.get("team") == affected[0] and e["event"] == event_key):
+                problems.append(f"(b) step {global_step} {event_key}: re-serve after a no-op poll changed")
+            if kind == "qual" and index in plan["sentinel_steps"]:
+                sentinels(event_key, affected[0], keys, as_of, global_step)
+            switch = plan.get("switch_step_in_window")
+            if kind == "qual" and switch is not None and index == switch - 1:
+                endpoints(plan, as_of, "before_switch", ("raw_epa", False))
+            if kind == "qual" and switch is not None and index == switch:
+                endpoints(plan, as_of, "after_switch", ("ranking_xgb_v2", True))
+            if position == n_windows - 1 and plan["stratum"] in ENDPOINT_AT_END:
+                endpoints(plan, as_of, "end_of_window")
+            if position == n_windows - 1:
+                print(f"[{run_name}] {plan['stratum']} {event_key} done at "
+                      f"{(time.monotonic() - started) / 60:.1f} min, problems={len(problems)}", flush=True)
+        if FALLBACK_EVENT in {p["event_key"] for p in plans} and not fallback_served[FALLBACK_EVENT] and not incomplete:
+            problems.append("(e) no fallback_stratai value was served at 2026iscmp")
+        counts["fallback_served"] = sum(fallback_served.values())
 
         logged = [e for e in log if "team" in e and "response" in e]
         sample = rng.sample(logged, min(RESERVE_SAMPLE, len(logged)))
         sample += [e for e in logged if e["step"] in sentinel_steps and e not in sample]
         reserve_mismatch = 0
-        for entry in sample:  # (c)
-            again = serve_strength(entry["team"], entry["event"], datetime.fromisoformat(entry["as_of"]))
-            reserve_mismatch += again != entry["response"]
-            counts["reserved"] += 1
+        for season in sorted({e["season"] for e in sample}):  # (c) (2) with the EPA settings each was served under
+            holder["providers"], holder["season"] = providers(season), season
+            for entry in (e for e in sample if e["season"] == season):
+                again = serve_strength(entry["team"], entry["event"], datetime.fromisoformat(entry["as_of"]))
+                entry["reserve_identical"] = again == entry["response"]
+                reserve_mismatch += again != entry["response"]
+                counts["reserved"] += 1
         counts["logged_strength_responses"] = len(logged)
         if reserve_mismatch:
             problems.append(f"(c) {reserve_mismatch} sampled responses re-served differently on the final database")
@@ -424,7 +472,7 @@ def run_plans(args, plans: list[dict[str, Any]], recorded: dict, stratai: tuple,
                                    "stratai_fingerprint": json.dumps(stratai[1].get("seasons"), sort_keys=True),
                                    "model_sha256": {"ranking_xgb_v2": args.ranking_sha256,
                                                     "win_prob_xgb_calibrated": args.win_prob_sha256}},
-            "passed": not problems and not incomplete}
+            "passed": not problems and not incomplete, "log": log}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -449,9 +497,12 @@ def main(argv: list[str] | None = None) -> int:
         plans = selection["plans"]
         recorded, stratai = load_sources(args, [p["event_key"] for p in plans])
         run = run_plans(args, plans, recorded, stratai, "stratai_p5_m6_verification")
-        result = {"milestone": "P5-M6", "done_means": "DM2", "decision": "P5-D14",
+        log = run.pop("log")
+        log_path = write_once(LOG_RECORD, {"milestone": "P5-M6", "entries": log})
+        result = {"milestone": "P5-M6", "done_means": "DM2", "decision": "P5-D14", "supersedes": SUPERSEDES,
                   "selection_record_sha256": sha256_file(selection_path),
-                  "population_fingerprint": selection["population_fingerprint"], **run}
+                  "population_fingerprint": selection["population_fingerprint"], "log_record": LOG_RECORD,
+                  "log_record_sha256": sha256_file(log_path), **run}
         path = write_once(RECORD, result)
         print(json.dumps({k: result[k] for k in ("passed", "incomplete", "minutes", "checked_steps", "counts")},
                          indent=1, default=str))
@@ -459,6 +510,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["passed"] else 1
     recorded, stratai = load_sources(args, [args.debug_event])
     run = run_plans(args, [full_event_plan(recorded[args.debug_event])], recorded, stratai, "stratai_p5_replay_debug")
+    run.pop("log")
     DEBUG_DIR.mkdir(parents=True, exist_ok=True)
     out = DEBUG_DIR / f"m6_debug_{args.debug_event}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.json"
     out.write_text(json.dumps(run, indent=1, default=str) + "\n", encoding="utf-8")  # complete, never truncated
