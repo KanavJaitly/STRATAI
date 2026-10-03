@@ -1,0 +1,144 @@
+{
+ "a_coverage": {
+  "2024": {
+   "coverage": 1.0,
+   "events_with_alliances": 190,
+   "events_with_playoff_matches": 190,
+   "playoff_events_without_alliances": []
+  },
+  "2025": {
+   "coverage": 1.0,
+   "events_with_alliances": 203,
+   "events_with_playoff_matches": 203,
+   "playoff_events_without_alliances": []
+  },
+  "2026": {
+   "coverage": 1.0,
+   "events_with_alliances": 213,
+   "events_with_playoff_matches": 213,
+   "playoff_events_without_alliances": []
+  }
+ },
+ "b_membership_exceptions": {
+  "by_event": {
+   "2024mosl": [
+    4330
+   ],
+   "2024mxto": [
+    9499
+   ],
+   "2024nytr": [
+    9624
+   ],
+   "2024onwat": [
+    7722,
+    9663
+   ]
+  },
+  "events_with_exceptions": 4,
+  "teams": 5
+ },
+ "c_seed_rank": {
+  "by_event": {
+   "2024vapor": [
+    {
+     "captain": 9990,
+     "expected_captain": 2912,
+     "reason": "captain_unranked",
+     "seed": 8
+    }
+   ],
+   "2025ncash": [
+    {
+     "captain": 9991,
+     "expected_captain": null,
+     "reason": "no_ranked_candidate",
+     "seed": 8
+    }
+   ],
+   "2026mefal": [
+    {
+     "captain": 9990,
+     "expected_captain": 6691,
+     "reason": "captain_unranked",
+     "seed": 7
+    },
+    {
+     "captain": 9992,
+     "expected_captain": 6691,
+     "reason": "captain_unranked",
+     "seed": 8
+    }
+   ],
+   "2026milac": [
+    {
+     "captain": 7768,
+     "expected_captain": 6087,
+     "reason": "captain_not_best_ranked_available",
+     "seed": 8
+    }
+   ],
+   "2026txfor": [
+    {
+     "captain": 9990,
+     "expected_captain": 5212,
+     "reason": "captain_unranked",
+     "seed": 8
+    }
+   ],
+   "2026txmca": [
+    {
+     "captain": 9991,
+     "expected_captain": 8750,
+     "reason": "captain_unranked",
+     "seed": 6
+    },
+    {
+     "captain": 9993,
+     "expected_captain": 8750,
+     "reason": "captain_unranked",
+     "seed": 7
+    },
+    {
+     "captain": 9995,
+     "expected_captain": 8750,
+     "reason": "captain_unranked",
+     "seed": 8
+    }
+   ]
+  },
+  "events_with_violations": 6,
+  "seeded_events_checked": 591,
+  "violations": 9
+ },
+ "d_seed_order_rejections": {
+  "count": 0,
+  "events": []
+ },
+ "ingestion_facts": {
+  "all_hold": true,
+  "frozen": {
+   "alliances": 4782,
+   "alliances_with_backup": 0,
+   "division_champion_events": 15,
+   "events_with_alliances": 606,
+   "payloads": 608,
+   "seeded_events": 591
+  },
+  "observed": {
+   "alliances": 4782,
+   "alliances_with_backup": 0,
+   "division_champion_events": 15,
+   "events_with_alliances": 606,
+   "payloads": 608,
+   "seeded_events": 591
+  }
+ },
+ "milestone": "P5-M1",
+ "provenance": {
+  "commit": "3082b47813498661ede465be5a0804e8c9bdd7e0",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-03T02:00:31.064066+00:00"
+ },
+ "spec": "docs/P5Milestones.md (frozen P5-M0)"
+}
