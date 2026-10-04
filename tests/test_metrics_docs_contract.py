@@ -357,7 +357,7 @@ def monkeypatch_module_env():
 
 
 def test_documented_endpoints_are_exactly_the_live_ones(docs_text: str, openapi_schema: dict):
-    live = set(openapi_schema["paths"]) - PROBE_PATHS - ML_PREDICTION_PATHS - PHASE5_PATHS
+    live = {p for p in openapi_schema["paths"] if not p.startswith("/human-inputs")}         - PROBE_PATHS - ML_PREDICTION_PATHS - PHASE5_PATHS
     documented = set(re.findall(r"^GET (/\S+)$", docs_text, flags=re.MULTILINE))
     assert documented, "section 8 documents no endpoint"
     assert live == documented, (
@@ -395,6 +395,7 @@ def test_reliability_score_placeholder_caveat_reaches_the_served_schema(openapi_
         operation["description"]
         for path, item in openapi_schema["paths"].items()
         if path not in PROBE_PATHS and path not in ML_PREDICTION_PATHS and path not in PHASE5_PATHS
+        and not path.startswith("/human-inputs")
         for operation in item.values()
     ]
     assert endpoints, "no non-probe endpoint to check"

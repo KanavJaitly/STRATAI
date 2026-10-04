@@ -554,6 +554,67 @@ from TBA, and this is a Phase-3-only, scouting-specific concern — the same rea
 already kept `scouting_observations`/`team_metrics` as their own tables referencing
 `events`/`teams` by FK rather than columns bolted onto them.
 
+### 4.3 Phase 5 human-input tables
+
+Created by `0010_phase5_human_inputs.sql`. These hold what people upload, enter, code and review through the web
+app (`data/human_inputs.py`, `api/routes/human_inputs.py`, `frontend/`), for P5-M8, P5-M9 and DM1.
+
+- **Append-only in content.** An edit inserts a new version; only status and review metadata move forward.
+- **Nothing is computed or inferred.** Every row records who acted and when.
+- **A manual upload validates nothing.** A structured spec becomes authoritative only when a named reviewer
+  approves it.
+
+#### `game_manuals`
+
+The provenance of an uploaded official game manual. The original PDF is kept write-once on disk under
+`Settings.artifact_store_dir`, named by its sha256.
+
+- **PK** `id`.
+- **Columns:** `season`, `game_name`, `filename`, `media_type` (`application/pdf` only), `byte_size`,
+  `content_sha256`, `storage_path`, `uploaded_by`, `uploaded_at`.
+- **`UNIQUE (season, content_sha256)`:** the same bytes for a season are the same manual (idempotent). Different
+  bytes are a new version; nothing is replaced.
+
+#### `game_spec_versions`
+
+Structured game specifications (`data.game_spec.GameSpec`), entered by a person.
+
+- **PK** `id`; `UNIQUE (season, version)`.
+- **Columns:**
+  - `spec_json`, `complete`, `validation_errors`, `spec_sha256`;
+  - `manual_id` → `game_manuals`, `based_on_id` → itself;
+  - `status` ∈ {draft, awaiting_review, approved, superseded};
+  - `created_by` / `created_at`;
+  - `entry_started_at` (the season's first draft time, which is DM1's clock);
+  - `submitted_at`, `reviewed_by`, `reviewed_at`, `review_note`.
+- **Constraints:**
+  - a partial unique index allows one `approved` version per season;
+  - a CHECK requires approved and superseded versions to be complete and reviewed.
+
+#### `capability_profiles`
+
+P5-M9 team capability profiles (`ml.gameanalysis.capability.CapabilityIntake`). Each submission is landed raw-first
+in `raw_source_payloads` (source `capability_intake`).
+
+- **PK** `id`; `UNIQUE (profile_key, version)`.
+- **Columns:** `payload`, `raw_payload_id` → `raw_source_payloads` (ON DELETE SET NULL), `based_on_id`, `status` ∈
+  {active, archived, superseded}, `created_by`, `created_at`.
+
+#### `human_review_artifacts`
+
+DM1's human review artifacts:
+- the codebook;
+- independent codings;
+- the consensus-meeting coding;
+- the action-type → function map;
+- the feasibility rubric;
+- the mentor review.
+
+- **PK** `id`; `UNIQUE (kind, season, author, version)`.
+- **Columns:** `kind`, `season`, `author`, `version`, `payload`, `payload_sha256`, `status` ∈ {submitted, established,
+  superseded}, `created_at`, `established_by`, `established_at`, `note`.
+- **CHECK:** `established` requires `established_by`. Establishing is always a named person's act.
+
 ---
 
 ## 5. Incremental state
@@ -1005,10 +1066,11 @@ DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 | `0007_data_quality_lineage.sql` | `data_quality_issues.raw_payload_id`/`field` + cascades; creates `canonical_lineage` |
 | `0008_metrics_schema.sql` | Phase 3 M2: creates `scouting_observations` and `team_metrics` (schema only, nothing writes them yet) |
 | `0009_scouting_access_codes.sql` | Phase 3 M7: creates `scouting_access_codes`, the lightweight per-event anti-abuse gate for human scouting submissions |
+| `0010_phase5_human_inputs.sql` | Phase 5 (P5-M8/M9, DM1): creates `game_manuals`, `game_spec_versions`, `capability_profiles` and `human_review_artifacts` for the web app's human-input workflows |
 
 Migrations are plain SQL applied in filename order and recorded in `migrations_applied`.
 **There is no Alembic and none should be added.** To add one, create
-`database/migrations/0010_<name>.sql` and run `database/migrate.py`.
+`database/migrations/0011_<name>.sql` and run `database/migrate.py`.
 
 ### 8.7 Watching a live event
 

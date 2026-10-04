@@ -21,6 +21,7 @@ from api.ml_loading import load_pinned_ranking_model, load_pinned_win_prob_model
 from api.request_id import REQUEST_ID_HEADER
 from api.routes.event_analysis import router as event_analysis_router
 from api.routes.health import router as health_router
+from api.routes.human_inputs import router as human_inputs_router
 from api.routes.metrics import router as metrics_router
 from api.routes.predictions import router as predictions_router
 from api.routes.qualification_forecast import router as qualification_forecast_router
@@ -117,6 +118,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(strength_router, prefix=settings.api_prefix)
     app.include_router(event_analysis_router, prefix=settings.api_prefix)
     app.include_router(qualification_forecast_router, prefix=settings.api_prefix)
+    app.include_router(human_inputs_router, prefix=settings.api_prefix)
 
     logger.info(
         "Application created: env=%s prefix=%r cors_origins=%s",

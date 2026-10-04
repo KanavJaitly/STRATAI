@@ -236,6 +236,73 @@ predictions with the D18 methodology unchanged).
   7. At least 10 sample team profiles.
   8. The mentor review.
 
+## Human-input workflows (P5-M8, P5-M9, DM1)
+
+A person can supply every DM1 human input through the STRATAI web app (`frontend/`), without editing the database,
+code or seed files. Storage is `data/human_inputs.py` over migration `0010_phase5_human_inputs.sql`, and the API is
+`api/routes/human_inputs.py`.
+
+**What is enforced:**
+- **Append-only content.** An edit is a new version; nothing is overwritten.
+- **Writes need a token:** `X-StratAI-Write-Token` must equal `HUMAN_INPUTS_WRITE_TOKEN`. With no token configured,
+  every write is refused (fail closed). Every write names the person acting.
+- **No LLM** reads a manual or fills a field. The frozen models (GameSpec, CapabilityIntake, Codebook, Coding,
+  ActionFunctionMap, Rubric) validate everything, and no criterion was added.
+- **A PDF upload validates nothing.** A structured spec is authoritative only once a named reviewer approves it.
+- **DM1 is never marked met here.** `dm1-status` reports what exists; DM1 comes only from the write-once records.
+
+**Game manual and spec workflow.** The three things are kept distinct: the uploaded source PDF, the human-entered
+and reviewed structured spec, and derived STRATAI analysis. A season moves through these states:
+
+| State | Meaning |
+|---|---|
+| `no_structured_spec` | nothing entered yet (a manual may already be uploaded: `source_uploaded`) |
+| `structured_spec_incomplete` | the latest draft fails GameSpec validation; its errors are listed |
+| `draft_complete_not_submitted` | the latest draft validates; not yet sent for review |
+| `awaiting_human_review` | submitted; a named reviewer must approve it or return it with a note |
+| `reviewed_approved` | approved by a named reviewer: the season's authoritative spec |
+| `superseded` | an approved version replaced by a later approval (kept) |
+
+- **The clock:** a season's `entry_started_at` is its first draft's creation time, which starts DM1's 5-day clock.
+- **2027:** nothing for 2027 is pre-populated. The manual is published in January.
+
+**Team capability profiles** expose exactly the M9 intake fields: budget, manufacturing, programming and mentoring
+levels (0–3), and notes for constraints.
+- **Actions:** create, edit (a new version), duplicate, archive, view history.
+- **Raw-first:** each submission lands in `raw_source_payloads` before validation.
+- **Recommendation:** the deterministic M9 output (ceiling, recommended archetype, achievable features, every
+  requirement met or unmet, limitations), labelled `heuristic_not_validated_against_outcomes`.
+  - It needs the season's established rubric.
+  - Candidate archetypes need an approved spec, an established codebook and an established action map (P5-D13).
+
+**DM1 review artifacts**, each in state `submitted`, `established` (a named person's act) or `superseded`:
+- the codebook;
+- two independent codings (never established individually);
+- κ under P5-D13's gate: pooled overall, per-function `provisional` below 0.6;
+- the consensus coding (only after two codings);
+- the action-type → function map;
+- the feasibility rubric;
+- the mentor review.
+
+**Routes:**
+- `GET /human-inputs/write-access`
+- `POST /human-inputs/game-manuals` (the PDF as the request body), `GET /human-inputs/game-manuals`,
+  `GET /human-inputs/game-manuals/{manual_id}/file`
+- `GET /human-inputs/seasons/{season}/workflow`, `GET /human-inputs/seasons/{season}/specs`,
+  `POST /human-inputs/seasons/{season}/specs`, `POST /human-inputs/specs/{spec_id}/submit`,
+  `POST /human-inputs/specs/{spec_id}/review`
+- `GET /human-inputs/capability-profiles`, `POST /human-inputs/capability-profiles`,
+  `PUT /human-inputs/capability-profiles/{profile_key}`, `POST /human-inputs/capability-profiles/{profile_key}/duplicate`,
+  `POST /human-inputs/capability-profiles/{profile_key}/archive`,
+  `GET /human-inputs/capability-profiles/{profile_key}/history`,
+  `GET /human-inputs/capability-profiles/{profile_key}/recommendation`
+- `GET /human-inputs/reference/design-examples`, `GET /human-inputs/seasons/{season}/artifacts`,
+  `POST /human-inputs/seasons/{season}/artifacts`, `POST /human-inputs/artifacts/{artifact_id}/establish`,
+  `GET /human-inputs/seasons/{season}/kappa`, `GET /human-inputs/seasons/{season}/dm1-status`
+
+**Error codes:** `invalid_input`, `not_found`, `invalid_state`, `conflict`, `prerequisite_missing`,
+`spec_incomplete`, `storage_integrity`, `writes_disabled`, `write_not_authorized`, `unsupported_media_type`.
+
 ## P5-M10 — Documentation, contracts and sign-off
 
 - **This page:** pinned by `tests/test_phase5_contract.py`, which checks:

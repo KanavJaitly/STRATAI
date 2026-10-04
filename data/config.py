@@ -112,6 +112,13 @@ class Settings(BaseSettings):
     live_epa_log_dir: str | None = None
     live_epa_a1a2_policy: Literal["d18_skip", "literal_state"] | None = None
     live_epa_concluded_seasons: list[int] = []
+    # Phase 5 human-input workflows (data/human_inputs.py, api/routes/human_inputs.py).
+    # - human_inputs_write_token: the shared secret every write request must present in the
+    #   X-StratAI-Write-Token header. Unset means every write is refused (fail closed); reads stay open, as
+    #   for every other endpoint.
+    # - artifact_store_dir: where uploaded game-manual PDFs are kept write-once, named by sha256.
+    human_inputs_write_token: str | None = None
+    artifact_store_dir: str = str(PROJECT_ROOT.parent / "StratAI-artifacts" / "uploads")
 
     model_config = ConfigDict(
         case_sensitive=False,
