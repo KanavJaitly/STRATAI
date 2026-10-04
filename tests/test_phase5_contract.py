@@ -53,7 +53,7 @@ def test_reliability_caveat_travels_on_endpoints_serving_it(openapi):
 @pytest.mark.parametrize("label", [
     "validated", "validated_as_measured", "descriptive", "not_validated", "approximately_calibrated_qualification",
     "heuristic_not_validated_against_outcomes", "curated_reference_unverified", "live_refresh_not_yet_validated",
-    "definition_pending", "provisional", "low_confidence", "fallback_stratai", "withheld_no_prior_event", "stale",
+    "descriptive_definition_pending", "provisional", "low_confidence", "fallback_stratai", "withheld_no_prior_event", "stale",
     "pending", "unavailable", "current"])
 def test_every_served_label_is_documented(docs, label):
     assert f"`{label}`" in docs
@@ -116,6 +116,19 @@ def test_open_decisions_are_recorded_and_referenced(docs):
 
 def test_done_means_never_inferred_from_code(tmp_path):
     assert dm1(tmp_path)["met"] is False and dm2(tmp_path)["met"] is False
-    (tmp_path / "p5_m6_replay.json").write_text(json.dumps({"passed": True, "problem_count": 0}))
+    (tmp_path / "p5_m6_replay.json").write_text(json.dumps({"passed": False, "problem_count": 14}))
+    assert dm2(tmp_path)["replay_passed"] is False
+    (tmp_path / "p5_m6_replay_rerun1.json").write_text(json.dumps(
+        {"passed": True, "problem_count": 0, "supersedes": {"record": "p5_m6_replay.json"}}))
     report = dm2(tmp_path)
-    assert report["replay_passed"] and not report["met"]  # P5-M2 adoption is still required
+    assert report["replay_passed"] and report["replay_record"] == "p5_m6_replay_rerun1.json"
+    assert not report["met"]  # P5-M2 adoption (a human decision) is still required
+    (tmp_path / "p5_m2_adoption.json").write_text(json.dumps({"adopted": True}))
+    assert dm2(tmp_path)["met"]
+
+
+def test_real_done_means_status_matches_the_records():
+    """As recorded: DM1 is blocked by human input; DM2's replay passed but P5-M2 is not adopted."""
+    one, two = dm1(), dm2()
+    assert one["met"] is False and "dm1_dry_run.json" in one["missing_records"]
+    assert two["replay_passed"] is True and two["p5_m2_adopted"] is False and two["met"] is False
