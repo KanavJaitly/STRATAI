@@ -130,13 +130,14 @@ def qualification_forecast(
     if not event_exists(database, event_key):
         raise event_not_found_error(event_key)
     scales = ScaleLookup(database)
-    forecasts, out_matches = [], []
+    forecasts, out_matches, states = [], [], []
     try:
         for match_key, scheduled in qualification_matches(database, event_key):
             features_as_of = min(when, scheduled)
             row = build_match_feature_row(database, match_key, features_as_of, epa_provider=epa_source.provider,
                                           scale_lookup=scales)
             teams = [*row.red_teams, *row.blue_teams]
+            states += [t.epa_source_state for t in teams]
             complete = bool(row.red_teams) and bool(row.blue_teams) and all(t.epa_total_present for t in teams)
             q = float(served.model.predict_win_prob(row))
             red = tuple(t.team_number for t in row.red_teams)
@@ -170,4 +171,4 @@ def qualification_forecast(
         event_key=event_key, as_of=when, statbotics_week=week,
         low_confidence=None if week is None else week in LOW_CONFIDENCE_WEEKS,
         record_evidence=RECORD_EVIDENCE, range_evidence=RANGE_EVIDENCE, matches=out_matches, teams=teams_out,
-        epa=epa_info(epa_source), win_prob_model_sha256=served.sha256)
+        epa=epa_info(epa_source, when, states), win_prob_model_sha256=served.sha256)
