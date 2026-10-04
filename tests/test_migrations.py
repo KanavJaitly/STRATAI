@@ -152,14 +152,19 @@ def test_run_migrations_rolls_back_the_whole_batch_on_a_later_failure(monkeypatc
     migrations directory containing one migration that would succeed
     followed by one that cannot, and checks the database itself afterward.
 
-    Uses the real project Settings (not this file's autouse env_settings
-    fixture, whose DATABASE_URL is a placeholder for the mocked tests above
-    and does not point at a reachable database). DATABASE_URL must be
-    cleared first: Settings() calls load_dotenv(), which refuses to override
-    an env var already set, so the autouse fixture's placeholder would
-    otherwise shadow the real .env value here too.
+    Uses the session's isolated test database (not this file's autouse
+    env_settings fixture, whose DATABASE_URL is a placeholder for the mocked
+    tests above and does not point at a reachable database). Until 2026-10-04
+    this cleared DATABASE_URL and let Settings() reload .env, which names the
+    serving database, so the rolled-back batch and its cleanup ran there; the
+    test-database guard (tests/db_guard.py) exposed it. The URL is now the one
+    the guard accepted at session start.
     """
-    monkeypatch.delenv("DATABASE_URL", raising=False)
+    from tests import db_guard
+
+    if db_guard.session_database_url is None:
+        pytest.skip("no isolated test database configured for this session")
+    monkeypatch.setenv("DATABASE_URL", db_guard.session_database_url)
     real_settings = Settings()
     valid_migration = tmp_path / _ROLLBACK_TEST_MARKER
     valid_migration.write_text(
