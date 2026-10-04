@@ -41,8 +41,12 @@ def _record(name: str) -> dict:
 def test_every_phase5_endpoint_is_live_and_documented(docs, openapi):
     live = set(openapi["paths"])
     assert PHASE5_PATHS <= live
-    documented = set(re.findall(r"`GET (/[^`?]+)", docs))
-    assert documented == PHASE5_PATHS, documented ^ PHASE5_PATHS
+    human = {p for p in live if p.startswith("/human-inputs")}
+    documented = set(re.findall(r"`(?:GET|POST|PUT) (/[^`?]+)", docs))
+    assert documented == PHASE5_PATHS | human, documented ^ (PHASE5_PATHS | human)
+    for path in human:  # every method of every human-input route is documented
+        for method in openapi["paths"][path]:
+            assert f"`{method.upper()} {path}`" in docs or f"`{method.upper()} {path}?" in docs, (method, path)
 
 
 def test_reliability_caveat_travels_on_endpoints_serving_it(openapi):
