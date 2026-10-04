@@ -6,7 +6,11 @@
 - **DM2 is MET.** **DM1 is still blocked** by required human input. **Phase 5 is not complete.**
 - **The human-input workflows are built:** the `frontend/` web app plus the `/human-inputs` API. Every DM1 input can now be entered,
   reviewed and established through the website. None has been entered, and none may be fabricated.
-  Migration 0010 is not yet applied to the serving database: that is a production step awaiting approval.
+- **Migration 0010 is on the serving database.** An un-isolated contract-test run applied it on 2026-10-04 at
+  19:30:56Z, without prior approval. Its four tables are empty, and no serving data changed. Kanav kept it as the
+  intended deployment migration. The incident is recorded separately (`.agent/phase5/INCIDENT_2026-10-04_0010_on_serving.md`); it is not a Phase 5
+  acceptance failure. A permanent test-database guard now refuses any test session not pointed at an isolated
+  `stratai_test` copy.
 
 The review below is kept as written on 2026-10-03; where it says DM2 waits on P5-D3, the update above supersedes it.
 
