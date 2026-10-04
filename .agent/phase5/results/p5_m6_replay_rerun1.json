@@ -1,0 +1,84 @@
+{
+ "checked_steps": 44,
+ "counts": {
+  "affected_checks": 264,
+  "bulk_matches": 388,
+  "bulk_syncs": 13,
+  "control_checks": 47,
+  "endpoint_calls": 8,
+  "equality_checks": 352,
+  "fallback_served": 80,
+  "fallback_views": 80,
+  "logged_strength_responses": 352,
+  "metrics_checks": 678,
+  "noop_polls": 44,
+  "policy_checks": 352,
+  "policy_differences": 4,
+  "reserved": 171,
+  "sentinel_checks": 10,
+  "step_syncs": 44,
+  "switch_checks": 2
+ },
+ "decision": "P5-D14",
+ "done_means": "DM2",
+ "harness": {
+  "budget_minutes": 45.0,
+  "control_teams_per_step": 2,
+  "production_policy": "d18_skip",
+  "reserve_sample": 150,
+  "seed": 20261005
+ },
+ "incomplete": null,
+ "log_record": "p5_m6_replay_rerun1_log.json",
+ "log_record_sha256": "33e3fea3a76c22e4c5cd6093e8a66f54132b2bc5dfeeb7a5c84855ea62b0b8fd",
+ "log_sha256": "d38f18d2ad01a82f6c11bf6821b957d2ef730b5d07964cf10e73ef21f2b604c1",
+ "milestone": "P5-M6",
+ "minutes": 32.6,
+ "passed": true,
+ "planned_steps": 44,
+ "plans": [
+  {
+   "event_key": "2026iscmp",
+   "stratum": "E1"
+  },
+  {
+   "event_key": "2026nccab",
+   "stratum": "E2"
+  },
+  {
+   "event_key": "2026cur",
+   "stratum": "E3"
+  },
+  {
+   "event_key": "2026vache",
+   "stratum": "E4"
+  },
+  {
+   "event_key": "2025mawne",
+   "stratum": "E5"
+  }
+ ],
+ "population_fingerprint": "24e23b1aac1fd0e58730bea9a9f536e40f437d16df6e2cdd77d353630baa4f48",
+ "problems": [],
+ "provenance": {
+  "commit": "5d39052d0c2e1bf20344ccf78d3537de8ffb1477",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-04T00:09:22.341652+00:00"
+ },
+ "replay_log_context": {
+  "model_sha256": {
+   "ranking_xgb_v2": "1f0fe5aae90244e2736950928a88e733c85214b8def547b399b87c0cdd136312",
+   "win_prob_xgb_calibrated": "c76d329918e1667ae6f641ae6023e0649f34feb7c35064dea8b3db5cd1a8b0a2"
+  },
+  "retrieval": "simulated lag 24 h",
+  "snapshot_id": "c7bcc3cc2d9edca4f3d01f559f2a20788bcfa055de68b6db2f4126f90603ef69",
+  "stratai_fingerprint": "[{\"input_fingerprint\": \"774a4aea5da9b80c2e1819287be6faed6360963d2625b994d5e229040c43f460\", \"prior_source\": null, \"results_fingerprint\": \"6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7\", \"season\": 2024}, {\"input_fingerprint\": \"95c6bfc2eb30677a43c120fef3a7545fbcbbd13ed4349573278bd99f8b8490b5\", \"prior_source\": \"stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7\", \"results_fingerprint\": \"4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551\", \"season\": 2025}, {\"input_fingerprint\": \"29357e19e2fc7b12f71efb6ad22d9dcdea9cecad903019c863c8104857349aff\", \"prior_source\": \"stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7,2025=4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551\", \"results_fingerprint\": \"8fa397b25c6f5ff926aef47499fde818746732375245c5f0d0b3a74c5569a9e7\", \"season\": 2026}]"
+ },
+ "run": "stratai_p5_m6_verification",
+ "selection_record_sha256": "39bbceb7a80f214bd48db3e0e615f6f4fe3597434b46a431ad824574840bfeb0",
+ "supersedes": {
+  "commit": "eafba43",
+  "reason": "harness defects, approved for correction by Kanav 2026-10-03 (.agent/phase5/M06_RECORDED_RUN_FAILURE.md): (1) control baselines now reset after a bulk sync that lands the team's matches; (2) each re-request uses the EPA settings it was served under; (3) planned actions run in global chronological order, so every as_of sees the selected events' earlier rows. Population, selection, criteria unchanged",
+  "record": "p5_m6_replay.json"
+ }
+}

@@ -1,0 +1,89 @@
+{
+ "appearances": 319301,
+ "check": "L2 simulated cadence",
+ "d18_snapshot_integrity": {
+  "a1_team_events": 331,
+  "invalid_team_events": 143,
+  "ok": true,
+  "raw_equals_table_epa_total": 24022,
+  "raw_files_verified": 608,
+  "raw_records": 24022,
+  "table_rows": 24022,
+  "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5"
+ },
+ "decision": "P5-D11",
+ "diagnostic_lag_24h": {
+  "ece_matches": 12245,
+  "epa_incomplete_matches": 2562,
+  "label": "diagnostic only (not a pass criterion)",
+  "lag_hours": 24,
+  "m5v2_events": 208,
+  "m5v2_midpoint_spearman": 0.6112440558451762,
+  "qualification_ece_epa_complete": 0.015283619194854966,
+  "reference_d18": {
+   "m5v2_midpoint_spearman": 0.6112,
+   "qualification_ece_epa_complete": 0.015
+  },
+  "refused_matches": 0,
+  "refused_snapshots": 0,
+  "substitution_check": {
+   "mismatches": 0,
+   "refused": 1,
+   "sample": 200,
+   "seed": 20261007
+  }
+ },
+ "lags": {
+  "24h": {
+   "differing_from_d18": 547,
+   "leak_examples": [],
+   "passed": true,
+   "served_with_available_at_not_before_as_of": 0,
+   "states": {
+    "current": 263179,
+    "fallback_stratai": 450,
+    "refused:EpaSourcePendingError": 547,
+    "withheld_no_prior_event": 55125
+   },
+   "unexplained_differences": 0,
+   "unexplained_examples": []
+  },
+  "6h": {
+   "differing_from_d18": 522,
+   "leak_examples": [],
+   "passed": true,
+   "served_with_available_at_not_before_as_of": 0,
+   "states": {
+    "current": 263204,
+    "fallback_stratai": 450,
+    "refused:EpaSourcePendingError": 522,
+    "withheld_no_prior_event": 55125
+   },
+   "unexplained_differences": 0,
+   "unexplained_examples": []
+  },
+  "72h": {
+   "differing_from_d18": 1726,
+   "leak_examples": [],
+   "passed": true,
+   "served_with_available_at_not_before_as_of": 0,
+   "states": {
+    "current": 262000,
+    "fallback_stratai": 450,
+    "refused:EpaSourcePendingError": 1726,
+    "withheld_no_prior_event": 55125
+   },
+   "unexplained_differences": 0,
+   "unexplained_examples": []
+  }
+ },
+ "milestone": "P5-M2",
+ "minutes": 1.9,
+ "passed": true,
+ "policy": "d18_skip",
+ "provenance": {
+  "commit": "5d39052d0c2e1bf20344ccf78d3537de8ffb1477",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-03T23:42:15.575054+00:00"
+ }
+}
