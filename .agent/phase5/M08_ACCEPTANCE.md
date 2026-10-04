@@ -1,16 +1,18 @@
 milestone: P5-M8 Game-rule analysis
-status: NOT ACCEPTED (built and tested; not exercised by DM1, which is BLOCKED_ON_HUMAN plus open decision Q3)
+status: NOT ACCEPTED. Built and tested, with the rules decided (P5-D13) and implemented; "exercised by DM1" waits on human inputs
 files:
-  - data/game_spec.py (new): versioned, human-entered GameSpec (match length, scoring actions by period, RP rules, field elements, manual sections, entered_by, entry clock, llm_used fixed False); catalog manifest with sha256 integrity; pre-reveal filter
-  - data/design_reference.py (new): curated reference loaded with sha256 40aef139...39e1 and 77 rows verified at load, micro-archetype verbatim, every example labelled curated_reference_unverified, pre-reveal filter (2026 drops the 10 REBUILT rows); human Codebook / Coding schemas; double-coding validation; Cohen's kappa pooled and per function; label_status with an explicit gate
-  - ml/gameanalysis/analysis.py (new): value table; past-season component ranges (seasons < reveal); analysis pipeline with Q3 rule slots that refuse until decided
-  - tests/test_game_analysis.py (8): schema, determinism, catalog integrity, reference sha and filter, kappa, refusals, leakage refusal (synthetic fixtures, labelled as such)
+  - data/game_spec.py: GameSpec v1 with human-entered action_type and element_type; catalog integrity; pre-reveal filter
+  - data/design_reference.py: reference sha verified; codebook and coding; Cohen's kappa; label_status per P5-D13; reconcile_with_consensus
+  - ml/gameanalysis/analysis.py, ml/gameanalysis/rules_p5d13.py: similarity, candidate archetypes, expected ranges, dominant component
+  - tests/test_game_analysis.py, tests/test_rules_p5d13.py (synthetic fixtures, including the DM1 runner wiring end to end)
 acceptance_criteria:
-  schema_determinism_catalog_integrity_tests: PASS (tests above)
-  reference_sha256_verified_at_load: PASS
-  codebook_agreement_reported: NOT RUN. Needs the human codebook and two independent human codings
-  outputs_labelled: descriptive (value table, ranges), curated_reference_unverified (examples), not_validated (forward-looking Q3 outputs)
-open:
-  - Q3 (.agent/phase5/M08_DECISION_REQUIRED.md): similarity, candidate archetypes, expected ranges, dominant components, the kappa gate and coding reconciliation
-  - human inputs: catalog specs, the codebook, two codings
-done_means: "built and tested; exercised by DM1" -> NOT MET (not exercised: DM1 blocked)
+  schema, determinism and catalog-integrity tests: PASS
+  reference sha256 verified at load: PASS
+  codebook agreement (kappa) reported: NOT RUN (needs the human codebook and two human codings)
+  output labels: descriptive / curated_reference_unverified / not_validated, as specified (tested)
+external_human_inputs (never simulated):
+  - catalog game specs entered from manuals
+  - the codebook
+  - two independent codings, then the consensus coding
+  - the action-type -> function map (pre-reveal)
+done_means: "built and tested; exercised by DM1" -> NOT MET (DM1 blocked by human inputs)

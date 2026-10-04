@@ -1,15 +1,24 @@
 milestone: P5-M9 Team capability intake and the DM1 end-to-end dry run
-status: NOT ACCEPTED (BLOCKED_ON_HUMAN + open decision Q3). DM1 NOT MET
-files:
-  - ml/gameanalysis/capability.py (new): CapabilityIntake landed raw-first (source capability_intake); a human-authored Rubric schema; a deterministic recommend() giving the realistic ceiling, the recommended archetype, achievable features and an explanation of every requirement met or unmet, labelled heuristic_not_validated_against_outcomes
-  - scripts/phase5_dm1_dry_run.py (new):
-      run: validates and hashes every input; enforces the reveal-year catalog/reference filters; reads 2024-2025 breakdowns only; records the elapsed time from the spec's entry_started_at; writes predictions write-once before any 2026 match data
-      score: once, against 2026 weeks 1-3, labelled not_validated regardless
-      mentor-review: records a named, dated review
-  - tests/test_game_analysis.py: rubric determinism and explanation; raw-first intake
+status: NOT ACCEPTED. DM1 NOT MET: BLOCKED BY REQUIRED HUMAN INPUT
+built:
+  - ml/gameanalysis/capability.py: raw-first intake; deterministic human-authored rubric; heuristic_not_validated_against_outcomes
+  - scripts/phase5_dm1_dry_run.py:
+      run: P5-D13 rules; consensus labels; per-function kappa status; clock; write-once before any 2026 match data
+      score: once, 2026 competition weeks 1-3 = TBA weeks 0-2, not_validated
+      mentor-review: records the human review
+  - the runner is wired end to end under test with synthetic fixtures (nothing recorded)
 acceptance_criteria:
-  a_DM1_run_within_5_days: NOT RUN. Needs Q3 rules, a human-entered 2026 spec (the clock starts at entry), human catalog specs, codebook and codings, a human-authored rubric, and at least 10 sample profiles fixed before the run
-  b_predictions_scored_once: NOT RUN (follows a)
+  a_DM1_within_5_days: NOT RUN. The clock starts when a person begins entering the 2026 spec from the manual
+  b_scored_once: NOT RUN (follows a)
   c_mentor_review: NOT RUN (human)
-note: none of the human inputs was simulated or authored by an AI. AI knowledge of the 2026 game would be hindsight leakage (P5-D7)
-done_means: DM1 met -> NOT MET
+external_human_inputs (never simulated; AI knowledge of 2026 is hindsight leakage, P5-D7):
+  1. the 2026 game spec, entered from the manual by a person (starts the clock)
+  2. pre-2026 catalog specs, entered from manuals, plus their manifest
+  3. the codebook
+  4. two independent codings of the 77 reference rows
+  5. the consensus-meeting coding
+  6. the action-type -> function map (pre-reveal)
+  7. the human-authored feasibility rubric
+  8. at least 10 sample team profiles, fixed before the run
+  9. the mentor review
+done_means: DM1 met -> NOT MET (blocked by human input)
