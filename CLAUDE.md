@@ -549,6 +549,15 @@ have been rated by two scouts, so defense_agreement measures match-to-match
 variance confounded with scout calibration, not inter-scout agreement. See
 docs/metrics_pipeline.md section 9.1.
 
+Phase 6 – Strategy & Alliance Selection Engines (2026-10-04): **milestones defined, not frozen, zero
+implementation.**
+- **Spec:** docs/P6Milestones.md (P6-M0 … P6-M14, done-means P6-DM1 / P6-DM2).
+- **Decisions:** .agent/phase6/P6_M0_DECISIONS.md. The P6-M0 freeze waits on Kanav's P6-Q0 … P6-Q13 and his
+  approval of the ambiguity resolutions P6-A1 … P6-A12.
+- **Phase 5:** accepted at the implementation checkpoint on branch `phase5/build` @ `6e76520`, which is not yet
+  on main (P6-Q0). Phase 5 is NOT complete: DM1 awaits genuine human inputs.
+- **Starting Phase 6:** implementation starts only on Kanav's explicit build instruction.
+
 ---
 
 ## Long-Term Features
