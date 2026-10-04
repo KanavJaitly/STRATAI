@@ -10,9 +10,11 @@ definition requires exists and says so. It is never inferred from code existing.
 - `dm1_score.json`;
 - `dm1_mentor_review.json`.
 
-**DM2** requires the P5-M6 replay (`p5_m6_replay.json`) to pass criteria (a)–(e), and P5-M6's declared
-dependency, P5-M2 adopted, to be met. Adoption is a recorded human decision (P5-D3) after L1–L4 pass, and is
-read from `p5_m2_adoption.json`.
+**DM2** requires the P5-M6 verification to pass criteria (a)–(e). The record read is
+`p5_m6_replay_rerun1.json` when it declares that it supersedes `p5_m6_replay.json` (the failed first run, kept),
+otherwise `p5_m6_replay.json`. DM2 also requires P5-M6's declared dependency, *P5-M2 adopted*. Adoption is a
+recorded human decision (P5-D3), taken after L1–L4 pass, and is read from `p5_m2_adoption.json`, which only a
+human decision creates.
 """
 
 from __future__ import annotations
@@ -40,23 +42,27 @@ def dm1(results: Path = RESULTS) -> dict[str, Any]:
     return {"done_means": "DM1", "met": met, "missing_records": missing,
             "within_5_days": within if run else None,
             "elapsed_hours": run["clock"]["elapsed_hours"] if run else None,
-            "blocked_on": [] if met else ["open decision Q3 (.agent/phase5/M08_DECISION_REQUIRED.md)",
-                                          "human inputs: catalog and 2026 specs, codebook and two codings, rubric, "
-                                          ">= 10 profiles, mentor review"]}
+            "blocked_on": [] if met else [
+                "required human input (.agent/phase5/M09_ACCEPTANCE.md): the 2026 spec entered from the manual, "
+                "catalog specs, codebook, two codings and a consensus coding, the action->function map, the rubric, "
+                ">= 10 team profiles, the mentor review"]}
 
 
 def dm2(results: Path = RESULTS) -> dict[str, Any]:
-    replay, adoption = _load("p5_m6_replay.json", results), _load("p5_m2_adoption.json", results)
+    rerun, adoption = _load("p5_m6_replay_rerun1.json", results), _load("p5_m2_adoption.json", results)
+    supersedes = (rerun or {}).get("supersedes", {}).get("record") == "p5_m6_replay.json"
+    replay = rerun if supersedes else _load("p5_m6_replay.json", results)
     replay_passed = bool(replay and replay["passed"])
     adopted = bool(adoption and adoption.get("adopted"))
     blocked = []
     if not replay_passed:
-        blocked.append("p5_m6_replay.json missing or not passed")
+        blocked.append("the P5-M6 verification record is missing or did not pass")
     if not adopted:
-        blocked.append("P5-M6 dependency 'P5-M2 adopted' unmet: open decision Q1, then L1/L2, then the P5-D3 "
-                       "adoption decision")
+        blocked.append("P5-M6's dependency 'P5-M2 adopted' is unmet: L1-L4 have passed; the P5-D3 adoption "
+                       "decision (human) is pending")
     return {"done_means": "DM2", "met": replay_passed and adopted, "replay_passed": replay_passed,
-            "replay_problems": None if replay is None else replay["problem_count"],
+            "replay_record": None if replay is None else ("p5_m6_replay_rerun1.json" if supersedes else "p5_m6_replay.json"),
+            "replay_problems": None if replay is None else replay.get("problem_count", len(replay.get("problems", []))),
             "p5_m2_adopted": adopted, "blocked_on": blocked}
 
 
