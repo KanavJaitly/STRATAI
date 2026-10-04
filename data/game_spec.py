@@ -38,6 +38,8 @@ class ScoringAction(BaseModel):
     points: float = Field(ge=0)
     unit: str = Field(min_length=1, description="what one scoring of the action is, e.g. 'game piece in the hub'")
     field_element_id: str | None = None
+    action_type: str = Field(min_length=1, description="the scoring-action type, from the vocabulary of the "
+                                                       "human-authored action->function map (P5-D13)")
     manual_section: str = Field(min_length=1)
 
 
@@ -52,6 +54,7 @@ class FieldElement(BaseModel):
     element_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
     count: int = Field(ge=1)
+    element_type: str = Field(min_length=1, description="the field-element type, for P5-D13's Jaccard similarity")
     manual_section: str = Field(min_length=1)
 
 
