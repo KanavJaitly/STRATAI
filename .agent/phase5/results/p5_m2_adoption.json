@@ -1,0 +1,44 @@
+{
+ "adopted": true,
+ "decided_at": "2026-10-04",
+ "decided_by": "Kanav",
+ "decision": "P5-D3",
+ "evidence_sha256": {
+  "p5_m2_l1.json": "67a3df01a7e133158154c8136d335dd3262a1e0905217092e0c3e242e026699b",
+  "p5_m2_l2.json": "b86f5fd8d81afaa8db39e53742fef63177bcd71e29fc3a44cc7fe388bf0fa257",
+  "p5_m2_l3_outage_drill.json": "b3e2986d24dcff6b466b87fe57f0d19cf1c4d6298069352aa8932a79b60dfc52",
+  "p5_m2_l4_atomicity_rerun1.json": "d7104581b08fa8717ba421131dd0dc80310c9cf3fb560a19537004a4fb39bfd7",
+  "p5_m6_replay_rerun1.json": "42f8c1729eb29da383782b52021255b9d4c20305b07ae1be380f97d5085a683c"
+ },
+ "kind": "operational production-adoption decision (not a claim of prospective validation)",
+ "outstanding": [
+  "L5 value drift and L6 live shadow evaluation during the 2027 season",
+  "live outputs carry live_refresh_not_yet_validated until L6 (design \u00a79)"
+ ],
+ "production_configuration": {
+  "EPA_SOURCE": "p5_live_statbotics",
+  "LIVE_EPA_A1A2_POLICY": "d18_skip",
+  "LIVE_EPA_CONCLUDED_SEASONS": "[2024,2025,2026]",
+  "LIVE_EPA_LOG_DIR": "C:/Dev/StratAI-artifacts/live_epa/production_log",
+  "STATBOTICS_SNAPSHOT_DIR": "C:/Dev/StratAI-artifacts/statbotics/statbotics_snapshot_20261001T220423Z",
+  "STRATAI_EPA_CHAIN": "C:/Dev/StratAI-artifacts/ratings/epa-chain/chain_e77d9444c57a7b50.json",
+  "models": "unchanged D18 pins (ranking_xgb_v2 1f0fe5aa...6312; win_prob_xgb_calibrated c76d3299...b0a2)",
+  "root_snapshot_id": "c7bcc3cc2d9edca4f3d01f559f2a20788bcfa055de68b6db2f4126f90603ef69"
+ },
+ "provenance": {
+  "commit": "ec66b6d6180183d47a788f909d58d96de9dd721d",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-04T19:09:51.818347+00:00"
+ },
+ "statement": "The live EPA source passed its frozen historical P5-M2 acceptance criteria and has been adopted for production; prospective 2027 validation remains pending.",
+ "unchanged": [
+  "P5-M2 acceptance criteria",
+  "timing rules (72 h fallback, retrieval)",
+  "EPA selection (D13)",
+  "fallback policy (Option A)",
+  "validation thresholds",
+  "source states: current, stale, pending, fallback_stratai, unavailable, withheld_no_prior_event",
+  "provenance, snapshot hashing, atomic refresh, validation_status"
+ ],
+ "what_is_adopted": "the P5-M2 live EPA refresh system (EPA_SOURCE=p5_live_statbotics), rooted at the frozen D18 Statbotics-primary snapshot with D18's A1/A2 semantics (a1a2_policy d18_skip, P5-D11). As of the log's root and before, it serves the root in frozen-D18 mode (L1's configuration)."
+}
