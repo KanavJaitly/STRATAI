@@ -1,7 +1,7 @@
 phase: 5
 branch: phase5/build (from origin/main 369687f); nothing pushed
 current_milestone: none (phase review done)
-status: PHASE_REVIEW_COMPLETE; Phase 5 NOT complete (done-means unmet; see PHASE_ACCEPTANCE.md)
+status: IMPLEMENTATION CHECKPOINT (final report accepted by Kanav, 2026-10-04); Phase 5 NOT complete: DM1 awaits genuine human inputs (the incident is not the reason). Phase 5 work stopped; Phase 6 next, on Kanav's instruction
 accepted: [P5-M1, P5-M2, P5-M3, P5-M4, P5-M5, P5-M6 (criteria a-e, labelled rerun), P5-M7]
 not_accepted: [P5-M8, P5-M9 (blocked by required human input)]
 done_means: {DM1: NOT MET (human inputs), DM2: MET (replay passed; P5-M2 adopted by P5-D3, 2026-10-04)}
@@ -14,5 +14,6 @@ human_inputs_required (DM1):
 known_risks:
   - live T_w1 early in 2027 untested until L6
   - the P5-M5 80% range is served not_validated
-last_verified: phase audit at 9a867fa on stratai_test: 1,800 passed, 3 skipped, 0 failed (9.3 min)
-last_checkpoint: PHASE_ACCEPTANCE.md (2026-10-03)
+test_database_guard: tests/db_guard.py via tests/conftest.py (75e9d9b); permanent; only stratai_test / stratai_test_<suffix>; no bypass
+last_verified: full suite with the guard on stratai_test (content of 75e9d9b): 1,842 passed, 3 skipped, 0 failed (10.4 min); final contract/guard set at b7ca503: 197 passed
+last_checkpoint: PHASE_ACCEPTANCE.md (2026-10-03, updated 2026-10-04)
