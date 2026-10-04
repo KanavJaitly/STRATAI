@@ -14,7 +14,8 @@ Run with the production environment: `EPA_SOURCE=p5_live_statbotics`, `LIVE_EPA_
    - For seeded held-out 2026 qualification matches (plus every 2026iscmp qualification match), the features the
      API builds at match time equal the D18 frame's, and the served value equals the frozen model on the frame
      row.
-   - No live flag is attached: historical as_of are served by the root in frozen-D18 mode.
+   - A historical match is flagged `live_refresh_not_yet_validated` if and only if one of its teams is served
+     `fallback_stratai` (design §9). Historical as_of are otherwise served by the root in frozen-D18 mode.
 3. **"As of now".** An event ranking is served. A request D18 refused because a team's latest prior event is an
    unprocessed Israeli event (2026dal) is now answered, with those teams labelled `fallback_stratai` and the
    response flagged `live_refresh_not_yet_validated`.
@@ -30,7 +31,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-RECORD = Path(".agent/production/p5_live_adoption_check.json")
+RECORD = Path(".agent/production/p5_live_adoption_check_rerun1.json")
+SUPERSEDES = {"record": ".agent/production/p5_live_adoption_check.json",
+              "reason": "check defect: it expected no live_refresh_not_yet_validated flag on any historical match, but LIVE_EPA_REFRESH_DESIGN.md §9 adds it to every output using a fallback_stratai value; the first run's 60 flagged matches were exactly the 2026iscmp fallback ones, with 0 feature and 0 value mismatches"}
 SEED = 20261004
 FALLBACK_PROBE_EVENT = "2026dal"
 
@@ -93,10 +96,11 @@ def main(argv: list[str] | None = None) -> int:
             shown = body.get("unvalidated_red_win_probability") if shown is None else shown
             if shown != display_probability(win.model.predict_win_prob(_match_features(row))):
                 value_mismatch.append(row.match_key)
-            if body["epa"]["validation_flags"]:
-                flagged.append(row.match_key)
+            uses_fallback = any(t.epa_value_source == "stratai_fallback" for t in (*row.red_teams, *row.blue_teams))
+            if bool(body["epa"]["validation_flags"]) != uses_fallback:
+                flagged.append(row.match_key)  # a flag where §9 does not call for one, or a missing one
         checks["2_history_unchanged"] = {"matches": len(sample), "feature_mismatches": len(feature_mismatch),
-                                         "value_mismatches": len(value_mismatch), "flagged": len(flagged),
+                                         "value_mismatches": len(value_mismatch), "flag_mismatches": len(flagged),
                                          "examples": (feature_mismatch + value_mismatch + flagged)[:10]}
         checks["2_history_unchanged"]["ok"] = not (feature_mismatch or value_mismatch or flagged)
 
@@ -108,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
                                  "validation_flags": body.get("epa", {}).get("validation_flags")}
         checks["3_as_of_now"]["ok"] = (ranking.status_code == 200 and "stratai_fallback" in sources
                                        and LIVE_REFRESH_NOT_YET_VALIDATED in body["epa"]["validation_flags"])
-    result = {"decision": "P5-D3", "checked_at": started.isoformat(),
+    result = {"decision": "P5-D3", "supersedes": SUPERSEDES, "checked_at": started.isoformat(),
               "minutes": round((datetime.now(timezone.utc) - started).total_seconds() / 60, 1),
               "checks": checks, "passed": all(c["ok"] for c in checks.values()), "provenance": prov}
     RECORD.parent.mkdir(parents=True, exist_ok=True)

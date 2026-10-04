@@ -1,0 +1,59 @@
+{
+ "decision": "P5-D3",
+ "checked_at": "2026-10-04T18:48:52.154937+00:00",
+ "minutes": 17.7,
+ "checks": {
+  "1_source": {
+   "epa_source": "p5_live_statbotics",
+   "evaluated_configuration": false,
+   "adoption": {
+    "decision": "P5-D3",
+    "decided": "2026-10-04",
+    "status": "adopted_for_production",
+    "historical_acceptance": "passed: P5-M2 L1-L4 (.agent/phase5/M02_ACCEPTANCE.md)",
+    "prospective_validation": "pending: L5/L6 during the 2027 season",
+    "statement": "The live EPA source passed its frozen historical P5-M2 acceptance criteria and has been adopted for production; prospective 2027 validation remains pending."
+   },
+   "root_snapshot": "c7bcc3cc2d9edca4f3d01f559f2a20788bcfa055de68b6db2f4126f90603ef69",
+   "historical_frozen_d18_until": "2026-10-01T22:19:51.438243+00:00",
+   "ok": true
+  },
+  "2_history_unchanged": {
+   "matches": 360,
+   "feature_mismatches": 0,
+   "value_mismatches": 0,
+   "flagged": 60,
+   "examples": [
+    "2026iscmp_qm1",
+    "2026iscmp_qm2",
+    "2026iscmp_qm3",
+    "2026iscmp_qm4",
+    "2026iscmp_qm5",
+    "2026iscmp_qm6",
+    "2026iscmp_qm7",
+    "2026iscmp_qm8",
+    "2026iscmp_qm9",
+    "2026iscmp_qm10"
+   ],
+   "ok": false
+  },
+  "3_as_of_now": {
+   "event": "2026dal",
+   "status": 200,
+   "epa_value_sources": [
+    "statbotics",
+    "stratai_fallback"
+   ],
+   "validation_flags": [
+    "live_refresh_not_yet_validated"
+   ],
+   "ok": true
+  }
+ },
+ "passed": false,
+ "provenance": {
+  "commit": "3d595ff3fbbc3ab2887ebbbaec6d77668739f0f2",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-04T18:48:52.154925+00:00"
+ }
+}
