@@ -323,7 +323,10 @@ levels (0–3), and notes for constraints.
 It is served same-origin, with `/api` proxied to the API. The API's CORS allow-list is not widened.
 `tests/test_frontend_api_contract.py` pins the app's routes to the API's, in both directions.
 
-**Not yet applied to the serving database:** migration 0010. Applying it is a production step that needs approval.
+**Migration 0010 is applied to the serving database.** It was applied on 2026-10-04 by an un-isolated
+contract-test run, without prior approval, and Kanav then kept it as the intended deployment migration. Its
+tables were created empty, and no serving data changed (`.agent/phase5/INCIDENT_2026-10-04_0010_on_serving.md`). Since then, `tests/conftest.py` refuses any
+test session not pointed at an isolated `stratai_test` copy.
 
 ## P5-M10 — Documentation, contracts and sign-off
 
