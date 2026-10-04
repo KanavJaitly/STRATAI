@@ -337,6 +337,38 @@ class MetricsComputeResult:
     issues: list[QualityIssue] = field(default_factory=list)
 
 
+QUALITY_ISSUE_KEYS = "quality_issue_keys"
+PREVIOUS_RUN_KEYS_SQL = """
+SELECT stage_counts -> %(field)s FROM pipeline_runs
+WHERE pipeline_name = %(pipeline)s AND scope_key = %(event)s AND status = 'succeeded' AND id < %(run)s
+ORDER BY id DESC LIMIT 1
+"""
+
+
+def _issue_key(issue: QualityIssue) -> tuple:
+    return (issue.object_type, issue.object_id, issue.field, issue.issue_type, issue.severity, issue.description)
+
+
+def _new_since_previous_run(database: Database, event_key: str, run_id: int,
+                            issues: list[QualityIssue]) -> list[QualityIssue]:
+    """The issues this recompute must write: those the event's previous successful recompute did not detect.
+
+    Phase 3 audit item (docs/metrics_pipeline.md §9.10): a recompute holds no watermark and re-detects every
+    warning, so writing all of them on each run would add one row per warning per poll once the recompute runs
+    during a watch (P5-M6). The previous run's complete detected set is kept in its stage_counts
+    (QUALITY_ISSUE_KEYS), so an issue is written when it first appears, when it changes, or when it reappears
+    after a run without it. A run with no previous key set (the first, or one predating this change) writes all.
+    """
+    with database.cursor() as cursor:
+        cursor.execute(PREVIOUS_RUN_KEYS_SQL, {"field": QUALITY_ISSUE_KEYS, "pipeline": PIPELINE_NAME,
+                                               "event": event_key, "run": run_id})
+        row = cursor.fetchone()
+    if row is None or row[0] is None:
+        return list(issues)
+    previous = {tuple(key) for key in row[0]}
+    return [issue for issue in issues if _issue_key(issue) not in previous]
+
+
 def compute_event_team_metrics(
     event_key: str,
     *,
@@ -406,7 +438,8 @@ def compute_event_team_metrics(
                 lineage, team_number, event_key, history.match_keys, observed_rows, match_lineage_cache,
             ))
 
-        quality.record(issues, run_id)
+        issue_keys = sorted({_issue_key(issue) for issue in issues})
+        quality.record(_new_since_previous_run(database, event_key, run_id, issues), run_id)
         lineage_recorded = lineage.record(lineage_entries, run_id)
         orphaned_removed = _delete_orphaned_team_metrics(database, event_key, team_numbers)
 
@@ -415,6 +448,7 @@ def compute_event_team_metrics(
             stage_counts={
                 "teams_computed": len(computed), "lineage_recorded": lineage_recorded,
                 "orphaned_removed": orphaned_removed, "quality_issues": summarize(issues),
+                QUALITY_ISSUE_KEYS: [list(key) for key in issue_keys],
             },
         )
         return MetricsComputeResult(

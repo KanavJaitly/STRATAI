@@ -151,10 +151,12 @@ RUNNING_NOTES.md carries the same list; keep the two in sync.
 * Win probabilities = **unbiased** — AI strategy cannot get inflated odds.
 * Core engine = **no LLM API calls** — ML / stats / optimization only.
 * LLM allowed only for: natural-language report generation and explanations.
-* Real-time updates must sync **during an event** as matches are played. This is a
-  **real-time-phase target, not a current guarantee**: `--watch` keeps the canonical
-  tables current, but `team_metrics` recomputes only on the single-event path, so the
-  metrics the API serves do not move during a watch. See docs/metrics_pipeline.md §9.9.
+* Real-time updates must sync **during an event** as matches are played. Since Phase 5 (P5-M6,
+  2026-10-03), `--watch` keeps the canonical tables current *and* recomputes `team_metrics` after
+  every poll that loads new rows (`data.orchestrator.after_watch_sync`), so the served metrics move
+  during a watch. The quality-issue growth that blocked this (docs/metrics_pipeline.md §9.10) is
+  deduplicated, and §9.9 is closed. Verified by replay
+  (`.agent/phase5/results/p5_m6_replay_rerun1.json`).
 
 The first constraint is enforced in four places, deliberately: the
 `DefenseFeedingProfile` invariants in data/metrics/schemas.py, the
