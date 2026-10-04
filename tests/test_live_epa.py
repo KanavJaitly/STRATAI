@@ -338,3 +338,23 @@ def test_l3_outage_drill_passes_on_an_isolated_database(monkeypatch):
     result = checks.run_l3(name)  # type: ignore[arg-type]
     assert result["passed"], result["problems"]
     assert serving_name(str(Settings().database_url)) == name
+
+
+def test_as_of_before_the_log_began_is_served_in_frozen_d18_mode(tmp_path):
+    """Adoption (P5-D3): history before live retrieval began keeps D18's evaluated values (L1's frozen mode)."""
+    root = tmp_path / "r"
+    _write_root(root, {"2027p0": [_record(TEAM, "2027p0", 20.0)], "2027p1": [_record(TEAM, "2027p1", 40.0)]},
+                T0 + timedelta(days=100))  # the log's root is created long after the event
+    log = SnapshotLog.create_from_root(tmp_path / "l", root)
+    historical = _simulated(log, frozen_d18_schedule)
+    live = LiveStatboticsEpa(LiveRetrieval(log), FACTS, ENDS, {2027: W1}, {}, STRATAI, {"replay": "synthetic"},
+                             A1A2_D18_SKIP, historical=historical, historical_until=T0 + timedelta(days=100))
+    found = live.point_in_time_epa(TEAM, "2027t", T0 + timedelta(hours=1))
+    assert found.total == 40.0 and found.provenance["retrieval_mode"] == "simulated:frozen_d18_schedule"  # type: ignore[union-attr]
+    assert live.snapshot_view(T0 + timedelta(hours=1)).is_root
+    pure_live = LiveStatboticsEpa(LiveRetrieval(log), FACTS, ENDS, {2027: W1}, {}, STRATAI, {"replay": "synthetic"},
+                                  A1A2_D18_SKIP)
+    with pytest.raises(EpaSourcePendingError):  # without delegation: nothing had been retrieved yet
+        pure_live.point_in_time_epa(TEAM, "2027t", T0 + timedelta(hours=1))
+    after = live.point_in_time_epa(TEAM, "2027t", T0 + timedelta(days=101))
+    assert after.provenance["retrieval_mode"] == "live" and after.total == 40.0  # type: ignore[union-attr]

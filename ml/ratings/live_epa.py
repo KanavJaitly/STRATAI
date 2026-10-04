@@ -71,6 +71,14 @@ FALLBACK_REASON = "statbotics_unprocessed_72h"
 A1A2_D18_SKIP, A1A2_LITERAL_STATE = "d18_skip", "literal_state"
 A1A2Policy = Literal["d18_skip", "literal_state"]
 LIVE_REFRESH_NOT_YET_VALIDATED = "live_refresh_not_yet_validated"
+# P5-D3 (Kanav, 2026-10-04): an operational adoption decision, not a claim of prospective validation.
+ADOPTION = {
+    "decision": "P5-D3", "decided": "2026-10-04", "status": "adopted_for_production",
+    "historical_acceptance": "passed: P5-M2 L1-L4 (.agent/phase5/M02_ACCEPTANCE.md)",
+    "prospective_validation": "pending: L5/L6 during the 2027 season",
+    "statement": "The live EPA source passed its frozen historical P5-M2 acceptance criteria and has been adopted "
+                 "for production; prospective 2027 validation remains pending.",
+}
 REASON_PENDING, REASON_UNAVAILABLE = "pending", "unavailable"
 
 
@@ -226,6 +234,11 @@ class LiveStatboticsEpa:
     provenance_info: dict[str, Any] = field(default_factory=dict)
     diagnostics: Counter = field(default_factory=Counter)
     source: str = LIVE_EPA_SOURCE
+    # Adoption (P5-D3): an as_of at or before the log's root, which is when live retrieval began, is served by
+    # the root in frozen-D18 mode. That is L1's configuration, proven identical to D18 on all 319,301 historical
+    # appearances, so historical queries keep their evaluated values.
+    historical: LiveStatboticsEpa | None = None
+    historical_until: datetime | None = None
 
     def __post_init__(self) -> None:
         if self.a1a2_policy not in (A1A2_D18_SKIP, A1A2_LITERAL_STATE):
@@ -261,9 +274,18 @@ class LiveStatboticsEpa:
     # --- lookup -------------------------------------------------------------------------------
 
     def snapshot_view(self, as_of: datetime) -> SnapshotView:
-        return self.retrieval.view(as_of)
+        historical = self._historical_for(as_of)
+        return historical.retrieval.view(as_of) if historical is not None else self.retrieval.view(as_of)
+
+    def _historical_for(self, as_of: datetime) -> LiveStatboticsEpa | None:
+        if self.historical is not None and self.historical_until is not None and as_of <= self.historical_until:
+            return self.historical
+        return None
 
     def point_in_time_epa(self, team: int, target_event_key: str, as_of: datetime) -> TeamEventEpa | Unavailable:
+        historical = self._historical_for(as_of)
+        if historical is not None:
+            return historical.point_in_time_epa(team, target_event_key, as_of)
         view = self.retrieval.view(as_of)
         skipped: list[str] = []
         for facts in self._ordered.get(team, ()):

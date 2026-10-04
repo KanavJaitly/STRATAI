@@ -83,4 +83,4 @@ def team_strength(
         view = build_team_strength(database, team_number, event_key, when, epa_provider=epa_source.provider)
     except SilentFallbackError as exc:
         raise epa_source_incomplete_error(exc) from exc
-    return TeamStrengthResponse(strength=view, epa=epa_info(epa_source))
+    return TeamStrengthResponse(strength=view, epa=epa_info(epa_source, when, [view.epa.epa_source_state]))

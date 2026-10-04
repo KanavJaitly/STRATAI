@@ -317,7 +317,8 @@ def _win_probability_response(
         probability_rounding=PROBABILITY_DISPLAY_STEP, calibration_status=CALIBRATION_STATUS_M7_FAILED,
         evidence=WIN_PROBABILITY_EVIDENCE, warning=None if validated else UNVALIDATED_WARNING,
         model_type=identity["model_type"], model_version=identity["model_version"],
-        model_version_tag=identity["model_version_tag"], model=_model_info(served), epa=epa_info(epa_source),
+        model_version_tag=identity["model_version_tag"], model=_model_info(served),
+        epa=epa_info(epa_source, as_of, [t.epa_source_state for t in all_teams]),
         teams=[_team_provenance(t, "red") for t in match_features.red_teams]
         + [_team_provenance(t, "blue") for t in match_features.blue_teams],
     )
@@ -448,7 +449,8 @@ def event_team_ranking(
     return TeamRankingResponse(
         event_key=event_key, as_of=as_of, validation_status=RANKING_VALIDATION_STATUS, evidence=RANKING_EVIDENCE,
         model_type=identity["model_type"], model_version=identity["model_version"],
-        model_version_tag=identity["model_version_tag"], model=_model_info(served), epa=epa_info(epa_source),
+        model_version_tag=identity["model_version_tag"], model=_model_info(served),
+        epa=epa_info(epa_source, as_of, [team.epa_source_state for team in teams]),
         rankings=[TeamRankingEntry(rank=position, team_number=team.team_number, predicted_rating=rating,
                                    epa_value_source=team.epa_value_source,
                                    epa_source_event_key=team.epa_source_event_key,
@@ -495,6 +497,7 @@ def alliance_synergy_score(
         scoring_distribution_axes_used=result.scoring_distribution_axes_used,
         defense_feeding_coverage_term=result.defense_feeding_coverage_term,
         defense_feeding_coverage_present_count=result.defense_feeding_coverage_present_count,
-        confidence=result.confidence, epa=epa_info(epa_source),
+        confidence=result.confidence,
+        epa=epa_info(epa_source, as_of, [t.epa_source_state for t in (team_a, team_b, team_c)]),
         teams=[_team_provenance(t) for t in (team_a, team_b, team_c)],
     )

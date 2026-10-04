@@ -4,6 +4,7 @@ routes needed them (one implementation, re-exported by predictions unchanged).""
 
 from __future__ import annotations
 
+from datetime import datetime
 from http import HTTPStatus
 from typing import Any
 
@@ -26,6 +27,13 @@ class EpaSourceInfo(BaseModel):
     epa_source: str
     evaluated_configuration: bool = Field(description="True only for d18_statbotics_primary, the evaluated source")
     provenance: dict[str, Any]
+    adoption: dict[str, Any] | None = Field(
+        default=None, description="P5-D3: the live source is adopted for production after passing its historical "
+                                  "acceptance (P5-M2 L1-L4); prospective 2027 validation is pending")
+    validation_flags: list[str] = Field(
+        default_factory=list,
+        description="live_refresh_not_yet_validated when this response used a value from a non-root live snapshot "
+                    "or a live STRATAI fallback (LIVE_EPA_REFRESH_DESIGN.md §9); outputs keep their base status")
 
 
 def epa_source_not_loaded_error() -> ApiError:
@@ -71,9 +79,19 @@ def require_epa_source(epa_source: ServedEpaSource | None) -> ServedEpaSource:
     return epa_source
 
 
-def epa_info(epa_source: ServedEpaSource) -> EpaSourceInfo:
+def epa_info(epa_source: ServedEpaSource, as_of: datetime | None = None,
+             states: list[str | None] | None = None) -> EpaSourceInfo:
+    """The EPA envelope. For the adopted live source, `live_refresh_not_yet_validated` is added when the
+    response's as_of reads a non-root snapshot or any team was served `fallback_stratai` (§9)."""
+    flags: list[str] = []
+    if epa_source.adoption is not None:
+        from ml.ratings.live_epa import LIVE_REFRESH_NOT_YET_VALIDATED
+
+        view = epa_source.provider.snapshot_view(as_of) if as_of is not None else None
+        if (view is not None and not view.is_root) or "fallback_stratai" in (states or []):
+            flags.append(LIVE_REFRESH_NOT_YET_VALIDATED)
     return EpaSourceInfo(epa_source=epa_source.epa_source, evaluated_configuration=epa_source.evaluated_configuration,
-                         provenance=epa_source.provenance)
+                         provenance=epa_source.provenance, adoption=epa_source.adoption, validation_flags=flags)
 
 
 def require_teams_rostered(database: Database, event_key: str, team_numbers: list[int]) -> None:

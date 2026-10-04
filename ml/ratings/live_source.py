@@ -35,6 +35,7 @@ from data.landing.raw_writer import RawPayloadRecord
 from database.connection import Database
 from ml.ratings.live_epa import (
     A1A2Policy,
+    frozen_d18_schedule,
     LiveRetrieval,
     LiveStatboticsEpa,
     Schedule,
@@ -93,10 +94,17 @@ def load_live_provider(database: Database, *, root_dir: Path, chain: Path, a1a2_
     """Live mode (``log``) or simulated retrieval over the root snapshot (``schedule``); exactly one."""
     if (log is None) == (schedule is None):
         raise ValueError("pass exactly one of log (live mode) or schedule (simulated retrieval)")
+    historical = historical_until = None
     if log is not None:
         retrieval: LiveRetrieval | SimulatedRetrieval = LiveRetrieval(log)
         records = retrieval.all_records()
         mode = "live"
+        root = log.snapshots()[0]
+        historical_until = datetime.fromisoformat(root["created_at"])
+        historical = load_live_provider(database, root_dir=root_dir, chain=chain, a1a2_policy=a1a2_policy,
+                                        concluded_seasons=concluded_seasons, schedule=frozen_d18_schedule,
+                                        stratai=stratai if stratai is not None else stratai_source(database, chain))
+        stratai = (historical.stratai, historical.stratai_info)
     else:
         root_log = SnapshotLog(Path("<unused>"), root_dir)
         root_records, root_id = _root_records(root_log, root_dir)
@@ -108,7 +116,10 @@ def load_live_provider(database: Database, *, root_dir: Path, chain: Path, a1a2_
     values, info = stratai if stratai is not None else stratai_source(database, chain)
     return LiveStatboticsEpa(retrieval, read_team_event_facts(database), ends, week_one, season_end, values, info,
                              a1a2_policy, provenance_info={"retrieval_mode": mode, "root_snapshot": root_dir.name,
-                                                           "concluded_seasons": sorted(concluded_seasons)})
+                                                           "concluded_seasons": sorted(concluded_seasons),
+                                                           "historical_frozen_d18_until": None if historical_until
+                                                           is None else historical_until.isoformat()},
+                             historical=historical, historical_until=historical_until)
 
 
 def _root_records(log: SnapshotLog, root_dir: Path) -> tuple[dict, str]:

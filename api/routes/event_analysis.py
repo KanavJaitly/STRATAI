@@ -171,6 +171,6 @@ def event_analysis(
         strongest_teams=LabelledTeams(validation_status=status, evidence=f"{evidence} {STRONGEST_NOTE}",
                                       team_numbers=top),
         team_comparison=TeamComparison(validation_status=DESCRIPTIVE, teams=views),
-        epa=epa_info(epa_source),
+        epa=epa_info(epa_source, when, [f.epa_source_state for f in features]),
         ranking_model_sha256=served.sha256 if model == POLICY_M5V2 and served is not None else None,
     )
