@@ -112,6 +112,11 @@ Unit and integration tests
     matches/events plus targeted edge cases, not the whole historical dataset.
   * Testing establishes that the system works correctly; it is not an exhaustive execution of history.
   * Harnesses should carry their own time budget and stop, reporting partial results, when they hit it.
+* **Test-database guard (Kanav, 2026-10-04; permanent).** Database-backed tests run only against an isolated
+  `stratai_test` / `stratai_test_<suffix>` copy.
+  * `tests/db_guard.py`, installed by `tests/conftest.py`, refuses every other database, the serving `stratai`
+    above all, before collection and at every connection.
+  * Never add a bypass or weaken it. See `.agent/phase5/INCIDENT_2026-10-04_0010_on_serving.md`.
 
 ---
 
@@ -170,6 +175,12 @@ observations gets no rating, never one synthesized from its scoring.
 ---
 
 ## Current Development Phase
+
+**Phase 5 (2026-10-04): implementation checkpoint accepted by Kanav. Phase 5 is NOT complete.**
+- **Status:** P5-D3 adopted (live EPA in production); DM2 met; DM1 not met.
+- **Why it is incomplete:** DM1 awaits genuine human M8/M9 inputs, entered through the `frontend/` web app.
+- **Records:** `.agent/phase5/PHASE_STATUS.md`, `PHASE_ACCEPTANCE.md`, `docs/phase5.md`.
+- **Phase 6 is next.** It starts only on Kanav's explicit build instruction. The Phase 4 text below is historical.
 
 Current Phase:
 Phase 4 – ML Models (underway). Phase 3 is not fully closed — Milestone 14
