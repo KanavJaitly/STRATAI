@@ -1,6 +1,10 @@
 Phase 6 — Strategy & Alliance Selection Engines: Milestone Specification
 
-Status: **DEFINED — revision 1 (2026-10-04). NOT FROZEN.** This is the Phase 6 milestone and acceptance baseline. P6-M0 freezes it only after Kanav resolves the open decisions in `.agent/phase6/P6_M0_DECISIONS.md` (P6-Q0 … P6-Q13) and approves the ambiguity resolutions recorded there (P6-A1 … P6-A12). **Zero Phase 6 implementation exists.** After the freeze, methodology and acceptance criteria change only by a dated decision made **before the affected result exists** (the Phase 5 rule).
+Status: **FROZEN / APPROVED — P6-M0 (Kanav, 2026-10-04), revision 2.**
+- **Freeze record:** `.agent/phase6/P6_M0_FREEZE.md`. The commit introducing it is the freeze point.
+- **Decisions:** `.agent/phase6/P6_M0_DECISIONS.md`. P6-A1 … P6-A12 are approved and P6-Q0 … P6-Q13 decided.
+- **After the freeze,** methodology and acceptance criteria change only by a dated decision made **before the affected result exists**, and D9 is binding.
+- **Zero Phase 6 implementation exists.** Implementation must not begin until the P6-Q0 code baseline exists: the approved merge of `phase5/build` into `main`, which has not been performed.
 
 **Sources, in authority order:**
 1. `docs/ROADMAP.md` Phase 6: scope and done-means.
@@ -15,15 +19,20 @@ Phase 4 and Phase 5 contracts are consumed as they stand, never reopened (§ "Fo
 
 ## Phase 6 done-means (immutable, from `docs/ROADMAP.md`)
 
-Phase 6 is complete only when **both** hold. Neither may be redefined, weakened or removed. The operational definitions marked "decision" must be fixed at P6-M0, before any result exists.
+Phase 6 is complete only when **both** hold. Neither may be redefined, weakened or removed. The operational definitions were fixed at P6-M0 (P6-Q1), before any result exists.
 
 ### P6-DM1 — alliance selection against real past events
 
 > "run alliance selection against a real past event and it identifies most of the actual strong playoff alliances (or has a defensible reason where it differs)"
 
 Demonstrated by P6-M8, run once on a pre-registered population of real past events (P6-A6: a population, not a single anecdotal event).
-- **Decision P6-Q1 must fix the operational terms** ("a real past event", "strong playoff alliance", "identifies", "most", "defensible reason") before the run.
-- Every miss without a defensible reason counts as a miss. A defensible reason is recorded per miss and reviewed by a named human (human input).
+**Operational definition (P6-Q1, decided):**
+- **Population:** held-out **2026** events; a seeded population stratified by week and event size, within the 45-minute budget. The exact sample is fixed in P6-M8's dated pre-run record.
+- **Strong playoff alliances:** the event **winner** and the **finalist**.
+- **Identifies:** a predicted alliance that contains the actual captain **and** at least one actual pick, **and** is among the engine's **top 2 predicted contenders**.
+- **Most:** **> 50% pooled** over strong alliances, with an event-bootstrap CI reported.
+- **Defensible reason:** a predefined reason category (fixed in P6-M8's pre-run record), reviewed by a **named mentor**. A miss without an accepted reason counts as a miss.
+- **Baselines:** a raw-EPA draft; actual-seed ordering.
 
 ### P6-DM2 — no inflated odds for AI strategies
 
@@ -63,7 +72,7 @@ These are inherited from Phase 4 and Phase 5 and are not re-decided here.
 - **Defense and feeding are measured, never inferred.**
   - They come only from scouting observations (CLAUDE.md constraint 1).
   - `insufficient_data` propagates, and absence is never 0.
-  - **Data fact (checked 2026-10-04 on the isolated copy):** `scouting_observations` holds 0 rows, so every historical event's defense and feeding are `insufficient_data`. Whether Phase 6 validation proceeds on that basis is P6-Q12.
+  - **Data fact (checked 2026-10-04 on the isolated copy):** `scouting_observations` holds 0 rows, so every historical event's defense and feeding are `insufficient_data`. Phase 6 validation proceeds on that basis, with defense and feeding explicitly `insufficient_data` throughout. Nothing is fabricated, inferred from outcomes or backfilled (P6-Q12).
 - **Evaluation discipline (D9).**
   - Each metric is computed once, on a population fixed before the run.
   - Records are write-once, with the frame/snapshot hash, seed and commit.
@@ -83,7 +92,7 @@ These are inherited from Phase 4 and Phase 5 and are not re-decided here.
 | D18 EPA source and P5-M2 live source (adopted, P5-D3) | `ml/ratings/` | all |
 | M5 v2 ranking; raw-EPA baseline; the P5-M4 event ordering policy | Phase 4 M5 v2 / M4; P5-M4 | P6-M6 (captains, opponent picks) |
 | M6/M7 qualification win probability (EPA-complete: `approximately_calibrated_qualification`; M7 gate failed) | Phase 4 | P6-M2 (baseline), P6-M10 (comparator) |
-| Alliance synergy primitive (share vectors; `not_validated_against_outcomes`) | `ml/synergy/score.py` (Phase 4 M9) | P6-M2 (candidate feature), P6-M6 |
+| Alliance synergy primitive (share vectors; `not_validated_against_outcomes`) | `ml/synergy/score.py` (Phase 4 M9) | P6-M6 (descriptive profile; not a PX-1 feature under P6-Q2) |
 | Bias audit (symmetry, order invariance, **no strategy leakage**, as-of integrity, label shuffle) | `scripts/ml_bias_audit.py` (Phase 4 M8) | P6-M13 (extended, not replaced) |
 | Model registry with feature-list guard | `ml/registry.py` (Phase 4 M10) | P6-M2, M10 |
 | Alliance and seed data: 606 events with alliances (591 seeded, 15 division-champion); backups unknown | `data/alliances.py` (P5-M1) | P6-M1 … M8 |
@@ -92,7 +101,9 @@ These are inherited from Phase 4 and Phase 5 and are not re-decided here.
 | Human-input infrastructure (versioned, raw-first, named reviewer, write token) | `data/human_inputs.py`, `api/routes/human_inputs.py`, `frontend/` (Phase 5) | P6-M1, M8, M9 |
 | Validation-status labels; `insufficient_data`; as-of conventions | `docs/phase5.md` | all |
 
-**Location of the Phase 5 implementation (P6-A11, P6-Q0).** The Phase 5 code is at the accepted checkpoint `phase5/build` @ `6e76520`, which is **not on `main`** and not pushed. Phase 6 implementation cannot start until P6-Q0 fixes its code baseline.
+**Location of the Phase 5 implementation (P6-A11, P6-Q0).** The Phase 5 code is at the accepted checkpoint `phase5/build` @ `6e76520`, which is **not on `main`** and not pushed.
+- **P6-Q0 decided:** merge it into `main` with Kanav's explicit approval, then branch Phase 6 from that `main`.
+- **The merge has not been performed.** Phase 6 implementation must not begin until it has.
 
 ## The validated / unvalidated boundary at the start of Phase 6
 
@@ -100,7 +111,7 @@ These are inherited from Phase 4 and Phase 5 and are not re-decided here.
 |---|---|
 | Qualification win probability on EPA-complete matches (M6/M7; ECE 0.015; M7 gate failed overall) | **Any playoff match, bracket, series or playoff-success probability** (D18 playoff ECE 0.119; higher seed wins 77.3% vs 62.4% predicted) |
 | M5 v2 orderings from each team's mid-qualification point; raw-EPA orderings | Alliance synergy (M9) as a predictor |
-| Descriptive strength views with n, uncertainty and provenance | Defense (definition decision open, Phase 3 M14) and feeding (no data) |
+| Descriptive strength views with n, uncertainty and provenance | Defense (quality-only definition decided, P6-Q11; no validated measurement) and feeding (no data) |
 | | Any strategy effect (no historical record of which strategy an alliance played) |
 
 - **Moving an item left:** only a milestone that meets its own pre-registered criteria may move an item to the left column.
@@ -118,8 +129,8 @@ Each table row is a required field. "Decision" points to `.agent/phase6/P6_M0_DE
 | **Objective** | Freeze this specification and its decisions before any Phase 6 result or implementation exists |
 | **Scope** | This document; `.agent/phase6/P6_M0_DECISIONS.md`; a freeze record `.agent/phase6/P6_M0_FREEZE.md` with git blob hashes |
 | **Depends on** | Phase 5 implementation checkpoint (accepted 2026-10-04) |
-| **Inputs** | Kanav's answers to P6-Q0 … P6-Q13; approval or override of P6-A1 … P6-A12 |
-| **Acceptance / done-means** | An approval commit naming the frozen files and their blob hashes, with every P6-Q either decided or explicitly deferred to a named milestone with a "decide before" point. **Zero Phase 6 implementation** in the checkpoint |
+| **Inputs** | Kanav's decisions P6-Q0 … P6-Q13 and approval of P6-A1 … P6-A12 (given 2026-10-04) |
+| **Acceptance / done-means** | An approval commit naming the frozen files and their blob hashes, with every P6-Q decided. **Zero Phase 6 implementation** in the checkpoint. **Status: FROZEN (2026-10-04)** |
 | **Human input** | Yes: Kanav |
 | **Prerequisite for** | Every Phase 6 milestone |
 
@@ -137,7 +148,7 @@ Each table row is a required field. "Decision" points to `.agent/phase6/P6_M0_DE
 | **Validation status** | Rulesets: `human_entered_reviewed`. Reproduction counts: descriptive |
 | **Leakage** | None: rules are pre-season facts. The bracket reproduction reads outcomes only to check structure, never results |
 | **Reproducibility** | Versioned, hashed rulesets; the reproduction check is recomputable from raw payloads |
-| **Failure / escalation** | A format the ruleset cannot represent: the events are excluded with counts. If more than a stated share is excluded, escalate (share: decision P6-Q13) |
+| **Failure / escalation** | A format the ruleset cannot represent: the events are excluded with counts. If more than **10%** of events are excluded, escalate (P6-Q13) |
 | **Evidence** | `.agent/phase6/results/p6_m1_ruleset_check.json` (write-once); approved ruleset versions with reviewer and date |
 | **Non-goals** | Pre-2024 seasons; offseason events; inferring rules from data where a manual exists |
 | **Human input** | **Yes:** entry from the manuals plus a named reviewer |
@@ -150,14 +161,14 @@ Each table row is a required field. "Decision" points to `.agent/phase6/P6_M0_DE
 | **Objective** | A playoff-specific match win-probability model. The qualification model is not a playoff model (P5-D4) |
 | **Scope** | Per playoff match: inputs as of match time; output P(red wins), **antisymmetric by construction** in alliance order and seed difference |
 | **Depends on** | P6-M0; P5-M1 (seeds, alliance composition); Phase 4 features |
-| **Inputs** | Alliance composition (three teams' point-in-time `TeamFeatures` at the selection moment); seed difference (antisymmetric); bracket position (from the P6-M1 slot mapping); candidate features fixed by P6-Q2 (which may include the M9 synergy terms, reliability, consistency and, where present, measured defense/feeding — never imputed) |
-| **Implementation** | One model class through the Phase 4 `Model` protocol and the registry. Model form and features per P6-Q2 (explainable preferred). Training on 2024–2025 playoff matches; held-out 2026 (the D7 split) |
+| **Inputs** | Alliance composition (three teams' point-in-time `TeamFeatures` at the selection moment); bracket round (from the P6-M1 slot mapping). **Features (P6-Q2), nothing else:** seed difference, alliance composition sums and bracket round (see the interpretation notes in the decision log). No earlier or in-playoff result is a feature. Absent values are never imputed |
+| **Implementation** | One **regularized logistic regression** (P6-Q2) through the Phase 4 `Model` protocol and the registry.<br>• **Training:** the ~5,900 eligible 2024–2025 playoff matches.<br>• **Excluded:** EPA-incomplete rows and the 15 division-champion events with null seeds, counted.<br>• **Held out:** 2026 (the D7 split).<br>• **Never added:** XGBoost, hand-tuned weights, or features after seeing results |
 | **Validation** | Single held-out 2026 run: log-loss, Brier, accuracy, ROC-AUC, ECE. **Baselines:** (i) M6/M7 applied to playoff matches (D18 playoff ECE 0.119); (ii) seed-only (historical higher-seed rate, fit on 2024–2025). Label-shuffle and as-of checks via the M8 audit |
-| **Acceptance criteria** | **Decision P6-Q3:** what PX-1 must beat, on which metric, with which paired test. Not invented here |
+| **Acceptance criteria** | **P6-Q3:** strictly better held-out 2026 playoff **log-loss** than **both** M6/M7 applied to playoff matches **and** the seed-only baseline. The paired event-bootstrap 95% CI of each comparison must exclude zero |
 | **Validation status** | Until P6-M3 passes: `not_validated` (playoff_model_uncalibrated) |
-| **Leakage** | Team features at the selection moment, or at match time if P6-Q2 admits earlier playoff results at the same event as features (decision). No feature from the match itself or any later match. Seeds only after selection. The 2026 hold-out is never used for fitting or model selection |
+| **Leakage** | Team features at the selection moment. No earlier or in-playoff result at the event is a feature (P6-Q2). No feature from the match itself or any later match. Seeds only after selection. The 2026 hold-out is never used for fitting or model selection |
 | **Reproducibility** | Seeded; frame hash; registry manifest; write-once result |
-| **Failure / escalation** | D9: failing P6-Q3's criterion is recorded as a failure and stops progression on the playoff track. No redesign without a dated decision before a re-run, and at most one pre-registered re-run |
+| **Failure / escalation** | D9: if either P6-Q3 comparison fails, the failure is recorded, progression on the playoff track stops, and it is escalated. No change to the model, features, metric or population to manufacture a pass |
 | **Evidence** | `.agent/phase6/results/p6_m2_px1.json`; frozen PX-1 spec; registry entry |
 | **Non-goals** | Retraining M5 v2 or M6/M7; qualification predictions; bracket simulation |
 | **Phase 4/5 foundations** | Assembler, registry, backtest harness (`Fold`), M8 audit, P5-M1 |
@@ -171,10 +182,10 @@ Each table row is a required field. "Decision" points to `.agent/phase6/P6_M0_DE
 | **Objective** | Calibrate PX-1 on playoff data only, and test calibration as M7 did, so that playoff match probabilities can be served as validated if, and only if, they pass |
 | **Scope** | A calibrator fit on a temporally prior, playoff-only slice; a stratified, playoff-only per-bin test on held-out 2026 |
 | **Depends on** | P6-M2 |
-| **Inputs** | PX-1 outputs; the calibration slice (P6-Q4) |
+| **Inputs** | PX-1 outputs; the calibration slice = the **temporally last 20% of 2025 playoff matches** (P6-Q4) |
 | **Implementation** | Reuse `ml/calibration/` (isotonic/Platt, symmetric serving) with antisymmetry in seed; fit isolation enforced structurally |
 | **Validation** | The M7 gate structure (D16): G1 ECE; G2 exact Poisson-binomial per-bin test, Holm-corrected, on bins with enough predictions; G3 (anti)symmetry; G4 fit isolation |
-| **Acceptance criteria** | **Decision P6-Q4:** confirm that the M7 constants apply unchanged (ECE < 0.05; 10 fixed bins; ≥ 30 per bin; α = 0.05; symmetry 1e-12), or set others before the run. P5-D4 says "as in M7"; the default is unchanged constants |
+| **Acceptance criteria** | **P6-Q4:** the M7/D16 constants unchanged: ECE < 0.05; 10 fixed bins; per-bin test on bins with ≥ 30 predictions, Holm α = 0.05; symmetry 1e-12; fit isolation. All four gates must pass |
 | **Validation status** | Pass: playoff match probabilities `validated_playoff` (P6 label, scope stated). Fail: `not_validated` (`px2_gate_failed`) |
 | **Leakage** | The calibration slice precedes every evaluated match; never 2026 |
 | **Reproducibility** | Write-once result with bin counts |
@@ -210,14 +221,14 @@ Each table row is a required field. "Decision" points to `.agent/phase6/P6_M0_DE
 |---|---|
 | **Objective** | Test whether the simulator's playoff-success probabilities, computed from the **actual** alliances at the selection moment, match real 2024–2026 bracket outcomes (held-out 2026 is primary) |
 | **Scope** | Event-level outcomes: event winner, finalists and elimination round per alliance |
-| **Depends on** | P6-M3 (pass, or recorded failure), P6-M4 |
+| **Depends on** | P6-M3 passed, P6-M4. A P6-M3 failure is a D9 stop: the playoff track continues only by Kanav's dated decision |
 | **Inputs** | Actual alliances (P5-M1) at the selection moment; PX-1/PX-2 probabilities; P6-M1 rulesets; outcomes as labels |
-| **Validation** | Single run on the population fixed by P6-Q5. Proper scoring (log-loss, Brier) of P(win event) and P(reach finals), plus reliability bins. **Baselines:** seed-only bracket probabilities (fit 2024–2025) and uniform. Event-bootstrap CIs of the paired differences |
-| **Acceptance criteria** | **Decision P6-Q5** (metric, baselines, paired test, threshold). Only after a pass are playoff, bracket, series or playoff-success probabilities served as validated (P5-D4) |
+| **Validation** | Single run on held-out 2026 events (sample, if any, per P6-Q13's dated pre-run record). Proper scoring, **log-loss primary** (Brier reported), of P(win event) and P(reach finals). **Baseline:** seed-only bracket probabilities (fit 2024–2025). Event-bootstrap CIs of the paired differences. Reliability/calibration bins **reported, not gated** |
+| **Acceptance criteria** | **P6-Q5:** for **each** of P(win event) and P(reach finals), held-out log-loss strictly better than seed-only, with the event-bootstrap CI excluding zero. Only after a pass are playoff, bracket, series or playoff-success probabilities served as validated (P5-D4) |
 | **Validation status** | Pass: `validated_playoff_success`, scope stated. Fail or PX-2 failed: `not_validated` |
 | **Leakage** | Predictions use only selection-moment data; no playoff result enters; events whose ruleset reproduction failed (P6-M1) are excluded with counts |
 | **Reproducibility** | Write-once record (frame hash, PX-1/PX-2 hashes, seed) |
-| **Runtime** | Exact computation is expected to be cheap. If the population cannot run in ≤ 45 min, a seeded stratified sample is fixed by decision before the run |
+| **Runtime** | Exact computation is expected to be cheap. If the population cannot run in ≤ 45 min, a seeded, stratified sample is fixed by a dated decision before the run (P6-Q13) |
 | **Failure / escalation** | D9 |
 | **Evidence** | `.agent/phase6/results/p6_m5_px4.json` |
 | **Non-goals** | Evaluating predicted alliance formation (P6-M8) |
@@ -229,19 +240,19 @@ Each table row is a required field. "Decision" points to `.agent/phase6/P6_M0_DE
 | | |
 |---|---|
 | **Objective** | At the selection moment, a complete, explainable profile for every eligible candidate, and a model of how the rest of the draft will unfold |
-| **Scope** | **Candidate factors** (roadmap): synergy, defense, feeding, reliability, consistency, role compatibility, plus scoring ability (Vision). **Draft model:** eligible teams, captain order, availability under the ruleset's decline rule, and the predicted picks of other captains (P6-Q6) |
+| **Scope** | **Candidate factors** (roadmap): synergy, defense, feeding, reliability, consistency, role compatibility, plus scoring ability (Vision). **Draft model:** eligible teams, captain order, availability under the ruleset's decline rule, and the predicted picks of other captains: **deterministic best-available by the validated P5-M4 ordering**, with P6-M1's decline rules (P6-Q6) |
 | **Depends on** | P6-M1; P5-M3; P5-M4 (ordering policy, captain candidates) |
 | **Inputs** | Point-in-time `TeamFeatures`; Phase 3 metrics (reliability, consistency) with n; scouting-only defense/feeding (`insufficient_data` when thin, which today is every event); M9 share vectors for role compatibility (P6-A10); final qualification rankings (known at the selection moment) |
-| **Implementation** | Pure functions over point-in-time inputs; every factor carries its value, n, presence and `validation_status`; nothing imputed. The draft model is implemented as specified by P6-Q6 |
+| **Implementation** | Pure functions over point-in-time inputs; every factor carries its value, n, presence and `validation_status`; nothing imputed. The draft model is deterministic (P6-Q6); no probabilistic pick model |
 | **Validation** | (a) Exact equality of each factor with its Phase 3/4/5 source function on a seeded sample. (b) **Opponent-pick prediction** measured once on held-out 2026 events against P5-M1 actual picks: top-1 / top-3 hit rate per pick slot, with CIs, next to a raw-EPA-order baseline |
-| **Acceptance criteria** | (a) exact. (b) is recorded as measured; whether a minimum accuracy is required is P6-Q6 |
-| **Validation status** | Factors: as their sources (defense `descriptive_definition_pending`; feeding `not_validated` / `insufficient_data`; synergy `not_validated_against_outcomes`). Draft model: `validated_as_measured` at most |
+| **Acceptance criteria** | (a) exact. (b) recorded as measured; draft-prediction accuracy **does not gate** the engine (P6-Q6) |
+| **Validation status** | Factors: as their sources. Defense: quality only (P6-Q11), `descriptive_definition_pending` / `insufficient_data`. Feeding: `insufficient_data`. Synergy: `not_validated_against_outcomes`, descriptive only. Draft model: `validated_as_measured` at most |
 | **Leakage** | Nothing after the selection moment; actual picks are labels only |
 | **Reproducibility** | Deterministic given as_of, snapshot and commit |
 | **Failure / escalation** | Missing inputs propagate as `insufficient_data`; a missing ruleset is refused |
 | **Evidence** | `.agent/phase6/results/p6_m6_profiles_draft.json` |
 | **Non-goals** | New defense/feeding measurement; any inferred defense or feeding |
-| **Human input** | No (depends on the Phase 3 M14 defense decision, P6-Q11) |
+| **Human input** | No (defense definition decided by P6-Q11) |
 | **Prerequisite for** | P6-M7 |
 
 ### P6-M7 — Alliance selection engine (pick-list optimizer)
@@ -272,8 +283,8 @@ Each table row is a required field. "Decision" points to `.agent/phase6/P6_M0_DE
 | **Scope** | Replay each event in the pre-registered population at its selection moment; run the full engine (P6-M6 draft model + P6-M7) for every captain; compare with what actually happened |
 | **Depends on** | P6-M5, P6-M7 |
 | **Inputs** | Held-out events (P6-Q1 population), at selection-moment data; P5-M1 actual alliances and outcomes as labels |
-| **Validation** | The P6-DM1 test exactly as P6-Q1 defines it, plus baselines (P6-Q1: at least a raw-EPA draft and the actual-seed order). **A defensible-reason review:** each miss gets a data-referenced reason (e.g., an unforeseeable decline, an in-playoff robot failure visible in reliability), and a named human reviewer accepts or rejects it |
-| **Acceptance criteria** | **Decision P6-Q1** ("most", the matching rule, the population, the review protocol). Misses without an accepted reason count as misses |
+| **Validation** | The P6-DM1 test exactly as P6-Q1 defines it (see "Phase 6 done-means"), with the raw-EPA-draft and actual-seed-ordering baselines. **A defensible-reason review:** each miss gets a reason from the predefined categories (fixed in the dated pre-run record before any result), and a **named mentor** accepts or rejects it |
+| **Acceptance criteria** | **P6-Q1:** more than 50% of the strong alliances (winner and finalist) identified, pooled, with the event-bootstrap CI reported. Misses without an accepted reason count as misses |
 | **Validation status** | Recorded as measured; P6-DM1 met or not met |
 | **Leakage** | A selection-moment sentinel: a future playoff result inserted in the isolated copy must not change any output |
 | **Reproducibility** | Write-once record (population seed, frame hash, commits); a re-executable replay |
@@ -310,16 +321,16 @@ Each table row is a required field. "Decision" points to `.agent/phase6/P6_M0_DE
 | **Scope** | Qualification context; playoff context only on top of PX-1/PX-2 (P6-A12) |
 | **Depends on** | P6-M9; Phase 4 features; P6-M3 for the playoff context |
 | **Inputs** | Point-in-time `TeamFeatures` (EPA components, Phase 3 metrics), measured defense/feeding where present, coach observations as measured adjustments, both strategies |
-| **Implementation** | Model form per **P6-Q8**. It must reduce to a "no strategy specified" baseline. Every strategy effect is either estimated from data with stated uncertainty or explicitly labelled an unvalidated assumption. One evaluation entry point: `evaluate(context, strategy_red, strategy_blue)` |
-| **Validation** | Baseline predictions on held-out 2026 qualification matches through the M7 gate structure, compared with M6/M7 (P6-Q9). Strategy effects validated only where measured data exist (today: none, so defense effects are not identifiable from 0 scouting rows) |
-| **Acceptance criteria** | **Decision P6-Q9** (baseline gate constants and the comparison with M6/M7) |
+| **Implementation** | **The component model (P6-Q8):**<br>• per-component score distributions from measured robot/team capabilities and role allocation;<br>• P(win) from the score difference;<br>• role allocation re-weights component contributions **only within measured capability**;<br>• defense and feeding effects only from measured data, otherwise **zero assumed effect**, labelled `not_validated` / `insufficient_data`.<br>It reduces to a "no strategy specified" baseline. There is one evaluation entry point: `evaluate(context, strategy_red, strategy_blue)` |
+| **Validation** | Baseline predictions on held-out 2026 **EPA-complete qualification** matches through the M7 gate constants. Paired log-loss vs M6/M7 is reported. Strategy effects are validated only where measured data exist (today none, so no defense or feeding effect is identifiable from 0 scouting rows) |
+| **Acceptance criteria** | **P6-Q9:** the M7 gate constants pass on the baseline. P6-M10 is **not required to outperform** M6/M7, and is not declared successful merely because its numbers differ |
 | **Validation status** | Baseline: by P6-Q9's result. Any non-baseline strategy: `not_validated` (`strategy_effect_unmeasured`) until measured. Playoff context: inherits P6-M3. Low odds are shown low (P6-A5) |
 | **Leakage** | Features as of match time; outcomes labels only; strategy never derived from the match's own outcome |
 | **Reproducibility** | Seeded, registry-pinned, write-once result |
 | **Failure / escalation** | D9; a failed baseline gate is recorded, and its odds are served `not_validated` |
 | **Evidence** | `.agent/phase6/results/p6_m10_outcome_model.json` |
 | **Non-goals** | Modifying M6/M7 (frozen); inferring defense or feeding from scoring |
-| **Human input** | No (P6-Q11 for the defense definition) |
+| **Human input** | No |
 | **Prerequisite for** | P6-M11, M12, M13 |
 
 ### P6-M11 — Match strategy optimizer (AI recommendation)
@@ -327,11 +338,11 @@ Each table row is a required field. "Decision" points to `.agent/phase6/P6_M0_DE
 | | |
 |---|---|
 | **Objective** | Recommend role assignments, defensive assignments and scoring priorities that maximize P(win) under P6-M10, with alternatives and explanations, and no LLM |
-| **Scope** | Your alliance's strategy, given the opponent's strategy: the opponent's "no strategy specified" baseline, or a coach-specified opponent strategy. Opponent best-response modelling only if P6-Q10 adds it |
+| **Scope** | Your alliance's strategy, given the opponent's strategy: the opponent's "no strategy specified" baseline, or a coach-specified opponent strategy. **No opponent best-response optimizer** in Phase 6 (P6-Q10) |
 | **Depends on** | P6-M10 |
 | **Implementation** | Exhaustive search over the finite strategy space where feasible (three robots × vocabulary), else OR-Tools with an optimality certificate; deterministic tie-breaking. **It calls only P6-M10's single entry point.** It never adds, adjusts or caches a probability itself |
 | **Validation (optimization correctness)** | Brute force equals the optimizer on the full space for small vocabularies; determinism; the recommended strategy's odds equal a fresh `evaluate` call on the same inputs, bit for bit |
-| **Acceptance criteria** | All correctness checks pass; the optimizer's-curse presentation follows P6-Q10 |
+| **Acceptance criteria** | All correctness checks pass. **Presentation (P6-Q10):**<br>• the AI and coach paths are shown identically, as model odds with P6-A5 rounding;<br>• a difference below one display step is labelled "indistinguishable at model resolution";<br>• the maximum over candidate strategies is never presented as an unbiased probability;<br>• an AI strategy is never called superior merely because its estimate is higher |
 | **Validation status** | That of P6-M10 for the chosen strategy (usually `not_validated` for non-baseline strategies) |
 | **Leakage** | As P6-M10 |
 | **Reproducibility** | Deterministic |
