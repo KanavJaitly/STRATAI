@@ -576,10 +576,10 @@ Phase 6 – Strategy & Alliance Selection Engines: **P6-M0 FROZEN (Kanav, 2026-1
 - **Freeze record:** .agent/phase6/P6_M0_FREEZE.md.
 - **Defense definition:** P6-Q11 settles the defense definition question above for Phase 6 use: quality only,
   when a validated measurement exists. Feeding stays insufficient_data.
-- **Phase 5:** accepted at the implementation checkpoint on branch `phase5/build` @ `6e76520`, which is NOT on
-  main. Phase 5 is NOT complete: DM1 awaits genuine human inputs.
-- **Before implementation:** P6-Q0 requires merging that branch into main with Kanav's explicit approval. That
-  merge has not been performed, and Phase 6 implementation starts only after it, on Kanav's build instruction.
+- **Phase 5:** accepted at the implementation checkpoint `phase5/build` @ `6e76520`. It was **merged into main**
+  (P6-Q0, Kanav-approved; merge commit d6d68a4). Phase 5 is NOT complete: DM1 awaits genuine human inputs.
+- **Phase 6 implementation** happens on branch `phase6/build`, created from that main. It starts only on Kanav's
+  build instruction.
 
 ---
 
