@@ -834,7 +834,18 @@ A fix would either extend the referential check to roster membership — rejecti
 while the observation is not yet irreplaceable — or add a metrics-side quality warning
 naming the orphan. Which of those is right is a real decision and was not made here.
 
-### 9.9 Metrics do not recompute during a live event
+### 9.9 Metrics do not recompute during a live event — CLOSED by Phase 5 (P5-M6, 2026-10-03)
+
+**Closed.**
+- **The change:** `data.orchestrator.watch_event` takes an `after_sync` follow-on, and the `--watch` CLI passes
+  `after_watch_sync`. That recomputes `team_metrics` after every poll that loads canonical rows, so the served
+  metrics move during a watch.
+- **The prerequisite, §9.10,** was closed first.
+- **Verification:** P5-M6's recorded verification (`.agent/phase5/results/p5_m6_replay_rerun1.json`) checks
+  `team_metrics` against a fresh recompute after every replayed match, 678 / 678.
+
+The text below is the Phase 3 record, kept as written.
+
 
 **By design for Phase 3**, recorded here because a project-level constraint reads as
 promising otherwise. `compute_event_team_metrics` is wired as a follow-on stage after a
@@ -849,7 +860,23 @@ metrics. It is a target for the real-time phase, not a description of what Phase
 guarantees. Closing the gap is the deliberate `watch_event` integration §2.4 defers — and it
 has a prerequisite: §9.10.
 
-### 9.10 🟡 Quality issues are re-inserted on every recompute
+### 9.10 Quality issues are re-inserted on every recompute — CLOSED by Phase 5 (2026-10-03)
+
+**Closed with metrics-side deduplication** in `data.metrics.compute`, one of the two fixes recorded below.
+- **Detected set:** every successful recompute stores its complete detected set in its run's `stage_counts`
+  (`quality_issue_keys`).
+- **What is written:** an issue is written only when the event's previous successful recompute did not
+  detect it, i.e. when it first appears, changes, or reappears.
+- **"How long has this been broken"** stays answerable: from the first row plus the runs whose key sets keep
+  listing it.
+- **Ingestion-side issues are unchanged,** still one row per detection.
+- **Tests:** `test_recomputing_records_the_findings_again` (updated) and
+  `test_repeated_recomputes_do_not_rewrite_unchanged_issues` in tests/test_metrics_quality.py.
+- **Ordering:** the P5-M6 recorded verification ran just before this change. None of its criteria read
+  `data_quality_issues`.
+
+The text below is the Phase 3 record, kept as written.
+
 
 **Found 2026-08-08 by audit. Harmless at today's cadence.** `DataQualityRecorder.record`
 writes one row per detection with no deduplication, and deliberately so: on the ingestion

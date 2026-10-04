@@ -49,6 +49,7 @@ import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Callable, Iterable, Sequence
 
 from psycopg.types.json import Jsonb
@@ -922,6 +923,7 @@ def watch_event(
     sleep: Callable[[float], None] = time.sleep,
     clock: Callable[[], float] = time.monotonic,
     today: Callable[[], date] = _utc_today,
+    after_sync: Callable[[Database, str, SyncResult], None] | None = None,
 ) -> WatchResult:
     """Keep one event's data fresh by re-running `sync_event` until the event ends.
 
@@ -959,6 +961,12 @@ def watch_event(
     `sync`, `progress`, `sleep`, `clock`, and `today` are injection points for
     tests, each defaulting to the real implementation; nothing else in the
     project passes them.
+
+    `after_sync` (Phase 5, P5-M6) runs after every successful poll. The CLI
+    passes `after_watch_sync`, which recomputes `team_metrics` whenever a poll
+    loaded canonical rows (closing CLAUDE.md constraint 5's gap) and, when the
+    live EPA source is configured, runs its refresh cycle. A follow-on failure
+    is logged and counted like a failed poll; it never stops the data sync.
     """
     started = clock()
     result = WatchResult(event_key=event_key)
@@ -1049,6 +1057,13 @@ def watch_event(
 
             consecutive_failures = 0
             result.successes += 1
+            if after_sync is not None:
+                try:
+                    after_sync(database, event_key, sync_result)
+                except Exception as exc:  # the data is synced; the follow-on is retried next poll
+                    result.failures += 1
+                    result.last_error = f"after_sync {type(exc).__name__}: {exc}"
+                    logger.error("poll %d follow-on FAILED: %s", result.polls, result.last_error)
             result.landed = _sum_counts([result.landed, sync_result.landed])
             result.loaded = _sum_counts([result.loaded, sync_result.loaded])
             landed_now = sum(sync_result.landed.values())
@@ -1111,6 +1126,33 @@ def watch_event(
         event_key, result.polls, result.elapsed_seconds, result.stop_reason,
     )
     return result
+
+
+def after_watch_sync(database: Database, event_key: str, result: SyncResult, *,
+                     settings: Settings | None = None) -> None:
+    """The watch follow-on (P5-M6): keep team_metrics and, if configured, the live EPA log current.
+
+    * team_metrics is recomputed for the event whenever the poll loaded canonical rows, so the metrics
+      the API serves move during a watch (CLAUDE.md constraint 5). An unchanged poll loads nothing and
+      recomputes nothing.
+    * When EPA_SOURCE is the P5-M2 live source (not the evaluated configuration; adoption is P5-D3) and
+      LIVE_EPA_LOG_DIR is set, one refresh cycle runs over the events due under LIVE_EPA_REFRESH_DESIGN.md
+      section 1. This is the "--watch detects due events" trigger.
+    """
+    if result.records_loaded:
+        from data.metrics.compute import compute_event_team_metrics  # deferred: circular import (see main)
+
+        compute_event_team_metrics(event_key, database=database)
+    settings = settings or Settings()
+    if settings.epa_source == "p5_live_statbotics" and settings.live_epa_log_dir and settings.statbotics_snapshot_dir:
+        from ml.ratings.live_snapshots import SnapshotLog
+        from ml.ratings.live_source import LiveEpaRefresher
+
+        log = SnapshotLog(Path(settings.live_epa_log_dir), Path(settings.statbotics_snapshot_dir))
+        refresher = LiveEpaRefresher(log, database, StatboticsClient(settings=settings))
+        due = refresher.due_events(datetime.now(timezone.utc))
+        if due:
+            refresher.refresh(due)
 
 
 def _progress_line(progress: EventProgress | None, newly_played: int) -> str:
@@ -1237,6 +1279,7 @@ def main(argv: list[str] | None = None) -> int:
                     settle_polls=args.settle_polls,
                     max_failures=args.max_failures,
                     max_duration_seconds=args.max_duration,
+                    after_sync=after_watch_sync,
                 )
                 _print_watch_summary(watch)
                 # Only a watch that gave up on repeated failures is an error; a

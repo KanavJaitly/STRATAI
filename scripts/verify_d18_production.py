@@ -108,8 +108,11 @@ def main(argv: list[str] | None = None) -> int:
         for row in sample:
             served = build_match_feature_row(database, row.match_key, row.scheduled_time, epa_provider=provider,
                                              scale_lookup=ScaleLookup(database))
-            expected = sorted((t.model_dump() for t in (*row.red_teams, *row.blue_teams)), key=lambda t: t["team_number"])
-            actual = sorted((t.model_dump() for t in (*served.red_teams, *served.blue_teams)), key=lambda t: t["team_number"])
+            # epa_source_state (Phase 5) postdates the frame; it is compared separately below
+            expected = sorted((t.model_dump(exclude={"epa_source_state"}) for t in (*row.red_teams, *row.blue_teams)),
+                              key=lambda t: t["team_number"])
+            actual = sorted((t.model_dump(exclude={"epa_source_state"}) for t in (*served.red_teams, *served.blue_teams)),
+                            key=lambda t: t["team_number"])
             if expected != actual:
                 feature_mismatches.append(row.match_key)
             body = client.get(f"/predictions/matches/{row.match_key}/win-probability").json()

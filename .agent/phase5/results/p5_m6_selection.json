@@ -1,0 +1,811 @@
+{
+ "candidate_counts": {
+  "E1": 1,
+  "E2": 29,
+  "E3": 7,
+  "E4": 94,
+  "E5": 60
+ },
+ "candidates": {
+  "E1": [
+   "2026iscmp"
+  ],
+  "E2": [
+   "2026bcvi",
+   "2026brba",
+   "2026cahal",
+   "2026capoh",
+   "2026cosp",
+   "2026gadal",
+   "2026inmis",
+   "2026mabil",
+   "2026mefal",
+   "2026miche",
+   "2026milak",
+   "2026mimtp",
+   "2026mndu",
+   "2026mndu2",
+   "2026mnwi",
+   "2026nccab",
+   "2026ncwak",
+   "2026njwas",
+   "2026okok",
+   "2026orsal",
+   "2026pahat",
+   "2026sccha",
+   "2026tuis",
+   "2026tuis2",
+   "2026txbel",
+   "2026txcle",
+   "2026vaale",
+   "2026wabon",
+   "2026wiply"
+  ],
+  "E3": [
+   "2026cur",
+   "2026dal",
+   "2026gal",
+   "2026hop",
+   "2026joh",
+   "2026mil",
+   "2026new"
+  ],
+  "E4": [
+   "2026caasv",
+   "2026cacac",
+   "2026caclv",
+   "2026caetb",
+   "2026cagle",
+   "2026calas",
+   "2026caoec",
+   "2026capin",
+   "2026casac",
+   "2026casgv",
+   "2026casnd",
+   "2026cthar",
+   "2026ctwat",
+   "2026flor",
+   "2026gaalb",
+   "2026gacol",
+   "2026gagai",
+   "2026hiho",
+   "2026iacf",
+   "2026idbo",
+   "2026ilch",
+   "2026ilpe",
+   "2026incol",
+   "2026inlaf",
+   "2026inwas",
+   "2026ksla",
+   "2026lake",
+   "2026mabos",
+   "2026mawor",
+   "2026mdbet",
+   "2026mdsev",
+   "2026mibat",
+   "2026mibel",
+   "2026miber",
+   "2026mibkn",
+   "2026mifli",
+   "2026miliv",
+   "2026milsu",
+   "2026mimas",
+   "2026mimus",
+   "2026misal",
+   "2026mitr2",
+   "2026mitry",
+   "2026mitvc",
+   "2026miwmi",
+   "2026mnmi",
+   "2026mnum",
+   "2026mose",
+   "2026mosl",
+   "2026mslr",
+   "2026mxto",
+   "2026ncelo",
+   "2026ncpem",
+   "2026ncwk2",
+   "2026nhdur",
+   "2026njfla",
+   "2026njrob",
+   "2026nyli2",
+   "2026nysu",
+   "2026ohcl",
+   "2026ohmv",
+   "2026oktu",
+   "2026onbar",
+   "2026onham",
+   "2026onnob",
+   "2026onwat",
+   "2026orore",
+   "2026paben",
+   "2026paca",
+   "2026paphi",
+   "2026pawar",
+   "2026rikin",
+   "2026schar",
+   "2026tnkn",
+   "2026tuhc",
+   "2026tuis3",
+   "2026tuis5",
+   "2026txama",
+   "2026txcl2",
+   "2026txdri",
+   "2026txfar",
+   "2026txfor",
+   "2026txhou",
+   "2026txman",
+   "2026txwac",
+   "2026vabla",
+   "2026vache",
+   "2026vtbur",
+   "2026waahs",
+   "2026wasam",
+   "2026wayak",
+   "2026wiapp",
+   "2026wilax",
+   "2026wimuk"
+  ],
+  "E5": [
+   "2025alhu",
+   "2025ausc",
+   "2025brba",
+   "2025caav",
+   "2025cala",
+   "2025capt",
+   "2025casd",
+   "2025casf",
+   "2025casj",
+   "2025cave",
+   "2025cnsh",
+   "2025flor",
+   "2025gagwi",
+   "2025iacf",
+   "2025idbo",
+   "2025ilch",
+   "2025ilpe",
+   "2025isde4",
+   "2025mawne",
+   "2025mawor",
+   "2025mdbet",
+   "2025mdsev",
+   "2025mibkn",
+   "2025midtr",
+   "2025miesc",
+   "2025mimcc",
+   "2025misal",
+   "2025mnmi",
+   "2025mnum",
+   "2025mose",
+   "2025mslr",
+   "2025mxto",
+   "2025nccat",
+   "2025ncgre",
+   "2025njwas",
+   "2025ntwc",
+   "2025nvlv",
+   "2025nyli2",
+   "2025nyny",
+   "2025nyro",
+   "2025nysu",
+   "2025ohcl",
+   "2025ohmv",
+   "2025oktu",
+   "2025onosh",
+   "2025onwin",
+   "2025paca",
+   "2025paphi",
+   "2025qcmo",
+   "2025schar",
+   "2025tnkn",
+   "2025tuak",
+   "2025tuhc",
+   "2025tuis",
+   "2025txama",
+   "2025txpla",
+   "2025txsan",
+   "2025vaale",
+   "2025wila",
+   "2025wimi"
+  ]
+ },
+ "checked_steps": 44,
+ "decision": "P5-D14",
+ "draw_order": [
+  "E2",
+  "E3",
+  "E4",
+  "E5",
+  "E1 start",
+  "E3 start"
+ ],
+ "estimated_minutes": {
+  "budget": 45.0,
+  "bulk_syncs": 1.4,
+  "checked_steps": 22.0,
+  "endpoints": 6.0,
+  "final_rerequests": 2.0,
+  "setup": 3.0,
+  "total": 34.4
+ },
+ "plans": [
+  {
+   "event_key": "2026iscmp",
+   "playoff_window": [
+    [
+     "2026iscmp_sf1m1"
+    ],
+    [
+     "2026iscmp_sf2m1"
+    ]
+   ],
+   "post_window_bulk": [
+    "2026iscmp_qm28",
+    "2026iscmp_qm29",
+    "2026iscmp_qm30",
+    "2026iscmp_qm31",
+    "2026iscmp_qm32",
+    "2026iscmp_qm33",
+    "2026iscmp_qm34",
+    "2026iscmp_qm35",
+    "2026iscmp_qm36",
+    "2026iscmp_qm37",
+    "2026iscmp_qm38",
+    "2026iscmp_qm39",
+    "2026iscmp_qm40",
+    "2026iscmp_qm41",
+    "2026iscmp_qm42",
+    "2026iscmp_qm43",
+    "2026iscmp_qm44",
+    "2026iscmp_qm45",
+    "2026iscmp_qm46",
+    "2026iscmp_qm47",
+    "2026iscmp_qm48",
+    "2026iscmp_qm49",
+    "2026iscmp_qm50",
+    "2026iscmp_qm51",
+    "2026iscmp_qm52",
+    "2026iscmp_qm53",
+    "2026iscmp_qm54",
+    "2026iscmp_qm55",
+    "2026iscmp_qm56",
+    "2026iscmp_qm57",
+    "2026iscmp_qm58",
+    "2026iscmp_qm59",
+    "2026iscmp_qm60"
+   ],
+   "pre_window_bulk": [
+    "2026iscmp_qm1",
+    "2026iscmp_qm2",
+    "2026iscmp_qm3",
+    "2026iscmp_qm4",
+    "2026iscmp_qm5",
+    "2026iscmp_qm6",
+    "2026iscmp_qm7",
+    "2026iscmp_qm8",
+    "2026iscmp_qm9",
+    "2026iscmp_qm10",
+    "2026iscmp_qm11",
+    "2026iscmp_qm12",
+    "2026iscmp_qm13",
+    "2026iscmp_qm14",
+    "2026iscmp_qm15",
+    "2026iscmp_qm16",
+    "2026iscmp_qm17",
+    "2026iscmp_qm18",
+    "2026iscmp_qm19"
+   ],
+   "qual_window": [
+    [
+     "2026iscmp_qm20"
+    ],
+    [
+     "2026iscmp_qm21"
+    ],
+    [
+     "2026iscmp_qm22"
+    ],
+    [
+     "2026iscmp_qm23"
+    ],
+    [
+     "2026iscmp_qm24"
+    ],
+    [
+     "2026iscmp_qm25"
+    ],
+    [
+     "2026iscmp_qm26"
+    ],
+    [
+     "2026iscmp_qm27"
+    ]
+   ],
+   "roster_size": 36,
+   "season": 2026,
+   "sentinel_steps": [
+    4
+   ],
+   "stratum": "E1",
+   "switch_step_in_window": null
+  },
+  {
+   "event_key": "2026nccab",
+   "playoff_window": [
+    [
+     "2026nccab_sf1m1"
+    ],
+    [
+     "2026nccab_sf2m1"
+    ]
+   ],
+   "post_window_bulk": [
+    "2026nccab_qm9",
+    "2026nccab_qm10",
+    "2026nccab_qm11",
+    "2026nccab_qm12",
+    "2026nccab_qm13",
+    "2026nccab_qm14",
+    "2026nccab_qm15",
+    "2026nccab_qm16",
+    "2026nccab_qm17",
+    "2026nccab_qm18",
+    "2026nccab_qm19",
+    "2026nccab_qm20",
+    "2026nccab_qm21",
+    "2026nccab_qm22",
+    "2026nccab_qm23",
+    "2026nccab_qm24",
+    "2026nccab_qm25",
+    "2026nccab_qm26",
+    "2026nccab_qm27",
+    "2026nccab_qm28",
+    "2026nccab_qm29",
+    "2026nccab_qm30",
+    "2026nccab_qm31",
+    "2026nccab_qm32",
+    "2026nccab_qm33",
+    "2026nccab_qm34",
+    "2026nccab_qm35",
+    "2026nccab_qm36",
+    "2026nccab_qm37",
+    "2026nccab_qm38",
+    "2026nccab_qm39",
+    "2026nccab_qm40",
+    "2026nccab_qm41",
+    "2026nccab_qm42",
+    "2026nccab_qm43",
+    "2026nccab_qm44",
+    "2026nccab_qm45",
+    "2026nccab_qm46",
+    "2026nccab_qm47",
+    "2026nccab_qm48",
+    "2026nccab_qm49",
+    "2026nccab_qm50",
+    "2026nccab_qm51",
+    "2026nccab_qm52",
+    "2026nccab_qm53",
+    "2026nccab_qm54",
+    "2026nccab_qm55",
+    "2026nccab_qm56"
+   ],
+   "pre_window_bulk": [],
+   "qual_window": [
+    [
+     "2026nccab_qm1"
+    ],
+    [
+     "2026nccab_qm2"
+    ],
+    [
+     "2026nccab_qm3"
+    ],
+    [
+     "2026nccab_qm4"
+    ],
+    [
+     "2026nccab_qm5"
+    ],
+    [
+     "2026nccab_qm6"
+    ],
+    [
+     "2026nccab_qm7"
+    ],
+    [
+     "2026nccab_qm8"
+    ]
+   ],
+   "roster_size": 28,
+   "season": 2026,
+   "sentinel_steps": [
+    4
+   ],
+   "stratum": "E2",
+   "switch_step_in_window": null
+  },
+  {
+   "event_key": "2026cur",
+   "playoff_window": [
+    [
+     "2026cur_sf1m1"
+    ]
+   ],
+   "post_window_bulk": [
+    "2026cur_qm72",
+    "2026cur_qm73",
+    "2026cur_qm74",
+    "2026cur_qm75",
+    "2026cur_qm76",
+    "2026cur_qm77",
+    "2026cur_qm78",
+    "2026cur_qm79",
+    "2026cur_qm80",
+    "2026cur_qm81",
+    "2026cur_qm82",
+    "2026cur_qm83",
+    "2026cur_qm84",
+    "2026cur_qm85",
+    "2026cur_qm86",
+    "2026cur_qm87",
+    "2026cur_qm88",
+    "2026cur_qm89",
+    "2026cur_qm90",
+    "2026cur_qm91",
+    "2026cur_qm92",
+    "2026cur_qm93",
+    "2026cur_qm94",
+    "2026cur_qm95",
+    "2026cur_qm96",
+    "2026cur_qm97",
+    "2026cur_qm98",
+    "2026cur_qm99",
+    "2026cur_qm100",
+    "2026cur_qm101",
+    "2026cur_qm102",
+    "2026cur_qm103",
+    "2026cur_qm104",
+    "2026cur_qm105",
+    "2026cur_qm106",
+    "2026cur_qm107",
+    "2026cur_qm108",
+    "2026cur_qm109",
+    "2026cur_qm110",
+    "2026cur_qm111",
+    "2026cur_qm112",
+    "2026cur_qm113",
+    "2026cur_qm114",
+    "2026cur_qm115",
+    "2026cur_qm116",
+    "2026cur_qm117",
+    "2026cur_qm118",
+    "2026cur_qm119",
+    "2026cur_qm120",
+    "2026cur_qm121",
+    "2026cur_qm122",
+    "2026cur_qm123",
+    "2026cur_qm124"
+   ],
+   "pre_window_bulk": [
+    "2026cur_qm1",
+    "2026cur_qm2",
+    "2026cur_qm3",
+    "2026cur_qm4",
+    "2026cur_qm5",
+    "2026cur_qm6",
+    "2026cur_qm7",
+    "2026cur_qm8",
+    "2026cur_qm9",
+    "2026cur_qm10",
+    "2026cur_qm11",
+    "2026cur_qm12",
+    "2026cur_qm13",
+    "2026cur_qm14",
+    "2026cur_qm15",
+    "2026cur_qm16",
+    "2026cur_qm17",
+    "2026cur_qm18",
+    "2026cur_qm19",
+    "2026cur_qm20",
+    "2026cur_qm21",
+    "2026cur_qm22",
+    "2026cur_qm23",
+    "2026cur_qm24",
+    "2026cur_qm25",
+    "2026cur_qm26",
+    "2026cur_qm27",
+    "2026cur_qm28",
+    "2026cur_qm29",
+    "2026cur_qm30",
+    "2026cur_qm31",
+    "2026cur_qm32",
+    "2026cur_qm33",
+    "2026cur_qm34",
+    "2026cur_qm35",
+    "2026cur_qm36",
+    "2026cur_qm37",
+    "2026cur_qm38",
+    "2026cur_qm39",
+    "2026cur_qm40",
+    "2026cur_qm41",
+    "2026cur_qm42",
+    "2026cur_qm43",
+    "2026cur_qm44",
+    "2026cur_qm45",
+    "2026cur_qm46",
+    "2026cur_qm47",
+    "2026cur_qm48",
+    "2026cur_qm49",
+    "2026cur_qm50",
+    "2026cur_qm51",
+    "2026cur_qm52",
+    "2026cur_qm53",
+    "2026cur_qm54",
+    "2026cur_qm55",
+    "2026cur_qm56",
+    "2026cur_qm57",
+    "2026cur_qm58",
+    "2026cur_qm59",
+    "2026cur_qm60",
+    "2026cur_qm61",
+    "2026cur_qm62",
+    "2026cur_qm63",
+    "2026cur_qm64",
+    "2026cur_qm65",
+    "2026cur_qm66"
+   ],
+   "qual_window": [
+    [
+     "2026cur_qm67"
+    ],
+    [
+     "2026cur_qm68"
+    ],
+    [
+     "2026cur_qm69"
+    ],
+    [
+     "2026cur_qm70"
+    ],
+    [
+     "2026cur_qm71"
+    ]
+   ],
+   "roster_size": 74,
+   "season": 2026,
+   "sentinel_steps": [
+    2
+   ],
+   "stratum": "E3",
+   "switch_step_in_window": null
+  },
+  {
+   "event_key": "2026vache",
+   "playoff_window": [
+    [
+     "2026vache_sf1m1"
+    ],
+    [
+     "2026vache_sf2m1"
+    ]
+   ],
+   "post_window_bulk": [
+    "2026vache_qm34",
+    "2026vache_qm35",
+    "2026vache_qm36",
+    "2026vache_qm37",
+    "2026vache_qm38",
+    "2026vache_qm39",
+    "2026vache_qm40",
+    "2026vache_qm41",
+    "2026vache_qm42",
+    "2026vache_qm43",
+    "2026vache_qm44",
+    "2026vache_qm45",
+    "2026vache_qm46",
+    "2026vache_qm47",
+    "2026vache_qm48",
+    "2026vache_qm49",
+    "2026vache_qm50",
+    "2026vache_qm51",
+    "2026vache_qm52",
+    "2026vache_qm53",
+    "2026vache_qm54",
+    "2026vache_qm55",
+    "2026vache_qm56",
+    "2026vache_qm57",
+    "2026vache_qm58",
+    "2026vache_qm59",
+    "2026vache_qm60"
+   ],
+   "pre_window_bulk": [
+    "2026vache_qm1",
+    "2026vache_qm2",
+    "2026vache_qm3",
+    "2026vache_qm4",
+    "2026vache_qm5",
+    "2026vache_qm6",
+    "2026vache_qm7",
+    "2026vache_qm8",
+    "2026vache_qm9",
+    "2026vache_qm10",
+    "2026vache_qm11",
+    "2026vache_qm12",
+    "2026vache_qm13",
+    "2026vache_qm14",
+    "2026vache_qm15",
+    "2026vache_qm16",
+    "2026vache_qm17",
+    "2026vache_qm18",
+    "2026vache_qm19",
+    "2026vache_qm20",
+    "2026vache_qm21",
+    "2026vache_qm22",
+    "2026vache_qm23",
+    "2026vache_qm24",
+    "2026vache_qm25"
+   ],
+   "qual_window": [
+    [
+     "2026vache_qm26"
+    ],
+    [
+     "2026vache_qm27"
+    ],
+    [
+     "2026vache_qm28"
+    ],
+    [
+     "2026vache_qm29"
+    ],
+    [
+     "2026vache_qm30"
+    ],
+    [
+     "2026vache_qm31"
+    ],
+    [
+     "2026vache_qm32"
+    ],
+    [
+     "2026vache_qm33"
+    ]
+   ],
+   "roster_size": 30,
+   "season": 2026,
+   "sentinel_steps": [
+    4
+   ],
+   "stratum": "E4",
+   "switch_step_in_window": 4
+  },
+  {
+   "event_key": "2025mawne",
+   "playoff_window": [
+    [
+     "2025mawne_sf1m1"
+    ],
+    [
+     "2025mawne_sf2m1"
+    ]
+   ],
+   "post_window_bulk": [
+    "2025mawne_qm66",
+    "2025mawne_qm67",
+    "2025mawne_qm68",
+    "2025mawne_qm69",
+    "2025mawne_qm70"
+   ],
+   "pre_window_bulk": [
+    "2025mawne_qm1",
+    "2025mawne_qm2",
+    "2025mawne_qm3",
+    "2025mawne_qm4",
+    "2025mawne_qm5",
+    "2025mawne_qm6",
+    "2025mawne_qm7",
+    "2025mawne_qm8",
+    "2025mawne_qm9",
+    "2025mawne_qm10",
+    "2025mawne_qm11",
+    "2025mawne_qm12",
+    "2025mawne_qm13",
+    "2025mawne_qm14",
+    "2025mawne_qm15",
+    "2025mawne_qm16",
+    "2025mawne_qm17",
+    "2025mawne_qm18",
+    "2025mawne_qm19",
+    "2025mawne_qm20",
+    "2025mawne_qm21",
+    "2025mawne_qm22",
+    "2025mawne_qm23",
+    "2025mawne_qm24",
+    "2025mawne_qm25",
+    "2025mawne_qm26",
+    "2025mawne_qm27",
+    "2025mawne_qm28",
+    "2025mawne_qm29",
+    "2025mawne_qm30",
+    "2025mawne_qm31",
+    "2025mawne_qm32",
+    "2025mawne_qm33",
+    "2025mawne_qm34",
+    "2025mawne_qm35",
+    "2025mawne_qm36",
+    "2025mawne_qm37",
+    "2025mawne_qm38",
+    "2025mawne_qm39",
+    "2025mawne_qm40",
+    "2025mawne_qm41",
+    "2025mawne_qm42",
+    "2025mawne_qm43",
+    "2025mawne_qm44",
+    "2025mawne_qm45",
+    "2025mawne_qm46",
+    "2025mawne_qm47",
+    "2025mawne_qm48",
+    "2025mawne_qm49",
+    "2025mawne_qm50",
+    "2025mawne_qm51",
+    "2025mawne_qm52",
+    "2025mawne_qm53",
+    "2025mawne_qm54",
+    "2025mawne_qm55",
+    "2025mawne_qm56",
+    "2025mawne_qm57",
+    "2025mawne_qm58",
+    "2025mawne_qm59"
+   ],
+   "qual_window": [
+    [
+     "2025mawne_qm60"
+    ],
+    [
+     "2025mawne_qm61"
+    ],
+    [
+     "2025mawne_qm62"
+    ],
+    [
+     "2025mawne_qm63"
+    ],
+    [
+     "2025mawne_qm64"
+    ],
+    [
+     "2025mawne_qm65"
+    ]
+   ],
+   "roster_size": 35,
+   "season": 2025,
+   "sentinel_steps": [
+    3
+   ],
+   "stratum": "E5",
+   "switch_step_in_window": null
+  }
+ ],
+ "population_fingerprint": "24e23b1aac1fd0e58730bea9a9f536e40f437d16df6e2cdd77d353630baa4f48",
+ "proposal_sha256": "50bbc99c319389d94c6b316c2d057fc5d46f0cd4e1ebc90bd2a9bd65ea6311ad",
+ "provenance": {
+  "commit": "ad3975396de97023825ad1a6fbe4e75149d1a4ae",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-03T22:44:13.619379+00:00"
+ },
+ "seed": 20261006,
+ "serving_row_counts": {
+  "current_tba_payloads": 59284,
+  "events": 418,
+  "match_teams": 217434,
+  "matches": 36239
+ },
+ "starts": {
+  "E1": 19,
+  "E2": 0,
+  "E3": 66,
+  "E4": 25,
+  "E5": 59
+ },
+ "synthetic_cases": "none (P5-D14 removed the synthetic score-correction case)"
+}

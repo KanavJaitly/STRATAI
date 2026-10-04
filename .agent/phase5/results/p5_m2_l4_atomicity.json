@@ -1,0 +1,108 @@
+{
+ "check": "L4 atomicity and reproducibility",
+ "epa_changes_without_retrieval_or_clock_change": 324,
+ "feature_changes_without_input_change": 0,
+ "logged_predictions": 120,
+ "milestone": "P5-M2",
+ "model_sha256": "c76d329918e1667ae6f641ae6023e0649f34feb7c35064dea8b3db5cd1a8b0a2",
+ "passed": false,
+ "pre_declared": {
+  "event": "2026iscmp",
+  "policies_compared": [
+   "d18_skip",
+   "literal_state"
+  ],
+  "retrieval": "simulated lag 24 h"
+ },
+ "problems": [
+  "EPA change without a retrieval or clock change: [2231, '2026iscmp_qm7']",
+  "EPA change without a retrieval or clock change: [5715, '2026iscmp_qm7']",
+  "EPA change without a retrieval or clock change: [7039, '2026iscmp_qm7']",
+  "EPA change without a retrieval or clock change: [7845, '2026iscmp_qm7']",
+  "EPA change without a retrieval or clock change: [11070, '2026iscmp_qm7']",
+  "EPA change without a retrieval or clock change: [11390, '2026iscmp_qm7']",
+  "EPA change without a retrieval or clock change: [1574, '2026iscmp_qm8']",
+  "EPA change without a retrieval or clock change: [2212, '2026iscmp_qm8']",
+  "EPA change without a retrieval or clock change: [3075, '2026iscmp_qm8']",
+  "EPA change without a retrieval or clock change: [6740, '2026iscmp_qm8']",
+  "EPA change without a retrieval or clock change: [8223, '2026iscmp_qm8']",
+  "EPA change without a retrieval or clock change: [11329, '2026iscmp_qm8']",
+  "EPA change without a retrieval or clock change: [1942, '2026iscmp_qm9']",
+  "EPA change without a retrieval or clock change: [2230, '2026iscmp_qm9']",
+  "EPA change without a retrieval or clock change: [3083, '2026iscmp_qm9']",
+  "EPA change without a retrieval or clock change: [3339, '2026iscmp_qm9']",
+  "EPA change without a retrieval or clock change: [9303, '2026iscmp_qm9']",
+  "EPA change without a retrieval or clock change: [11478, '2026iscmp_qm9']",
+  "EPA change without a retrieval or clock change: [1577, '2026iscmp_qm10']",
+  "EPA change without a retrieval or clock change: [2679, '2026iscmp_qm10']",
+  "EPA change without a retrieval or clock change: [3835, '2026iscmp_qm10']",
+  "EPA change without a retrieval or clock change: [4586, '2026iscmp_qm10']",
+  "EPA change without a retrieval or clock change: [5614, '2026iscmp_qm10']",
+  "EPA change without a retrieval or clock change: [11471, '2026iscmp_qm10']",
+  "EPA change without a retrieval or clock change: [1690, '2026iscmp_qm11']",
+  "EPA change without a retrieval or clock change: [3065, '2026iscmp_qm11']",
+  "EPA change without a retrieval or clock change: [4416, '2026iscmp_qm11']",
+  "EPA change without a retrieval or clock change: [4590, '2026iscmp_qm11']",
+  "EPA change without a retrieval or clock change: [4744, '2026iscmp_qm11']",
+  "EPA change without a retrieval or clock change: [11332, '2026iscmp_qm11']",
+  "EPA change without a retrieval or clock change: [1937, '2026iscmp_qm12']",
+  "EPA change without a retrieval or clock change: [3316, '2026iscmp_qm12']",
+  "EPA change without a retrieval or clock change: [4320, '2026iscmp_qm12']",
+  "EPA change without a retrieval or clock change: [5990, '2026iscmp_qm12']",
+  "EPA change without a retrieval or clock change: [8175, '2026iscmp_qm12']",
+  "EPA change without a retrieval or clock change: [11480, '2026iscmp_qm12']",
+  "EPA change without a retrieval or clock change: [1942, '2026iscmp_qm13']",
+  "EPA change without a retrieval or clock change: [2231, '2026iscmp_qm13']",
+  "EPA change without a retrieval or clock change: [3083, '2026iscmp_qm13']",
+  "EPA change without a retrieval or clock change: [5715, '2026iscmp_qm13']",
+  "EPA change without a retrieval or clock change: [7039, '2026iscmp_qm13']",
+  "EPA change without a retrieval or clock change: [11390, '2026iscmp_qm13']",
+  "EPA change without a retrieval or clock change: [1574, '2026iscmp_qm14']",
+  "EPA change without a retrieval or clock change: [2212, '2026iscmp_qm14']",
+  "EPA change without a retrieval or clock change: [3339, '2026iscmp_qm14']",
+  "EPA change without a retrieval or clock change: [4586, '2026iscmp_qm14']",
+  "EPA change without a retrieval or clock change: [5614, '2026iscmp_qm14']",
+  "EPA change without a retrieval or clock change: [7845, '2026iscmp_qm14']",
+  "EPA change without a retrieval or clock change: [4416, '2026iscmp_qm15']",
+  "EPA change without a retrieval or clock change: [4590, '2026iscmp_qm15']"
+ ],
+ "provenance": {
+  "commit": "7b2d29cc28bcbd813e4d9cfb4a11c902314f6153",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-03T02:39:40.402111+00:00"
+ },
+ "qualification_matches": 60,
+ "refused": 0,
+ "reserve_mismatches": 0,
+ "served": 60,
+ "snapshot_ids": [
+  "c7bcc3cc2d9edca4f3d01f559f2a20788bcfa055de68b6db2f4126f90603ef69"
+ ],
+ "stratai": {
+  "chain_manifest": "chain_e77d9444c57a7b50.json",
+  "seasons": [
+   {
+    "input_fingerprint": "774a4aea5da9b80c2e1819287be6faed6360963d2625b994d5e229040c43f460",
+    "prior_source": null,
+    "results_fingerprint": "6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+    "season": 2024
+   },
+   {
+    "input_fingerprint": "95c6bfc2eb30677a43c120fef3a7545fbcbbd13ed4349573278bd99f8b8490b5",
+    "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+    "results_fingerprint": "4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+    "season": 2025
+   },
+   {
+    "input_fingerprint": "29357e19e2fc7b12f71efb6ad22d9dcdea9cecad903019c863c8104857349aff",
+    "prior_source": "stratai-epa-chain:2024=6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7,2025=4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+    "results_fingerprint": "8fa397b25c6f5ff926aef47499fde818746732375245c5f0d0b3a74c5569a9e7",
+    "season": 2026
+   }
+  ],
+  "snapshot_verified": true
+ },
+ "team_epa_states": {
+  "fallback_stratai": 360
+ }
+}

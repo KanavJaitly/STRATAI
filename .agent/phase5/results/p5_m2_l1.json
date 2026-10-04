@@ -1,0 +1,32 @@
+{
+ "appearances": 319301,
+ "check": "L1 equivalence (frozen mode)",
+ "d18_snapshot_integrity": {
+  "a1_team_events": 331,
+  "invalid_team_events": 143,
+  "ok": true,
+  "raw_equals_table_epa_total": 24022,
+  "raw_files_verified": 608,
+  "raw_records": 24022,
+  "table_rows": 24022,
+  "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5"
+ },
+ "decision": "P5-D11",
+ "examples": [],
+ "milestone": "P5-M2",
+ "minutes": 0.6,
+ "mismatches": 0,
+ "outcomes": {
+  "served:statbotics": 263726,
+  "served:stratai_fallback": 450,
+  "withheld": 55125
+ },
+ "passed": true,
+ "policy": "d18_skip",
+ "provenance": {
+  "commit": "5d39052d0c2e1bf20344ccf78d3537de8ffb1477",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-03T23:40:00.300019+00:00"
+ },
+ "snapshot_id": "c7bcc3cc2d9edca4f3d01f559f2a20788bcfa055de68b6db2f4126f90603ef69"
+}

@@ -1,0 +1,110 @@
+{
+ "check": "L3 outage drill (synthetic season 9983, isolated database)",
+ "database": "stratai_test",
+ "manifests": 3,
+ "milestone": "P5-M2",
+ "passed": true,
+ "policies_compared": [
+  "d18_skip",
+  "literal_state"
+ ],
+ "problems": [],
+ "provenance": {
+  "commit": "7b2d29cc28bcbd813e4d9cfb4a11c902314f6153",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-03T02:39:08.850228+00:00"
+ },
+ "refresh_entries": 5,
+ "timeline": [
+  {
+   "injected": "HTTPStatusError",
+   "manifest_written": false,
+   "refresh_at_hours": 1,
+   "refresh_ok": false,
+   "states_30min_later": {
+    "team_a": [
+     "pending",
+     null,
+     null
+    ],
+    "team_b": [
+     "stale",
+     "statbotics",
+     55.0
+    ]
+   }
+  },
+  {
+   "injected": "ReadTimeout",
+   "manifest_written": false,
+   "refresh_at_hours": 3,
+   "refresh_ok": false,
+   "states_30min_later": {
+    "team_a": [
+     "pending",
+     null,
+     null
+    ],
+    "team_b": [
+     "stale",
+     "statbotics",
+     55.0
+    ]
+   }
+  },
+  {
+   "injected": "HTTPStatusError",
+   "manifest_written": false,
+   "refresh_at_hours": 73,
+   "refresh_ok": false,
+   "states_30min_later": {
+    "team_a": [
+     "fallback_stratai",
+     "stratai_fallback",
+     33.0
+    ],
+    "team_b": [
+     "stale",
+     "statbotics",
+     55.0
+    ]
+   }
+  },
+  {
+   "injected": "records",
+   "manifest_written": true,
+   "refresh_at_hours": 80,
+   "refresh_ok": true,
+   "states_30min_later": {
+    "team_a": [
+     "fallback_stratai",
+     "stratai_fallback",
+     33.0
+    ],
+    "team_b": [
+     "current",
+     "statbotics",
+     55.0
+    ]
+   }
+  },
+  {
+   "injected": "records",
+   "manifest_written": true,
+   "refresh_at_hours": 90,
+   "refresh_ok": true,
+   "states_30min_later": {
+    "team_a": [
+     "current",
+     "statbotics",
+     42.0
+    ],
+    "team_b": [
+     "current",
+     "statbotics",
+     55.0
+    ]
+   }
+  }
+ ]
+}

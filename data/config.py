@@ -100,9 +100,25 @@ class Settings(BaseSettings):
     # Unconfigured, it fails loudly rather than silently using another source.
     # "stratai" (D15, historical) and "statbotics" (plain D13 over team_event_stats, no
     # availability rule or fallback) remain selectable as non-evaluated references.
-    epa_source: Literal["d18_statbotics_primary", "stratai", "statbotics"] = "d18_statbotics_primary"
+    #
+    # "p5_live_statbotics" is the P5-M2 live-refreshed provider (ml.ratings.live_epa). It is
+    # not the evaluated configuration: adoption is a recorded human decision (P5-D3), and it
+    # loads only with LIVE_EPA_LOG_DIR (a snapshot log rooted at STATBOTICS_SNAPSHOT_DIR) and an
+    # explicit LIVE_EPA_A1A2_POLICY (open decision Q1, .agent/phase5/M02_DECISION_REQUIRED.md).
+    epa_source: Literal["d18_statbotics_primary", "stratai", "statbotics", "p5_live_statbotics"] = (
+        "d18_statbotics_primary")
     stratai_epa_chain: str | None = None
     statbotics_snapshot_dir: str | None = None
+    live_epa_log_dir: str | None = None
+    live_epa_a1a2_policy: Literal["d18_skip", "literal_state"] | None = None
+    live_epa_concluded_seasons: list[int] = []
+    # Phase 5 human-input workflows (data/human_inputs.py, api/routes/human_inputs.py).
+    # - human_inputs_write_token: the shared secret every write request must present in the
+    #   X-StratAI-Write-Token header. Unset means every write is refused (fail closed); reads stay open, as
+    #   for every other endpoint.
+    # - artifact_store_dir: where uploaded game-manual PDFs are kept write-once, named by sha256.
+    human_inputs_write_token: str | None = None
+    artifact_store_dir: str = str(PROJECT_ROOT.parent / "StratAI-artifacts" / "uploads")
 
     model_config = ConfigDict(
         case_sensitive=False,

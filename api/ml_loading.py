@@ -81,6 +81,8 @@ class ServedEpaSource:
     epa_source: str
     evaluated_configuration: bool  # True only for the D18 configuration Phase 4 evaluated
     provenance: dict[str, Any]
+    adoption: dict[str, Any] | None = None  # P5-D3, for the adopted live source
+    log_stamp: tuple[int, int] | None = None  # the live snapshot log's (mtime_ns, size) at load
 
 
 def _load(kind: str, servable: dict[str, tuple[type, tuple[str, ...]]], model_type: str, version_tag: str | None,
@@ -136,4 +138,24 @@ def load_epa_source(settings: Settings, database: Database) -> ServedEpaSource |
         return None
     provenance = {k: v for k, v in provenance.items() if k != "lookup_diagnostics"}
     logger.info("Loaded EPA source %r", settings.epa_source)
+    if settings.epa_source == LIVE_EPA_SOURCE:
+        from ml.ratings.live_epa import ADOPTION
+
+        return ServedEpaSource(provider, settings.epa_source, False, provenance, adoption=ADOPTION,
+                               log_stamp=live_log_stamp(settings))
     return ServedEpaSource(provider, settings.epa_source, settings.epa_source == D18_EPA_SOURCE, provenance)
+
+
+LIVE_EPA_SOURCE = "p5_live_statbotics"
+
+
+def live_log_stamp(settings: Settings) -> tuple[int, int] | None:
+    """(mtime_ns, size) of the live snapshot log: it changes with every refresh entry (P5-M2 §4)."""
+    if not settings.live_epa_log_dir:
+        return None
+    path = Path(settings.live_epa_log_dir) / "log.jsonl"
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    return stat.st_mtime_ns, stat.st_size

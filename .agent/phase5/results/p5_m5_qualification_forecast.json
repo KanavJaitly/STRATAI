@@ -1,0 +1,44 @@
+{
+ "a_reproduction": {
+  "exact": true,
+  "mean_abs_actual_minus_expected": 1.1207038490019907,
+  "mean_actual_minus_expected": 1.166123355374288e-17,
+  "recorded": {
+   "mean_abs_actual_minus_expected": 1.1207,
+   "mean_actual_minus_expected": 0.0
+  },
+  "rounded": {
+   "mean_abs_actual_minus_expected": 1.1207,
+   "mean_actual_minus_expected": 0.0
+  }
+ },
+ "b_range_coverage": {
+  "coverage": 0.8531548757170172,
+  "inside": 6693,
+  "label": "not_validated",
+  "team_events": 7845,
+  "within_band": false
+ },
+ "milestone": "P5-M5",
+ "model": {
+  "sha256": "c76d329918e1667ae6f641ae6023e0649f34feb7c35064dea8b3db5cd1a8b0a2",
+  "type": "win_prob_xgb_calibrated"
+ },
+ "passed_a": true,
+ "population": {
+  "expected": {
+   "matches": 12245,
+   "team_events": 7845
+  },
+  "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+  "frame_info_sha256": "64fa2fd358bd7b8cf9010ca00273ce340897b992e4518cdaccff82cf748d1f19",
+  "matches": 12245,
+  "team_events": 7845
+ },
+ "provenance": {
+  "commit": "2ebd83a0d781d69711ecb339b9a84fd8e6eae4c6",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-03T02:49:56.080307+00:00"
+ },
+ "spec": "docs/P5Milestones.md (frozen P5-M0)"
+}

@@ -37,6 +37,10 @@ def verify_database() -> None:
         "scouting_observations",
         "team_metrics",
         "scouting_access_codes",
+        "game_manuals",
+        "game_spec_versions",
+        "capability_profiles",
+        "human_review_artifacts",
     }
 
     missing = expected_tables - tables
