@@ -1,4 +1,14 @@
-# Phase 5 — phase acceptance review (2026-10-03)
+# Phase 5 — phase acceptance review (2026-10-03; updated 2026-10-04)
+
+**Update 2026-10-04.**
+- **P5-D3 decided: the live EPA source is adopted for production** (Kanav). The live EPA source passed its frozen historical P5-M2 acceptance criteria and has been adopted for production; prospective 2027 validation remains pending.
+  The record is `results/p5_m2_adoption.json`, and the production check is `.agent/production/p5_live_adoption_check_rerun1.json` (PASSED).
+- **DM2 is MET.** **DM1 is still blocked** by required human input. **Phase 5 is not complete.**
+- **The human-input workflows are built:** the `frontend/` web app plus the `/human-inputs` API. Every DM1 input can now be entered,
+  reviewed and established through the website. None has been entered, and none may be fabricated.
+  Migration 0010 is not yet applied to the serving database: that is a production step awaiting approval.
+
+The review below is kept as written on 2026-10-03; where it says DM2 waits on P5-D3, the update above supersedes it.
 
 **Verdict: Phase 5 is NOT complete.** Neither immutable done-means is met:
 - **DM1** is blocked by required human input;
@@ -79,6 +89,8 @@ Everything that can be completed without fabricating human inputs or decisions i
 | P5-M2 L2 | 1.9 | PASSED |
 | P5-M7 (b)/(c) | 0.8 | (b) PASSED |
 | Full test suite (phase audit) | 9.3 | 1,800 passed, 3 skipped, 0 failed |
+| P5-D3 production adoption check (first) | 17.7 | FAILED (check defect), kept |
+| P5-D3 production adoption check rerun1 | 18.8 | PASSED |
 
 The only run that broke the rule was the first 2026arli debug run (about 52 min). It ran before the rule existed
 and prompted it.

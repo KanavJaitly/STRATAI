@@ -14,7 +14,7 @@ This page is the reference for STRATAI's Phase 4 ML layer: features, dataset, ba
 - **Playoff probabilities:** NOT currently validated. The higher-seed playoff effect is a known systematic limitation (§7).
 - **Precision:** unsupported statistics must not be presented with false precision.
 
-**D18 is the evaluated production-source configuration.** The production API serves exactly the D18 models and EPA source (§9).
+**D18 is the evaluated production-source configuration.** The production API serves exactly the D18 models and EPA source (§9). **Since Phase 5's P5-D3 adoption (2026-10-04)**, production's EPA source is the P5-M2 live source rooted at the D18 snapshot (`EPA_SOURCE=p5_live_statbotics`; docs/phase5.md). The models are unchanged, and historical as-of queries are still answered by the D18 snapshot.
 
 ---
 

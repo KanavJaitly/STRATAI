@@ -132,7 +132,23 @@ def test_done_means_never_inferred_from_code(tmp_path):
 
 
 def test_real_done_means_status_matches_the_records():
-    """As recorded: DM1 is blocked by human input; DM2's replay passed but P5-M2 is not adopted."""
+    """As recorded: DM1 is blocked by human input; DM2 is met (the replay passed, and P5-D3 adopted P5-M2)."""
     one, two = dm1(), dm2()
     assert one["met"] is False and "dm1_dry_run.json" in one["missing_records"]
-    assert two["replay_passed"] is True and two["p5_m2_adopted"] is False and two["met"] is False
+    assert two["replay_passed"] is True and two["p5_m2_adopted"] is True and two["met"] is True
+
+
+def test_p5_d3_adoption_record_matches_the_served_status_and_its_evidence():
+    """The adoption record is Kanav's decision, states that prospective validation is pending, and cites the
+    exact bytes of the records it rests on."""
+    import hashlib
+
+    from ml.ratings.live_epa import ADOPTION
+
+    record = _record("p5_m2_adoption.json")
+    assert record["decision"] == ADOPTION["decision"] == "P5-D3" and record["adopted"] is True
+    assert record["decided_by"] == "Kanav" and record["statement"] == ADOPTION["statement"]
+    assert "prospective 2027 validation remains pending" in record["statement"]
+    for name, sha in record["evidence_sha256"].items():
+        assert hashlib.sha256((RESULTS / name).read_bytes()).hexdigest() == sha, name
+    assert all(_record(name)["passed"] for name in record["evidence_sha256"])
