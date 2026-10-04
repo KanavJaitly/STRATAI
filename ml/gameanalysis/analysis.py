@@ -7,16 +7,16 @@
 - **Historical design examples by codebook label:** see data.design_reference. Each is labelled
   `curated_reference_unverified`.
 
-**Left open by the spec, and the reason for open decision Q3** (.agent/phase5/M08_DECISION_REQUIRED.md). P5-M8
-says these rules are "fixed before the dry run" but does not say what they are:
+**Left open by the spec, and therefore Q3**, now decided as P5-D13 and implemented in
+ml.gameanalysis.rules_p5d13. P5-M8 says these rules are "fixed before the dry run" but did not say what they are:
 - similarity to catalog games;
 - candidate archetypes for a new game;
 - expected scoring ranges for a new game;
 - P5-M9's "predicted dominant scoring components";
 - how two codings are reconciled into the served labels.
 
-They are `Rules` slots with no implementation. `analyze` refuses (`RuleNotDecided`) until a decided, versioned
-rule set is registered. Inventing them here would be new methodology.
+They are `Rules` slots: `analyze` refuses (`RuleNotDecided`) unless a decided, versioned rule set fills them.
+`rules_p5d13.build_rules` is the only such set, and it binds the human-authored artifacts the decided rules need.
 """
 
 from __future__ import annotations

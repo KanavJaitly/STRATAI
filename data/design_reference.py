@@ -22,8 +22,13 @@ Keyword auto-labelling is not used: the audit found 19 of 77 rows (25%) misassig
 - pooled over every (row, function) present/absent decision;
 - per function.
 
-Which of the two gates the 0.6 rule is part of open decision Q3 (.agent/phase5/M08_DECISION_REQUIRED.md), so
-`label_status` requires the choice explicitly.
+**Decided as P5-D13** (`label_status`):
+- the pooled κ ≥ 0.6 makes the coding acceptable overall;
+- every per-function κ is reported;
+- a function whose own κ is below 0.6 is served `provisional`.
+
+**Reconciliation** (`reconcile_with_consensus`): the served labels are the consensus meeting's coding, never
+one coder's.
 
 **The pre-reveal filter** (DM1 leakage) keeps only rows from before the simulated reveal year. For 2026, that
 excludes the 10 REBUILT rows.
@@ -37,7 +42,6 @@ import json
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -47,7 +51,6 @@ REFERENCE_ROWS = 77
 CURATED_REFERENCE_UNVERIFIED = "curated_reference_unverified"
 KAPPA_THRESHOLD = 0.6
 LABELS_AS_CATEGORIES, LABELS_PROVISIONAL = "categories", "provisional"
-KappaGate = Literal["pooled", "every_function"]
 
 
 class ReferenceIntegrityError(RuntimeError):
@@ -143,17 +146,27 @@ def agreement(codebook: Codebook, first: Coding, second: Coding) -> dict[str, ob
     return {"rows": len(rows), "pooled_kappa": cohens_kappa(pooled_a, pooled_b), "per_function_kappa": per_function}
 
 
-def label_status(result: dict[str, object], gate: KappaGate) -> str:
-    """Q3's choice of gate: `pooled` κ ≥ 0.6, or `every_function` with κ ≥ 0.6 (undefined κ fails)."""
-    if gate == "pooled":
-        kappa = result["pooled_kappa"]
-        ok = kappa is not None and kappa >= KAPPA_THRESHOLD  # type: ignore[operator]
-    elif gate == "every_function":
-        values = list(result["per_function_kappa"].values())  # type: ignore[union-attr]
-        ok = all(v is not None and v >= KAPPA_THRESHOLD for v in values)
-    else:
-        raise ValueError(f"the κ gate is open decision Q3 and must be chosen explicitly, got {gate!r}")
-    return LABELS_AS_CATEGORIES if ok else LABELS_PROVISIONAL
+def label_status(result: dict[str, object]) -> dict[str, object]:
+    """P5-D13 (5).
+    - Pooled κ ≥ 0.6 makes the coding acceptable overall.
+    - Every per-function κ is reported, and a function whose own κ is below 0.6 (or undefined) is served
+      `provisional`, so a weak function never hides behind the pooled κ.
+    - If the pooled κ fails, every label is `provisional`."""
+    pooled = result["pooled_kappa"]
+    overall_ok = pooled is not None and pooled >= KAPPA_THRESHOLD  # type: ignore[operator]
+    functions = {f: (LABELS_AS_CATEGORIES if overall_ok and k is not None and k >= KAPPA_THRESHOLD
+                     else LABELS_PROVISIONAL)
+                 for f, k in result["per_function_kappa"].items()}  # type: ignore[union-attr]
+    return {"overall": LABELS_AS_CATEGORIES if overall_ok else LABELS_PROVISIONAL, "functions": functions}
+
+
+def reconcile_with_consensus(codebook: Codebook, first: Coding, second: Coding, consensus: Coding) -> Coding:
+    """P5-D13 (6): the served labels are the consensus meeting's coding, made after the independent codings
+    and κ; never one coder's labels."""
+    if consensus.coder in (first.coder, second.coder):
+        raise ValueError("the consensus coding must be the meeting's, not one coder's")
+    validate_codings(codebook, first, consensus, sorted(first.labels))
+    return consensus
 
 
 def examples_by_function(examples: Sequence[DesignExample], coding: Coding, function: str) -> list[DesignExample]:

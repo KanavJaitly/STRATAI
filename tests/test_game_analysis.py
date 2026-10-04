@@ -42,14 +42,15 @@ def _spec(season: int = 2026, **overrides) -> dict:
             "match_length": {"auto_seconds": 15, "teleop_seconds": 135, "endgame_seconds": 20},
             "scoring_actions": [
                 {"action_id": "a_piece", "name": "piece", "period": "auto", "points": 4, "unit": "piece",
-                 "field_element_id": "goal", "manual_section": "6.4"},
+                 "field_element_id": "goal", "action_type": "score_piece", "manual_section": "6.4"},
                 {"action_id": "t_piece", "name": "piece", "period": "teleop", "points": 2, "unit": "piece",
-                 "field_element_id": "goal", "manual_section": "6.4"},
+                 "field_element_id": "goal", "action_type": "score_piece", "manual_section": "6.4"},
                 {"action_id": "climb", "name": "climb", "period": "endgame", "points": 10, "unit": "robot",
-                 "manual_section": "6.5"}],
+                 "action_type": "climb", "manual_section": "6.5"}],
             "ranking_point_rules": [{"rule_id": "win", "description": "win", "ranking_points": 3,
                                      "manual_section": "11.6"}],
-            "field_elements": [{"element_id": "goal", "name": "goal", "count": 1, "manual_section": "5.2"}],
+            "field_elements": [{"element_id": "goal", "name": "goal", "count": 1, "element_type": "goal",
+                                "manual_section": "5.2"}],
             "source": {"manual_title": "synthetic", "manual_version": "0", "entered_by": "fixture",
                        "entry_started_at": T.isoformat(), "entry_completed_at": T.isoformat()}}
     spec.update(overrides)
@@ -109,10 +110,9 @@ def test_kappa_and_label_status():
     validate_codings(book, a, b, [1, 2, 3])
     result = agreement(book, a, b)
     assert result["per_function_kappa"]["shoot"] == 1.0
-    assert label_status(result, "pooled") in (LABELS_AS_CATEGORIES, LABELS_PROVISIONAL)
-    assert label_status(result, "every_function") == LABELS_PROVISIONAL  # climb κ < 0.6
-    with pytest.raises(ValueError):
-        label_status(result, None)  # type: ignore[arg-type]
+    status = label_status(result)  # P5-D13: pooled gate overall, per-function provisional below 0.6
+    assert status["overall"] in (LABELS_AS_CATEGORIES, LABELS_PROVISIONAL)
+    assert status["functions"]["climb"] == LABELS_PROVISIONAL
     with pytest.raises(ValueError):
         validate_codings(book, a, a, [1, 2, 3])  # one coder twice
     examples = examples_by_function(load_reference(), a, "climb")

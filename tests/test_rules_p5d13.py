@@ -98,3 +98,54 @@ def test_reconciliation_serves_the_consensus_never_the_first_coder():
     assert reconcile_with_consensus(BOOK, a, b, consensus) is consensus
     with pytest.raises(ValueError):
         reconcile_with_consensus(BOOK, a, b, a)  # a coder's own labels are not a consensus
+
+
+def test_dm1_runner_wiring_end_to_end(tmp_path, monkeypatch):
+    """Wiring only: synthetic fixtures through scripts/phase5_dm1_dry_run.run (nothing recorded, no database)."""
+    import json
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+
+    from data.game_spec import write_catalog_manifest
+    from ml.features.score_components import ScoreComponents
+    from ml.meta.weekly import ComponentRow
+    from scripts import phase5_dm1_dry_run as dm1
+    from tests.test_game_analysis import _rubric
+
+    catalog = tmp_path / "catalog"
+    catalog.mkdir()
+    for season in (2024, 2025):
+        (catalog / f"{season}.json").write_text(_game(season).model_dump_json(), encoding="utf-8")
+    write_catalog_manifest(catalog)
+    spec = _game(2026, climb=20).model_copy(update={"source": _game(2026).source.model_copy(
+        update={"entry_started_at": datetime.now(timezone.utc), "entry_completed_at": datetime.now(timezone.utc)})})
+    (tmp_path / "spec.json").write_text(spec.model_dump_json(), encoding="utf-8")
+    rows = list(range(1, 78))  # every curated reference row must be coded
+    files = {
+        "codebook": BOOK.model_dump_json(),
+        "a": Coding(coder="a", codebook_sha256=BOOK.sha256(), labels={r: ["shooter"] for r in rows}).model_dump_json(),
+        "b": Coding(coder="b", codebook_sha256=BOOK.sha256(), labels={r: ["shooter"] for r in rows}).model_dump_json(),
+        "consensus": Coding(coder="consensus", codebook_sha256=BOOK.sha256(),
+                            labels={r: ["shooter"] for r in rows}).model_dump_json(),
+        "map": MAP.model_dump_json(), "rubric": _rubric().model_dump_json(),
+        "profiles": json.dumps([{"profile_id": f"p{i}", "budget_usd": 1000 * i, "manufacturing": i % 4,
+                                 "programming": 2, "mentoring": 1, "submitted_at": "2026-01-01T00:00:00+00:00"}
+                                for i in range(10)]),
+    }
+    for name, body in files.items():
+        (tmp_path / f"{name}.json").write_text(body, encoding="utf-8")
+    synthetic_rows = [ComponentRow(s, "e", 1, f"m{i}", "red", ScoreComponents(i, 2 * i, 3, 1, 0, 3 * i + 4), 3 * i + 4)
+                      for s in (2024, 2025) for i in range(1, 11)]
+    monkeypatch.setattr(dm1, "_component_rows", lambda seasons: [r for r in synthetic_rows if r.season in seasons])
+    args = SimpleNamespace(spec=tmp_path / "spec.json", catalog=catalog, codebook=tmp_path / "codebook.json",
+                           coding=[tmp_path / "a.json", tmp_path / "b.json"], consensus=tmp_path / "consensus.json",
+                           action_map=tmp_path / "map.json", rubric=tmp_path / "rubric.json",
+                           profiles=tmp_path / "profiles.json")
+    record = dm1.run(args)
+    assert record["inputs"]["rules_version"] == "P5-D13" and record["clock"]["within_5_days"]
+    assert record["codebook_agreement"]["status"]["overall"] in ("categories", "provisional")
+    assert len(record["recommendations"]) == 10
+    examples = [e for a in record["analysis"]["candidate_archetypes"]["archetypes"]
+                for e in a["historical_design_examples"]]
+    assert examples and all(e["label"] == "curated_reference_unverified" and e["year"] < 2026 for e in examples)
+    assert record["analysis"]["expected_scoring_ranges"]["label"] == "not_validated"
