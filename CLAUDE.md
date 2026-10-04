@@ -104,6 +104,19 @@ Unit and integration tests
 * Keep functions reasonably small.
 * Write tests for backend features whenever practical.
 * Never hardcode secrets or API keys.
+* **Verification runtime limit (Kanav, 2026-10-03; permanent).** No test, simulation, replay,
+  verification harness or other non-production validation run may be designed or allowed to run longer
+  than about 45 minutes.
+  * If a run is expected to exceed that, redesign it before running it; never let it run for hours.
+  * For expensive replay or simulation testing, use a seeded random or stratified representative sample of
+    matches/events plus targeted edge cases, not the whole historical dataset.
+  * Testing establishes that the system works correctly; it is not an exhaustive execution of history.
+  * Harnesses should carry their own time budget and stop, reporting partial results, when they hit it.
+* **Test-database guard (Kanav, 2026-10-04; permanent).** Database-backed tests run only against an isolated
+  `stratai_test` / `stratai_test_<suffix>` copy.
+  * `tests/db_guard.py`, installed by `tests/conftest.py`, refuses every other database, the serving `stratai`
+    above all, before collection and at every connection.
+  * Never add a bypass or weaken it. See `.agent/phase5/INCIDENT_2026-10-04_0010_on_serving.md`.
 
 ---
 
@@ -143,10 +156,12 @@ RUNNING_NOTES.md carries the same list; keep the two in sync.
 * Win probabilities = **unbiased** — AI strategy cannot get inflated odds.
 * Core engine = **no LLM API calls** — ML / stats / optimization only.
 * LLM allowed only for: natural-language report generation and explanations.
-* Real-time updates must sync **during an event** as matches are played. This is a
-  **real-time-phase target, not a current guarantee**: `--watch` keeps the canonical
-  tables current, but `team_metrics` recomputes only on the single-event path, so the
-  metrics the API serves do not move during a watch. See docs/metrics_pipeline.md §9.9.
+* Real-time updates must sync **during an event** as matches are played. Since Phase 5 (P5-M6,
+  2026-10-03), `--watch` keeps the canonical tables current *and* recomputes `team_metrics` after
+  every poll that loads new rows (`data.orchestrator.after_watch_sync`), so the served metrics move
+  during a watch. The quality-issue growth that blocked this (docs/metrics_pipeline.md §9.10) is
+  deduplicated, and §9.9 is closed. Verified by replay
+  (`.agent/phase5/results/p5_m6_replay_rerun1.json`).
 
 The first constraint is enforced in four places, deliberately: the
 `DefenseFeedingProfile` invariants in data/metrics/schemas.py, the
@@ -160,6 +175,12 @@ observations gets no rating, never one synthesized from its scoring.
 ---
 
 ## Current Development Phase
+
+**Phase 5 (2026-10-04): implementation checkpoint accepted by Kanav. Phase 5 is NOT complete.**
+- **Status:** P5-D3 adopted (live EPA in production); DM2 met; DM1 not met.
+- **Why it is incomplete:** DM1 awaits genuine human M8/M9 inputs, entered through the `frontend/` web app.
+- **Records:** `.agent/phase5/PHASE_STATUS.md`, `PHASE_ACCEPTANCE.md`, `docs/phase5.md`.
+- **Phase 6 is next.** It starts only on Kanav's explicit build instruction. The Phase 4 text below is historical.
 
 Current Phase:
 Phase 4 – ML Models (underway). Phase 3 is not fully closed — Milestone 14

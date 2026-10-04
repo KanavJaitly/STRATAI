@@ -57,8 +57,15 @@ venv/bin/python -m data.orchestrator 2024casj   # sync one event end to end
 Run the tests:
 
 ```bash
+export DATABASE_URL=$(venv/bin/python -m scripts.phase5_isolated_db --name stratai_test --print-url-env)
 venv/bin/python -m pytest -q
 ```
+
+**The suite runs only against an isolated test database** (since 2026-10-04; `tests/db_guard.py`, installed by
+`tests/conftest.py`). A session whose `DATABASE_URL` resolves to anything other than `stratai_test` or
+`stratai_test_<suffix>` stops before collection, and the serving database `stratai` is always refused. There is
+no bypass. Clone the isolated copy once with `python -m scripts.phase5_isolated_db --name stratai_test`, then
+export its URL as above. Background: `.agent/phase5/INCIDENT_2026-10-04_0010_on_serving.md`.
 
 All tests pass, with 3 integration tests self-skipping when no database is reachable. (If
 you have an older command with `--deselect tests/test_config.py::...`, drop it — that test

@@ -1,0 +1,52 @@
+{
+ "decision": "P5-D3",
+ "supersedes": {
+  "record": ".agent/production/p5_live_adoption_check.json",
+  "reason": "check defect: it expected no live_refresh_not_yet_validated flag on any historical match, but LIVE_EPA_REFRESH_DESIGN.md \u00a79 adds it to every output using a fallback_stratai value; the first run's 60 flagged matches were exactly the 2026iscmp fallback ones, with 0 feature and 0 value mismatches"
+ },
+ "checked_at": "2026-10-04T19:11:48.850131+00:00",
+ "minutes": 18.8,
+ "checks": {
+  "1_source": {
+   "epa_source": "p5_live_statbotics",
+   "evaluated_configuration": false,
+   "adoption": {
+    "decision": "P5-D3",
+    "decided": "2026-10-04",
+    "status": "adopted_for_production",
+    "historical_acceptance": "passed: P5-M2 L1-L4 (.agent/phase5/M02_ACCEPTANCE.md)",
+    "prospective_validation": "pending: L5/L6 during the 2027 season",
+    "statement": "The live EPA source passed its frozen historical P5-M2 acceptance criteria and has been adopted for production; prospective 2027 validation remains pending."
+   },
+   "root_snapshot": "c7bcc3cc2d9edca4f3d01f559f2a20788bcfa055de68b6db2f4126f90603ef69",
+   "historical_frozen_d18_until": "2026-10-01T22:19:51.438243+00:00",
+   "ok": true
+  },
+  "2_history_unchanged": {
+   "matches": 360,
+   "feature_mismatches": 0,
+   "value_mismatches": 0,
+   "flag_mismatches": 0,
+   "examples": [],
+   "ok": true
+  },
+  "3_as_of_now": {
+   "event": "2026dal",
+   "status": 200,
+   "epa_value_sources": [
+    "statbotics",
+    "stratai_fallback"
+   ],
+   "validation_flags": [
+    "live_refresh_not_yet_validated"
+   ],
+   "ok": true
+  }
+ },
+ "passed": true,
+ "provenance": {
+  "commit": "6b75843790ece509e9203e67ea729f092dba9cd0",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-04T19:11:48.850119+00:00"
+ }
+}

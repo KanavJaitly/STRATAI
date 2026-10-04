@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 EpaSource = Literal["statbotics", "stratai"]
 # "d18_statbotics_primary" is the evaluated production configuration (D18): Statbotics primary,
 # STRATAI fallback for 2026iscmp only (ml.ratings.statbotics_primary, ml.ratings.d18_source).
-EPA_SOURCES: tuple[str, ...] = ("d18_statbotics_primary", "stratai", "statbotics")
+EPA_SOURCES: tuple[str, ...] = ("d18_statbotics_primary", "stratai", "statbotics", "p5_live_statbotics")
 
 UNAVAILABLE_NOT_RUN = "season_not_run"
 UNAVAILABLE_NO_TEAM_EVENT = "team_did_not_play_event"
@@ -358,6 +358,23 @@ def default_point_in_time_provider(database: Database, settings: Any | None = No
             _DEFAULT_CACHE[key] = load_d18_provider(database, Path(settings.statbotics_snapshot_dir),
                                                     Path(settings.stratai_epa_chain))[0]
         return _DEFAULT_CACHE[key]
+    if source == "p5_live_statbotics":
+        from ml.ratings.live_snapshots import SnapshotLog
+        from ml.ratings.live_source import load_live_provider
+
+        missing = [name for name, value in (("LIVE_EPA_LOG_DIR", settings.live_epa_log_dir),
+                                            ("STATBOTICS_SNAPSHOT_DIR", settings.statbotics_snapshot_dir),
+                                            ("STRATAI_EPA_CHAIN", settings.stratai_epa_chain),
+                                            ("LIVE_EPA_A1A2_POLICY", settings.live_epa_a1a2_policy)) if not value]
+        if missing:
+            raise EpaSourceNotConfigured(
+                f"epa_source is 'p5_live_statbotics' (P5-M2, not the evaluated configuration) but {missing} are "
+                "unset; LIVE_EPA_A1A2_POLICY is open decision Q1 (.agent/phase5/M02_DECISION_REQUIRED.md)")
+        root = Path(settings.statbotics_snapshot_dir)  # type: ignore[arg-type]
+        return load_live_provider(database, root_dir=root, chain=Path(settings.stratai_epa_chain),  # type: ignore[arg-type]
+                                  a1a2_policy=settings.live_epa_a1a2_policy,  # type: ignore[arg-type]
+                                  concluded_seasons=set(settings.live_epa_concluded_seasons),
+                                  log=SnapshotLog(Path(settings.live_epa_log_dir), root))  # type: ignore[arg-type]
     if source == "statbotics":
         key = ("statbotics", id(database))
         if key not in _DEFAULT_CACHE:

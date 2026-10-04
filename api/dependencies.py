@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from starlette.requests import Request
 
-from api.ml_loading import ServedEpaSource, ServedModel, load_epa_source
+from api.ml_loading import ServedEpaSource, ServedModel, live_log_stamp, load_epa_source
 from data.config import Settings
 from database.connection import Database
 
@@ -66,4 +66,14 @@ def get_epa_source(request: Request) -> ServedEpaSource | None:
         with state.epa_source_lock:
             if state.epa_source is None:
                 state.epa_source = load_epa_source(state.settings, state.database)
-    return state.epa_source
+    served = state.epa_source
+    if served is not None and served.log_stamp is not None and live_log_stamp(state.settings) != served.log_stamp:
+        # P5-M2 §4: a refresh appended to the snapshot log, so canonical facts and snapshots are re-read and the
+        # provider is swapped atomically. In-flight requests keep the instance they already hold.
+        with state.epa_source_lock:
+            if state.epa_source is served:
+                reloaded = load_epa_source(state.settings, state.database)
+                if reloaded is not None:
+                    state.epa_source = reloaded
+        served = state.epa_source
+    return served

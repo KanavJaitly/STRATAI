@@ -702,12 +702,20 @@ def test_every_rostered_team_is_loaded_regardless_of_its_findings(database: Data
 
 @requires_db
 def test_recomputing_records_the_findings_again(database: Database) -> None:
-    """One row per detection, matching DataQualityRecorder's existing policy --
-    it is what keeps "how long has this been thin" answerable."""
-    compute_event_team_metrics(_S_EVENT, database=database)
-    compute_event_team_metrics(_S_EVENT, database=database)
+    """Changed for P5-M6 (docs/metrics_pipeline.md §9.10, the Phase 3 audit's blocking item for wiring the
+    recompute into the watch loop).
+    - **Rows:** an unchanged finding is written once, not once per recompute.
+    - **Every run's stage_counts** still lists its full detected set (`quality_issue_keys`).
+    So "how long has this been thin" stays answerable: from the first row plus the runs that keep detecting it."""
+    first = compute_event_team_metrics(_S_EVENT, database=database)
+    second = compute_event_team_metrics(_S_EVENT, database=database)
 
-    assert len(_issue_rows(database, _S_TEAM_THIN)) == 4  # two findings, twice
+    assert len(_issue_rows(database, _S_TEAM_THIN)) == 2  # two findings, written once
+    with database.cursor() as cursor:
+        cursor.execute("SELECT stage_counts FROM pipeline_runs WHERE id = ANY(%s) ORDER BY id",
+                       ([first.run_id, second.run_id],))
+        keys = [row[0]["quality_issue_keys"] for row in cursor.fetchall()]
+    assert keys[0] == keys[1] and len(keys[0]) == 4  # both runs detected all four
 
 
 @requires_db
@@ -722,3 +730,30 @@ def test_deleting_the_run_reclaims_its_metric_issues(database: Database) -> None
         cursor.execute("DELETE FROM pipeline_runs WHERE id = %s", (result.run_id,))
 
     assert _issue_rows(database, _S_TEAM_THIN) == []
+
+
+def _metric_issue_rows(database: Database) -> int:
+    with database.cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM data_quality_issues WHERE object_type = %s AND object_id LIKE %s",
+                       (OBJECT_TYPE_TEAM_METRICS, f"%{_S_EVENT}"))
+        return cursor.fetchone()[0]
+
+
+@requires_db
+def test_repeated_recomputes_do_not_rewrite_unchanged_issues(database: Database) -> None:
+    """docs/metrics_pipeline.md §9.10, closed for P5-M6: a recompute during a watch writes an issue only when it
+    first appears, changes or reappears -- not one row per warning per poll -- while every run still reports its
+    full detected set in stage_counts."""
+    first = compute_event_team_metrics(_S_EVENT, database=database)
+    assert _metric_issue_rows(database) == 4
+    second = compute_event_team_metrics(_S_EVENT, database=database)
+    assert len(second.issues) == 4 and _metric_issue_rows(database) == 4  # nothing new: nothing written
+    with database.cursor() as cursor:
+        cursor.execute("SELECT stage_counts FROM pipeline_runs WHERE id = %s", (second.run_id,))
+        assert len(cursor.fetchone()[0]["quality_issue_keys"]) == 4
+        # the disagreeing team's observations go away: its issue is absent from the next run ...
+        cursor.execute("DELETE FROM scouting_observations WHERE event_key = %s AND team_number = %s",
+                       (_S_EVENT, _S_TEAM_DISAGREED))
+    third = compute_event_team_metrics(_S_EVENT, database=database)
+    assert len(third.issues) < 4 and _metric_issue_rows(database) == 4
+    assert first.run_id < second.run_id < third.run_id
