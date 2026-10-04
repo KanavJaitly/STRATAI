@@ -11,6 +11,10 @@
   intended deployment migration. The incident is recorded separately (`.agent/phase5/INCIDENT_2026-10-04_0010_on_serving.md`); it is not a Phase 5
   acceptance failure. A permanent test-database guard now refuses any test session not pointed at an isolated
   `stratai_test` copy.
+- **Correction found by that guard:** one Phase 2 test (`tests/test_migrations.py`'s rollback test) reached the
+  serving database in full-suite runs, by reloading `.env`. Its batch always rolled back, so there was no persistent
+  change, but the 2026-10-03 statement "every test ... ran on isolated copies" below did not hold for it. It is fixed,
+  and the details are in `.agent/phase5/INCIDENT_2026-10-04_0010_on_serving.md`.
 
 The review below is kept as written on 2026-10-03; where it says DM2 waits on P5-D3, the update above supersedes it.
 

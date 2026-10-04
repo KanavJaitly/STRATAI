@@ -70,3 +70,32 @@ it ahead of any test module's import-time connection, any `run_migrations` fixtu
 - **No bypass.** There is no environment variable or flag to turn the guard off.
 - **Regression tests:** `tests/test_db_guard.py`. They include a subprocess session pointed at `stratai` (on an
   unroutable host), which is refused before any test runs.
+
+## Related finding, exposed by the guard on its first full run (2026-10-04)
+
+`tests/test_migrations.py::test_run_migrations_rolls_back_the_whole_batch_on_a_later_failure` (Phase 2) reached the
+serving database in every full-suite run where `.env`'s database was reachable, even with the isolated URL exported.
+
+**How it reached the serving database.**
+- The test deleted `DATABASE_URL` from the environment, so `Settings()` reloaded `.env`, which names `stratai`.
+- It then ran `run_migrations` against a temporary migrations directory holding:
+  - `CREATE TABLE test_rollback_should_not_persist`;
+  - a statement that fails.
+- In its cleanup it ran `DROP TABLE IF EXISTS test_rollback_should_not_persist` and
+  `DELETE FROM migrations_applied WHERE migration_file = '9999_test_rollback_valid.sql'`.
+
+**Effect: no persistent change.**
+- The batch is one transaction and rolls back by design; that is what the test asserts.
+- The cleanup statements had nothing to act on.
+- The serving `migrations_applied` table has 10 rows (0001-0010), none of them the test marker.
+- `test_rollback_should_not_persist` does not exist.
+
+It is unrelated to 0010: the test only ever applied its temporary directory, and today's first full-suite run started
+at 19:31:23Z, after 0010 was applied at 19:30:56Z.
+
+**Fix.** The test now uses the isolated URL that the guard accepted at session start
+(`tests/db_guard.session_database_url`). Its intent is unchanged: a real rollback against real PostgreSQL. It runs on
+`stratai_test`.
+
+**Correction to `PHASE_ACCEPTANCE.md` (2026-10-03).** "Every test and replay ran on isolated copies" did not hold for
+this one test's connection. No verification result depends on it.
