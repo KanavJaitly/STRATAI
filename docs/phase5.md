@@ -22,7 +22,7 @@ replays use seeded, stratified samples plus targeted edge cases.
 | Milestone | Status | Notes |
 |---|---|---|
 | P5-M1 Alliance and seed data | **accepted** | data findings recorded |
-| P5-M2 Live EPA refresh | **accepted, not adopted** | L1–L4 passed; production adoption is a human decision (P5-D3) |
+| P5-M2 Live EPA refresh | **accepted; adopted for production** (P5-D3, 2026-10-04) | L1–L4 (historical) passed; L5–L6 (prospective, 2027) pending |
 | P5-M3 Strength views | **accepted** | descriptive; EPA provenance on every value |
 | P5-M4 Event analysis | **accepted** | the ordering is validated; captain improvement is not claimed |
 | P5-M5 Qualification forecasts | **accepted** | the 80% range **failed** its coverage band, so it is served `not_validated` |
@@ -34,8 +34,10 @@ replays use seeded, stratified samples plus targeted edge cases.
 
 **Done-means (immutable):**
 - **DM1 — NOT MET.** The dry run needs human-authored inputs that may not be simulated (§P5-M9).
-- **DM2 — NOT MET.** The P5-M6 replay passed criteria (a)–(e), but P5-M6's declared dependency, *P5-M2
-  adopted*, is a pending human decision (P5-D3).
+- **DM2 — MET.** The P5-M6 replay passed criteria (a)–(e), and its declared dependency, *P5-M2 adopted*, is met
+  by Kanav's recorded P5-D3 adoption (2026-10-04, `.agent/phase5/results/p5_m2_adoption.json`). The live 2027
+  confirmation stays a recommended, non-gating follow-up (P5-D8).
+- **Phase 5 is not complete** while DM1 is unmet.
 
 ## Labels served
 
@@ -79,12 +81,19 @@ replays use seeded, stratified samples plus targeted edge cases.
 | Seed–rank violations | 9, in 6 of 591 seeded events. 8 are TBA placeholder teams (`999x`); 1 is a real anomaly (2026milac) |
 | Seed-order rejections | 0 |
 
-## P5-M2 — Live EPA refresh (accepted; not adopted)
+## P5-M2 — Live EPA refresh (accepted; adopted for production)
 
 - **Status:**
   - implemented to `.agent/phase5/LIVE_EPA_REFRESH_DESIGN.md`, with A1/A2 semantics from P5-D11 (Q1,
     `.agent/phase5/M02_DECISION_REQUIRED.md`): D18's availability skip is kept;
-  - production still serves the frozen D18 source until a recorded adoption decision (P5-D3).
+  - **adopted for production by P5-D3 (Kanav, 2026-10-04).** This is an operational adoption, not prospective
+    validation: "The live EPA source passed its frozen historical P5-M2 acceptance criteria and has been adopted for production; prospective 2027 validation remains pending." Record: `.agent/phase5/results/p5_m2_adoption.json`;
+  - production serves `EPA_SOURCE=p5_live_statbotics`, rooted at the D18 snapshot, with `d18_skip`, unchanged
+    D18 models, and the frozen states, timing, selection, fallback and thresholds. Every response's `epa` carries
+    the `adoption` block. An as-of at or before the log root's creation is served by the root in frozen-D18
+    mode (L1's configuration), so historical answers are unchanged. The API swaps to a new snapshot atomically
+    when the log changes;
+  - production check: `.agent/production/p5_live_adoption_check_rerun1.json` (PASSED, 18.8 min, commit 6b75843): source and adoption status correct; 360 seeded historical 2026 qualification matches (300 seeded + every 2026iscmp match) with 0 feature, 0 value and 0 §9-flag mismatches; 2026dal ranked as of now with `fallback_stratai` teams flagged `live_refresh_not_yet_validated`. The first check (`p5_live_adoption_check.json`) failed on a check defect and is kept.
 - **Snapshot log:** `ml/ratings/live_snapshots.py`; append-only manifests rooted at the D18 snapshot;
   `snapshot_id` is the manifest's sha256.
 - **Provider:** `ml/ratings/live_epa.py`. Every served value names its state, `snapshot_id`, `retrieved_at` and raw
@@ -302,6 +311,19 @@ levels (0–3), and notes for constraints.
 
 **Error codes:** `invalid_input`, `not_found`, `invalid_state`, `conflict`, `prerequisite_missing`,
 `spec_incomplete`, `storage_integrity`, `writes_disabled`, `write_not_authorized`, `unsupported_media_type`.
+
+**The web app** (`frontend/`, React and TypeScript, Vite; see `frontend/README.md`) has four pages:
+- **Overview:** each DM1 input's state, and DM1 as the records report it;
+- **Game manual & spec:** upload with a browser-side checksum comparison, the structured-spec editor (every save a
+  version), submit, and review (approve, or return with a note);
+- **Team profiles:** create, edit, duplicate, archive, history, and the M9 recommendation with its reasoning;
+- **Human review:** the codebook, the coding grid over the reference rows, κ, the consensus coding (offered only
+  after κ), the action map, the rubric, the mentor review, and named sign-off.
+
+It is served same-origin, with `/api` proxied to the API. The API's CORS allow-list is not widened.
+`tests/test_frontend_api_contract.py` pins the app's routes to the API's, in both directions.
+
+**Not yet applied to the serving database:** migration 0010. Applying it is a production step that needs approval.
 
 ## P5-M10 — Documentation, contracts and sign-off
 

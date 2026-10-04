@@ -1,5 +1,5 @@
 milestone: P5-M6 In-season learning loop (DM2)
-status: ACCEPTED on its criteria (a)-(e), via the labelled rerun. DM2 not yet MET: its declared dependency "P5-M2 adopted" (P5-D3) is a pending human decision
+status: ACCEPTED on its criteria (a)-(e), via the labelled rerun. DM2 MET since the P5-D3 adoption of P5-M2 (2026-10-04)
 population: P5-D14, a seeded stratified selection (seed 20261006, fingerprint 24e23b1a...4f48), p5_m6_selection.json (commit 6d8134b)
   - E1 2026iscmp; E2 2026nccab; E3 2026cur; E4 2026vache; E5 2025mawne
   - 44 checked steps
@@ -23,4 +23,4 @@ rerun_results: 44 / 44 steps, 32.6 min (budget 45), 0 problems
   endpoints: 8 / 8 returned 200, including E4's switch from raw_epa to ranking_xgb_v2 (2 / 2)
   diagnostic: d18_skip vs literal_state differed on 4 of 352 lookups (production uses d18_skip, P5-D11)
 note: the §9.10 dedup was committed after the rerun. None of P5-M6's criteria read data_quality_issues
-done_means: "DM2 by the replay with (a)-(e) passing" -> replay criteria MET; DM2 overall waits on P5-M2 adoption (P5-D3)
+done_means: "DM2 by the replay with (a)-(e) passing" -> replay criteria MET; P5-M2 adopted (P5-D3, 2026-10-04) -> DM2 MET

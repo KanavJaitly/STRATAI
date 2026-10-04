@@ -1,5 +1,5 @@
 milestone: P5-M2 Live EPA refresh
-status: ACCEPTED (done-means met). NOT ADOPTED: production still serves D18; adoption is the P5-D3 human decision
+status: ACCEPTED (done-means met). ADOPTED for production by P5-D3 (Kanav, 2026-10-04): historical P5-M2 acceptance passed; prospective 2027 validation (L5/L6) pending
 spec: .agent/phase5/LIVE_EPA_REFRESH_DESIGN.md (frozen at P5-M0); A1/A2 semantics per P5-D11 (Q1, 2026-10-03)
 files: ml/ratings/live_snapshots.py, live_epa.py, live_source.py, prediction_log.py; data/config.py and ml/ratings/provider.py (EPA_SOURCE=p5_live_statbotics); api/routes/common.py (epa_source_pending); scripts/live_epa_refresh.py, phase5_m2_live_epa_checks.py (L3/L4), phase5_m2_l1_l2.py (L1/L2); tests/test_live_epa.py, test_live_epa_root.py
 results:
@@ -16,5 +16,7 @@ results:
   L5, L6: scheduled prospectively for 2027 (docs/phase5.md)
 validation_status: live-refreshed outputs carry live_refresh_not_yet_validated until L6
 decisions: P5-D11 (Q1): A1/A2 keeps D18's skip; production rule d18_skip
-human_decision_outstanding: P5-D3 adoption (switch production from D18 to p5_live_statbotics). P5-M6's dependency and DM2 need it
+adoption: P5-D3 decided 2026-10-04 (row in P5_M0_DECISIONS.md; record results/p5_m2_adoption.json, commit 6b75843).
+  The live EPA source passed its frozen historical P5-M2 acceptance criteria and has been adopted for production; prospective 2027 validation remains pending.
+  production check: .agent/production/p5_live_adoption_check_rerun1.json PASSED (18.8 min); the first check (p5_live_adoption_check.json) FAILED on a check defect and is kept
 done_means: "implemented to the frozen design; L1-L4 recorded as passed; L5-L6 scheduled" -> MET
