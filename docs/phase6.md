@@ -111,6 +111,14 @@ P6-M10's log-loss is lower: 0.5004 vs 0.5388.
 **Served:** baseline odds are `not_validated` (`p6_m10_gate_failed`). There is no redesign without Kanav's dated
 decision (D9).
 
+**Forensic diagnosis** (diagnostic only; nothing changed): `.agent/phase6/P6_M10_DIAGNOSIS.md`.
+- **The likely cause is misspecification already present in training:** the in-sample calibration slope is
+  1.274. The per-component least-squares design discards cross-component information; a diagnostic joint fit
+  gives an in-sample slope of 1.066.
+- **Compounding it:** EPA-source-season heterogeneity, and a smaller 2026 shift.
+- **On the same rows,** M6/M7 also fails G2 (1 bin).
+- **Redesign directions are listed but not implemented.** Each needs Kanav's dated decision.
+
 ### P6-M11: the recommender
 
 `ml/strategy/engine.py`:
@@ -234,6 +242,8 @@ decision (D9).
 
 1. **P6-M1 rulesets** for 2024, 2025 and 2026: entered from the manuals and approved by a different named reviewer.
    **All of P6-DM1 waits on this.**
+   The fields, sources, reviewer checks, open decisions and migration 0011 steps are in
+   `.agent/phase6/P6_M1_HUMAN_INPUT_GUIDE.md`.
 2. **Migration 0011 on the serving database:** Kanav's explicit approval of the production DDL.
 3. **The P6-M8 pre-run record** (`.agent/phase6/decisions/P6_M8_PRE_RUN.md` and `p6_m8_pre_run.json`: seed, strata,
    per-stratum count, reason categories, the named mentor), committed before the run. Then the **named mentor's
