@@ -33,6 +33,9 @@ SNAPSHOT = Path("C:/Dev/StratAI-artifacts/statbotics/statbotics_snapshot_2026100
 CHAIN = Path("C:/Dev/StratAI-artifacts/ratings/epa-chain/chain_e77d9444c57a7b50.json")
 FAR_FUTURE = datetime(2026, 12, 31, tzinfo=timezone.utc)
 SENTINEL_PREFIX = "t_p6m12_sentinel"
+RECORD = "p6_m12_strategy_validation_rerun1.json"
+SUPERSEDES = {"record": "p6_m12_strategy_validation.json", "failure_record": ".agent/phase6/P6_M12_RUN1_FAILURE.md",
+              "reason": "harness defect: coach sentinels were timestamped +1h (legitimately past for later sampled matches at the same event); now far-future like the other sentinel rows; per-match sentinel outcomes recorded; same plan, sample and seed"}
 
 WEEK_SQL = """
 SELECT DISTINCT ON (r.source_object_id) r.source_object_id, (r.payload_json->>'week')::int
@@ -163,7 +166,7 @@ def main() -> int:
         for match_key, (row, _) in fingerprints.items():
             submit_coach_observation(database, {"event_key": row.event_key, "team_number": row.red_teams[0].team_number,
                                                 "kind": "robot_unavailable", "observer": "p6m12-sentinel",
-                                                "observed_at": (row.scheduled_time + timedelta(hours=1)).isoformat()})
+                                                "observed_at": FAR_FUTURE.isoformat()})
         for match_key, (row, before) in fingerprints.items():
             _, context, _ = replay(row)
             sentinel_results[match_key] = _fingerprint(engine, context) == before
@@ -182,12 +185,13 @@ def main() -> int:
         "a_reproduction": {"matches": len(results), "reproduced": reproduced, "features_equal": features_equal,
                            "passed": len(results) == len(sample) and reproduced == len(results)},
         "b_sentinels": {"matches": len(sentinel_results), "unchanged": sum(sentinel_results.values()),
+                        "per_match": sentinel_results,
                         "passed": len(sentinel_results) == min(SENTINELS, len(sample)) and all(sentinel_results.values())},
         "c_honest_odds": {**honest, "passed": honest_ok and len(results) == len(sample)},
         "d_mentor_review": {"performed": False, "note": "optional, not gating; no genuine named review was supplied"},
     }
     record = {
-        "milestone": "P6-M12", "plan": PLAN, "plan_blob": git_blob(PLAN), "frame_content_hash": frame_hash,
+        "milestone": "P6-M12", "supersedes": SUPERSEDES, "plan": PLAN, "plan_blob": git_blob(PLAN), "frame_content_hash": frame_hash,
         "clone": CLONE, "epa_source": {"provider": "d18", "integrity": integrity},
         "model": {"version_tag": model.version_tag, "model_sha256": model.artifact_sha256,
                   "served_baseline_status": list(model.baseline_status)},
@@ -202,7 +206,7 @@ def main() -> int:
                                "playoff context (P6-M3 not run)"],
         "over_budget": over_budget, "minutes": round((time.time() - started) / 60, 1),
     }
-    path = write_once("p6_m12_strategy_validation.json", record)
+    path = write_once(RECORD, record)
     print({k: v["passed"] for k, v in criteria.items() if "passed" in v}, "passed:", record["passed"],
           "minutes:", record["minutes"], "->", path)
     return 0 if record["passed"] else 1
