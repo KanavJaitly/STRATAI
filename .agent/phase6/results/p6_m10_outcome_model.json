@@ -1,0 +1,254 @@
+{
+ "decision": "P6-Q9",
+ "fit_isolation": {
+  "earliest_evaluated_row": "2026-03-06T10:40:00-05:00",
+  "fit_isolated": true,
+  "fit_seasons": [
+   2024,
+   2025
+  ],
+  "latest_fit_row": "2025-04-18T19:00:00-04:00"
+ },
+ "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+ "gate": {
+  "ece": 0.026622087727987034,
+  "g1_pass": true,
+  "g2": {
+   "bins": [
+    {
+     "count": 1020,
+     "expected_wins": 48.33045875066536,
+     "holm_threshold": 0.0125,
+     "interval_95": [
+      0.03529411764705882,
+      0.060784313725490195
+     ],
+     "lower": 0.0,
+     "mean_predicted": 0.047382802696730744,
+     "observed_rate": 0.054901960784313725,
+     "observed_wins": 56,
+     "p_value": 0.26335533096167185,
+     "rejected": false,
+     "tested": true,
+     "upper": 0.1
+    },
+    {
+     "count": 1061,
+     "expected_wins": 160.90610845803945,
+     "holm_threshold": 0.01,
+     "interval_95": [
+      0.13006597549481622,
+      0.17342130065975495
+     ],
+     "lower": 0.1,
+     "mean_predicted": 0.15165514463528695,
+     "observed_rate": 0.13383600377002827,
+     "observed_wins": 142,
+     "p_value": 0.11197426075941179,
+     "rejected": false,
+     "tested": true,
+     "upper": 0.2
+    },
+    {
+     "count": 1219,
+     "expected_wins": 306.418425564471,
+     "holm_threshold": 0.005,
+     "interval_95": [
+      0.22723543888433143,
+      0.2756357670221493
+     ],
+     "lower": 0.2,
+     "mean_predicted": 0.25136868381006644,
+     "observed_rate": 0.1944216570959803,
+     "observed_wins": 237,
+     "p_value": 2.9585513530849997e-06,
+     "rejected": true,
+     "tested": true,
+     "upper": 0.3
+    },
+    {
+     "count": 1393,
+     "expected_wins": 488.31762652014277,
+     "holm_threshold": 0.005555555555555556,
+     "interval_95": [
+      0.32591529073941133,
+      0.375448671931084
+     ],
+     "lower": 0.3,
+     "mean_predicted": 0.35055105995703,
+     "observed_rate": 0.30007178750897345,
+     "observed_wins": 418,
+     "p_value": 7.193843321987898e-05,
+     "rejected": true,
+     "tested": true,
+     "upper": 0.4
+    },
+    {
+     "count": 1445,
+     "expected_wins": 650.7705684556232,
+     "holm_threshold": 0.016666666666666666,
+     "interval_95": [
+      0.4249134948096886,
+      0.47612456747404847
+     ],
+     "lower": 0.4,
+     "mean_predicted": 0.4503602549865905,
+     "observed_rate": 0.4359861591695502,
+     "observed_wins": 630,
+     "p_value": 0.27765978841301436,
+     "rejected": false,
+     "tested": true,
+     "upper": 0.5
+    },
+    {
+     "count": 1402,
+     "expected_wins": 770.1447350341487,
+     "holm_threshold": 0.05,
+     "interval_95": [
+      0.5235378031383737,
+      0.5756062767475035
+     ],
+     "lower": 0.5,
+     "mean_predicted": 0.5493186412511759,
+     "observed_rate": 0.5520684736091298,
+     "observed_wins": 774,
+     "p_value": 0.850758260646959,
+     "rejected": false,
+     "tested": true,
+     "upper": 0.6
+    },
+    {
+     "count": 1354,
+     "expected_wins": 879.0527690063021,
+     "holm_threshold": 0.00625,
+     "interval_95": [
+      0.6240768094534712,
+      0.6742983751846381
+     ],
+     "lower": 0.6,
+     "mean_predicted": 0.6492265649972689,
+     "observed_rate": 0.6942392909896603,
+     "observed_wins": 940,
+     "p_value": 0.000496623527971911,
+     "rejected": true,
+     "tested": true,
+     "upper": 0.7
+    },
+    {
+     "count": 1207,
+     "expected_wins": 905.1666676634826,
+     "holm_threshold": 0.0071428571428571435,
+     "interval_95": [
+      0.7257663628831814,
+      0.7738193869096934
+     ],
+     "lower": 0.7,
+     "mean_predicted": 0.7499309591246749,
+     "observed_rate": 0.7845898922949461,
+     "observed_wins": 947,
+     "p_value": 0.005123028799538576,
+     "rejected": true,
+     "tested": true,
+     "upper": 0.8
+    },
+    {
+     "count": 1052,
+     "expected_wins": 890.9731593985275,
+     "holm_threshold": 0.008333333333333333,
+     "interval_95": [
+      0.8250950570342205,
+      0.8678707224334601
+     ],
+     "lower": 0.8,
+     "mean_predicted": 0.8469326610252162,
+     "observed_rate": 0.8726235741444867,
+     "observed_wins": 918,
+     "p_value": 0.02028185314808553,
+     "rejected": false,
+     "tested": true,
+     "upper": 0.9
+    },
+    {
+     "count": 1062,
+     "expected_wins": 1010.4438624522113,
+     "holm_threshold": 0.025,
+     "interval_95": [
+      0.9378531073446328,
+      0.9642184557438794
+     ],
+     "lower": 0.9,
+     "mean_predicted": 0.9514537311226096,
+     "observed_rate": 0.9472693032015066,
+     "observed_wins": 1006,
+     "p_value": 0.5161260312213981,
+     "rejected": false,
+     "tested": true,
+     "upper": 1.0
+    }
+   ],
+   "eligible_bins": 10,
+   "rejected_bins": 4,
+   "status": "fail"
+  },
+  "g3_max_symmetry_error": 2.220446049250313e-16,
+  "g3_order_independent": true,
+  "g3_pass": true,
+  "g4_fit_isolated": true,
+  "passed": false
+ },
+ "gate_passed": false,
+ "m6m7_same_rows": {
+  "brier": 0.1716214874122274,
+  "ece": 0.014722004301933878,
+  "log_loss": 0.5388237347237061,
+  "version_tag": "d18"
+ },
+ "metrics": {
+  "brier": 0.16579986746501885,
+  "ece": 0.026622087727987034,
+  "log_loss": 0.5004329119727345
+ },
+ "milestone": "P6-M10",
+ "minutes": 0.6,
+ "model": {
+  "beta": {
+   "auto": 0.7406426846752129,
+   "endgame": 0.8846389021366173,
+   "teleop": 0.9496312440087671
+  },
+  "model_sha256": "aded2c829a1f2edbd1ddb50e099b0e88df8a5cc4033efe0fa7270dae235fbf5f",
+  "model_type": "strategy_outcome_component",
+  "sigma": 0.8987916813111286,
+  "version_tag": "p6m10-v1"
+ },
+ "paired_log_loss_minus_m6m7": {
+  "ci_excludes_zero": true,
+  "ci_high": -0.017029053469584644,
+  "ci_low": -0.0612548428951532,
+  "events": 207,
+  "gated": false,
+  "mean": -0.03839082275100889,
+  "resamples": 2000,
+  "seed": 20261005,
+  "units": 12215
+ },
+ "population": {
+  "comp_level": "qualification",
+  "epa_complete": true,
+  "evaluated": 12215,
+  "excluded": {
+   "model_input_absent": 30,
+   "tie": 33
+  },
+  "season": 2026
+ },
+ "provenance": {
+  "commit": "4c38f7a0faf8e737e70797b511427931ec32b484",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-05T22:44:20.320614+00:00"
+ },
+ "served_baseline_status": "not_validated (p6_m10_gate_failed)",
+ "spec": ".agent/phase6/P6_M10_MODEL_SPEC.md",
+ "spec_blob": "5f838613531e623b7a8a38e2cc0634ca1aafe3b4",
+ "spec_sha256": "7b93609205c17956c26ac85c2cee8fac6b7d11b1ee01e3b404360a091e1fee23"
+}
