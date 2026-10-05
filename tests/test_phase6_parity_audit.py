@@ -33,3 +33,15 @@ def test_each_planted_defect_is_caught_by_its_target_check(setup, name):
     factory, target = PLANTED_DEFECTS[name]
     failed = [r.name for r in run_audit(factory(model), contexts) if not r.passed]
     assert target in failed
+
+
+def test_planted_missing_data_defect_is_caught_when_only_the_score_scale_is_absent(setup):
+    """P6-M13 run-1 harness defect: the planted engine imputed only a missing EPA scale."""
+    model, contexts = setup
+    only_score_scale = MatchContext((team(1, score_scale=None), team(2, score_scale=None), team(3, score_scale=None)),
+                                    tuple(team(n, score_scale=None) for n in (4, 5, 6)))
+    narrowed = AuditContexts(contexts.ordinary, only_score_scale, contexts.low_odds)
+    factory, target = PLANTED_DEFECTS["different_missing_data_handling"]
+    failed = [r.name for r in run_audit(factory(model), narrowed) if not r.passed]
+    assert target in failed
+    assert [r.name for r in run_audit(StrategyEngine(model), narrowed) if not r.passed] == []

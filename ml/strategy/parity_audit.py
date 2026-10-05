@@ -303,15 +303,18 @@ class _ImputingEngine(StrategyEngine):
 
     def recommend(self, context, side, opponent_strategy=None, max_alternatives=5):
         def fill(team):
-            if team.epa_scale is None or team.epa_auto is None:
-                return team.model_copy(update={"epa_auto": 0.0, "epa_teleop": 0.0, "epa_endgame": 0.0,
-                                               "epa_total": 0.0, "epa_auto_present": True,
-                                               "epa_teleop_present": True, "epa_endgame_present": True,
-                                               "epa_total_present": True, "epa_scale": team.epa_scale or 1.0,
-                                               "epa_scale_present": True,
-                                               "score_scale": team.score_scale or 1.0,
-                                               "score_scale_present": True})
-            return team
+            """Impute every absent model input: EPA components, the EPA scale and the score scale."""
+            update = {}
+            for name in ("epa_auto", "epa_teleop", "epa_endgame", "epa_total"):
+                if getattr(team, name) is None:
+                    update.update({name: 0.0, f"{name}_present": True})
+            if team.epa_scale is None:
+                update.update({"epa_scale": 1.0, "epa_scale_present": True})
+            if team.score_scale is None:
+                update.update({"score_scale": 1.0, "score_scale_present": True})
+            if update and team.epa_source_event_key is None:
+                update.update({"epa_source_event_key": "imputed", "epa_withheld_reason": None})
+            return team.model_copy(update=update) if update else team
         filled = MatchContext(tuple(fill(t) for t in context.red_teams), tuple(fill(t) for t in context.blue_teams),
                               context.comp_level, context.observations)
         if any(t.score_scale != filled.red_teams[0].score_scale for t in (*filled.red_teams, *filled.blue_teams)):

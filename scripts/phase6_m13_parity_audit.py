@@ -21,6 +21,9 @@ PLAN = ".agent/phase6/decisions/P6_M13_AUDIT_PLAN.md"
 SEED = 20261007
 ORDINARY, FULL_SEARCH, PLANTED_CONTEXTS = 10, 2, 3
 BUDGET_SECONDS = 45 * 60
+RECORD = "p6_m13_parity_audit_rerun1.json"
+SUPERSEDES = {"record": "p6_m13_parity_audit.json", "failure_record": ".agent/phase6/P6_M13_RUN1_FAILURE.md",
+              "reason": "two objectively demonstrated defects fixed (order-free alliance sum; planted missing-data fixture coverage); same plan, contexts, seed and checks"}
 
 
 def main() -> int:
@@ -71,7 +74,7 @@ def main() -> int:
     real_passed = all(r.passed for r in real)
     all_caught = all(p.get("target_caught") for p in planted.values())
     record = {
-        "milestone": "P6-M13", "done_means": "P6-DM2", "plan": PLAN, "plan_blob": git_blob(PLAN),
+        "milestone": "P6-M13", "done_means": "P6-DM2", "supersedes": SUPERSEDES, "plan": PLAN, "plan_blob": git_blob(PLAN),
         "frame_content_hash": frame_hash,
         "model": {"version_tag": model.version_tag, "model_sha256": model.artifact_sha256,
                   "served_baseline_status": list(model.baseline_status)},
@@ -84,7 +87,7 @@ def main() -> int:
         "over_budget": over_budget, "minutes": round((time.time() - started) / 60, 1),
         "p6_dm2_met": real_passed and all_caught and not over_budget,
     }
-    path = write_once("p6_m13_parity_audit.json", record)
+    path = write_once(RECORD, record)
     print({"real_engine_passed": real_passed, "every_planted_defect_caught": all_caught,
            "p6_dm2_met": record["p6_dm2_met"], "minutes": record["minutes"]}, "->", path)
     return 0 if record["p6_dm2_met"] else 1
