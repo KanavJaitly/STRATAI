@@ -96,7 +96,8 @@ def main() -> int:
         weeks = dict(cursor.fetchall())
     strata: dict[int, list] = defaultdict(list)
     for row in population:
-        strata[weeks.get(row.event_key, -1)].append(row)
+        week = weeks.get(row.event_key)
+        strata[-1 if week is None else week].append(row)
     sample = []
     for week in sorted(strata):
         members = strata[week]

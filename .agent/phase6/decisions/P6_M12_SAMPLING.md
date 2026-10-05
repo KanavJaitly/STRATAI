@@ -7,6 +7,9 @@
 - **Population:** exactly the P6-M10 evaluated population. That is held-out 2026 EPA-complete qualification matches in the D18 frame `frame_ab1adbf38b43c2f3`, excluding ties and matches with an absent model input (12,215 matches; `p6_m10_outcome_model.json`).
   - Playoff matches are excluded. P6-M3 has not run, so the playoff context is unavailable (P6-A12).
 - **Strata:** the TBA event week, from the event's current raw payload (the P5-M7 source).
+  - **Amendment, 2026-10-05, before any result:** events whose TBA payload has no week (null) form one stratum,
+    numbered −1 and drawn with seed 20261008 − 1. Strata are ordered with −1 first. The first launch crashed while
+    building the sample, because a null week could not be sorted. It wrote no record and computed no result.
 - **Sample:**
   - **15 matches per week stratum present in the population** (all of a stratum if it has fewer).
   - Within each stratum, matches are sorted by `match_key` and drawn with `random.Random(20261008 + week).sample`.
