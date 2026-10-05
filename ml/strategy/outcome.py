@@ -52,6 +52,12 @@ REASON_OBSERVATION = "coach_observation_effect_unmeasured"
 REASON_PLAYOFF = "playoff_model_unavailable"
 QUALIFICATION = "qualification"
 
+# P6-M10's single evaluation (.agent/phase6/results/p6_m10_outcome_model.json; .agent/phase6/P6_M10_FAILURE.md):
+# the M7/D16 gate FAILED (G2), so baseline odds are served not_validated (D9). Pinned by a contract test to the record.
+BASELINE_GATE_PASSED = False
+SERVED_BASELINE_STATUS: tuple[str, str | None] = ("validated", None) if BASELINE_GATE_PASSED else (
+    "not_validated", "p6_m10_gate_failed")
+
 
 @dataclass(frozen=True)
 class MatchContext:
@@ -276,3 +282,14 @@ def fit_sample(red_teams: Sequence[TeamFeatures], blue_teams: Sequence[TeamFeatu
     mu_blue = alliance_means(blue_teams, baseline_blue, ())
     delta = {c: mu_red[c] - mu_blue[c] for c in SCORING_COMPONENTS}
     return FitSample(delta, normalized_difference(red, blue, scale))
+
+
+def load_registered_strategy_model(registry_dir: Path, *, version_tag: str = "p6m10-v1",
+                                   expected_sha256: str | None = None) -> ComponentOutcomeModel:
+    """The registered P6-M10 artifact, carrying the status its recorded evaluation earned."""
+    from ml.registry import load_registered_model
+
+    model, _ = load_registered_model(ComponentOutcomeModel, registry_dir=registry_dir, model_type=MODEL_TYPE,
+                                     version_tag=version_tag, current_feature_list=FEATURE_LIST,
+                                     expected_sha256=expected_sha256)
+    return model.with_status(version_tag=version_tag, baseline_status=SERVED_BASELINE_STATUS)
