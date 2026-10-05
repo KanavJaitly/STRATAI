@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import math
 from datetime import datetime, timedelta, timezone
 
@@ -218,3 +219,22 @@ def test_event_bootstrap_is_deterministic_and_pooled():
     assert first["mean"] == 5.0 / 6.0 and first["events"] == 3 and first["units"] == 6
     assert first["ci_low"] <= first["mean"] <= first["ci_high"]
     assert ci_excludes_zero({"ci_low": 0.1, "ci_high": 0.2}) and not ci_excludes_zero({"ci_low": -0.1, "ci_high": 0.2})
+
+
+def test_alliance_means_are_order_free_to_the_last_bit():
+    """P6-M13 run-1 defect: plain addition made the sum depend on team order by one ULP."""
+    from ml.strategy.outcome import alliance_means
+
+    values = [(0.1, 0.3, 0.7), (0.2, 0.2, 0.1), (0.3, 0.1, 0.2)]  # plain sums of these depend on order
+    teams = [team(10 + i, a, b, c, epa_scale=1.0) for i, (a, b, c) in enumerate(values)]
+    strategy = Strategy.baseline([t.team_number for t in teams])
+    forward = alliance_means(teams, strategy, ())
+    def plain_sum(order, c):  # left-to-right addition, as the run-1 code accumulated (+=)
+        total = 0.0
+        for i in order:
+            total += values[i][c]
+        return total
+
+    assert len({plain_sum(o, 0) for o in itertools.permutations(range(3))}) > 1  # really order-sensitive
+    for order in itertools.permutations(range(3)):
+        assert alliance_means([teams[i] for i in order], strategy, ()) == forward

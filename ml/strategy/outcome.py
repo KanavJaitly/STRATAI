@@ -134,14 +134,16 @@ def _weight(strategy: Strategy, team_number: int, component: str,
 
 def alliance_means(teams: Sequence[TeamFeatures], strategy: Strategy,
                    observations: Sequence[CoachObservation]) -> dict[str, float]:
-    means = {c: 0.0 for c in SCORING_COMPONENTS}
+    """The alliance's normalized component means (spec §2). Each is an order-free sum (math.fsum is correctly
+    rounded), so neither team order nor robot order can change a probability, even in its last bit."""
+    terms: dict[str, list[float]] = {c: [] for c in SCORING_COMPONENTS}
     for team in teams:
         caps = capabilities(team)
         if caps is None:
             raise ValueError(f"team {team.team_number} has no measured capability")
         for c in SCORING_COMPONENTS:
-            means[c] += _weight(strategy, team.team_number, c, observations) * caps[c]
-    return means
+            terms[c].append(_weight(strategy, team.team_number, c, observations) * caps[c])
+    return {c: math.fsum(values) for c, values in terms.items()}
 
 
 def _check_strategy(strategy: Strategy, own: Sequence[TeamFeatures], opponents: Sequence[TeamFeatures]) -> None:
