@@ -1,17 +1,17 @@
 phase: 6
-status: P6-M0 FROZEN (Kanav, 2026-10-04; revision 2); zero implementation
-spec: docs/P6Milestones.md (revision 2, frozen)
-decisions: .agent/phase6/P6_M0_DECISIONS.md (P6-A1 … A12 APPROVED; P6-Q0 … Q13 DECIDED)
-freeze_record: .agent/phase6/P6_M0_FREEZE.md (the commit introducing it is the freeze point)
-current_milestone: none started; P6-M1 begins only on Kanav's Phase 6 build instruction
-milestones: [P6-M0 freeze (FROZEN), P6-M1 rulesets, P6-M2 PX-1, P6-M3 PX-2, P6-M4 PX-3, P6-M5 PX-4, P6-M6 profiles+draft, P6-M7 selection optimizer, P6-M8 DM1 validation, P6-M9 strategy repr., P6-M10 outcome model, P6-M11 strategy optimizer, P6-M12 strategy validation, P6-M13 parity audit (DM2), P6-M14 sign-off]
-done_means: {P6-DM1: NOT MET (not run), P6-DM2: NOT MET (not run)}
-p6_q0_baseline: EXECUTED 2026-10-04 (Kanav-approved): phase5/build @ 6e76520 merged into main by merge commit d6d68a4 (clean; no conflicts); Phase 6 implementation branch phase6/build starts from that main
-note: the frozen P6-M0 texts describe the merge as not yet performed; that was true at the freeze (9964001). P6_M0_FREEZE.md's blob for .agent/phase5/P5_M0_DECISIONS.md (7d26fc2) is the P5-M0-era log; the merged log is that text unchanged plus the dated rows P5-D11..D14 and the P5-D3 adoption (append-only, verified)
-human_inputs_required: [P6-M1 season rulesets entered from the manuals + named reviewer; P6-M8 defensible-reason review by a named mentor]
+branch: phase6/build (from main aab8fe1, the P6-Q0 baseline)
+status: IMPLEMENTATION COMPLETE TO THE LIMIT OF AVAILABLE INPUTS; Phase 6 NOT complete
+spec: docs/P6Milestones.md (P6-M0 FROZEN at 9964001; unchanged)
+done_means: {P6-DM1: NOT MET (blocked by required human input: P6-M1 rulesets), P6-DM2: MET (p6_m13_parity_audit_rerun1.json)}
+accepted: [P6-M0 frozen, P6-M4 implementation correctness, P6-M6 (a), P6-M7 optimization correctness, P6-M9, P6-M11, P6-M12 (rerun1), P6-M13 (rerun1), P6-M14]
+failed_d9: [P6-M10 gate (G2) -> baseline strategy odds not_validated; no redesign without Kanav's dated decision]
+failed_and_superseded: [P6-M12 run 1 (harness defect), P6-M13 run 1 (two demonstrated defects)] -- both kept
+blocked_by_human_input: [P6-M1 rulesets 2024-2026 (entered from the manuals; different named reviewer) -> P6-M2, M3, M5, M6 (b), M8 not run; P6-M8 pre-run record and named mentor review]
+prerequisites:
+  - migration 0011 on the serving database (production DDL: Kanav's explicit approval)
+records: .agent/phase6/results/ (p6_m10_fit, p6_m10_outcome_model, p6_m12_strategy_validation(+_rerun1), p6_m13_parity_audit(+_rerun1), p6_m6a_profiles)
+human_inputs_never_fabricated: true
 known_risks:
-  - PX-1 must beat both M6/M7-on-playoffs and seed-only with paired CIs excluding 0 (P6-Q3); a failure is a D9 stop
-  - PX-2 may fail (M7 failed on qualification; playoff ECE 0.119): playoff probabilities would stay not_validated
-  - strategy effects are not identifiable from historical data (no strategy records; 0 scouting rows): not_validated
-  - defense/feeding are insufficient_data for every historical event (P6-Q12)
-results: none (no Phase 6 run has happened)
+  - PX-1 must beat M6/M7-on-playoffs and seed-only (P6-Q3); PX-2 must pass the M7 gate that M7 itself failed on qualifications
+  - strategy and defense/feeding effects are unmeasurable from history (0 scouting rows; no strategy records)
+no_phase7_or_8_work: true (no HTTP routes, no UI; pinned by tests/test_phase6_contract.py)

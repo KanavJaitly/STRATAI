@@ -570,16 +570,15 @@ have been rated by two scouts, so defense_agreement measures match-to-match
 variance confounded with scout calibration, not inter-scout agreement. See
 docs/metrics_pipeline.md section 9.1.
 
-Phase 6 – Strategy & Alliance Selection Engines: **P6-M0 FROZEN (Kanav, 2026-10-04); zero implementation.**
-- **Spec:** docs/P6Milestones.md (revision 2; P6-M0 … P6-M14; done-means P6-DM1 / P6-DM2).
-- **Decisions:** .agent/phase6/P6_M0_DECISIONS.md (P6-A1 … A12 approved; P6-Q0 … Q13 decided).
-- **Freeze record:** .agent/phase6/P6_M0_FREEZE.md.
-- **Defense definition:** P6-Q11 settles the defense definition question above for Phase 6 use: quality only,
-  when a validated measurement exists. Feeding stays insufficient_data.
-- **Phase 5:** accepted at the implementation checkpoint `phase5/build` @ `6e76520`. It was **merged into main**
-  (P6-Q0, Kanav-approved; merge commit d6d68a4). Phase 5 is NOT complete: DM1 awaits genuine human inputs.
-- **Phase 6 implementation** happens on branch `phase6/build`, created from that main. It starts only on Kanav's
-  build instruction.
+Phase 6 – Strategy & Alliance Selection Engines (implementation on branch `phase6/build`, 2026-10-05): **NOT
+complete.**
+- **P6-DM2 MET:** the parity audit (`.agent/phase6/results/p6_m13_parity_audit_rerun1.json`).
+- **P6-DM1 NOT MET:** it is blocked by required human input. The 2024–2026 season rulesets must be entered from
+  the manuals and approved by a different named reviewer (`scripts/phase6_rulesets.py`). Migration 0011 must
+  also be applied to serving, with Kanav's approval.
+- **P6-M10 FAILED** its gate (D9). Strategy odds are served `not_validated`.
+- **Records:** `docs/phase6.md`, `.agent/phase6/PHASE_STATUS.md`, `.agent/phase6/PHASE_ACCEPTANCE.md`.
+- **Spec:** frozen at P6-M0, in `docs/P6Milestones.md` and `.agent/phase6/P6_M0_DECISIONS.md`.
 
 ---
 
