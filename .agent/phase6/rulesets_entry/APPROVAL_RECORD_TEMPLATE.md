@@ -9,7 +9,8 @@
 | **Approved `ruleset_sha256` (full 64 hex)** | |
 | Schema version | `p6-ruleset-v3` |
 | Author (`created_by`) | |
-| Reviewer (`reviewed_by`): a different person | |
+| Reviewer (`reviewed_by`): a named, qualified FRC-domain reviewer (may be the author) | |
+| Reviewer qualification (as stated; also in the generated `P6_M1_APPROVAL_<season>_v<version>.json`) | |
 | Approved at (`reviewed_at`, UTC) | |
 | Database | serving `stratai` (migration 0011 applied on: ____) |
 

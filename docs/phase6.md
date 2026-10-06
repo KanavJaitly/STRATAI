@@ -193,7 +193,11 @@ decision (D9).
   - A season ruleset is entered by a person from the manual, citing a section for every rule. The rules cover
     alliance count by roster size, serpentine selection, captain and decline rules, and the bracket as a slot graph
     keyed by TBA (`competition_level`, `set_number`), plus a best-of-N finals.
-  - It becomes authoritative only through a **different** named reviewer's approval.
+  - It becomes authoritative only through approval by a named, qualified human FRC-domain reviewer.
+    - The reviewer independently verifies the stored ruleset against the authoritative FIRST sources and
+      completes R1–R15. They may also be the author (review control of 2026-10-07,
+      `.agent/phase6/decisions/P6_M1_REVIEW_CONTROL.md`).
+    - Approval needs the stated qualification, the full R1–R15 checklist and the full stored sha256.
   - `approved_ruleset` refuses an unapproved season. No rule exists in code.
 - **Schema v2 (`p6-ruleset-v2`, Kanav's P1 decision, 2026-10-05; decision record
   `.agent/phase6/decisions/P6_M1_P1_SCHEMA_V2.md`):**
@@ -274,7 +278,8 @@ decision (D9).
 
 ## Remaining human inputs and prerequisites
 
-1. **P6-M1 rulesets** for 2024, 2025 and 2026: entered from the manuals and approved by a different named reviewer.
+1. **P6-M1 rulesets** for 2024, 2025 and 2026: entered from the manuals and approved by a named, qualified
+   human FRC-domain reviewer.
    **All of P6-DM1 waits on this.**
    The fields, sources, reviewer checks, open decisions and migration 0011 steps are in
    `.agent/phase6/P6_M1_HUMAN_INPUT_GUIDE.md`.
@@ -288,7 +293,7 @@ decision (D9).
    template, and the gate that unblocks the runner.
 2. **Migration 0011 on the serving database:** applied 2026-10-06 with Kanav's approval (backup and checks in
    `.agent/phase6/decisions/P6_M1_ENTRY_STATUS.md`). The 2024–2026 rulesets are stored as `awaiting_review`
-   (ids 1–3); approval by a different named reviewer is outstanding.
+   (ids 1–3); approval by a named, qualified human FRC-domain reviewer is outstanding.
 3. **The P6-M8 pre-run record** (`.agent/phase6/decisions/P6_M8_PRE_RUN.md` and `p6_m8_pre_run.json`: seed, strata,
    per-stratum count, reason categories, the named mentor), committed before the run. Then the **named mentor's
    review** of every miss.

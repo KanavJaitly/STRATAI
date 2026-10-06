@@ -39,29 +39,189 @@ def database():
     cleanup()
 
 
-def test_review_lifecycle_needs_a_different_named_reviewer(database):
+QUALIFICATION = "synthetic test qualification: FRC strategy reviewer"
+CHECKLIST = {f"R{i}": True for i in range(1, 16)}
+
+
+def _approve(database, row, reviewer="Reviewer B", **overrides):
+    """Approve with every review condition satisfied, unless a test overrides one."""
+    kwargs = {"reviewer_qualification": QUALIFICATION, "checklist": dict(CHECKLIST),
+              "verified_sha256": row["ruleset_sha256"]}
+    kwargs.update(overrides)
+    return review_ruleset(database, row["id"], reviewer=reviewer, approve=True, **kwargs)
+
+
+def _submitted(database, data=None, author="Author A"):
+    row = save_ruleset_draft(database, data or ruleset(SEASON), created_by=author)
+    submit_ruleset(database, row["id"])
+    return row
+
+
+def test_review_lifecycle_with_a_qualified_reviewer(database):
     row = save_ruleset_draft(database, ruleset(SEASON), created_by="Author A")
     with pytest.raises(RulesetError) as unapproved:
         approved_ruleset(database, SEASON)
     assert unapproved.value.code == "not_approved"
+    with pytest.raises(RulesetError) as not_submitted:
+        _approve(database, row)  # a draft cannot be approved before submission
+    assert not_submitted.value.code == "invalid_state"
     submit_ruleset(database, row["id"])
     with pytest.raises(RulesetError):
-        review_ruleset(database, row["id"], reviewer="Author A", approve=True)  # the author cannot approve
-    with pytest.raises(RulesetError):
         review_ruleset(database, row["id"], reviewer="Reviewer B", approve=False)  # returning needs a note
-    review_ruleset(database, row["id"], reviewer="Reviewer B", approve=True)
+    approved = _approve(database, row)
+    assert approved["status"] == "approved" and approved["reviewed_by"] == "Reviewer B"
     assert approved_ruleset(database, SEASON).sha256() == row["ruleset_sha256"]
+
+
+def test_a_returned_ruleset_goes_back_to_draft(database):
+    row = _submitted(database)
+    returned = review_ruleset(database, row["id"], reviewer="Reviewer B", approve=False, note="fix the tie rule")
+    assert returned["status"] == "draft" and returned["review_note"] == "fix the tie rule"
+    with pytest.raises(RulesetError):
+        approved_ruleset(database, SEASON)
+
+
+def test_a_qualified_reviewer_who_is_not_the_author_may_approve(database):
+    assert _approve(database, _submitted(database), reviewer="Reviewer B")["status"] == "approved"
+
+
+def test_a_qualified_reviewer_who_is_the_author_may_approve(database):
+    """Review control of 2026-10-07: matching author and reviewer names are no longer refused."""
+    approved = _approve(database, _submitted(database, author="Same Person"), reviewer="Same Person")
+    assert approved["status"] == "approved" and approved["created_by"] == approved["reviewed_by"]
+
+
+def test_the_approval_records_qualification_checklist_and_hash(database):
+    import json
+
+    row = _submitted(database)
+    record = json.loads(_approve(database, row)["review_note"])
+    assert record == {"reviewer_qualification": QUALIFICATION, "checklist": CHECKLIST,
+                      "verified_sha256": row["ruleset_sha256"], "note": None}
+
+
+@pytest.mark.parametrize("reviewer", ["", "   "])
+def test_approval_needs_a_reviewer_identity(database, reviewer):
+    row = _submitted(database)
+    with pytest.raises(RulesetError) as refused:
+        _approve(database, row, reviewer=reviewer)
+    assert refused.value.code == "invalid_input"
+    assert list_rulesets(database, SEASON)[0]["status"] == "awaiting_review"
+
+
+@pytest.mark.parametrize("qualification", ["", "   ", None])
+def test_approval_needs_the_reviewer_qualification(database, qualification):
+    row = _submitted(database)
+    with pytest.raises(RulesetError) as refused:
+        _approve(database, row, reviewer_qualification=qualification)
+    assert refused.value.code == "invalid_input"
+    assert list_rulesets(database, SEASON)[0]["status"] == "awaiting_review"
+
+
+@pytest.mark.parametrize("change", ["missing_R7", "R15_false", "none", "extra_item", "string_true"])
+def test_approval_needs_every_checklist_item_completed(database, change):
+    row = _submitted(database)
+    checklist = dict(CHECKLIST)
+    if change == "missing_R7":
+        del checklist["R7"]
+    elif change == "R15_false":
+        checklist["R15"] = False
+    elif change == "none":
+        checklist = None
+    elif change == "extra_item":
+        checklist["R16"] = True
+    else:
+        checklist["R3"] = "true"
+    with pytest.raises(RulesetError) as refused:
+        _approve(database, row, checklist=checklist)
+    assert refused.value.code == "review_incomplete"
+    assert list_rulesets(database, SEASON)[0]["status"] == "awaiting_review"
+
+
+@pytest.mark.parametrize("sha", ["", "0" * 64, "short", "ABC"])
+def test_approval_needs_the_stored_full_sha256(database, sha):
+    row = _submitted(database)
+    with pytest.raises(RulesetError) as refused:
+        _approve(database, row, verified_sha256=sha)
+    assert refused.value.code == "hash_mismatch"
+    assert list_rulesets(database, SEASON)[0]["status"] == "awaiting_review"
+
+
+def test_approval_refuses_stored_content_that_no_longer_matches_its_hash(database):
+    row = _submitted(database)
+    with database.cursor() as c:  # simulate tampering after submission (isolated database only)
+        c.execute("UPDATE season_rulesets SET ruleset_json = jsonb_set(ruleset_json, '{tie_rule}', '\"tampered\"') "
+                  "WHERE id = %s", (row["id"],))
+    with pytest.raises(RulesetError) as refused:
+        _approve(database, row)
+    assert refused.value.code == "hash_mismatch"
+
+
+def test_approval_refuses_stored_content_with_an_unresolved_marker(database):
+    import hashlib
+    import json
+
+    data = ruleset(SEASON)
+    data["selection"]["captain_rule"] = "HUMAN_DECISION(2026_CAPTAIN_RULE): unresolved"
+    sha = hashlib.sha256(json.dumps(data, sort_keys=True).encode("utf-8")).hexdigest()
+    with database.cursor() as c:  # bypasses save_ruleset_draft's validation on purpose (isolated database only)
+        c.execute("INSERT INTO season_rulesets (season, version, ruleset_json, ruleset_sha256, status, created_by, "
+                  "submitted_at) VALUES (%s, 1, %s, %s, 'awaiting_review', 'Author A', now()) RETURNING id",
+                  (SEASON, json.dumps(data), sha))
+        row = {"id": c.fetchone()[0], "ruleset_sha256": sha}
+    with pytest.raises(RulesetError) as refused:
+        _approve(database, row)
+    assert refused.value.code == "invalid_stored_ruleset"
+    with pytest.raises(RulesetError):
+        save_ruleset_draft(database, data, created_by="Author A")  # and it can never be drafted
+
+
+def test_the_runner_gate_accepts_only_an_approved_hash_matching_ruleset(database, monkeypatch):
+    from scripts import phase6_playoff_track
+    from scripts.phase6_playoff_track import Blocked, require_rulesets
+
+    monkeypatch.setattr(phase6_playoff_track, "SEASONS", (SEASON,))
+    row = _submitted(database)
+    with pytest.raises(Blocked):
+        require_rulesets(database)  # awaiting review: refused
+    _approve(database, row)
+    assert require_rulesets(database)[SEASON].sha256() == row["ruleset_sha256"]  # approved and matching: accepted
+    with database.cursor() as c:
+        c.execute("UPDATE season_rulesets SET ruleset_json = jsonb_set(ruleset_json, '{tie_rule}', '\"tampered\"') "
+                  "WHERE id = %s", (row["id"],))
+    with pytest.raises(RulesetError) as integrity:
+        require_rulesets(database)  # approved but no longer matching its hash: refused
+    assert integrity.value.code == "storage_integrity"
+
+
+def test_cli_approval_writes_the_approval_record(database, tmp_path):
+    import json
+
+    from scripts.phase6_rulesets import main
+
+    row = _submitted(database, author="Same Person")
+    checklist = tmp_path / "review.json"
+    checklist.write_text(json.dumps(CHECKLIST), encoding="utf-8")
+    base = ["review", "--id", str(row["id"]), "--reviewer", "Same Person", "--approve", "--record-dir", str(tmp_path)]
+    assert main(base + ["--checklist", str(checklist), "--sha256", row["ruleset_sha256"]]) == 1  # no qualification
+    assert main(base + ["--qualification", QUALIFICATION, "--sha256", row["ruleset_sha256"]]) == 1  # no checklist
+    assert main(base + ["--qualification", QUALIFICATION, "--checklist", str(checklist), "--sha256",
+                        row["ruleset_sha256"]]) == 0
+    record = json.loads((tmp_path / f"P6_M1_APPROVAL_{SEASON}_v1.json").read_text(encoding="utf-8"))
+    assert record["reviewer_name"] == "Same Person" and record["reviewer_qualification"] == QUALIFICATION
+    assert record["checklist_result"] == CHECKLIST and record["approved_ruleset_sha256"] == row["ruleset_sha256"]
+    assert record["status"] == "approved" and record["review_date"]
 
 
 def test_a_new_approval_supersedes_and_versions_are_kept(database):
     first = save_ruleset_draft(database, ruleset(SEASON), created_by="Author A")
     submit_ruleset(database, first["id"])
-    review_ruleset(database, first["id"], reviewer="Reviewer B", approve=True)
+    _approve(database, first)
     changed = copy.deepcopy(ruleset(SEASON))
     changed["tie_rule"] = "synthetic fixture: a different tie rule"
     second = save_ruleset_draft(database, changed, created_by="Author A")
     submit_ruleset(database, second["id"])
-    review_ruleset(database, second["id"], reviewer="Reviewer B", approve=True)
+    _approve(database, second)
     statuses = [(r["version"], r["status"]) for r in list_rulesets(database, SEASON)]
     assert statuses == [(1, "superseded"), (2, "approved")]
     assert approved_ruleset(database, SEASON).tie_rule.endswith("different tie rule")
