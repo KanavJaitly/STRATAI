@@ -244,6 +244,9 @@ decision (D9).
    **All of P6-DM1 waits on this.**
    The fields, sources, reviewer checks, open decisions and migration 0011 steps are in
    `.agent/phase6/P6_M1_HUMAN_INPUT_GUIDE.md`.
+   A Claude-prepared, cited research draft per season (Kanav's workflow, 2026-10-05; not verified, not entered,
+   not approved) is in `.agent/phase6/rulesets_research/`. It reports schema mismatches (D5 Championship
+   divisions; small-event byes) that need a decision before entry.
 2. **Migration 0011 on the serving database:** Kanav's explicit approval of the production DDL.
 3. **The P6-M8 pre-run record** (`.agent/phase6/decisions/P6_M8_PRE_RUN.md` and `p6_m8_pre_run.json`: seed, strata,
    per-stratum count, reason categories, the named mentor), committed before the run. Then the **named mentor's

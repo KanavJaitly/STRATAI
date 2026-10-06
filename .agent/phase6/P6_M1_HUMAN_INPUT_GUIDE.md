@@ -1,7 +1,12 @@
 # P6-M1 — human entry and review of the 2024, 2025 and 2026 rulesets
 
 Revised 2026-10-05.
-- **What this is:** preparation only. No ruleset value was drafted, inferred, guessed or generated. Every value must be transcribed by a person from the official documents, then verified by a different named reviewer.
+- **What this is:** preparation only. No ruleset has been entered, submitted or approved. A person enters every value from the official documents, and a different named reviewer verifies it.
+- **Workflow change (Kanav, 2026-10-05):** Claude researched the official FIRST Game Manuals and Team Updates and prepared a cited research draft for each season: `.agent/phase6/rulesets_research/` (start with its `README.md`).
+  - The draft is **input to a person's verification, not a substitute**. Nothing in it is human-verified, and it was not stored anywhere.
+  - Each draft fails schema validation while any value is `UNRESOLVED`.
+  - It answers D1–D7 with evidence. **It reports schema mismatches that need your decision before entry:** D5 (M1) and small events (M3).
+  - §2 below is superseded by the package's document list (official URLs and sha256s).
 - **What it is based on:** the actual implementation, `data/rulesets.py` (schema and workflow), `scripts/phase6_rulesets.py` (CLI) and `database/migrations/0011_phase6_season_rulesets.sql`. Data facts quoted below come from the isolated copy of the canonical TBA data (read-only). They are observations, not rules.
 
 ## 1. Readiness verdict
@@ -10,11 +15,11 @@ Revised 2026-10-05.
 - The schema validation, the draft → submit → review → approve lifecycle, refusal of self-approval and sha256 verification on read are implemented. They are tested on the isolated copy (`tests/test_phase6_rulesets.py`).
 - The CLI `template` command works.
 
-**Six usability problems are documented below and NOT fixed** (you asked for documentation, not changes). **U1 matters before entry:** treat every pre-filled value in the template as blank.
+**Six usability problems are documented below.** U1 is fixed (commit `c8b7b7a`, 2026-10-05): every template value is now a blank placeholder that fails validation, with regression tests. U2–U6 are documented, not fixed.
 
 | ID | Problem | Effect | Proposed remedy (needs your approval; not a methodology change) |
 |---|---|---|---|
-| **U1** | `template` **pre-fills rule values**: `captain_may_accept_higher_alliance: true`, `declined_team_may_be_picked_later: false`, `declined_team_may_become_captain: true`, `backup_robots: true`. `order` and `captain_rule` are also pre-filled, but each is the schema's only allowed value. | A value left untouched passes validation, so an un-transcribed (software-supplied) rule could enter a ruleset | Make the template emit `null` for every rule value, so validation fails until a person enters each one |
+| **U1 (FIXED, `c8b7b7a`)** | Before the fix, `template` **pre-filled rule values**: `captain_may_accept_higher_alliance: true`, `declined_team_may_be_picked_later: false`, `declined_team_may_become_captain: true`, `backup_robots: true`. `order` and `captain_rule` are also pre-filled, but each is the schema's only allowed value. | A value left untouched passes validation, so an un-transcribed (software-supplied) rule could enter a ruleset | Make the template emit `null` for every rule value, so validation fails until a person enters each one |
 | U2 | No CLI command shows a stored ruleset; `list` shows only id, season, version, status, author, reviewer and sha prefix | The reviewer must see exactly what was stored, not only the author's file | Add a read-only `show --id` command that prints the stored JSON and its sha256. Until then, the reviewer reads `season_rulesets.ruleset_json` directly, read-only |
 | U3 | Self-approval is refused by comparing names as stripped strings, case-sensitively. It is not an identity check (the Phase 5 convention: names are recorded, not authenticated) | "Kanav" and "kanav" would count as different people | Procedural: use each person's full name, written identically every time. A real identity check would be a separate decision |
 | U4 | `alliance_counts` ranges are not checked for overlap, gaps, or `max_teams ≥ min_teams`. `alliances_for` takes the **first** matching rule | An entry error could silently pick the wrong rule. A gap yields `not_covered`, and the event is excluded and counted | The reviewer checks it manually (reviewer checklist R4) |
@@ -56,10 +61,10 @@ The section numbers are **not** given here. Read them from the manual you provid
 | `selection.order` | draft order | required | the alliance-selection section | manual / Team Update | **yes (D5)** if the manual's order is not serpentine | must be `serpentine` (nothing else is representable) |
 | `selection.picks_per_alliance` | picks after the captain | required | the alliance-selection section | manual / Team Update | **yes (D5)**: one value per season | integer ≥ 1 |
 | `selection.captain_rule` | how captains are determined | required | the alliance-selection section | manual | **yes (D5)** if it differs | must be `highest_ranked_available` |
-| `selection.captain_may_accept_higher_alliance` | may a would-be captain join a higher alliance? | required (**U1: pre-filled**) | the alliance-selection section | manual / Team Update | no (transcribe) | boolean. **`false` is accepted by the schema but refused by the draft model** (P6-M6/M8 `not_supported`) |
-| `selection.declined_team_may_be_picked_later` | after declining, can a team be picked later? | required (**U1**) | the decline rule | manual / Team Update | no | boolean |
-| `selection.declined_team_may_become_captain` | after declining, can a team still become captain? | required (**U1**) | the decline rule | manual / Team Update | no | boolean |
-| `selection.backup_robots` | does the format use backup robots? | required (**U1**) | the backup-robot section | manual / Team Update | **yes (D5)** | boolean. Recorded, not modelled |
+| `selection.captain_may_accept_higher_alliance` | may a would-be captain join a higher alliance? | required | the alliance-selection section | manual / Team Update | no (transcribe) | boolean. **`false` is accepted by the schema but refused by the draft model** (P6-M6/M8 `not_supported`) |
+| `selection.declined_team_may_be_picked_later` | after declining, can a team be picked later? | required | the decline rule | manual / Team Update | no | boolean |
+| `selection.declined_team_may_become_captain` | after declining, can a team still become captain? | required | the decline rule | manual / Team Update | no | boolean |
+| `selection.backup_robots` | does the format use backup robots? | required | the backup-robot section | manual / Team Update | **yes (D5)** | boolean. Recorded, not modelled |
 | `selection.citation` | the section(s) for all selection fields | required | — | — | no | non-empty, **one citation for all selection fields** |
 | `brackets[]` | one bracket per alliance count used | required (≥ 1) | the playoff tournament section and its bracket diagram | manual / Team Update | D4 | one format per alliance count; each count in `alliance_counts` must have one |
 | `brackets[].alliances` | the alliance count this bracket serves | required | same | same | no | integer ≥ 2 |
@@ -94,7 +99,7 @@ The section numbers are **not** given here. Read them from the manual you provid
 
 - **R1 Identity.** Use your full name exactly as recorded (U3). You are not the author.
 - **R2 Documents.** Use the same manual version and Team Updates the author used. Confirm that `manual.title` and `manual.version` match them, and that **Team Update precedence** is correctly reflected (a later Team Update overrides the manual).
-- **R3 Every value.** Check each field in §3 against the cited section. Every boolean in `selection` must be actually transcribed, not left as the template's pre-filled value (U1).
+- **R3 Every value.** Check each field in §3 against the cited section. Every boolean in `selection` must be actually transcribed. A research-draft value counts only once verified against its source.
 - **R4 Alliance counts.** The ranges match the manual, do not overlap, have no unintended gaps, and have `max_teams ≥ min_teams` (U4). Every count has a bracket.
 - **R5 Selection behaviour.** Order, captain rule, picks per alliance, the decline rules and the backup rule match the manual and Team Updates. Your D5 decision is applied consistently.
 - **R6 The bracket.** Every slot's sources match the bracket diagram (seeds; winner and loser routing); the finals' sources and `wins_needed` match; rounds follow the D3 convention, identically across the three seasons.
@@ -109,7 +114,7 @@ The section numbers are **not** given here. Read them from the manual you provid
 1. **Decide D1, D2, D3 and D5** (and D4 and D6 if they apply) and write the decisions down, dated, before entering values. D3 must be one convention for all three seasons.
 2. **Get migration 0011 onto serving** (§7), with your explicit approval. The CLI writes to `DATABASE_URL`, and the authoritative rulesets belong in serving.
 3. **For each season (2024, 2025, 2026):**
-   1. `python -m scripts.phase6_rulesets template > ruleset_<season>.json`, then **replace every value**, including the pre-filled booleans (U1).
+   1. `python -m scripts.phase6_rulesets template > ruleset_<season>.json`, then **replace every value**. Every placeholder is blank and fails validation (U1, fixed).
    2. Transcribe each field from the manual and Team Updates, with the citations (§3). Establish the TBA mapping from real match keys (D2).
    3. `python -m scripts.phase6_rulesets draft --file ruleset_<season>.json --by "<Author Full Name>"`. Schema errors are printed with their field paths; fix them and draft again (each draft is a new version).
    4. `python -m scripts.phase6_rulesets submit --id <id>`.
