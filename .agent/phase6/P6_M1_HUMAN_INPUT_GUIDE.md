@@ -1,116 +1,143 @@
-# P6-M1 — what people must provide to unblock the playoff track (and migration 0011)
+# P6-M1 — human entry and review of the 2024, 2025 and 2026 rulesets
 
-2026-10-05. **No ruleset was drafted, inferred or generated here.** This guide describes the required inputs only. Every rule value must come from the official game manual, entered by a person.
+Revised 2026-10-05.
+- **What this is:** preparation only. No ruleset value was drafted, inferred, guessed or generated. Every value must be transcribed by a person from the official documents, then verified by a different named reviewer.
+- **What it is based on:** the actual implementation, `data/rulesets.py` (schema and workflow), `scripts/phase6_rulesets.py` (CLI) and `database/migrations/0011_phase6_season_rulesets.sql`. Data facts quoted below come from the isolated copy of the canonical TBA data (read-only). They are observations, not rules.
 
-## Official documents needed (none is in the repository)
+## 1. Readiness verdict
 
-There is no game manual in the repository, in the artifact store, or in the `game_manuals` table (0 rows on serving). Provide, for each season, **the official FIRST Robotics Competition Game Manual** in the version in force for that season's official events:
+**The workflow is functional.**
+- The schema validation, the draft → submit → review → approve lifecycle, refusal of self-approval and sha256 verification on read are implemented. They are tested on the isolated copy (`tests/test_phase6_rulesets.py`).
+- The CLI `template` command works.
 
-| Season | Game (name as recorded in `data/reference/frc_robot_design_curated.csv`) |
-|---|---|
-| 2024 | CRESCENDO |
-| 2025 | REEFSCAPE |
-| 2026 | REBUILT |
+**Six usability problems are documented below and NOT fixed** (you asked for documentation, not changes). **U1 matters before entry:** treat every pre-filled value in the template as blank.
 
-Bring any **Team Updates** that amended the tournament, alliance-selection or playoff sections, so the cited version is the right one.
-
-Optionally, upload each manual through the Phase 5 web app (Game manual page). That keeps the PDF write-once with its sha256 as provenance, and requires a write token and migration 0010, which serving already has.
-
-## What to enter, per season (schema: `data/rulesets.py` `SeasonRuleset`)
-
-Run `python -m scripts.phase6_rulesets template` for the empty JSON skeleton, then fill one file per season.
-
-| Field | What it is | Source | Citation |
+| ID | Problem | Effect | Proposed remedy (needs your approval; not a methodology change) |
 |---|---|---|---|
-| `season`, `game_name` | season year; the game's name | the manual's cover | — |
-| `manual.title`, `manual.version` | exact title and version or revision of the manual used | the manual | the version string |
-| `alliance_counts[]` | for each roster-size range (`min_teams`, `max_teams`, `null` = no upper bound): the number of playoff alliances | the tournament or alliance-selection section | `citation`: the section number(s) |
-| `selection.order` | the draft order. The engine represents `serpentine` only | the alliance-selection section | `selection.citation` |
-| `selection.picks_per_alliance` | picks per alliance after the captain | same | same |
-| `selection.captain_rule` | `highest_ranked_available` is the only representable value | same | same |
-| `selection.captain_may_accept_higher_alliance` | may a would-be captain join a higher alliance? `false` is refused by the draft model (not represented) | same | same |
-| `selection.declined_team_may_be_picked_later` | after declining, can a team be picked by a later alliance? | same | same |
-| `selection.declined_team_may_become_captain` | after declining, can a team still become a captain? | same | same |
-| `selection.backup_robots` | does the format use backup robots? (Backups are not modelled; the field records the rule) | same | same |
-| `brackets[]` | **one bracket per alliance count used in `alliance_counts`** | the playoff tournament section, with its bracket diagram | per slot and finals |
-| `brackets[].slots[]` | for **every** playoff match before the finals: a `slot` name, TBA's `competition_level` and `set_number` for that match, its `round`, and where each side comes from (`{"kind": "seed", "seed": n}`, or `{"kind": "winner"\|"loser", "slot": name}`) | the manual's bracket, **plus TBA's match keys** for the level and set number (see ambiguity 2) | `citation` per slot |
-| `brackets[].finals` | the finals level and `set_number`, `round`, `wins_needed` (best-of-N → wins needed), and where both sides come from | the manual | `citation` |
-| `tie_rule` | how a tied playoff match is resolved (tiebreakers or replay), with its section | the manual | inside the text |
+| **U1** | `template` **pre-fills rule values**: `captain_may_accept_higher_alliance: true`, `declined_team_may_be_picked_later: false`, `declined_team_may_become_captain: true`, `backup_robots: true`. `order` and `captain_rule` are also pre-filled, but each is the schema's only allowed value. | A value left untouched passes validation, so an un-transcribed (software-supplied) rule could enter a ruleset | Make the template emit `null` for every rule value, so validation fails until a person enters each one |
+| U2 | No CLI command shows a stored ruleset; `list` shows only id, season, version, status, author, reviewer and sha prefix | The reviewer must see exactly what was stored, not only the author's file | Add a read-only `show --id` command that prints the stored JSON and its sha256. Until then, the reviewer reads `season_rulesets.ruleset_json` directly, read-only |
+| U3 | Self-approval is refused by comparing names as stripped strings, case-sensitively. It is not an identity check (the Phase 5 convention: names are recorded, not authenticated) | "Kanav" and "kanav" would count as different people | Procedural: use each person's full name, written identically every time. A real identity check would be a separate decision |
+| U4 | `alliance_counts` ranges are not checked for overlap, gaps, or `max_teams ≥ min_teams`. `alliances_for` takes the **first** matching rule | An entry error could silently pick the wrong rule. A gap yields `not_covered`, and the event is excluded and counted | The reviewer checks it manually (reviewer checklist R4) |
+| U5 | `round` is only required to be ≥ 1. There is no check of ordering or consistency, and the finals round is not required to exceed the slot rounds | PX-1 uses rounds as categorical interactions **pooled across 2024–2025**, so inconsistent numbering across seasons would silently change the model's inputs | Your decision D3 below, plus reviewer check R6 |
+| U6 | No structured field records Team Updates or effective dates. The only places are `manual.version` and each free-text `citation` | Team Update precedence can be recorded only in text | Decision D1 below. Record Team Updates inside `manual.version` and each affected `citation` |
 
-The schema enforces, before the draft can even be saved:
-- every seed enters the bracket exactly once;
-- every slot depends only on earlier slots;
-- no slot's winner or loser is routed twice;
-- every alliance count has a bracket format.
+## 2. Official documents to provide (none is in the repository)
 
-## Where and how (the CLI; Phase 6 has no HTTP form, per P6-A1)
+There is no game manual in the repository, the artifact store, or `game_manuals` (0 rows on serving).
 
-**Prerequisite:** migration 0011 on the serving database (below).
+| Season | Game | Provide |
+|---|---|---|
+| 2024 | CRESCENDO | the official FRC Game Manual, in the version in force at the season's official events, **and every Team Update** that amended alliance selection, playoffs, the bracket, tiebreakers or backup robots |
+| 2025 | REEFSCAPE | the same |
+| 2026 | REBUILT | the same |
 
-```
-python -m scripts.phase6_rulesets draft  --file ruleset_2024.json --by "Author Name"
-python -m scripts.phase6_rulesets submit --id <id>
-python -m scripts.phase6_rulesets review --id <id> --reviewer "Different Person" --approve [--note "checked against §…"]
-python -m scripts.phase6_rulesets review --id <id> --reviewer "Different Person" --return --note "what to fix"
-python -m scripts.phase6_rulesets list   --season 2024
-```
+Also have TBA available for at least one real event per season, to verify the level and set-number mapping (D2).
 
-The CLI writes to the database `DATABASE_URL` names. For authoritative rulesets, that is the serving database.
+**Optional:** upload each manual through the Phase 5 web app's Game manual page. That keeps the PDF write-once with its sha256 as provenance, and serving already has migration 0010.
 
-## The independent reviewer
+## 3. Field checklist (identical for each season)
 
-- **A different named person** from the author. The workflow refuses self-approval.
-- **The reviewer checks every value and citation against the cited manual version,** in particular:
-  - the alliance counts;
-  - every selection rule;
-  - every bracket slot's sources;
-  - the finals series length;
-  - the tie rule.
-- **The reviewer also checks the TBA mapping:** each slot's (`competition_level`, `set_number`) against TBA's actual match keys for at least one real event of that season.
-- **Approving** makes the version authoritative and supersedes any earlier approved version. **Returning** a ruleset requires a note.
+The section numbers are **not** given here. Read them from the manual you provide; "the section defining …" says what to look for.
 
-## When a ruleset counts as accepted
+**Every object forbids extra fields** (`extra=forbid`), so a misspelled field name is rejected.
 
-1. It satisfies the schema.
-2. Its status is `approved` by a named reviewer different from its author. `approved_ruleset` then serves it, with its sha256 verified.
-3. All three seasons (2024, 2025, 2026) are approved. Then `python -m scripts.phase6_playoff_track m1` (on an isolated copy cloned from serving afterwards) records:
-   - (a) bracket reproduction against every real event;
-   - (b) the captain rule.
+| Field | Meaning | Required | Cite | Manual or Team Update | Human judgment? | Software validation |
+|---|---|---|---|---|---|---|
+| `schema_version` | schema id | optional (defaults `p6-ruleset-v1`) | — | — | no | must equal `p6-ruleset-v1` |
+| `season` | the season year | required | — | manual cover | no | integer ≥ 1992 |
+| `game_name` | the game's name | required | — | manual cover | no | non-empty |
+| `manual.title` | exact manual title | required | — | manual | no | non-empty |
+| `manual.version` | the manual version used, **plus any Team Updates applied** (U6) | required | — | manual + Team Updates | **yes (D1)** | non-empty |
+| `alliance_counts[]` | rules mapping roster size → number of playoff alliances | required (≥ 1 rule) | the section defining the number of alliances | manual (or a Team Update if amended) | **yes (D4)** | ≥ 1 item; each item below |
+| `alliance_counts[].min_teams` | smallest roster this rule covers | required | same | same | D4 | integer ≥ 1 (overlap and gaps not checked: U4) |
+| `alliance_counts[].max_teams` | largest roster, or `null` for no upper bound | required (may be `null`) | same | same | D4 | `null` or integer ≥ 1 |
+| `alliance_counts[].alliances` | alliances for that range | required | same | same | no | integer ≥ 2; **a bracket must exist for every value used** |
+| `alliance_counts[].citation` | where this rule is stated | required | the section | — | no | non-empty |
+| `selection.order` | draft order | required | the alliance-selection section | manual / Team Update | **yes (D5)** if the manual's order is not serpentine | must be `serpentine` (nothing else is representable) |
+| `selection.picks_per_alliance` | picks after the captain | required | the alliance-selection section | manual / Team Update | **yes (D5)**: one value per season | integer ≥ 1 |
+| `selection.captain_rule` | how captains are determined | required | the alliance-selection section | manual | **yes (D5)** if it differs | must be `highest_ranked_available` |
+| `selection.captain_may_accept_higher_alliance` | may a would-be captain join a higher alliance? | required (**U1: pre-filled**) | the alliance-selection section | manual / Team Update | no (transcribe) | boolean. **`false` is accepted by the schema but refused by the draft model** (P6-M6/M8 `not_supported`) |
+| `selection.declined_team_may_be_picked_later` | after declining, can a team be picked later? | required (**U1**) | the decline rule | manual / Team Update | no | boolean |
+| `selection.declined_team_may_become_captain` | after declining, can a team still become captain? | required (**U1**) | the decline rule | manual / Team Update | no | boolean |
+| `selection.backup_robots` | does the format use backup robots? | required (**U1**) | the backup-robot section | manual / Team Update | **yes (D5)** | boolean. Recorded, not modelled |
+| `selection.citation` | the section(s) for all selection fields | required | — | — | no | non-empty, **one citation for all selection fields** |
+| `brackets[]` | one bracket per alliance count used | required (≥ 1) | the playoff tournament section and its bracket diagram | manual / Team Update | D4 | one format per alliance count; each count in `alliance_counts` must have one |
+| `brackets[].alliances` | the alliance count this bracket serves | required | same | same | no | integer ≥ 2 |
+| `brackets[].slots[]` | every playoff match before the finals | required (≥ 1) | same | same | **yes (D2, D3)** | slot names unique; (level, set) pairs unique; every seed 1…N enters exactly once; sources only from **earlier** slots; no winner or loser routed twice |
+| `slots[].slot` | your label for the match (e.g. the manual's match name) | required | — | — | yes (naming only) | non-empty, unique |
+| `slots[].competition_level` | **TBA's** level for this match | required | TBA match keys (not the manual) | TBA | **yes (D2)** | one of `semifinal`, `quarterfinal`, `eighthfinal` |
+| `slots[].set_number` | **TBA's** set number for this match | required | TBA match keys | TBA | **yes (D2)** | integer ≥ 1 |
+| `slots[].round` | the match's round | required | the bracket diagram | manual | **yes (D3)** | integer ≥ 1 (no other check: U5) |
+| `slots[].red` / `.blue` | where each side comes from: `{"kind": "seed", "seed": n}` or `{"kind": "winner"\|"loser", "slot": "<earlier slot>"}` | required | the bracket diagram | manual / Team Update | no (transcribe) | a seed source names a seed (≤ alliances); a winner/loser source names an earlier slot |
+| `slots[].citation` | where this slot is defined | required | the section and diagram | — | no | non-empty |
+| `brackets[].finals.competition_level` | TBA's finals level | optional (defaults `final`) | — | TBA | no | must be `final` |
+| `brackets[].finals.set_number` | TBA's finals set number | required | TBA match keys | TBA | **yes (D2)** | integer ≥ 1 |
+| `brackets[].finals.round` | the finals round | required | the bracket diagram | manual | **yes (D3)** | integer ≥ 1 |
+| `brackets[].finals.wins_needed` | wins to take the finals (best-of-N → (N + 1) / 2) | required | the finals section | manual / Team Update | no | integer ≥ 1 |
+| `brackets[].finals.red` / `.blue` | where the finalists come from | required | the bracket diagram | manual | no | must be winner/loser sources from earlier slots (no seed sources) |
+| `brackets[].finals.citation` | where the finals are defined | required | — | — | no | non-empty |
+| `tie_rule` | how a tied playoff match is resolved, **including its section** | required | the playoff tiebreaker section | manual / Team Update | no | non-empty free text. **Informational:** no computation reads it. Replays are handled by taking a slot's last decided match |
 
-   **An excluded-event share above 10% escalates (P6-Q13).** Exclusions caused by an entry error are corrected by a new reviewed version. That is fixing a data entry, not changing methodology. Record why.
+## 4. Decisions you must make (not transcription)
 
-## Points that need a human decision
+| ID | What the frozen schema permits | Where the ambiguity occurs | Your decision | Downstream |
+|---|---|---|---|---|
+| **D1 Mid-season rule changes** | One `SeasonRuleset` per season. Versions exist, but **only the currently approved version is served, and it applies to every event of the season**: there is no effective date. Approving a new version supersedes the old one for all events | A Team Update that changes selection, bracket or tie rules partway through a season | (a) transcribe the rules in force for most or all official events and accept that events under other rules fail reproduction and are excluded and counted; or (b) treat the season as unsupported if the change matters; or (c) authorize a schema change (an effective-date field). (c) is a schema and methodology change and needs a dated decision. **Record which Team Updates are reflected, in `manual.version` and the citations** | P6-M1 (a) and (b); PX-1 (rounds and slot mapping); PX-3/PX-4 (bracket); P6-M6 (b) and P6-M8 (selection rules) |
+| **D2 Match numbering** | Slots are keyed by **TBA's** (`competition_level`, `set_number`). The manual's own match numbering is not stored, except as the free-text `slot` label | Every slot and the finals: you must establish which TBA (level, set) corresponds to each match in the manual's bracket | Establish the mapping from TBA's actual match keys, not from memory or the manual alone. **Data facts:** in 2024–2026 TBA uses only `semifinal` sets 1–13 and `final` set 1 (finals up to 4 match numbers). Whether set n is the manual's match n must be verified, not assumed | P6-M1 (a) reproduction, which detects mapping errors; PX-1 rounds; PX-3/PX-4; P6-M8 |
+| **D3 Round numbering** | `round` is any integer ≥ 1 per slot and for the finals | What counts as a "round" (the manual's round labels, or another convention), and **consistency across 2024, 2025 and 2026** | One round convention used identically in all three seasons. PX-1 pools 2024–2025 and treats each round number as its own category, so if "round 3" means different things in different seasons, its interactions are not comparable | PX-1 features (frozen P6-Q2 interaction design); PX-3 (the round is passed to the probability function) |
+| **D4 Smaller alliance counts** | `alliance_counts` maps roster ranges to alliance counts, and **every count listed needs its own bracket** | Whether, and how, to transcribe the manual's rules for small events | **Data facts:** every 2024–2026 event with other than 8 alliances is an unseeded division-champion event (each season: `micmp` with 4; `necmp`, `oncmp`, `txcmp` with 2). These are excluded by P6-Q2 regardless. Every seeded event has 8 alliances. So: transcribe the roster rule as the manual states it; if it defines other alliance counts, either transcribe their brackets too, or omit those counts and accept that matching events are counted `not_covered` | P6-M1 (a): an alliance-count mismatch means the event is excluded and counted |
+| **D5 Four-team alliances and backups** | **One** `picks_per_alliance` per season, and `backup_robots` is a boolean only | **Data fact:** TBA's `picks` list holds **4 teams** for some alliances at 104 (2024), 100 (2025) and 126 (2026) **seeded** events, while TBA's `backup` field is null for every alliance. What the fourth listed team is must be established from the manual (and TBA), not inferred | (a) the meaning of a fourth listed team in each season; (b) the single `picks_per_alliance` value to transcribe; (c) whether events whose alliances do not match it are treated as unsupported for the draft-model checks (P6-M6 (b), P6-M8) and excluded and counted. **Note for the frozen PX-1 spec:** composition sums run over the alliance's listed picks, so a listed fourth team enters PX-1's inputs | P6-M1 (b) (captain and first pick only); P6-M6 (b) and P6-M8 (turn order uses `picks_per_alliance`); PX-1 inputs |
+| **D6 Unsupported rules** | Representable: serpentine order; highest-ranked-available captains; captains may join higher alliances; slot graphs over `semifinal`/`quarterfinal`/`eighthfinal` plus a best-of-N `final`; seeds entering at any slot (byes included); replays (the last decided match counts) | Rules the schema cannot express: a non-serpentine order; another captain rule; captains barred from joining higher alliances (the schema accepts it, the draft model refuses it); playoff matches outside the slot graph (e.g. extra levels or third-place matches: flagged "no slot"); finals with a non-constant format or a reset; division or Einstein round-robin formats; one season with mixed formats (D1, D5) | Record any such rule. **The frozen requirement:** affected events are excluded and counted, never approximated. More than 10% excluded in a season escalates (P6-Q13) | P6-M1 (a) and (b); everything downstream |
+| **D7 Tie rule** | Free text | How a playoff tie is resolved | Transcribe it with its citation. It is informational only, so no modelling decision is needed | none computational |
 
-1. **Mid-season rule changes:** if a Team Update changed the playoff or selection rules during a season, one ruleset per season cannot represent both. Decide how to handle it (a split season is not supported by the schema today).
-2. **Manual match numbers vs TBA set numbers:** the manual numbers playoff matches, while TBA keys them by level and set number. The person entering must establish the mapping, and the reviewer must verify it against TBA.
-3. **Events with fewer alliances,** if any roster-size rule yields another format: each such format needs its own bracket, or those events are excluded and counted.
-4. **Division and Einstein formats:** events with null seeds (division champions) are excluded by P6-Q2. No bracket is needed for them unless you decide otherwise.
-5. **Any rule the schema cannot represent** (non-serpentine order, captains barred from accepting): record it. Those events are excluded with counts, never approximated.
+## 5. Reviewer checklist (a DIFFERENT named person from the author; the CLI refuses self-approval)
 
-## Migration 0011 (NOT applied to serving)
+- **R1 Identity.** Use your full name exactly as recorded (U3). You are not the author.
+- **R2 Documents.** Use the same manual version and Team Updates the author used. Confirm that `manual.title` and `manual.version` match them, and that **Team Update precedence** is correctly reflected (a later Team Update overrides the manual).
+- **R3 Every value.** Check each field in §3 against the cited section. Every boolean in `selection` must be actually transcribed, not left as the template's pre-filled value (U1).
+- **R4 Alliance counts.** The ranges match the manual, do not overlap, have no unintended gaps, and have `max_teams ≥ min_teams` (U4). Every count has a bracket.
+- **R5 Selection behaviour.** Order, captain rule, picks per alliance, the decline rules and the backup rule match the manual and Team Updates. Your D5 decision is applied consistently.
+- **R6 The bracket.** Every slot's sources match the bracket diagram (seeds; winner and loser routing); the finals' sources and `wins_needed` match; rounds follow the D3 convention, identically across the three seasons.
+- **R7 The TBA mapping.** Each slot's and the finals' (`competition_level`, `set_number`) match TBA's actual match keys for **at least one real event** of the season (D2).
+- **R8 Tie behaviour.** `tie_rule` matches the cited section.
+- **R9 Exclusions.** Any unsupported rule (D6) or D1/D4/D5 decision is recorded, and the resulting exclusions are acceptable.
+- **R10 Stored content.** Review the **stored** ruleset (U2: read `season_rulesets.ruleset_json` for the id) and confirm it is what you checked.
+- **Decision:** approve (`--approve`, with an optional note), or return (`--return --note "what to fix"`; a note is required).
 
-**What it changes:** `database/migrations/0011_phase6_season_rulesets.sql` creates one new table, `season_rulesets`, with its constraints and a partial unique index (one `approved` version per season).
-- It is **schema-only and additive.** `CREATE TABLE IF NOT EXISTS` and `CREATE UNIQUE INDEX IF NOT EXISTS`.
-- It **alters, rewrites and deletes nothing** in any existing table.
+## 6. Procedure once you have the manuals
 
-**Why serving needs it:** the authoritative rulesets (human inputs) live in the serving database, like the Phase 5 human inputs. Evaluations run on isolated copies cloned from serving afterwards.
+1. **Decide D1, D2, D3 and D5** (and D4 and D6 if they apply) and write the decisions down, dated, before entering values. D3 must be one convention for all three seasons.
+2. **Get migration 0011 onto serving** (§7), with your explicit approval. The CLI writes to `DATABASE_URL`, and the authoritative rulesets belong in serving.
+3. **For each season (2024, 2025, 2026):**
+   1. `python -m scripts.phase6_rulesets template > ruleset_<season>.json`, then **replace every value**, including the pre-filled booleans (U1).
+   2. Transcribe each field from the manual and Team Updates, with the citations (§3). Establish the TBA mapping from real match keys (D2).
+   3. `python -m scripts.phase6_rulesets draft --file ruleset_<season>.json --by "<Author Full Name>"`. Schema errors are printed with their field paths; fix them and draft again (each draft is a new version).
+   4. `python -m scripts.phase6_rulesets submit --id <id>`.
+   5. The reviewer runs the §5 checklist, then `python -m scripts.phase6_rulesets review --id <id> --reviewer "<Reviewer Full Name>" --approve` (or `--return --note "…"`).
+   6. `python -m scripts.phase6_rulesets list --season <season>` shows the version `approved`.
+4. **When all three are approved,** tell me. The next step (not done now) is to clone a fresh isolated copy from serving and run `python -m scripts.phase6_playoff_track m1`, which records bracket reproduction and the captain-rule check with exclusion counts. Only after that, and in dependency order, do PX-1, PX-2, PX-4, P6-M6 (b) and P6-M8 become runnable.
 
-**Tested:** applied to the isolated `stratai_test` on 2026-10-05 at 19:15 EDT. `tests/test_phase6_rulesets.py` passes there: the lifecycle, refusal of self-approval, supersession, schema refusal and runner refusal. The full suite passed: 1,937 passed.
+## 7. Migration 0011 (NOT applied to serving)
 
-**Serving state (read-only check):** the latest applied migration is 0010, and `season_rulesets` does not exist. **0011 was not applied.**
+- **What it is:** `database/migrations/0011_phase6_season_rulesets.sql` creates one table, `season_rulesets`, with its CHECK constraints and a partial unique index (one `approved` version per season).
+  - **Schema-only and additive:** `CREATE TABLE IF NOT EXISTS` and `CREATE UNIQUE INDEX IF NOT EXISTS`.
+  - It **modifies and deletes no existing data or table.**
+- **Isolated-copy testing is sufficient for a schema-only additive migration:**
+  - it applied cleanly to `stratai_test` on 2026-10-05 at 19:15 EDT;
+  - the workflow tests pass there: lifecycle, self-approval refusal, supersession, schema refusal, runner refusal;
+  - the full suite passed, 1,937 tests, with 0011 present.
+- **Serving state (read-only check):** the latest applied migration is `0010_phase5_human_inputs.sql`, and `season_rulesets` does not exist.
+- **Before applying (your action):**
+  1. back up `stratai` (`pg_dump`);
+  2. confirm that serving ends at 0010 and that `to_regclass('season_rulesets')` is null;
+  3. check out **`phase6/build`**, because `database/migrate.py` applies every pending migration in the checked-out tree, and only `phase6/build` contains 0011;
+  4. make sure nothing else is migrating.
+- **Apply (only with your explicit approval):** with `DATABASE_URL` pointing at serving, `python database/migrate.py`. It runs as one transaction that rolls back on failure.
+- **Verify:**
+  - `migrations_applied` contains 0011;
+  - `python database/verify_db.py` lists `season_rulesets`;
+  - existing row counts are unchanged.
 
-**Safety checks before applying:**
-1. Take a backup (`pg_dump` of `stratai`) and keep it until verified.
-2. Confirm the current state: `migrations_applied` ends at 0010, and `to_regclass('season_rulesets')` is null.
-3. Confirm no other process is mid-migration.
-4. Apply from a checkout of **`phase6/build`**. `database/migrate.py` applies every pending migration in the checked-out tree; `main` does not contain 0011, and `phase6/build` adds only 0011 beyond serving's 0010.
-5. Afterwards:
-   - `migrations_applied` contains `0011_phase6_season_rulesets.sql`;
-   - `python database/verify_db.py` lists `season_rulesets`;
-   - the existing data counts are unchanged.
+## 8. What stays blocked
 
-**Exact action** (only with your explicit approval), from `phase6/build`, with `DATABASE_URL` pointing at the serving `stratai`:
-```
-python database/migrate.py
-```
-The runner applies the pending files inside one transaction, which rolls back on failure. It records each file in `migrations_applied`.
+PX-1 (P6-M2), PX-2 (P6-M3), PX-4 (P6-M5), P6-M6 (b) and P6-M8 (P6-DM1) refuse to run, writing nothing, until approved rulesets for 2024, 2025 and 2026 exist (`scripts/phase6_playoff_track.py` `require_rulesets`). No synthetic ruleset is stored or used for them.
