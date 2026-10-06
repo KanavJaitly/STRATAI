@@ -20,20 +20,52 @@ docs/P6Milestones.md P6-M1 (frozen at P6-M0).
 - where each side comes from: a seed, or the winner or loser of an earlier slot.
 
 The finals are a best-of-N series between two slot sources. Nothing about a particular season's format is coded.
+
+**Per-event selection variants (schema v2, Kanav's P1 decision, 2026-10-05).** One season can use more than one
+alliance-selection structure. For example, standard events use 2 picks and backups, while FIRST Championship
+divisions use 3 picks and no backups (2024 §12.2, 2025 and 2026 §13.2).
+- **`selection`** is the season default.
+- **`selection_variants`** each carry a complete `SelectionRules` and an explicit list of the event keys they apply
+  to. Every listed event carries its own FIRST provenance: rule, document, version, Team Update (or an explicit
+  null), section, and a FIRST URL.
+  - Nothing is inferred: membership is never derived from `events.event_type` or from the data.
+  - An event appears in at most one variant.
+- **Precedence**, which is deterministic and never implicit:
+  1. the explicit event-level variant listing the event;
+  2. the season default.
+- **`event_exclusions`** list events the ruleset cannot represent faithfully. Each has a reason code and the finding.
+  Two kinds:
+  - recorded behaviour no FIRST document explains, e.g. a backup that plays before T604/T608 allow it;
+  - a FIRST rule the schema cannot express, e.g. small-event byes (§10.6.6) that TBA records as placeholder
+    alliances.
+  - An excluded event has no rules: `for_event` refuses it, so consumers exclude and count it and never
+    approximate it.
+- **Consumers must use `for_event`.** Selection consumers read one event's rules through `SeasonRuleset.for_event`,
+  which returns an `EventRules`. `ml.playoffs.selection` refuses a bare `SeasonRuleset`, so the season default can
+  never be applied to an event by accident.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import re
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from database.connection import Database
 
-SCHEMA_VERSION = "p6-ruleset-v1"
+SCHEMA_VERSION = "p6-ruleset-v2"
+# Provenance URLs must point at FIRST itself: the official manuals, Team Updates and event pages (P6-M1 research
+# rule, 2026-10-05: FIRST is the only authoritative source for the rules).
+FIRST_SOURCE_HOSTS = ("firstinspires.org", "firstfrc.blob.core.windows.net")
+EVENT_KEY_PATTERN = re.compile(r"^(\d{4})[a-z0-9]+$")
+REASON_CODE_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
+NonEmpty = Annotated[str, Field(min_length=1)]
 STATUSES = ("draft", "awaiting_review", "approved", "superseded")
 
 
@@ -143,13 +175,72 @@ class ManualReference(_Frozen):
     version: str = Field(min_length=1)
 
 
+def _event_key(value: str) -> str:
+    if not isinstance(value, str) or not EVENT_KEY_PATTERN.fullmatch(value):
+        raise ValueError(f"{value!r} is not a TBA event key (e.g. 2025arc)")
+    return value
+
+
+class VariantEvent(_Frozen):
+    """One event placed in a non-default selection variant, with the FIRST provenance that puts it there."""
+
+    event_key: str
+    rule: NonEmpty  # the relevant FIRST rule, e.g. "FIRST Championship division: 4-ROBOT ALLIANCES"
+    document: NonEmpty  # the source document
+    version: NonEmpty  # the source document's version
+    team_update: NonEmpty | None  # required key: the Team Update that applies, or null when none does
+    section: NonEmpty  # the section or rule citation
+    url: NonEmpty  # the FIRST URL
+
+    _key = field_validator("event_key")(_event_key)
+
+    @field_validator("url")
+    @classmethod
+    def _first_url(cls, value: str) -> str:
+        parsed = urlparse(value)
+        host = (parsed.hostname or "").lower()
+        if parsed.scheme != "https" or not any(host == h or host.endswith("." + h) for h in FIRST_SOURCE_HOSTS):
+            raise ValueError(f"the source URL must be an https URL on a FIRST host {FIRST_SOURCE_HOSTS}")
+        return value
+
+
+class SelectionVariant(_Frozen):
+    """A complete alternative `SelectionRules` for the explicitly listed events only."""
+
+    name: NonEmpty
+    selection: SelectionRules
+    events: tuple[VariantEvent, ...] = Field(min_length=1)
+
+
+class EventExclusion(_Frozen):
+    """An event the ruleset cannot represent faithfully: excluded and counted, never approximated.
+
+    Either its recorded behaviour is unexplained by any FIRST document, or a FIRST rule it follows is not
+    expressible in this schema."""
+
+    event_key: str
+    reason: str  # a machine-readable code, e.g. "backup_before_first_match"
+    finding: NonEmpty  # what was found, and why the FIRST documents do not resolve it
+
+    _key = field_validator("event_key")(_event_key)
+
+    @field_validator("reason")
+    @classmethod
+    def _code(cls, value: str) -> str:
+        if not REASON_CODE_PATTERN.fullmatch(value):
+            raise ValueError("the reason must be a lower_snake_case code")
+        return value
+
+
 class SeasonRuleset(_Frozen):
-    schema_version: Literal["p6-ruleset-v1"] = SCHEMA_VERSION
+    schema_version: Literal["p6-ruleset-v2"] = SCHEMA_VERSION
     season: int = Field(ge=1992)
     game_name: str = Field(min_length=1)
     manual: ManualReference
     alliance_counts: tuple[AllianceCountRule, ...] = Field(min_length=1)
-    selection: SelectionRules
+    selection: SelectionRules  # the season default
+    selection_variants: tuple[SelectionVariant, ...]  # required; [] when every event uses the default
+    event_exclusions: tuple[EventExclusion, ...]  # required; [] when there are none
     brackets: tuple[BracketFormat, ...] = Field(min_length=1)
     tie_rule: str = Field(min_length=1, description="how a tied playoff match is resolved, with its citation")
 
@@ -161,7 +252,48 @@ class SeasonRuleset(_Frozen):
         missing = {r.alliances for r in self.alliance_counts} - formats
         if missing:
             raise ValueError(f"no bracket format for alliance counts {sorted(missing)}")
+        self._check_events()
         return self
+
+    def _check_events(self) -> None:
+        names = [v.name for v in self.selection_variants]
+        if len(set(names)) != len(names):
+            raise ValueError("duplicate selection variant names")
+        default = self.selection.model_dump(exclude={"citation"})
+        placed: dict[str, str] = {}
+        for variant in self.selection_variants:
+            if variant.selection.model_dump(exclude={"citation"}) == default:
+                raise ValueError(f"variant {variant.name!r} has the season default's rules: it overrides nothing")
+            for event in variant.events:
+                if event.event_key in placed:
+                    raise ValueError(f"{event.event_key} is listed in variants {placed[event.event_key]!r} and "
+                                     f"{variant.name!r}: an event has at most one variant")
+                placed[event.event_key] = variant.name
+        excluded = [e.event_key for e in self.event_exclusions]
+        if len(set(excluded)) != len(excluded):
+            raise ValueError("an event is excluded at most once")
+        for key in [*placed, *excluded]:
+            if not key.startswith(str(self.season)):
+                raise ValueError(f"{key} is not a {self.season} event")
+
+    def exclusion(self, event_key: str) -> EventExclusion | None:
+        return next((e for e in self.event_exclusions if e.event_key == event_key), None)
+
+    def for_event(self, event_key: str) -> EventRules:
+        """One event's rules. Precedence: (1) the explicit variant listing the event, (2) the season default.
+
+        Refuses an event of another season, and an excluded event (which has no rules to apply)."""
+        _event_key(event_key)
+        if not event_key.startswith(str(self.season)):
+            raise RulesetError("wrong_season", f"{event_key} is not covered by the {self.season} ruleset")
+        excluded = self.exclusion(event_key)
+        if excluded is not None:
+            raise RulesetError("event_excluded", f"{event_key} is excluded ({excluded.reason}): {excluded.finding}",
+                               {"reason": excluded.reason})
+        for variant in self.selection_variants:
+            if any(e.event_key == event_key for e in variant.events):
+                return EventRules(self, event_key, variant.name, variant.selection)
+        return EventRules(self, event_key, None, self.selection)
 
     def alliances_for(self, team_count: int) -> int:
         for rule in self.alliance_counts:
@@ -177,6 +309,25 @@ class SeasonRuleset(_Frozen):
 
     def sha256(self) -> str:
         return hashlib.sha256(json.dumps(self.model_dump(mode="json"), sort_keys=True).encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True)
+class EventRules:
+    """One event's resolved rules (`SeasonRuleset.for_event`): what every selection consumer reads.
+
+    `variant` is the name of the variant that applies, or None for the season default. The roster rule and the
+    brackets are season-level."""
+
+    season_ruleset: SeasonRuleset
+    event_key: str
+    variant: str | None
+    selection: SelectionRules
+
+    def alliances_for(self, team_count: int) -> int:
+        return self.season_ruleset.alliances_for(team_count)
+
+    def bracket(self, alliances: int) -> BracketFormat:
+        return self.season_ruleset.bracket(alliances)
 
 
 # --- storage (migration 0011): draft -> submit -> named-reviewer approval ----------------------------------

@@ -86,6 +86,7 @@ def run_m1(database, rulesets: dict[int, Any], *, limit: int | None = None) -> d
         events = read_event_playoffs(database, season)[:limit]
         ranks = read_final_ranks_for_season(database, season)
         counts: Counter[str] = Counter()
+        variants: Counter[str] = Counter()
         selection_violations = []
         for event in events:
             if not event.alliances:
@@ -95,6 +96,15 @@ def run_m1(database, rulesets: dict[int, Any], *, limit: int | None = None) -> d
                 counts["division_champion"] += 1
                 status = "excluded:division_champion"
             else:
+                try:
+                    event_rules = ruleset.for_event(event.event_key)  # explicit variant, else the season default
+                except RulesetError as exc:  # an event_exclusions entry: excluded and counted, never approximated
+                    reason = (exc.details or {}).get("reason", exc.code)
+                    counts[f"ruleset_exclusion:{reason}"] += 1
+                    events_out[event.event_key] = {"status": f"excluded:ruleset_exclusion:{reason}",
+                                                   "problems": [str(exc)]}
+                    continue
+                variants[event_rules.variant or "season_default"] += 1
                 try:
                     bracket = event_bracket(event, ruleset)
                 except RulesetError as exc:
@@ -107,15 +117,18 @@ def run_m1(database, rulesets: dict[int, Any], *, limit: int | None = None) -> d
                 status = "reproduced" if not problems else "excluded:reproduction_failed"
                 counts[status] += 1
                 events_out[event.event_key] = {"status": status, "problems": problems[:10],
+                                               "selection_variant": event_rules.variant,
                                                "winner_seed": result.winner_seed,
                                                "finalist_seed": result.finalist_seed}
-                selection_violations.extend(_captain_rule_violations(event, ranks.get(event.event_key, {}), ruleset))
+                selection_violations.extend(_captain_rule_violations(event, ranks.get(event.event_key, {}),
+                                                                     event_rules))
                 continue
             events_out[event.event_key] = {"status": status}
         excluded = sum(v for k, v in counts.items() if k != "reproduced")
         share = excluded / len(events) if events else 0.0
         per_season[season] = {"events": len(events), "counts": dict(counts), "excluded_share": share,
                               "escalate": share > EXCLUSION_ESCALATION_SHARE,
+                              "selection_variants": dict(variants),
                               "selection_rule_violations": len(selection_violations),
                               "selection_rule_examples": selection_violations[:20],
                               "ruleset_sha256": ruleset.sha256()}
@@ -123,7 +136,7 @@ def run_m1(database, rulesets: dict[int, Any], *, limit: int | None = None) -> d
             "escalate": any(s["escalate"] for s in per_season.values())}
 
 
-def _captain_rule_violations(event, ranks: dict[int, int], ruleset) -> list[str]:
+def _captain_rule_violations(event, ranks: dict[int, int], event_rules) -> list[str]:
     """P6-M1 (b): alliance k's captain is the best-ranked team still available when seed k's first turn comes.
 
     In a serpentine draft that is after the earlier alliances' captains and round-1 picks, and before any round-2
@@ -132,7 +145,7 @@ def _captain_rule_violations(event, ranks: dict[int, int], ruleset) -> list[str]
     out, taken = [], set()
     declined = {t for a in event.alliances for t in a.declines}
     for alliance in sorted(event.alliances, key=lambda a: a.seed):
-        eligible = [t for t in ranks if t not in taken and (ruleset.selection.declined_team_may_become_captain
+        eligible = [t for t in ranks if t not in taken and (event_rules.selection.declined_team_may_become_captain
                                                               or t not in declined)]
         if eligible and alliance.captain in ranks and ranks[alliance.captain] > min(ranks[t] for t in eligible):
             best = min(eligible, key=lambda t: ranks[t])
@@ -415,17 +428,19 @@ def run_m8(database, rulesets) -> dict[str, Any]:
 
         ordering = sorted(roster, key=lambda t: (-strength(t), t))
         p_match = alliance_match_probability(px1, features, calibrator.calibrate)
-        engine = SelectionEngine(ruleset, ranks, ordering, p_match, probability_status="validated_playoff",
+        event_rules = ruleset.for_event(event.event_key)
+        engine = SelectionEngine(event_rules, ranks, ordering, p_match, probability_status="validated_playoff",
                                  features=features)
         bracket = event_bracket(event, ruleset)
 
         def engine_choice(state, seed, options):
             return engine.recommend(state, seed).ranked[0].team_number
 
-        predicted = run_draft(DraftState.empty(engine.n_alliances), ruleset, ranks, engine_choice).alliances
+        predicted = run_draft(DraftState.empty(engine.n_alliances), event_rules, ranks, engine_choice).alliances
         raw_order = sorted(roster, key=lambda t: (-(features[t].epa_total if features[t].epa_total is not None
                                                      else float("-inf")), t))
-        raw_field = run_draft(DraftState.empty(engine.n_alliances), ruleset, ranks, best_available(raw_order)).alliances
+        raw_field = run_draft(DraftState.empty(engine.n_alliances), event_rules, ranks,
+                              best_available(raw_order)).alliances
 
         def contenders(alliances):
             return [PredictedAlliance(a, field_outcome(alliances, bracket, p_match, i + 1).p_win_event)
@@ -535,10 +550,11 @@ def run_m6b(database, rulesets) -> dict[str, Any]:
 
         ordering = sorted(roster, key=lambda t: (-score(t), t))
         alliances = sorted(event.alliances, key=lambda a: a.seed)
+        event_rules = ruleset.for_event(event.event_key)
         declined = frozenset(t for a in alliances for t in a.declines)
         current: list[list[int]] = [[] for _ in alliances]
         actual = []
-        for turn, seed in enumerate(turn_order(len(alliances), ruleset.selection.picks_per_alliance)):
+        for turn, seed in enumerate(turn_order(len(alliances), event_rules.selection.picks_per_alliance)):
             alliance = alliances[seed - 1]
             if not current[seed - 1]:
                 current[seed - 1].append(alliance.captain)
@@ -548,7 +564,7 @@ def run_m6b(database, rulesets) -> dict[str, Any]:
                 break
             actual.append((DraftState(tuple(tuple(a) for a in current), declined, turn), seed, alliance.picks[index]))
             current[seed - 1].append(alliance.picks[index])
-        result = pick_prediction_accuracy(actual, ordering, ruleset, roster)
+        result = pick_prediction_accuracy(actual, ordering, event_rules, roster)
         top1, top3, picks, events = top1 + result["top1"], top3 + result["top3"], picks + result["picks"], events + 1
     return {"milestone": "P6-M6", "criterion": "b", "gating": False, "policy": policy, "events": events,
             "picks": picks, "top1_rate": top1 / picks if picks else None,

@@ -94,6 +94,33 @@ def test_m1_reproduction_path_runs_on_real_events_with_injected_rulesets(databas
     assert all(s["events"] == 2 for s in result["seasons"].values())
 
 
+def test_m1_counts_ruleset_exclusions_and_records_the_variant_applied(database):
+    """Schema v2: an excluded event is excluded and counted under its reason, never evaluated, and an evaluated
+    event records which selection variant governed it. SYNTHETIC rulesets on real event keys; nothing recorded."""
+    from data.rulesets import SeasonRuleset
+    from ml.playoffs.data import read_event_playoffs
+    from scripts.phase6_playoff_track import run_m1
+    from tests.phase6_bracket_fixtures import with_three_pick_variant
+
+    limit = 8
+    seeded = [e.event_key for e in read_event_playoffs(database, 2024)[:limit]
+              if e.alliances and not e.division_champion]
+    assert len(seeded) >= 2
+    excluded_key, variant_key = seeded[0], seeded[1]
+    data_2024 = with_three_pick_variant(ruleset(2024), [variant_key])
+    data_2024["event_exclusions"] = [{"event_key": excluded_key, "reason": "synthetic_reason",
+                                      "finding": "synthetic test exclusion"}]
+    synthetic = {2024: SeasonRuleset.model_validate(data_2024),
+                 2025: SeasonRuleset.model_validate(ruleset(2025)), 2026: SeasonRuleset.model_validate(ruleset(2026))}
+    result = run_m1(database, synthetic, limit=limit)
+    season = result["seasons"][2024]
+    assert result["events"][excluded_key]["status"] == "excluded:ruleset_exclusion:synthetic_reason"
+    assert season["counts"]["ruleset_exclusion:synthetic_reason"] == 1
+    assert season["selection_variants"].get("three_picks") == 1
+    if "selection_variant" in result["events"][variant_key]:  # reached the bracket (the roster rule covered it)
+        assert result["events"][variant_key]["selection_variant"] == "three_picks"
+
+
 def test_captain_rule_respects_serpentine_timing():
     """Round-2 picks happen after later seeds choose captains: a better-ranked team picked in round 2 should have
     been the next captain, so that is a violation."""
@@ -103,7 +130,7 @@ def test_captain_rule_respects_serpentine_timing():
     from data.rulesets import SeasonRuleset
     from scripts.phase6_playoff_track import _captain_rule_violations
 
-    rules = SeasonRuleset.model_validate(ruleset())
+    rules = SeasonRuleset.model_validate(ruleset()).for_event("2099synth")
     ranks = {101: 1, 102: 2, 103: 3, 104: 4, 105: 5, 106: 6}
     ok = SimpleNamespace(event_key="e", alliances=[Alliance(1, 1, None, 101, (101, 102, 106), None, ()),
                                                    Alliance(2, 2, None, 103, (103, 104, 105), None, ())])

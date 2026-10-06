@@ -58,6 +58,23 @@ def ruleset(season: int = 2099) -> dict[str, Any]:
                       "captain_may_accept_higher_alliance": True, "declined_team_may_be_picked_later": False,
                       "declined_team_may_become_captain": True, "backup_robots": True,
                       "citation": "synthetic fixture"},
+        "selection_variants": [],
+        "event_exclusions": [],
         "brackets": [double_elimination_8(), single_elimination_4()],
         "tie_rule": "synthetic fixture: replay",
     }
+
+
+def variant_event(event_key: str) -> dict[str, Any]:
+    """Synthetic per-event provenance (the shape a real entry needs; the values are not evidence)."""
+    return {"event_key": event_key, "rule": "synthetic fixture rule", "document": "synthetic document",
+            "version": "0", "team_update": None, "section": "synthetic section",
+            "url": "https://www.firstinspires.org/synthetic-fixture"}
+
+
+def with_three_pick_variant(data: dict[str, Any], event_keys: list[str]) -> dict[str, Any]:
+    """A synthetic second selection structure (3 picks, no backups) for the listed events only."""
+    selection = dict(data["selection"], picks_per_alliance=3, backup_robots=False, citation="synthetic fixture")
+    data["selection_variants"] = [{"name": "three_picks", "selection": selection,
+                                   "events": [variant_event(k) for k in event_keys]}]
+    return data

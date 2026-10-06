@@ -195,10 +195,23 @@ decision (D9).
     keyed by TBA (`competition_level`, `set_number`), plus a best-of-N finals.
   - It becomes authoritative only through a **different** named reviewer's approval.
   - `approved_ruleset` refuses an unapproved season. No rule exists in code.
+- **Schema v2 (`p6-ruleset-v2`, Kanav's P1 decision, 2026-10-05; decision record
+  `.agent/phase6/decisions/P6_M1_P1_SCHEMA_V2.md`):**
+  - `selection` is the season default.
+  - `selection_variants` give a complete alternative `selection` for an explicit, cited list of event keys, e.g.
+    FIRST Championship divisions: 3 picks, no backups. Each listed event carries its own FIRST provenance: rule,
+    document, version, Team Update or explicit null, section, and a FIRST URL.
+  - `event_exclusions` list events the ruleset cannot represent faithfully, each with a reason code and the
+    finding. Consumers exclude and count them.
+  - **Precedence:** an explicit variant listing the event, otherwise the season default. Nothing is inferred
+    (not from `events.event_type`, not from data).
+  - Selection consumers take one event's rules from `SeasonRuleset.for_event(event_key)`. `ml.playoffs.selection`
+    refuses a bare season ruleset.
+  - No DDL change: `ruleset_json` is JSONB, and there is still one approved ruleset per season.
 - **CLI:** `scripts/phase6_rulesets.py` (template, draft, submit, review, list).
 - **Checks:** `scripts/phase6_playoff_track.py m1` checks:
-  - (a) bracket reproduction against every real 2024–2026 event;
-  - (b) the serpentine captain rule.
+  - (a) bracket reproduction against every real 2024–2026 event (ruleset exclusions counted by reason);
+  - (b) the serpentine captain rule, under each event's own selection rules (the variant applied is recorded).
 - **Prerequisites:**
   1. migration 0011 applied to the serving database, which is a production step that needs Kanav's explicit
      approval;
@@ -247,6 +260,8 @@ decision (D9).
    A Claude-prepared, cited research draft per season (Kanav's workflow, 2026-10-05; not verified, not entered,
    not approved) is in `.agent/phase6/rulesets_research/`. It reports schema mismatches (D5 Championship
    divisions; small-event byes) that need a decision before entry.
+   Schema v2 (P1, 2026-10-05) represents the Championship-division variant. Its review, and the open items in
+   `.agent/phase6/decisions/P6_M1_P1_SCHEMA_V2.md`, come before any entry.
 2. **Migration 0011 on the serving database:** Kanav's explicit approval of the production DDL.
 3. **The P6-M8 pre-run record** (`.agent/phase6/decisions/P6_M8_PRE_RUN.md` and `p6_m8_pre_run.json`: seed, strata,
    per-stratum count, reason categories, the named mentor), committed before the run. Then the **named mentor's
