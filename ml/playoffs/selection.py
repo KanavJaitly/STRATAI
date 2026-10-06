@@ -11,7 +11,8 @@
 - **Captains:** assigned when their seed's first turn comes, as the highest-ranked available team. A team picked
   earlier was never a captain.
 - **Picks:** every other captain picks the best available team by the validated P5-M4 ordering.
-- **Decline rules** come from the season's approved ruleset (P6-M1). A rule the model cannot represent is refused,
+- **Decline rules and picks per alliance** come from the event's rules in the approved P6-M1 ruleset (`for_event`:
+  an explicit variant, else the season default). A rule the model cannot represent is refused,
   never approximated.
 - **Accuracy:** measured and reported, not gating.
 
@@ -32,7 +33,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from data.rulesets import BracketFormat, RulesetError, SeasonRuleset
+from data.rulesets import BracketFormat, EventRules, RulesetError, SelectionRules
 from ml.features.assembler import TeamFeatures
 from ml.playoffs.simulator import simulate
 from ml.synergy.score import alliance_synergy
@@ -132,23 +133,32 @@ def turn_order(n_alliances: int, picks_per_alliance: int) -> list[int]:
     return order
 
 
-def _check_supported(rules: SeasonRuleset) -> None:
-    if rules.selection.order != "serpentine" or rules.selection.captain_rule != "highest_ranked_available":
+def _selection(rules: EventRules) -> SelectionRules:
+    """The selection rules of ONE event (P6-M1 schema v2). A bare season ruleset is refused: its default would be
+    silently applied to events that a variant governs (e.g. FIRST Championship divisions)."""
+    if not isinstance(rules, EventRules):
+        raise RulesetError("event_rules_required", "selection consumers take one event's rules: "
+                                                   "SeasonRuleset.for_event(event_key)")
+    return rules.selection
+
+
+def _check_supported(rules: EventRules) -> None:
+    if _selection(rules).order != "serpentine" or _selection(rules).captain_rule != "highest_ranked_available":
         raise RulesetError("not_supported", "the draft model represents serpentine, highest-ranked-available drafts only")
-    if not rules.selection.captain_may_accept_higher_alliance:
+    if not _selection(rules).captain_may_accept_higher_alliance:
         raise RulesetError("not_supported", "a ruleset forbidding captains from joining higher alliances is not "
                                             "represented by the draft model")
 
 
-def available_for_pick(state: DraftState, teams: Sequence[int], rules: SeasonRuleset) -> list[int]:
+def available_for_pick(state: DraftState, teams: Sequence[int], rules: EventRules) -> list[int]:
     taken = state.on_alliance()
-    blocked = set() if rules.selection.declined_team_may_be_picked_later else set(state.declined)
+    blocked = set() if _selection(rules).declined_team_may_be_picked_later else set(state.declined)
     return [t for t in teams if t not in taken and t not in blocked]
 
 
-def _captain(state: DraftState, ranks: Mapping[int, int], rules: SeasonRuleset) -> int:
+def _captain(state: DraftState, ranks: Mapping[int, int], rules: EventRules) -> int:
     taken = state.on_alliance()
-    blocked = set() if rules.selection.declined_team_may_become_captain else set(state.declined)
+    blocked = set() if _selection(rules).declined_team_may_become_captain else set(state.declined)
     eligible = [t for t in ranks if t not in taken and t not in blocked]
     if not eligible:
         raise RulesetError("infeasible", "no team is eligible to be a captain")
@@ -158,11 +168,11 @@ def _captain(state: DraftState, ranks: Mapping[int, int], rules: SeasonRuleset) 
 Chooser = Callable[[DraftState, int, list[int]], int]
 
 
-def run_draft(state: DraftState, rules: SeasonRuleset, ranks: Mapping[int, int], chooser: Chooser) -> DraftState:
+def run_draft(state: DraftState, rules: EventRules, ranks: Mapping[int, int], chooser: Chooser) -> DraftState:
     """Complete the draft from `state`. `chooser(state, seed, available)` returns the team the acting captain picks."""
     _check_supported(rules)
     n = len(state.alliances)
-    order = turn_order(n, rules.selection.picks_per_alliance)
+    order = turn_order(n, _selection(rules).picks_per_alliance)
     teams = sorted(ranks, key=lambda t: (ranks[t], t))
     alliances = [list(a) for a in state.alliances]
     current = state
@@ -192,7 +202,7 @@ def best_available(ordering: Sequence[int]) -> Chooser:
 
 
 def pick_prediction_accuracy(actual: Sequence[tuple[DraftState, int, int]], ordering: Sequence[int],
-                             rules: SeasonRuleset, teams: Sequence[int]) -> dict[str, Any]:
+                             rules: EventRules, teams: Sequence[int]) -> dict[str, Any]:
     """P6-M6 (b): for each actual pick (state before it, seed, team picked), whether the draft model's choice
     matches (top-1), or the pick is among its top 3 available. Measured, not gating (P6-Q6)."""
     position = {t: i for i, t in enumerate(ordering)}
@@ -246,7 +256,7 @@ def field_outcome(alliances: tuple[tuple[int, ...], ...], bracket: BracketFormat
 
 
 class SelectionEngine:
-    def __init__(self, rules: SeasonRuleset, ranks: Mapping[int, int], ordering: Sequence[int],
+    def __init__(self, rules: EventRules, ranks: Mapping[int, int], ordering: Sequence[int],
                  p_match: AllianceMatchProbability, *, probability_status: str,
                  features: Mapping[int, TeamFeatures] | None = None) -> None:
         _check_supported(rules)
@@ -269,7 +279,7 @@ class SelectionEngine:
     def _finish(self, state: DraftState, seed: int) -> tuple[FieldOutcome, DraftState]:
         """Complete the draft from `state`, optimizing `seed`'s own remaining picks by exhaustive search; every
         other captain follows the draft model."""
-        order = turn_order(self.n_alliances, self.rules.selection.picks_per_alliance)
+        order = turn_order(self.n_alliances, _selection(self.rules).picks_per_alliance)
         upcoming = [t for t in range(state.turns_taken, len(order)) if order[t] == seed]
         if not upcoming:
             done = run_draft(state, self.rules, self.ranks, self.others)
@@ -294,7 +304,7 @@ class SelectionEngine:
 
     def recommend(self, state: DraftState, seed: int) -> PickRecommendation:
         """Rank every available pick for `seed`'s next turn by P(the alliance wins the event)."""
-        order = turn_order(self.n_alliances, self.rules.selection.picks_per_alliance)
+        order = turn_order(self.n_alliances, _selection(self.rules).picks_per_alliance)
         if state.turns_taken >= len(order) or order[state.turns_taken] != seed:
             raise RulesetError("invalid_state", f"it is not seed {seed}'s turn")
         if not state.alliances[seed - 1]:
@@ -331,7 +341,7 @@ class SelectionEngine:
                                   self.fields_evaluated, notes)
 
 
-def _assign_captain(state: DraftState, seed: int, ranks: Mapping[int, int], rules: SeasonRuleset) -> DraftState:
+def _assign_captain(state: DraftState, seed: int, ranks: Mapping[int, int], rules: EventRules) -> DraftState:
     alliances = [list(a) for a in state.alliances]
     alliances[seed - 1].append(_captain(state, ranks, rules))
     return DraftState(tuple(tuple(a) for a in alliances), state.declined, state.turns_taken)
@@ -343,11 +353,11 @@ def _apply_pick(state: DraftState, seed: int, team: int) -> DraftState:
     return DraftState(tuple(tuple(a) for a in alliances), state.declined, state.turns_taken + 1)
 
 
-def run_draft_until(state: DraftState, rules: SeasonRuleset, ranks: Mapping[int, int], chooser: Chooser,
+def run_draft_until(state: DraftState, rules: EventRules, ranks: Mapping[int, int], chooser: Chooser,
                     stop_turn: int) -> DraftState:
     """Advance the draft with `chooser` up to (not including) turn index `stop_turn`."""
     n = len(state.alliances)
-    order = turn_order(n, rules.selection.picks_per_alliance)
+    order = turn_order(n, _selection(rules).picks_per_alliance)
     teams = sorted(ranks, key=lambda t: (ranks[t], t))
     current = state
     for turn in range(state.turns_taken, stop_turn):

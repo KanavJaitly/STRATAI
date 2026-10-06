@@ -12,7 +12,8 @@ from ml.playoffs.selection import (DraftState, SelectionEngine, available_for_pi
 from tests.phase6_bracket_fixtures import ruleset
 from tests.phase6_fixtures import team
 
-RULES = SeasonRuleset.model_validate(ruleset())
+EVENT = "2099synth"
+RULES = SeasonRuleset.model_validate(ruleset()).for_event(EVENT)  # the season default
 TEAMS = list(range(101, 113))  # 12 teams -> 4 alliances in the synthetic ruleset
 RANKS = {t: i for i, t in enumerate(TEAMS, start=1)}
 
@@ -44,8 +45,10 @@ def test_declined_team_is_not_picked_later_when_the_rules_say_so():
 def test_unsupported_rules_are_refused():
     data = ruleset()
     data["selection"]["captain_may_accept_higher_alliance"] = False
-    with pytest.raises(RulesetError):
-        run_draft(DraftState.empty(4), SeasonRuleset.model_validate(data), RANKS, best_available(TEAMS))
+    with pytest.raises(RulesetError) as refused:
+        run_draft(DraftState.empty(4), SeasonRuleset.model_validate(data).for_event(EVENT), RANKS,
+                  best_available(TEAMS))
+    assert refused.value.code == "not_supported"
 
 
 def test_profiles_report_n_and_never_impute():
