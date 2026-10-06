@@ -56,7 +56,7 @@ def ruleset(season: int = 2099) -> dict[str, Any]:
                             {"min_teams": 24, "max_teams": None, "alliances": 8, "citation": "synthetic fixture"}],
         "selection": {"order": "serpentine", "picks_per_alliance": 2, "captain_rule": "highest_ranked_available",
                       "captain_may_accept_higher_alliance": True, "declined_team_may_be_picked_later": False,
-                      "declined_team_may_become_captain": True, "backup_robots": True,
+                      "declined_team_may_become_captain": True, "backup_robots": True, "unresolved": [],
                       "citation": "synthetic fixture"},
         "selection_variants": [],
         "event_exclusions": [],
@@ -78,3 +78,8 @@ def with_three_pick_variant(data: dict[str, Any], event_keys: list[str]) -> dict
     data["selection_variants"] = [{"name": "three_picks", "selection": selection,
                                    "events": [variant_event(k) for k in event_keys]}]
     return data
+
+
+def unresolved(field: str) -> dict[str, Any]:
+    """A synthetic `unresolved` entry (schema v3): the shape a real one needs, not evidence."""
+    return {"field": field, "note": "synthetic: not established", "sources_checked": "synthetic sources"}

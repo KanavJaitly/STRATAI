@@ -28,6 +28,13 @@ from ml.features.assembler import TeamFeatures
 from ml.models.team_vector import TEAM_FEATURE_NAMES, team_features_to_vector
 
 MODEL_TYPE, SEED_ONLY_MODEL_TYPE = "playoff_px1", "playoff_seed_only"
+# The frozen representation: "three teams'" composition per alliance, "six teams" per row (P6-M2 Inputs; PX-1 spec
+# §1-§2). A four-member FIRST Championship alliance is outside it (D-PX1-2, Kanav 2026-10-06).
+PX1_TEAMS_PER_ALLIANCE = 3
+
+
+class OutsidePX1Domain(ValueError):
+    """An alliance that is not three selection-time members: PX-1 defines no probability for it (D-PX1-2)."""
 MODEL_VERSION = "1.0.0"
 SPEC_PATH = ".agent/phase6/P6_M2_PX1_SPEC.md"
 SELECTION_MOMENT_OFFSET = timedelta(minutes=1)
@@ -188,8 +195,12 @@ class PlayoffLogisticModel:
 def alliance_match_probability(model: PlayoffLogisticModel, features: dict[int, TeamFeatures],
                                calibrate=None):
     """Adapter for the selection engine: p(red alliance teams, blue alliance teams, seeds, round) from PX-1, and
-    PX-2's calibrator when given. Raises if an input is absent: the engine must not run on imputed values."""
+    PX-2's calibrator when given. Raises if an input is absent: the engine must not run on imputed values.
+    Raises `OutsidePX1Domain` for an alliance that is not three teams: PX-1 is never applied to four (D-PX1-2)."""
     def p(red: tuple[int, ...], blue: tuple[int, ...], red_seed: int, blue_seed: int, round_: int) -> float:
+        if len(red) != PX1_TEAMS_PER_ALLIANCE or len(blue) != PX1_TEAMS_PER_ALLIANCE:
+            raise OutsidePX1Domain(f"alliances {red} v {blue}: PX-1's frozen representation is "
+                                   f"{PX1_TEAMS_PER_ALLIANCE} teams per alliance")
         row = PlayoffRow("", "", 0, datetime.min.replace(tzinfo=None), round_, red_seed, blue_seed,
                          tuple(features[t] for t in red), tuple(features[t] for t in blue), False)
         value = model.predict(row)

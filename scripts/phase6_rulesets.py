@@ -33,13 +33,17 @@ SKELETON = {
     "alliance_counts": [{"min_teams": BLANK, "max_teams": BLANK, "alliances": BLANK, "citation": BLANK}],
     "selection": {"order": BLANK, "picks_per_alliance": BLANK, "captain_rule": BLANK,
                   "captain_may_accept_higher_alliance": BLANK, "declined_team_may_be_picked_later": BLANK,
-                  "declined_team_may_become_captain": BLANK, "backup_robots": BLANK, "citation": BLANK},
+                  "declined_team_may_become_captain": BLANK, "backup_robots": BLANK,
+                  # Schema v3: `captain_rule` / `declined_team_may_become_captain` may be null ONLY when FIRST does
+                  # not establish them, each with an entry here. Replace with [] when every rule is established.
+                  "unresolved": [{"field": BLANK, "note": BLANK, "sources_checked": BLANK}], "citation": BLANK},
     # Schema v2 (P1, 2026-10-05). Replace with [] when every event uses the season default. Otherwise give each
     # variant a complete selection and, for every listed event, its FIRST provenance (team_update: null when none).
     "selection_variants": [{"name": BLANK, "selection": {
         "order": BLANK, "picks_per_alliance": BLANK, "captain_rule": BLANK, "captain_may_accept_higher_alliance": BLANK,
         "declined_team_may_be_picked_later": BLANK, "declined_team_may_become_captain": BLANK,
-        "backup_robots": BLANK, "citation": BLANK},
+        "backup_robots": BLANK, "unresolved": [{"field": BLANK, "note": BLANK, "sources_checked": BLANK}],
+        "citation": BLANK},
         "events": [{"event_key": BLANK, "rule": BLANK, "document": BLANK, "version": BLANK, "team_update": BLANK,
                     "section": BLANK, "url": BLANK}]}],
     # Events whose recorded behaviour no FIRST document explains; [] when there are none.
