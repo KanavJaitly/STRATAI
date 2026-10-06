@@ -574,8 +574,9 @@ Phase 6 – Strategy & Alliance Selection Engines (implementation on branch `pha
 complete.**
 - **P6-DM2 MET:** the parity audit (`.agent/phase6/results/p6_m13_parity_audit_rerun1.json`).
 - **P6-DM1 NOT MET:** it is blocked by required human input. The 2024–2026 season rulesets must be entered from
-  the manuals and approved by a different named reviewer (`scripts/phase6_rulesets.py`). Migration 0011 must
-  also be applied to serving, with Kanav's approval.
+  the manuals and approved by a different named reviewer (`scripts/phase6_rulesets.py`). Migration 0011 is applied
+  to serving (2026-10-06, Kanav's approval); the three rulesets are stored `awaiting_review` and need that reviewer
+  (`.agent/phase6/decisions/P6_M1_ENTRY_STATUS.md`).
 - **P6-M10 FAILED** its gate (D9). Strategy odds are served `not_validated`.
 - **Records:** `docs/phase6.md`, `.agent/phase6/PHASE_STATUS.md`, `.agent/phase6/PHASE_ACCEPTANCE.md`.
 - **Spec:** frozen at P6-M0, in `docs/P6Milestones.md` and `.agent/phase6/P6_M0_DECISIONS.md`.

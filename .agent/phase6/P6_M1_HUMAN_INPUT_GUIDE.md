@@ -154,7 +154,7 @@ The steps below still apply. Step 3.1 starts from the entry form instead of the 
    6. `python -m scripts.phase6_rulesets list --season <season>` shows the version `approved`.
 4. **When all three are approved,** tell me. The next step (not done now) is to clone a fresh isolated copy from serving and run `python -m scripts.phase6_playoff_track m1`, which records bracket reproduction and the captain-rule check with exclusion counts. Only after that, and in dependency order, do PX-1, PX-2, PX-4, P6-M6 (b) and P6-M8 become runnable.
 
-## 7. Migration 0011 (NOT applied to serving)
+## 7. Migration 0011 (APPLIED to serving 2026-10-06 with Kanav's approval; see `.agent/phase6/decisions/P6_M1_ENTRY_STATUS.md`; the text below is the pre-application plan)
 
 - **What it is:** `database/migrations/0011_phase6_season_rulesets.sql` creates one table, `season_rulesets`, with its CHECK constraints and a partial unique index (one `approved` version per season).
   - **Schema-only and additive:** `CREATE TABLE IF NOT EXISTS` and `CREATE UNIQUE INDEX IF NOT EXISTS`.
