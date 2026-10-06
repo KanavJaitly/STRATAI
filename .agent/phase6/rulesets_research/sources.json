@@ -1,0 +1,53 @@
+{
+ "retrieved": "2026-10-05",
+ "retrieved_by": "Claude (research draft; Kanav's P6-M1 workflow of 2026-10-05)",
+ "note": "Official FIRST documents only. The PDFs are not stored in the repository; verify by sha256.",
+ "archive_pages": [
+  "https://www.firstinspires.org/resources/library/frc/archived-games",
+  "https://www.firstinspires.org/resources/library/frc/season-materials"
+ ],
+ "seasons": {
+  "2024": {
+   "game_manual": {
+    "url": "https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf",
+    "sha256": "1b7e1dc3fe1b1bd64d97a482d7e78eb419ec77d611a15226a16b0c7011069b94",
+    "pages": 153,
+    "label": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0)"
+   },
+   "team_updates": {
+    "url": "https://firstfrc.blob.core.windows.net/frc2024/Manual/TeamUpdates/TeamUpdates-combined.pdf",
+    "sha256": "76cdaa779997020d4e03c7811a4e3b82d04c14a3913315b595933f9171677c17",
+    "pages": 56,
+    "label": "2024 Team Updates 00-21, combined PDF (TU21, 2024-04-09, is the final update)"
+   }
+  },
+  "2025": {
+   "game_manual": {
+    "url": "https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf",
+    "sha256": "dc6aa9ddbeba25c679c58bae746bde14dba2af79a61a65d8c5f575ca6cdfd523",
+    "pages": 164,
+    "label": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0)"
+   },
+   "team_updates": {
+    "url": "https://firstfrc.blob.core.windows.net/frc2025/Manual/TeamUpdates/TeamUpdate-Combined.pdf",
+    "sha256": "fc8c6292a5756244d1e896d01fc78bb620db9caa95913d42c02a450e379f10fb",
+    "pages": 44,
+    "label": "2025 Team Updates 00-21, combined PDF (TU21, 2025-04-08, is the last update)"
+   }
+  },
+  "2026": {
+   "game_manual": {
+    "url": "https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf",
+    "sha256": "5c67300fc412a1eed8ca9dc37fb6644aee05795a2befed1f69736643cbf95139",
+    "pages": 166,
+    "label": "2026 Game Manual, PDF 'Version: TU22'"
+   },
+   "team_updates": {
+    "url": "https://firstfrc.blob.core.windows.net/frc2026/Manual/TeamUpdates/REBUILT_TeamUpdate-Combined.pdf",
+    "sha256": "8ec2754d157b7f35cf93b4be301ebdf576f2abf2650975731dcc3cdf5ab0ecb1",
+    "pages": 46,
+    "label": "2026 Team Updates 01-22, combined PDF (TU22, 2026-04-21, is the final update)"
+   }
+  }
+ }
+}
