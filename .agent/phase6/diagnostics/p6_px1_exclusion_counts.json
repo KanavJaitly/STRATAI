@@ -1,0 +1,153 @@
+{
+ "epa_integrity": {
+  "a1_team_events": 331,
+  "invalid_team_events": 143,
+  "ok": true,
+  "raw_equals_table_epa_total": 24022,
+  "raw_files_verified": 608,
+  "raw_records": 24022,
+  "table_rows": 24022,
+  "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5"
+ },
+ "minutes": 0.8,
+ "provenance": {
+  "commit": "0df1b3070877af0efec10ea705b0fb895a0fdc68",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-06T22:39:42.734301+00:00"
+ },
+ "seasons": {
+  "2024": {
+   "championship_division_events": {
+    "2024arc": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2024cur": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2024dal": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2024gal": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2024hop": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2024joh": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2024mil": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2024new": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    }
+   },
+   "counts": {
+    "eligible": 1006,
+    "epa_incomplete": 1691,
+    "excluded_four_member_alliance": 120,
+    "excluded_four_member_alliance:epa_complete": 120,
+    "tie_or_unplayed": 5
+   },
+   "split": "train"
+  },
+  "2025": {
+   "championship_division_events": {
+    "2025arc": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2025cur": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15,
+     "tie_or_unplayed": 1
+    },
+    "2025dal": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2025gal": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2025hop": {
+     "excluded_four_member_alliance": 16,
+     "excluded_four_member_alliance:epa_complete": 16
+    },
+    "2025joh": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2025mil": {
+     "excluded_four_member_alliance": 16,
+     "excluded_four_member_alliance:epa_complete": 16
+    },
+    "2025new": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    }
+   },
+   "counts": {
+    "eligible": 2463,
+    "epa_incomplete": 422,
+    "excluded_four_member_alliance": 122,
+    "excluded_four_member_alliance:epa_complete": 122,
+    "tie_or_unplayed": 4
+   },
+   "split": "train"
+  },
+  "2026": {
+   "championship_division_events": {
+    "2026arc": {
+     "excluded_four_member_alliance": 16,
+     "excluded_four_member_alliance:epa_complete": 16
+    },
+    "2026cur": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2026dal": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2026gal": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2026hop": {
+     "excluded_four_member_alliance": 16,
+     "excluded_four_member_alliance:epa_complete": 16
+    },
+    "2026joh": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2026mil": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    },
+    "2026new": {
+     "excluded_four_member_alliance": 15,
+     "excluded_four_member_alliance:epa_complete": 15
+    }
+   },
+   "counts": {
+    "eligible": 2675,
+    "epa_incomplete": 368,
+    "excluded_four_member_alliance": 122,
+    "excluded_four_member_alliance:epa_complete": 122,
+    "tie_or_unplayed": 1
+   },
+   "split": "held_out"
+  }
+ }
+}
