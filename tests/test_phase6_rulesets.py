@@ -112,3 +112,60 @@ def test_captain_rule_respects_serpentine_timing():
     late = SimpleNamespace(event_key="e", alliances=[Alliance(1, 1, None, 101, (101, 102, 103), None, ()),
                                                      Alliance(2, 2, None, 104, (104, 105, 106), None, ())])
     assert len(_captain_rule_violations(late, ranks, rules)) == 1
+
+
+def _leaves(value, path=""):
+    if isinstance(value, dict):
+        for k, v in value.items():
+            yield from _leaves(v, f"{path}.{k}" if path else k)
+    elif isinstance(value, list):
+        for i, v in enumerate(value):
+            yield from _leaves(v, f"{path}[{i}]")
+    else:
+        yield path, value
+
+
+def test_fresh_template_supplies_no_rule_values():
+    """Template safety (2026-10-05): every value is a blank placeholder; nothing is software-supplied."""
+    from scripts.phase6_rulesets import SKELETON
+
+    leaves = dict(_leaves(SKELETON))
+    assert leaves and all(v == "" for v in leaves.values()), {k: v for k, v in leaves.items() if v != ""}
+    for name in ("captain_may_accept_higher_alliance", "declined_team_may_be_picked_later",
+                 "declined_team_may_become_captain", "backup_robots"):
+        assert SKELETON["selection"][name] == ""
+
+
+def test_fresh_template_fails_validation_on_every_rule_value():
+    import pytest
+    from pydantic import ValidationError
+
+    from data.rulesets import SeasonRuleset
+    from scripts.phase6_rulesets import SKELETON
+
+    with pytest.raises(ValidationError) as error:
+        SeasonRuleset.model_validate(SKELETON)
+    failed = {".".join(str(p) for p in e["loc"]) for e in error.value.errors()}
+    for name in ("captain_may_accept_higher_alliance", "declined_team_may_be_picked_later",
+                 "declined_team_may_become_captain", "backup_robots", "order", "captain_rule",
+                 "picks_per_alliance", "citation"):
+        assert f"selection.{name}" in failed, name
+    assert "alliance_counts.0.max_teams" in failed and "tie_rule" in failed and "season" in failed
+
+
+def test_a_blank_boolean_alone_fails_validation():
+    """Filling everything except one rule boolean still fails: a blank is never read as true or false."""
+    import pytest
+    from pydantic import ValidationError
+
+    from data.rulesets import SeasonRuleset
+
+    for name in ("captain_may_accept_higher_alliance", "declined_team_may_be_picked_later",
+                 "declined_team_may_become_captain", "backup_robots"):
+        data = ruleset()
+        data["selection"][name] = ""
+        with pytest.raises(ValidationError):
+            SeasonRuleset.model_validate(data)
+        del data["selection"][name]
+        with pytest.raises(ValidationError):
+            SeasonRuleset.model_validate(data)
