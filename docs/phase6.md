@@ -202,7 +202,15 @@ decision (D9).
     FIRST Championship divisions: 3 picks, no backups. Each listed event carries its own FIRST provenance: rule,
     document, version, Team Update or explicit null, section, and a FIRST URL.
   - `event_exclusions` list events the ruleset cannot represent faithfully, each with a reason code and the
-    finding. Consumers exclude and count them.
+    finding. Consumers exclude and count them. `2024isde2`, `2026tuak2` and `2026tuis4` are listed at entry unless
+    a FIRST document resolves them (D-PX1-3).
+  - **Schema v3 (`p6-ruleset-v3`, D-PX1-4/5, 2026-10-06):** `captain_rule` and `declined_team_may_become_captain`
+    may be `null`, meaning not established by an authoritative FIRST source, each with an `unresolved` note and the
+    sources checked.
+    - Consumers raise `not_established` only where the value would decide an outcome.
+    - P6-M1 (b) counts unchecked alliances (`captain_rule_not_established`, `decline_rule_not_established`).
+    - 2025 `captain_rule` is `null`: the official 2025 sources do not establish who replaces a Lead who accepts an
+      invitation.
   - **Precedence:** an explicit variant listing the event, otherwise the season default. Nothing is inferred
     (not from `events.event_type`, not from data).
   - Selection consumers take one event's rules from `SeasonRuleset.for_event(event_key)`. `ml.playoffs.selection`
@@ -230,6 +238,19 @@ decision (D9).
 - **PX-4:** P(win event) and P(reach finals) against the seed-only baseline, with event-bootstrap CIs.
 - **Runs:** `scripts/phase6_playoff_track.py m2 | m3 | m5`. Each refuses, writing nothing, until the P6-M1 rulesets
   exist and its prerequisite passed.
+- **Composition and populations** (Kanav, 2026-10-06: D-PX1-1/2 and C1/C2;
+  `.agent/phase6/decisions/P6_PX1_COMPOSITION_DECISIONS.md`). The frozen spec is unchanged; these decisions sit
+  alongside it.
+  - **Members:** an alliance's composition is its selection-time members, the captain and its picks
+    (`ml.playoffs.data.selection_members`). TBA lists a backup as an extra `picks` entry; it is never a member. This
+    applies to PX-1, the M6/M7 baseline, PX-4, P6-M8's "actual pick" and the engine.
+  - **Four-member exclusion:** FIRST Championship divisions have four members, per the ruleset's cited variant.
+    That is outside PX-1's frozen three-team representation, so they are excluded and counted per event:
+    - from PX-1 rows (`four_member_alliance`);
+    - from the PX-4 population (C1);
+    - from the M8 population (C2).
+  - **Records:** each record keeps the intended population next to the validated one, plus the decisions' blob.
+  - **Guard:** `alliance_match_probability` refuses an alliance that is not three teams (`OutsidePX1Domain`).
 
 ### P6-M6 … P6-M8: selection and P6-DM1
 

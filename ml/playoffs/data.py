@@ -4,6 +4,18 @@
   qualification match (the selection moment) and its roster size.
 - **Build:** PX-1 rows from those, with every exclusion counted by reason (`.agent/phase6/P6_M2_PX1_SPEC.md` §1).
 - **Bracket rounds** always come from the approved ruleset passed in, never from code.
+
+**Selection-time members (D-PX1-1, Kanav 2026-10-06; `.agent/phase6/decisions/P6_PX1_COMPOSITION_DECISIONS.md`).**
+- **Definition:** an alliance's composition is its members at the selection moment, i.e. the captain plus the
+  event's `picks_per_alliance` picks, from the event's own rules (`SeasonRuleset.for_event`).
+- **Backups:** TBA lists a backup as an extra `picks` entry. Recruited during the playoffs, it is never a member.
+- **Refused, counted:** an extra entry where the rules allow no backup, or more than one extra entry
+  (`unexpected_listed_team`). Never interpreted.
+- **Used everywhere:** PX-1 rows (and so the M6/M7 baseline), PX-4's alliances and P6-M8's actual alliances all use
+  `selection_members`.
+- **Four members (D-PX1-2):** a row with a side that is not three members (FIRST Championship divisions, 4-ROBOT
+  ALLIANCES) is outside PX-1's frozen three-team representation. It is excluded as `four_member_alliance` and
+  counted.
 """
 
 from __future__ import annotations
@@ -14,11 +26,11 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from data.alliances import Alliance, read_event_alliances
-from data.rulesets import BracketFormat, RulesetError, SeasonRuleset
+from data.rulesets import BracketFormat, EventRules, RulesetError, SeasonRuleset
 from database.connection import Database
 from ml.features.assembler import TeamFeatures, build_team_features
 from ml.playoffs.evaluation import PlayoffMatch
-from ml.playoffs.px1 import PlayoffRow, map_side, selection_moment
+from ml.playoffs.px1 import PX1_TEAMS_PER_ALLIANCE, PlayoffRow, map_side, selection_moment
 
 PLAYOFF_SQL = """
 SELECT m.match_key, m.event_key, m.competition_level, m.set_number, m.match_number, m.scheduled_time,
@@ -87,6 +99,33 @@ def read_event_playoffs(database: Database, season: int) -> list[EventPlayoffs]:
             for event, matches in sorted(by_event.items())]
 
 
+def selection_members(alliance: Alliance, event_rules: EventRules) -> tuple[int, ...]:
+    """The alliance at the selection moment: the captain and the event's picks (D-PX1-1). A listed backup is not a
+    member; a listing the event's rules do not explain is refused (`unexpected_listed_team`), never interpreted."""
+    selection = event_rules.selection
+    size = 1 + selection.picks_per_alliance
+    if len(alliance.picks) < size:
+        raise RulesetError("incomplete_alliance", f"{event_rules.event_key} seed {alliance.seed}: "
+                                                  f"{len(alliance.picks)} listed teams, the rules need {size}")
+    extra = alliance.picks[size:]
+    if extra and (not selection.backup_robots or len(extra) > 1):
+        raise RulesetError("unexpected_listed_team", f"{event_rules.event_key} seed {alliance.seed}: listed "
+                                                     f"{alliance.picks} but the rules allow {size} members and "
+                                                     f"{'one backup' if selection.backup_robots else 'no backup'}")
+    return alliance.picks[:size]
+
+
+def event_members(event: EventPlayoffs, event_rules: EventRules) -> dict[int, tuple[int, ...]]:
+    """{seed: selection-time members} for every alliance of the event (raises as `selection_members` does)."""
+    return {a.seed: selection_members(a, event_rules) for a in event.alliances}
+
+
+def map_side_members(side_teams, members: Mapping[int, tuple[int, ...]]) -> int | None:
+    """The seed whose captain-and-picks contain at least two of the side's teams (PX-1 spec §1), or None."""
+    seeds = [seed for seed, teams in members.items() if len(set(teams) & set(side_teams)) >= 2]
+    return seeds[0] if len(seeds) == 1 else None
+
+
 def map_matches(event: EventPlayoffs) -> tuple[list[PlayoffMatch], Counter[str]]:
     """Each playoff match with its sides as seeds; unmappable sides counted, never guessed."""
     out, excluded = [], Counter()
@@ -117,31 +156,39 @@ def selection_features(database: Database, event: EventPlayoffs, teams: set[int]
             for t in sorted(teams)}
 
 
-def playoff_rows(event: EventPlayoffs, bracket: BracketFormat, features: Mapping[int, TeamFeatures]
-                 ) -> tuple[list[PlayoffRow], Counter[str]]:
-    """PX-1 rows (§1): every exclusion counted by reason."""
+def playoff_rows(event: EventPlayoffs, bracket: BracketFormat, features: Mapping[int, TeamFeatures],
+                 event_rules: EventRules) -> tuple[list[PlayoffRow], Counter[str]]:
+    """PX-1 rows (§1): every exclusion counted by reason.
+
+    The composition is the selection-time members (D-PX1-1). A side that is not three members is excluded as
+    `four_member_alliance` before the EPA check (D-PX1-2). Raises `RulesetError` when a listing is unexplained."""
     excluded: Counter[str] = Counter()
-    seeds = {a.seed: a for a in event.alliances}
+    members = event_members(event, event_rules)
     slot_round = {(s.competition_level, s.set_number): s.round for s in bracket.slots}
     finals_key = (bracket.finals.competition_level, bracket.finals.set_number)
-    mapped, unmapped = map_matches(event)
-    excluded.update(unmapped)
     rows = []
-    for m in mapped:
-        key = (m.competition_level, m.set_number)
+    for raw in event.matches:
+        red_seed, blue_seed = map_side_members(raw.red, members), map_side_members(raw.blue, members)
+        if red_seed is None or blue_seed is None:
+            excluded["side_unmappable"] += 1
+            continue
+        key = (raw.competition_level, raw.set_number)
         round_ = bracket.finals.round if key == finals_key else slot_round.get(key)
         if round_ is None:
             excluded["slot_unknown"] += 1
             continue
-        if m.winner is None:
+        if raw.winner is None:
             excluded["tie_or_unplayed"] += 1
             continue
-        red = tuple(features[t] for t in seeds[m.red_seed].picks)
-        blue = tuple(features[t] for t in seeds[m.blue_seed].picks)
+        if any(len(members[s]) != PX1_TEAMS_PER_ALLIANCE for s in (red_seed, blue_seed)):
+            excluded["four_member_alliance"] += 1
+            continue
+        red = tuple(features[t] for t in members[red_seed])
+        blue = tuple(features[t] for t in members[blue_seed])
         if not all(t.epa_total_present for t in (*red, *blue)):
             excluded["epa_incomplete"] += 1
             continue
-        raw = next(r for r in event.matches if r.match_key == m.match_key)
-        rows.append(PlayoffRow(m.match_key, event.event_key, event.season, raw.scheduled_time or event.selection_as_of(),
-                               round_, m.red_seed, m.blue_seed, red, blue, m.winner == "red"))
+        rows.append(PlayoffRow(raw.match_key, event.event_key, event.season,
+                               raw.scheduled_time or event.selection_as_of(), round_, red_seed, blue_seed, red, blue,
+                               raw.winner == "red"))
     return rows, excluded

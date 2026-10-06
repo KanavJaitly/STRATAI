@@ -40,6 +40,11 @@ divisions use 3 picks and no backups (2024 §12.2, 2025 and 2026 §13.2).
     alliances.
   - An excluded event has no rules: `for_event` refuses it, so consumers exclude and count it and never
     approximate it.
+- **Unresolved rules (schema v3, D-PX1-4/5, Kanav 2026-10-06).** `captain_rule` and
+  `declined_team_may_become_captain` may be `null`, meaning not established by an authoritative FIRST source.
+  - A `null` needs an `unresolved` entry (note and sources checked); an `unresolved` entry needs a `null`.
+  - Consumers never substitute a value. They raise `RulesetError("not_established")` only where the value would
+    actually decide an outcome.
 - **Consumers must use `for_event`.** Selection consumers read one event's rules through `SeasonRuleset.for_event`,
   which returns an `EventRules`. `ml.playoffs.selection` refuses a bare `SeasonRuleset`, so the season default can
   never be applied to an event by accident.
@@ -59,7 +64,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from database.connection import Database
 
-SCHEMA_VERSION = "p6-ruleset-v2"
+SCHEMA_VERSION = "p6-ruleset-v3"
 # Provenance URLs must point at FIRST itself: the official manuals, Team Updates and event pages (P6-M1 research
 # rule, 2026-10-05: FIRST is the only authoritative source for the rules).
 FIRST_SOURCE_HOSTS = ("firstinspires.org", "firstfrc.blob.core.windows.net")
@@ -159,15 +164,39 @@ class AllianceCountRule(_Frozen):
     citation: str = Field(min_length=1)
 
 
+NULLABLE_SELECTION_FIELDS = ("captain_rule", "declined_team_may_become_captain")
+
+
+class UnresolvedRule(_Frozen):
+    """Why a nullable selection field is null: the rule is not established by an authoritative FIRST source
+    (D-PX1-4/5, Kanav 2026-10-06). A null is never read as true, false or a default."""
+
+    field: Literal["captain_rule", "declined_team_may_become_captain"]
+    note: NonEmpty  # what is and is not established
+    sources_checked: NonEmpty  # the official sources searched
+
+
 class SelectionRules(_Frozen):
     order: Literal["serpentine"]
     picks_per_alliance: int = Field(ge=1)
-    captain_rule: Literal["highest_ranked_available"]
+    captain_rule: Literal["highest_ranked_available"] | None  # null = not established (needs an `unresolved` entry)
     captain_may_accept_higher_alliance: bool
     declined_team_may_be_picked_later: bool
-    declined_team_may_become_captain: bool
+    declined_team_may_become_captain: bool | None  # null = not established (needs an `unresolved` entry)
     backup_robots: bool
+    unresolved: tuple[UnresolvedRule, ...]  # required; [] when every rule is established
     citation: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _nulls_are_explained(self) -> SelectionRules:
+        explained = [u.field for u in self.unresolved]
+        if len(set(explained)) != len(explained):
+            raise ValueError("a field is listed in `unresolved` at most once")
+        nulls = {f for f in NULLABLE_SELECTION_FIELDS if getattr(self, f) is None}
+        if nulls != set(explained):
+            raise ValueError(f"null fields {sorted(nulls)} must be exactly the fields explained in `unresolved` "
+                             f"{sorted(explained)}")
+        return self
 
 
 class ManualReference(_Frozen):
@@ -233,7 +262,7 @@ class EventExclusion(_Frozen):
 
 
 class SeasonRuleset(_Frozen):
-    schema_version: Literal["p6-ruleset-v2"] = SCHEMA_VERSION
+    schema_version: Literal["p6-ruleset-v3"] = SCHEMA_VERSION
     season: int = Field(ge=1992)
     game_name: str = Field(min_length=1)
     manual: ManualReference

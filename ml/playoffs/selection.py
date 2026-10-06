@@ -143,6 +143,9 @@ def _selection(rules: EventRules) -> SelectionRules:
 
 
 def _check_supported(rules: EventRules) -> None:
+    if _selection(rules).captain_rule is None:
+        raise RulesetError("not_established", f"{rules.event_key}: the captain rule is not established by an "
+                                              "authoritative source (P6-M1 `unresolved`); no draft is simulated")
     if _selection(rules).order != "serpentine" or _selection(rules).captain_rule != "highest_ranked_available":
         raise RulesetError("not_supported", "the draft model represents serpentine, highest-ranked-available drafts only")
     if not _selection(rules).captain_may_accept_higher_alliance:
@@ -157,9 +160,20 @@ def available_for_pick(state: DraftState, teams: Sequence[int], rules: EventRule
 
 
 def _captain(state: DraftState, ranks: Mapping[int, int], rules: EventRules) -> int:
+    """The highest-ranked available team. A declined team's eligibility follows the event's decline rule.
+
+    If that rule is null (not established), the captain is still decided whenever no declined team is decisive.
+    If one is decisive, `not_established` is raised: the value is never guessed (D-PX1-4)."""
     taken = state.on_alliance()
-    blocked = set() if _selection(rules).declined_team_may_become_captain else set(state.declined)
-    eligible = [t for t in ranks if t not in taken and t not in blocked]
+    rule = _selection(rules).declined_team_may_become_captain
+    available = [t for t in ranks if t not in taken]
+    eligible = available if rule is True else [t for t in available if t not in state.declined]
+    if rule is None and available:
+        best_of_all = min(available, key=lambda t: (ranks[t], t))
+        if best_of_all in state.declined:
+            raise RulesetError("not_established", f"{rules.event_key}: declined team {best_of_all} would be the next "
+                                                  "captain, and whether a declined team may become captain is not "
+                                                  "established (P6-M1 `unresolved`)")
     if not eligible:
         raise RulesetError("infeasible", "no team is eligible to be a captain")
     return min(eligible, key=lambda t: (ranks[t], t))

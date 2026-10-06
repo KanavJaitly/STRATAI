@@ -134,11 +134,11 @@ def test_captain_rule_respects_serpentine_timing():
     ranks = {101: 1, 102: 2, 103: 3, 104: 4, 105: 5, 106: 6}
     ok = SimpleNamespace(event_key="e", alliances=[Alliance(1, 1, None, 101, (101, 102, 106), None, ()),
                                                    Alliance(2, 2, None, 103, (103, 104, 105), None, ())])
-    assert _captain_rule_violations(ok, ranks, rules) == []
+    assert _captain_rule_violations(ok, ranks, rules) == ([], {})
     # seed 2's captain is 104 although 103 was still available (103 only joined seed 1 in round 2)
     late = SimpleNamespace(event_key="e", alliances=[Alliance(1, 1, None, 101, (101, 102, 103), None, ()),
                                                      Alliance(2, 2, None, 104, (104, 105, 106), None, ())])
-    assert len(_captain_rule_violations(late, ranks, rules)) == 1
+    assert len(_captain_rule_violations(late, ranks, rules)[0]) == 1
 
 
 def _leaves(value, path=""):
