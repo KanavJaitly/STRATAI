@@ -6,7 +6,7 @@ done_means: {P6-DM1: NOT MET (blocked by required human input: P6-M1 rulesets), 
 accepted: [P6-M0 frozen, P6-M4 implementation correctness, P6-M6 (a), P6-M7 optimization correctness, P6-M9, P6-M11, P6-M12 (rerun1), P6-M13 (rerun1), P6-M14]
 failed_d9: [P6-M10 gate (G2) -> baseline strategy odds not_validated; no redesign without Kanav's dated decision]
 failed_and_superseded: [P6-M12 run 1 (harness defect), P6-M13 run 1 (two demonstrated defects)] -- both kept
-blocked_by_human_input: [P6-M1 rulesets 2024-2026 (entered from the manuals; different named reviewer) -> P6-M2, M3, M5, M6 (b), M8 not run; P6-M8 pre-run record and named mentor review]
+blocked_by_human_input: [P6-M1 rulesets 2024-2026 (entered from the manuals; named, qualified FRC-domain reviewer per the 2026-10-07 review control) -> P6-M2, M3, M5, M6 (b), M8 not run; P6-M8 pre-run record and named mentor review]
 prerequisites:
   - migration 0011 on the serving database (production DDL: Kanav's explicit approval)
 records: .agent/phase6/results/ (p6_m10_fit, p6_m10_outcome_model, p6_m12_strategy_validation(+_rerun1), p6_m13_parity_audit(+_rerun1), p6_m6a_profiles)

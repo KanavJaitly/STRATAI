@@ -3,7 +3,7 @@
 **Prepared 2026-10-06 by Claude. Status: not entered, not submitted, not approved.**
 - **What it is:** a pre-filled entry form per season, built from the official-FIRST research package (`.agent/phase6/rulesets_research/`, unchanged) and Kanav's dated decisions (`.agent/phase6/decisions/P6_M1_P1_SCHEMA_V2.md`, `P6_PX1_COMPOSITION_DECISIONS.md`).
 - **Not human-verified:** a person verifies every value against its cited source, decides every `HUMAN_DECISION(...)` marker and enters it under their own name.
-- **Approval:** a **different** named person approves.
+- **Approval:** a named, qualified human FRC-domain reviewer approves after independently verifying the stored ruleset against the authoritative FIRST sources (R1–R15). The reviewer may also be the author (review control of 2026-10-07, `.agent/phase6/decisions/P6_M1_REVIEW_CONTROL.md`).
 
 **Current state: implementation complete; validation not run; P6-M1 human approval required.**
 
@@ -50,9 +50,9 @@ For each season, the author (one named person) does:
 3. Run `python -m scripts.phase6_rulesets draft --file <working file> --by "<Author Full Name>"`. Schema errors print with field paths; a remaining marker is one of them.
 4. Run `python -m scripts.phase6_rulesets submit --id <id>`.
 
-Then the reviewer, a **different** named person, does:
+Then the reviewer, a named, qualified human FRC-domain reviewer (who may be the author), does:
 1. Run the checklist in `P6_M1_HUMAN_INPUT_GUIDE.md` §5 against the **stored** JSON (read-only), not the author's file.
-2. Run `python -m scripts.phase6_rulesets review --id <id> --reviewer "<Reviewer Full Name>" --approve`, or `--return --note "<what to fix>"`.
+2. Copy `review_checklist_template.json` and set each item `true` only when verified. Then run `python -m scripts.phase6_rulesets review --id <id> --reviewer "<Full Name>" --approve --qualification "<qualification>" --checklist <file> --sha256 <full stored sha256>`, or `--return --note "<what to fix>"`. The CLI writes the approval record JSON.
 3. Record the approval with `APPROVAL_RECORD_TEMPLATE.md`, including the full approved sha256. Commit it.
 
 ## The gate that unblocks validation

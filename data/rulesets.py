@@ -1,13 +1,27 @@
 """P6-M1: per-season alliance-selection and playoff rulesets, entered by people from the game manuals.
 
 docs/P6Milestones.md P6-M1 (frozen at P6-M0).
-- **Human-entered:** a ruleset is entered by a person from the official manual, with a section citation for every
-  rule. Workflow (Kanav, 2026-10-05): Claude may prepare a cited research draft from the official FIRST
-  documents (`.agent/phase6/rulesets_research/`). That draft is never stored here as entered. A person verifies
-  every value against the cited source and enters it under their own name, and a different named person
-  approves it. No LLM is in the runtime path (CLAUDE.md).
-- **Draft → approval:** a ruleset becomes authoritative only when a named reviewer approves it: draft → submit →
-  approve, or return with a note. Every version is kept.
+- **Sources and roles are kept apart:**
+  - the authoritative sources: FIRST Game Manuals, Team Updates and event/division pages, plus TBA only where the
+    ruleset requires the TBA mapping;
+  - Claude's cited research draft (`.agent/phase6/rulesets_research/`);
+  - the submitted ruleset (stored here);
+  - the human review.
+- **Review control (Kanav, 2026-10-07; `.agent/phase6/decisions/P6_M1_REVIEW_CONTROL.md`).** P6-M1 requires a
+  named, qualified human FRC-domain reviewer who independently verifies the submitted ruleset against the
+  authoritative FIRST sources and completes R1–R15.
+  - "Independently" means against the sources, never by accepting the author's transcription or the research
+    draft.
+  - The reviewer may also be the ruleset's author when the reviewer satisfies the qualification requirement.
+  - This replaces the earlier "a different person from the author" control.
+  - No LLM is in the runtime path (CLAUDE.md).
+- **Draft → approval:** a ruleset becomes authoritative only when a qualified named reviewer approves it: draft →
+  submit → approve, or return with a note. Every version is kept.
+  - **Approval refuses unless** all of these hold: a reviewer name; the reviewer's FRC-domain qualification; R1–R15
+    all completed; the full sha256 the reviewer verified equals the stored one; the stored content still validates
+    and still hashes to it.
+  - **Recording:** the qualification, the checklist result and the verified sha256 are stored as a JSON document in
+    `review_note`.
 - **Read, never hard-coded:** every later Phase 6 milestone reads the season's *approved* ruleset, and no rule
   exists only in code. `approved_ruleset` refuses an unapproved or unknown season.
 - **Storage:** migration `0011_phase6_season_rulesets.sql`. Content is append-only (an edit is a new version), and
@@ -419,16 +433,50 @@ def submit_ruleset(database: Database, ruleset_id: int) -> dict[str, Any]:
         return _rows(cursor)[0]
 
 
-def review_ruleset(database: Database, ruleset_id: int, *, reviewer: str, approve: bool,
-                   note: str = "") -> dict[str, Any]:
-    """A named reviewer approves it, superseding the season's earlier approved version, or returns it with a note."""
+REVIEW_CHECKLIST = tuple(f"R{i}" for i in range(1, 16))  # P6_M1_HUMAN_INPUT_GUIDE.md §5
+SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _approval_record(row: dict[str, Any], *, reviewer_qualification: str, checklist: Any, verified_sha256: str,
+                     note: str) -> str:
+    """The review conditions an approval needs (review control of 2026-10-07). Returns the `review_note` JSON."""
+    if not isinstance(reviewer_qualification, str) or not reviewer_qualification.strip():
+        raise RulesetError("invalid_input", "approval needs the reviewer's FRC-domain qualification")
+    if not isinstance(checklist, dict):
+        raise RulesetError("review_incomplete", "approval needs the R1-R15 checklist result")
+    unknown = sorted(set(checklist) - set(REVIEW_CHECKLIST))
+    incomplete = [item for item in REVIEW_CHECKLIST if checklist.get(item) is not True]
+    if unknown or incomplete:
+        raise RulesetError("review_incomplete", "every checklist item R1-R15 must be completed (true)",
+                           {"incomplete": incomplete, "unknown": unknown})
+    sha_ok = isinstance(verified_sha256, str) and SHA256_PATTERN.fullmatch(verified_sha256)
+    if not sha_ok or verified_sha256 != row["ruleset_sha256"]:
+        raise RulesetError("hash_mismatch", "the full sha256 the reviewer verified does not equal the stored "
+                                            f"ruleset's {row['ruleset_sha256']}")
+    try:
+        stored = SeasonRuleset.model_validate(row["ruleset_json"])
+    except ValidationError as exc:  # e.g. an unresolved marker in content stored outside save_ruleset_draft
+        raise RulesetError("invalid_stored_ruleset", "the stored ruleset does not satisfy the schema",
+                           [".".join(str(p) for p in e["loc"]) for e in exc.errors()]) from exc
+    if stored.sha256() != row["ruleset_sha256"]:
+        raise RulesetError("hash_mismatch", "the stored ruleset content does not hash to its stored sha256")
+    return json.dumps({"reviewer_qualification": reviewer_qualification.strip(),
+                       "checklist": {item: True for item in REVIEW_CHECKLIST},
+                       "verified_sha256": verified_sha256, "note": note or None}, sort_keys=True)
+
+
+def review_ruleset(database: Database, ruleset_id: int, *, reviewer: str, approve: bool, note: str = "",
+                   reviewer_qualification: str = "", checklist: Any = None,
+                   verified_sha256: str = "") -> dict[str, Any]:
+    """A named, qualified FRC-domain reviewer approves it (superseding the season's earlier approved version), or
+    returns it with a note.
+
+    Approval refuses unless every review condition holds (module docstring). The reviewer may be the author."""
     reviewer = _name(reviewer, "reviewer")
     with database.cursor() as cursor:
         row = _locked(cursor, ruleset_id)
         if row["status"] != "awaiting_review":
             raise RulesetError("invalid_state", f"ruleset {ruleset_id} is {row['status']}, not awaiting_review")
-        if row["created_by"] == reviewer:
-            raise RulesetError("invalid_input", "the reviewer must be a different person from the author")
         now = _now()
         if not approve:
             if not note.strip():
@@ -436,10 +484,12 @@ def review_ruleset(database: Database, ruleset_id: int, *, reviewer: str, approv
             cursor.execute("UPDATE season_rulesets SET status = 'draft', reviewed_by = %s, reviewed_at = %s, "
                            "review_note = %s WHERE id = %s RETURNING *", (reviewer, now, note, ruleset_id))
             return _rows(cursor)[0]
+        record = _approval_record(row, reviewer_qualification=reviewer_qualification, checklist=checklist,
+                                  verified_sha256=verified_sha256, note=note)
         cursor.execute("UPDATE season_rulesets SET status = 'superseded' WHERE season = %s AND status = 'approved'",
                        (row["season"],))
         cursor.execute("UPDATE season_rulesets SET status = 'approved', reviewed_by = %s, reviewed_at = %s, "
-                       "review_note = %s WHERE id = %s RETURNING *", (reviewer, now, note or None, ruleset_id))
+                       "review_note = %s WHERE id = %s RETURNING *", (reviewer, now, record, ruleset_id))
         return _rows(cursor)[0]
 
 
@@ -460,7 +510,7 @@ def approved_ruleset(database: Database, season: int) -> SeasonRuleset:
         row = cursor.fetchone()
     if row is None:
         raise RulesetError("not_approved", f"no approved {season} ruleset: it must be entered from the manual and "
-                                           "approved by a named reviewer (P6-M1)")
+                                           "approved by a named, qualified FRC-domain reviewer (P6-M1)")
     ruleset = SeasonRuleset.model_validate(row[0])
     if ruleset.sha256() != row[1]:
         raise RulesetError("storage_integrity", f"the approved {season} ruleset does not match its sha256")

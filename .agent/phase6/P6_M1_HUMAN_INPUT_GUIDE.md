@@ -1,7 +1,7 @@
 # P6-M1 — human entry and review of the 2024, 2025 and 2026 rulesets
 
 Revised 2026-10-05.
-- **What this is:** preparation only. No ruleset has been entered, submitted or approved. A person enters every value from the official documents, and a different named reviewer verifies it.
+- **What this is:** preparation only. No ruleset has been entered, submitted or approved. **Review control (2026-10-07, `.agent/phase6/decisions/P6_M1_REVIEW_CONTROL.md`):** P6-M1 requires a named, qualified human FRC-domain reviewer who independently verifies the submitted ruleset against authoritative FIRST sources and completes R1–R15. The reviewer may also be the ruleset author when the reviewer satisfies the qualification requirement. 'Independently' means the review is performed against the authoritative sources, not by accepting the author's transcription or Claude's research draft.
 - **Workflow change (Kanav, 2026-10-05):** Claude researched the official FIRST Game Manuals and Team Updates and prepared a cited research draft for each season: `.agent/phase6/rulesets_research/` (start with its `README.md`).
   - The draft is **input to a person's verification, not a substitute**. Nothing in it is human-verified, and it was not stored anywhere.
   - Each draft fails schema validation while any value is `UNRESOLVED`.
@@ -12,7 +12,7 @@ Revised 2026-10-05.
 ## 1. Readiness verdict
 
 **The workflow is functional.**
-- The schema validation, the draft → submit → review → approve lifecycle, refusal of self-approval and sha256 verification on read are implemented. They are tested on the isolated copy (`tests/test_phase6_rulesets.py`).
+- The schema validation, the draft → submit → review → approve lifecycle, the approval conditions (a qualified reviewer, R1–R15 complete, the full stored sha256 verified) and sha256 verification on read are implemented. They are tested on the isolated copy (`tests/test_phase6_rulesets.py`).
 - The CLI `template` command works.
 
 **Six usability problems are documented below.** U1 is fixed (commit `c8b7b7a`, 2026-10-05): every template value is now a blank placeholder that fails validation, with regression tests. U2–U6 are documented, not fixed.
@@ -21,7 +21,7 @@ Revised 2026-10-05.
 |---|---|---|---|
 | **U1 (FIXED, `c8b7b7a`)** | Before the fix, `template` **pre-filled rule values**: `captain_may_accept_higher_alliance: true`, `declined_team_may_be_picked_later: false`, `declined_team_may_become_captain: true`, `backup_robots: true`. `order` and `captain_rule` are also pre-filled, but each is the schema's only allowed value. | A value left untouched passes validation, so an un-transcribed (software-supplied) rule could enter a ruleset | Make the template emit `null` for every rule value, so validation fails until a person enters each one |
 | U2 | No CLI command shows a stored ruleset; `list` shows only id, season, version, status, author, reviewer and sha prefix | The reviewer must see exactly what was stored, not only the author's file | Add a read-only `show --id` command that prints the stored JSON and its sha256. Until then, the reviewer reads `season_rulesets.ruleset_json` directly, read-only |
-| U3 | Self-approval is refused by comparing names as stripped strings, case-sensitively. It is not an identity check (the Phase 5 convention: names are recorded, not authenticated) | "Kanav" and "kanav" would count as different people | Procedural: use each person's full name, written identically every time. A real identity check would be a separate decision |
+| U3 | **Superseded 2026-10-07.** Self-approval is no longer refused. A reviewer is a named person who states an FRC-domain qualification. Names and qualifications are recorded, not authenticated (the Phase 5 convention) | A misstated qualification is not detected by software | Procedural: state your full name and your qualification accurately; both are recorded in the approval record |
 | U4 | `alliance_counts` ranges are not checked for overlap, gaps, or `max_teams ≥ min_teams`. `alliances_for` takes the **first** matching rule | An entry error could silently pick the wrong rule. A gap yields `not_covered`, and the event is excluded and counted | The reviewer checks it manually (reviewer checklist R4) |
 | U5 | `round` is only required to be ≥ 1. There is no check of ordering or consistency, and the finals round is not required to exceed the slot rounds | PX-1 uses rounds as categorical interactions **pooled across 2024–2025**, so inconsistent numbering across seasons would silently change the model's inputs | Your decision D3 below, plus reviewer check R6 |
 | U6 | No structured field records Team Updates or effective dates. The only places are `manual.version` and each free-text `citation` | Team Update precedence can be recorded only in text | Decision D1 below. Record Team Updates inside `manual.version` and each affected `citation` |
@@ -101,9 +101,14 @@ The section numbers are **not** given here. Read them from the manual you provid
 | **D6 Unsupported rules** | Representable: serpentine order; highest-ranked-available captains; captains may join higher alliances; slot graphs over `semifinal`/`quarterfinal`/`eighthfinal` plus a best-of-N `final`; seeds entering at any slot (byes included); replays (the last decided match counts) | Rules the schema cannot express: a non-serpentine order; another captain rule; captains barred from joining higher alliances (the schema accepts it, the draft model refuses it); playoff matches outside the slot graph (e.g. extra levels or third-place matches: flagged "no slot"); finals with a non-constant format or a reset; division or Einstein round-robin formats; one season with mixed formats (D1, D5) | Record any such rule. **The frozen requirement:** affected events are excluded and counted, never approximated. More than 10% excluded in a season escalates (P6-Q13) | P6-M1 (a) and (b); everything downstream |
 | **D7 Tie rule** | Free text | How a playoff tie is resolved | Transcribe it with its citation. It is informational only, so no modelling decision is needed | none computational |
 
-## 5. Reviewer checklist (a DIFFERENT named person from the author; the CLI refuses self-approval)
+## 5. Reviewer checklist (a named, qualified human FRC-domain reviewer; the reviewer may also be the author)
 
-- **R1 Identity.** Use your full name exactly as recorded (U3). You are not the author.
+P6-M1 requires a named, qualified human FRC-domain reviewer who independently verifies the submitted ruleset against authoritative FIRST sources and completes R1–R15. The reviewer may also be the ruleset author when the reviewer satisfies the qualification requirement.
+- **'Independently'** means you verify the **stored** ruleset against the authoritative FIRST sources: the Game Manuals, Team Updates and FIRST event/division pages, plus TBA only for the slot mapping (R7).
+- **It does not mean** accepting the author's transcription, Claude's research draft or the entry sheets as evidence. They are aids that point you to the sources.
+- **The CLI refuses approval without:** your name; `--qualification`; `--checklist` with R1–R15 each `true`; `--sha256`, the full stored hash.
+
+- **R1 Identity and qualification.** Use your full name exactly as recorded (U3). State your FRC-domain qualification accurately, without claiming any credential you do not hold; it is recorded in the approval record. You may be the author. If you are, the R2–R15 verification against the sources is still required in full.
 - **R2 Documents.** Use the same manual version and Team Updates the author used. Confirm that `manual.title` and `manual.version` match them, and that **Team Update precedence** is correctly reflected (a later Team Update overrides the manual).
 - **R3 Every value.** Check each field in §3 against the cited section. Every boolean in `selection` must be actually transcribed. A research-draft value counts only once verified against its source.
 - **R4 Alliance counts.** The ranges match the manual, do not overlap, have no unintended gaps, and have `max_teams ≥ min_teams` (U4). Every count has a bracket.
@@ -129,7 +134,7 @@ The section numbers are **not** given here. Read them from the manual you provid
   - `event_exclusions` contains the D-PX1-3 anomalies (2024: `2024isde2`; 2026: `2026tuak2`, `2026tuis4`) with their findings, unless an authoritative FIRST document resolving one is cited in the approval record.
   - The H1 small-event choice (O1 or O2) is applied as recorded.
   - No other exclusion appears without a dated decision.
-- **R15 Approval recorded with its hash.** After `review --approve`, complete `rulesets_entry/APPROVAL_RECORD_TEMPLATE.md` as `.agent/phase6/decisions/P6_M1_APPROVAL_<season>.md`. Include the **full** approved `ruleset_sha256` (read-only query in the template), the decisions H1–H3, and this checklist's result. Commit it.
+- **R15 Approval recorded with its hash.** `review --approve` writes the approval record `.agent/phase6/decisions/P6_M1_APPROVAL_<season>_v<version>.json`: reviewer name, qualification, review date, checklist result, full approved sha256. Commit it. Then complete `rulesets_entry/APPROVAL_RECORD_TEMPLATE.md` as `.agent/phase6/decisions/P6_M1_APPROVAL_<season>.md` for the narrative and decisions. Include the **full** approved `ruleset_sha256` (read-only query in the template), the decisions H1–H3, and this checklist's result. Commit it.
 - **Decision:** approve (`--approve`, with an optional note), or return (`--return --note "what to fix"`; a note is required).
 
 ## 6. Procedure once you have the manuals
@@ -150,7 +155,7 @@ The steps below still apply. Step 3.1 starts from the entry form instead of the 
    2. Transcribe each field from the manual and Team Updates, with the citations (§3). Establish the TBA mapping from real match keys (D2).
    3. `python -m scripts.phase6_rulesets draft --file ruleset_<season>.json --by "<Author Full Name>"`. Schema errors are printed with their field paths; fix them and draft again (each draft is a new version).
    4. `python -m scripts.phase6_rulesets submit --id <id>`.
-   5. The reviewer runs the §5 checklist, then `python -m scripts.phase6_rulesets review --id <id> --reviewer "<Reviewer Full Name>" --approve` (or `--return --note "…"`).
+   5. The qualified reviewer runs the §5 checklist against the stored ruleset. They copy `rulesets_entry/review_checklist_template.json`, set each item `true` only when verified, and run `python -m scripts.phase6_rulesets review --id <id> --reviewer "<Full Name>" --approve --qualification "<qualification>" --checklist <file> --sha256 <full stored sha256>`, or `--return --note "…"`.
    6. `python -m scripts.phase6_rulesets list --season <season>` shows the version `approved`.
 4. **When all three are approved,** tell me. The next step (not done now) is to clone a fresh isolated copy from serving and run `python -m scripts.phase6_playoff_track m1`, which records bracket reproduction and the captain-rule check with exclusion counts. Only after that, and in dependency order, do PX-1, PX-2, PX-4, P6-M6 (b) and P6-M8 become runnable.
 
