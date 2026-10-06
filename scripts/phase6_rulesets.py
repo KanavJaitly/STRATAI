@@ -10,7 +10,8 @@
 **Who does what:**
 - A person enters the ruleset from the official game manual, citing a section for every rule.
 - A different named person reviews it against the manual.
-- Nothing is drafted or parsed automatically, and no LLM is involved.
+- A Claude-prepared research draft (`.agent/phase6/rulesets_research/`, Kanav's workflow of 2026-10-05) is input
+  to that person's verification, never a substitute for it. The template itself supplies no values.
 
 **Where it is stored:** the database `DATABASE_URL` names, which needs migration 0011. Applying 0011 to the serving
 database is a production step that needs Kanav's explicit approval.
@@ -23,19 +24,23 @@ import json
 import sys
 from pathlib import Path
 
+# Every value is an empty-string placeholder. The schema rejects "" for every field (integers, booleans, the fixed
+# vocabularies, `max_teams`, citations and free text), so a fresh template fails validation until a person replaces
+# every value. The template supplies no rule value of its own (P6-M1 template safety, 2026-10-05).
+BLANK = ""
 SKELETON = {
-    "season": 0, "game_name": "", "manual": {"title": "", "version": ""},
-    "alliance_counts": [{"min_teams": 0, "max_teams": None, "alliances": 0, "citation": "manual section"}],
-    "selection": {"order": "serpentine", "picks_per_alliance": 0, "captain_rule": "highest_ranked_available",
-                  "captain_may_accept_higher_alliance": True, "declined_team_may_be_picked_later": False,
-                  "declined_team_may_become_captain": True, "backup_robots": True, "citation": "manual section"},
-    "brackets": [{"alliances": 0, "slots": [
-        {"slot": "", "competition_level": "semifinal", "set_number": 0, "round": 0,
-         "red": {"kind": "seed", "seed": 0}, "blue": {"kind": "winner", "slot": ""}, "citation": "manual section"}],
-        "finals": {"competition_level": "final", "set_number": 1, "round": 0, "wins_needed": 0,
-                   "red": {"kind": "winner", "slot": ""}, "blue": {"kind": "winner", "slot": ""},
-                   "citation": "manual section"}}],
-    "tie_rule": "how a tied playoff match is resolved, with its manual section",
+    "season": BLANK, "game_name": BLANK, "manual": {"title": BLANK, "version": BLANK},
+    "alliance_counts": [{"min_teams": BLANK, "max_teams": BLANK, "alliances": BLANK, "citation": BLANK}],
+    "selection": {"order": BLANK, "picks_per_alliance": BLANK, "captain_rule": BLANK,
+                  "captain_may_accept_higher_alliance": BLANK, "declined_team_may_be_picked_later": BLANK,
+                  "declined_team_may_become_captain": BLANK, "backup_robots": BLANK, "citation": BLANK},
+    "brackets": [{"alliances": BLANK, "slots": [
+        {"slot": BLANK, "competition_level": BLANK, "set_number": BLANK, "round": BLANK,
+         "red": {"kind": BLANK, "seed": BLANK}, "blue": {"kind": BLANK, "slot": BLANK}, "citation": BLANK}],
+        "finals": {"competition_level": BLANK, "set_number": BLANK, "round": BLANK, "wins_needed": BLANK,
+                   "red": {"kind": BLANK, "slot": BLANK}, "blue": {"kind": BLANK, "slot": BLANK},
+                   "citation": BLANK}}],
+    "tie_rule": BLANK,
 }
 
 

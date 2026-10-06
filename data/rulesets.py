@@ -2,7 +2,10 @@
 
 docs/P6Milestones.md P6-M1 (frozen at P6-M0).
 - **Human-entered:** a ruleset is entered by a person from the official manual, with a section citation for every
-  rule. No LLM drafts or parses a manual (CLAUDE.md, P6-M1).
+  rule. Workflow (Kanav, 2026-10-05): Claude may prepare a cited research draft from the official FIRST
+  documents (`.agent/phase6/rulesets_research/`). That draft is never stored here as entered. A person verifies
+  every value against the cited source and enters it under their own name, and a different named person
+  approves it. No LLM is in the runtime path (CLAUDE.md).
 - **Draft → approval:** a ruleset becomes authoritative only when a named reviewer approves it: draft → submit →
   approve, or return with a note. Every version is kept.
 - **Read, never hard-coded:** every later Phase 6 milestone reads the season's *approved* ruleset, and no rule
