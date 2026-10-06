@@ -113,9 +113,35 @@ The section numbers are **not** given here. Read them from the manual you provid
 - **R8 Tie behaviour.** `tie_rule` matches the cited section.
 - **R9 Exclusions.** Any unsupported rule (D6) or D1/D4/D5 decision is recorded, and the resulting exclusions are acceptable.
 - **R10 Stored content.** Review the **stored** ruleset (U2: read `season_rulesets.ruleset_json` for the id) and confirm it is what you checked.
+- **R11 Fields populated or explicitly unresolved (schema v3).**
+  - No `HUMAN_DECISION(...)` marker remains.
+  - Every field has a value, or is `null` with exactly one `selection.unresolved` entry (field, note, sources checked), in the default **and** in every variant.
+  - The only nulls are the decided ones: `declined_team_may_become_captain` (D-PX1-4, all seasons) and 2025 `captain_rule` (D-PX1-5); plus 2026 `captain_rule` only if H3 chose (b).
+  - No inferred value was silently entered: every non-null value matches a row marked ESTABLISHED in `rulesets_entry/entry_<season>.md`, or a recorded dated decision.
+- **R12 Citations exist.** `selection.citation`, every bracket slot and the finals, each `alliance_counts` row and `tie_rule` cite a section and page of the official PDF. Every variant event carries `rule`, `document`, `version`, `team_update` (named, or an explicit null), `section` and an https FIRST `url`.
+- **R13 Event variants tied to the correct events.**
+  - `first_championship_division` lists exactly the 8 FIRST Championship divisions of the season (`<year>arc cur dal gal hop joh mil new`).
+  - Each `url` opens the FRC Events page of that division.
+  - TBA's name for the key is that division.
+  - No other event is listed.
+  - The variant has 3 picks and no backups (2024 §12.2; 2025/2026 §13.2). Its other fields equal the default.
+- **R14 Exclusions intentional and documented.**
+  - `event_exclusions` contains the D-PX1-3 anomalies (2024: `2024isde2`; 2026: `2026tuak2`, `2026tuis4`) with their findings, unless an authoritative FIRST document resolving one is cited in the approval record.
+  - The H1 small-event choice (O1 or O2) is applied as recorded.
+  - No other exclusion appears without a dated decision.
+- **R15 Approval recorded with its hash.** After `review --approve`, complete `rulesets_entry/APPROVAL_RECORD_TEMPLATE.md` as `.agent/phase6/decisions/P6_M1_APPROVAL_<season>.md`. Include the **full** approved `ruleset_sha256` (read-only query in the template), the decisions H1–H3, and this checklist's result. Commit it.
 - **Decision:** approve (`--approve`, with an optional note), or return (`--return --note "what to fix"`; a note is required).
 
 ## 6. Procedure once you have the manuals
+
+**Use the entry package (2026-10-06): `.agent/phase6/rulesets_entry/README.md`.** It holds:
+- the v3 entry forms (`entry_<season>.json`), pre-filled with the ESTABLISHED and DECIDED values; every human decision is a marker the schema refuses;
+- the per-field sheets (`entry_<season>.md`): value, source, status and downstream effect;
+- the three remaining decisions: H1 small events, H2 round convention, H3 2026 captain rule;
+- the exact commands;
+- the gate that unblocks the validation runner.
+
+The steps below still apply. Step 3.1 starts from the entry form instead of the blank template.
 
 1. **Decide D1, D2, D3 and D5** (and D4 and D6 if they apply) and write the decisions down, dated, before entering values. D3 must be one convention for all three seasons.
 2. **Get migration 0011 onto serving** (§7), with your explicit approval. The CLI writes to `DATABASE_URL`, and the authoritative rulesets belong in serving.
