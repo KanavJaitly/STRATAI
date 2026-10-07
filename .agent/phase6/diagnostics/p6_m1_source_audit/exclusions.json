@@ -1,0 +1,463 @@
+{
+ "2024isde2": {
+  "reason": "backup_before_first_match",
+  "qualification_teams": 30,
+  "ranked_teams": 30,
+  "alliances_listed": 8,
+  "alliance_sizes": [
+   3,
+   3,
+   3,
+   3,
+   4,
+   3,
+   4,
+   3
+  ],
+  "placeholder_teams": [],
+  "roster_rule_covers": 8,
+  "playoff_matches": 15,
+  "split": "train",
+  "px1_rows_if_not_excluded": 0,
+  "px1_other_exclusions": {
+   "epa_incomplete": 15
+  },
+  "four_listed_alliances": [
+   {
+    "seed": 5,
+    "listed": [
+     6168,
+     7845,
+     4744,
+     1943
+    ],
+    "on_field": [
+     [
+      "2024isde2_sf2m1",
+      [
+       6168,
+       7845,
+       4744
+      ]
+     ],
+     [
+      "2024isde2_sf5m1",
+      [
+       6168,
+       7845,
+       4744
+      ]
+     ],
+     [
+      "2024isde2_sf10m1",
+      [
+       6168,
+       7845,
+       1943
+      ]
+     ]
+    ]
+   },
+   {
+    "seed": 7,
+    "listed": [
+     5554,
+     4590,
+     2212,
+     4416
+    ],
+    "on_field": [
+     [
+      "2024isde2_sf3m1",
+      [
+       5554,
+       4590,
+       4416
+      ]
+     ],
+     [
+      "2024isde2_sf6m1",
+      [
+       5554,
+       4590,
+       4416
+      ]
+     ]
+    ]
+   }
+  ]
+ },
+ "2024vapor": {
+  "reason": "small_event_byes_not_represented",
+  "qualification_teams": 23,
+  "ranked_teams": 23,
+  "alliances_listed": 8,
+  "alliance_sizes": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "placeholder_teams": [
+   9990,
+   9991,
+   9992
+  ],
+  "roster_rule_covers": "not covered (not_covered)",
+  "playoff_matches": 15,
+  "split": "train",
+  "px1_rows_if_not_excluded": 0,
+  "px1_other_exclusions": {
+   "epa_incomplete": 15
+  }
+ },
+ "2025ncash": {
+  "reason": "small_event_byes_not_represented",
+  "qualification_teams": 22,
+  "ranked_teams": 22,
+  "alliances_listed": 8,
+  "alliance_sizes": [
+   3,
+   3,
+   3,
+   3,
+   4,
+   3,
+   3,
+   3
+  ],
+  "placeholder_teams": [
+   9991,
+   9992,
+   9993
+  ],
+  "roster_rule_covers": "not covered (not_covered)",
+  "playoff_matches": 15,
+  "split": "train",
+  "px1_rows_if_not_excluded": 4,
+  "px1_other_exclusions": {
+   "epa_incomplete": 11
+  }
+ },
+ "2026tuak2": {
+  "reason": "backup_before_first_match",
+  "qualification_teams": 33,
+  "ranked_teams": 33,
+  "alliances_listed": 8,
+  "alliance_sizes": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   4,
+   3,
+   4
+  ],
+  "placeholder_teams": [],
+  "roster_rule_covers": 8,
+  "playoff_matches": 15,
+  "split": "held_out",
+  "px1_rows_if_not_excluded": 10,
+  "px1_other_exclusions": {
+   "epa_incomplete": 5
+  },
+  "four_listed_alliances": [
+   {
+    "seed": 6,
+    "listed": [
+     8056,
+     8863,
+     6399,
+     11022
+    ],
+    "on_field": [
+     [
+      "2026tuak2_sf4m1",
+      [
+       8056,
+       8863,
+       6399
+      ]
+     ],
+     [
+      "2026tuak2_sf6m1",
+      [
+       8056,
+       8863,
+       6399
+      ]
+     ],
+     [
+      "2026tuak2_sf9m1",
+      [
+       8056,
+       8863,
+       6399
+      ]
+     ],
+     [
+      "2026tuak2_sf12m1",
+      [
+       8056,
+       8863,
+       11022
+      ]
+     ]
+    ]
+   },
+   {
+    "seed": 8,
+    "listed": [
+     9583,
+     10940,
+     9247,
+     10998
+    ],
+    "on_field": [
+     [
+      "2026tuak2_sf1m1",
+      [
+       9583,
+       9247,
+       10998
+      ]
+     ],
+     [
+      "2026tuak2_sf7m1",
+      [
+       9583,
+       9247,
+       10998
+      ]
+     ],
+     [
+      "2026tuak2_sf9m1",
+      [
+       9583,
+       10940,
+       9247
+      ]
+     ]
+    ]
+   }
+  ]
+ },
+ "2026tuis4": {
+  "reason": "backup_never_played",
+  "qualification_teams": 29,
+  "ranked_teams": 29,
+  "alliances_listed": 8,
+  "alliance_sizes": [
+   3,
+   3,
+   3,
+   4,
+   3,
+   3,
+   3,
+   4
+  ],
+  "placeholder_teams": [],
+  "roster_rule_covers": 8,
+  "playoff_matches": 15,
+  "split": "held_out",
+  "px1_rows_if_not_excluded": 6,
+  "px1_other_exclusions": {
+   "epa_incomplete": 9
+  },
+  "four_listed_alliances": [
+   {
+    "seed": 4,
+    "listed": [
+     9427,
+     9519,
+     8151,
+     8042
+    ],
+    "on_field": [
+     [
+      "2026tuis4_sf2m1",
+      [
+       9427,
+       9519,
+       8151
+      ]
+     ],
+     [
+      "2026tuis4_sf7m1",
+      [
+       9427,
+       9519,
+       8151
+      ]
+     ],
+     [
+      "2026tuis4_sf9m1",
+      [
+       9427,
+       9519,
+       8151
+      ]
+     ],
+     [
+      "2026tuis4_sf12m1",
+      [
+       9427,
+       9519,
+       8151
+      ]
+     ]
+    ]
+   },
+   {
+    "seed": 8,
+    "listed": [
+     7742,
+     6988,
+     7576,
+     10064
+    ],
+    "on_field": [
+     [
+      "2026tuis4_sf1m1",
+      [
+       7742,
+       6988,
+       7576
+      ]
+     ],
+     [
+      "2026tuis4_sf5m1",
+      [
+       7742,
+       7576,
+       10064
+      ]
+     ]
+    ]
+   }
+  ]
+ },
+ "2026mefal": {
+  "reason": "small_event_byes_not_represented",
+  "qualification_teams": 20,
+  "ranked_teams": 20,
+  "alliances_listed": 8,
+  "alliance_sizes": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "placeholder_teams": [
+   9990,
+   9991,
+   9992,
+   9993,
+   9994,
+   9995
+  ],
+  "roster_rule_covers": "not covered (not_covered)",
+  "playoff_matches": 15,
+  "split": "held_out",
+  "px1_rows_if_not_excluded": 5,
+  "px1_other_exclusions": {
+   "epa_incomplete": 10
+  }
+ },
+ "2026txfor": {
+  "reason": "small_event_byes_not_represented",
+  "qualification_teams": 24,
+  "ranked_teams": 24,
+  "alliances_listed": 8,
+  "alliance_sizes": [
+   3,
+   3,
+   3,
+   3,
+   4,
+   3,
+   3,
+   3
+  ],
+  "placeholder_teams": [
+   9990,
+   9991,
+   9992
+  ],
+  "roster_rule_covers": "not covered (not_covered)",
+  "playoff_matches": 15,
+  "split": "held_out",
+  "px1_rows_if_not_excluded": 13,
+  "px1_other_exclusions": {
+   "epa_incomplete": 2
+  }
+ },
+ "2026txmca": {
+  "reason": "small_event_byes_not_represented",
+  "qualification_teams": 18,
+  "ranked_teams": 18,
+  "alliances_listed": 8,
+  "alliance_sizes": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "placeholder_teams": [
+   9991,
+   9992,
+   9993,
+   9994,
+   9995,
+   9996,
+   9997,
+   9998,
+   9999
+  ],
+  "roster_rule_covers": "not covered (not_covered)",
+  "playoff_matches": 15,
+  "split": "held_out",
+  "px1_rows_if_not_excluded": 9,
+  "px1_other_exclusions": {
+   "epa_incomplete": 6
+  }
+ },
+ "2026isde2": {
+  "reason": "alliance_count_contrary_to_10_6_6",
+  "qualification_teams": 24,
+  "ranked_teams": 24,
+  "alliances_listed": 8,
+  "alliance_sizes": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "placeholder_teams": [],
+  "roster_rule_covers": "not covered (not_covered)",
+  "playoff_matches": 16,
+  "split": "held_out",
+  "px1_rows_if_not_excluded": 0,
+  "px1_other_exclusions": {
+   "epa_incomplete": 16
+  }
+ }
+}
