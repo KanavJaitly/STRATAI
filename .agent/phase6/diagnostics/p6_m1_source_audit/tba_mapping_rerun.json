@@ -1,0 +1,195 @@
+{
+ "2024": {
+  "seeded_8_alliance_events": 185,
+  "per_set": {
+   "1": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "2": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "3": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "4": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "5": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "6": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "7": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "8": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "9": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "10": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "11": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "12": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "13": {
+    "match": 185,
+    "max_match_number_1": 185
+   },
+   "final": {
+    "match": 185,
+    "max_match_number_2": 141,
+    "max_match_number_3": 41,
+    "max_match_number_4": 3
+   }
+  },
+  "matches_outside_sf1_13_f1": {}
+ },
+ "2025": {
+  "seeded_8_alliance_events": 198,
+  "per_set": {
+   "1": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "2": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "3": {
+    "match": 198,
+    "max_match_number_1": 197,
+    "max_match_number_2": 1
+   },
+   "4": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "5": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "6": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "7": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "8": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "9": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "10": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "11": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "12": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "13": {
+    "match": 198,
+    "max_match_number_1": 198
+   },
+   "final": {
+    "match": 198,
+    "max_match_number_2": 160,
+    "max_match_number_3": 36,
+    "max_match_number_4": 2
+   }
+  },
+  "matches_outside_sf1_13_f1": {}
+ },
+ "2026": {
+  "seeded_8_alliance_events": 208,
+  "per_set": {
+   "1": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "2": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "3": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "4": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "5": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "6": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "7": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "8": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "9": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "10": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "11": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "12": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "13": {
+    "match": 208,
+    "max_match_number_1": 208
+   },
+   "final": {
+    "match": 208,
+    "max_match_number_2": 163,
+    "max_match_number_3": 44,
+    "max_match_number_4": 1
+   }
+  },
+  "matches_outside_sf1_13_f1": {}
+ }
+}
