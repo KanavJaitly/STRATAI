@@ -1,0 +1,24 @@
+{
+ "milestone": "P6-M8",
+ "recorded": "2026-10-08",
+ "prepared_by": "Claude, on Kanav's instruction of 2026-10-08; committed before any P6-M8 run and before PX-4",
+ "frozen_basis": ["P6-Q1", "P6-Q13", "docs/P6Milestones.md P6-M8", "C2 (P6_PX1_COMPOSITION_DECISIONS.md)"],
+ "population": "held-out 2026 events whose P6-M1 status is 'reproduced', minus the C2 four-member (FIRST Championship division) exclusion, as computed by scripts.phase6_playoff_track.representable_events at run time",
+ "strata": "TBA event week (payload 'week'; missing -> -1) x qualification-roster size tercile (cuts at the sorted 1/3 and 2/3 positions of the population's team counts), as implemented by _m8_sample",
+ "seed": 20261012,
+ "per_stratum": 1,
+ "sentinel_event_rule": "the sampled event with the fewest qualification teams (ties: event key); a far-future playoff result with scouting rows is inserted into the isolated copy, the event is re-run, and every output must be unchanged",
+ "runtime_budget_minutes": 45,
+ "runtime_planning": "synthetic engine timing (no real data, no result): 27 s per event at 30 teams, 112 s at 45, 247 s at 60. Over the approximate 2026 population (194 events, 22 strata, size cuts 34/40): per_stratum 1 = 22 events, expected 25 min, worst case 37.5 min; per_stratum 2 = 42 events, expected 49 min (over budget). Over budget: SystemExit, nothing recorded",
+ "reason_categories": [
+  {"code": "post_selection_event", "definition": "The result turned on something that happened after the selection moment, which the frozen leakage rule keeps out of every input: a robot failure, a backup recruited, a lineup change, a card or DQ in the playoffs.", "evidence_required": "the playoff match records (lineups, a listed backup, cards or DQ) for the alliance"},
+  {"code": "unmeasured_role", "definition": "The actual alliance was built around a role Phase 6 cannot measure, such as defense or feeding (P6-Q11/Q12: insufficient_data, zero assumed effect).", "evidence_required": "a specific, citable account of the role at this event (scouting record, match video), not general belief"},
+  {"code": "insufficient_preselection_data", "definition": "A member of the actual alliance had absent or thin selection-moment data (EPA absent, few matches used), so its strength was not observable to any data-driven method.", "evidence_required": "the record's facts: ordering positions, reliability and presence at the selection moment"},
+  {"code": "procedural_selection_event", "definition": "The actual alliance resulted from a selection-procedure event the draft model does not simulate: an absent team (T601), a pick-timer skip or automatic assignment (T605; HD-5), or a decline.", "evidence_required": "the event's selection record or video showing the procedural event"},
+  {"code": "outcome_variance", "definition": "The actual winner or finalist was not a strong alliance by any pre-selection measure: neither baseline identified it either.", "evidence_required": "raw_epa_draft_hit and actual_seed_order_hit both false in the record's facts for that miss"},
+  {"code": "data_error", "definition": "The event's input data (TBA alliances or matches, EPA) is wrong in a way that changes the outcome.", "evidence_required": "the specific record and the corrected fact, from an official source"}
+ ],
+ "review_rule": "Each miss is reviewed by the named mentor, who accepts or rejects exactly one category with its evidence. A miss without an accepted category counts as a miss (P6-Q1). Nothing is accepted by default.",
+ "mentor": "Mr. Biery",
+ "mentor_status": "named by Kanav on 2026-10-08 as the proposed reviewer of every miss; agreement and any review NOT yet confirmed"
+}
