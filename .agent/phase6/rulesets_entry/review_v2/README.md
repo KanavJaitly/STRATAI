@@ -1,6 +1,6 @@
 # R1–R15 review package: v2 rulesets (2024, 2025, 2026)
 
-**The checklists:** `review_<season>.json`. An item is `true` **only** where a committed audit or test already establishes it. **R1, R10 and R15 are `false`.** They depend on your own actions, and the CLI refuses approval until you set them `true`.
+**The checklists:** `review_<season>.json`. An item is `true` **only** where a committed audit or test already establishes it. **R1 and R10 are `false`.** They depend on your own actions, and the CLI refuses approval until you set them `true`. The checklist holds R1–R14 only; R15 is the approval record the command writes.
 
 | Season | File | Expected v2 sha256 |
 |---|---|---|
@@ -25,9 +25,9 @@
 | R7 TBA mapping | true | SA R7 (fresh re-run: 185, 198, 208 events, all sets match) |
 | R8 tie rule | true | SA R8; HD-4 (2024 wordings compatible; both cited) |
 | R9 unsupported rules recorded | true | SA R9 / §5 |
-| R10 stored content | **false: yours** | After `draft`, confirm the stored sha256 equals the table above (step 5 of the command list) |
+| R10 stored content | **false: yours** | After `draft` and `submit`, confirm with the read-only hash query that each stored sha256 equals the table above. The approval command re-checks it and refuses any mismatch |
 | R11 populated or explicitly unresolved | true | T (no `HUMAN_DECISION(` markers; the only null is 2025 `captain_rule`, with its note) |
 | R12 citations | true | SA (a)/(b) (every reference in range, quotes verbatim); HA §6 (new 2026 quotes verbatim); the HD quotes were checked verbatim at `245aa2e` |
 | R13 Championship variants | true | SA §6 (all 24 division keys: FIRST team list = TBA roster) |
 | R14 exclusions intentional | true | SA §5 (9 exclusions, each required and evidenced) |
-| R15 approval recorded | **false: yours** | Set `true` when you approve. The CLI writes `P6_M1_APPROVAL_<season>_v2.json`; commit it |
+| R15 approval recorded | **not in the checklist** | Fulfilled by the approval command, which writes `P6_M1_APPROVAL_<season>_v2.json` with the full approved hash, and by your commit of it. Never attested in advance |

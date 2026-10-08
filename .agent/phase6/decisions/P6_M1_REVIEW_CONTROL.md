@@ -131,3 +131,15 @@ The three stored rulesets (ids 1–3) are untouched and still `awaiting_review`,
 ## 7. Status
 
 **P6-M1: awaiting human review.** ids 1–3 are `awaiting_review` on serving. Kanav performs R1–R15 and the approvals. M1, PX-1, PX-2, PX-4, M6 (b) and M8 have not run.
+
+## Amendment (2026-10-08): R15 is produced, not attested
+
+The approval command previously required `R1`–`R15` all `true`. R15 ("approval recorded with its hash") is the record
+that the same command writes after approving, so it could not truthfully be attested in advance.
+
+**The pre-approval checklist is now R1–R14** (`data/rulesets.REVIEW_CHECKLIST`). R15 is fulfilled by the write-once
+approval record the command writes (with the full approved sha256) and by the reviewer's commit of it. A checklist
+that pre-attests R15 is refused as an unknown item.
+
+Every other approval condition is unchanged: reviewer name, qualification, the full stored sha256 equal to the
+stored row, and stored content that re-validates and re-hashes.

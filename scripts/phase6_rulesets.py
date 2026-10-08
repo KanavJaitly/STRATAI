@@ -15,7 +15,7 @@
   may also be the author.
 - **What approval needs:**
   - `--qualification` (recorded as stated);
-  - `--checklist`, a JSON file with R1…R15 each `true`;
+  - `--checklist`, a JSON file with R1…R14 each `true` (R15 is the record this command writes);
   - `--sha256`, the full stored hash the reviewer verified.
   Anything missing is refused.
 - **On approval** the CLI writes the write-once approval record
@@ -89,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     group.add_argument("--return", dest="return_", action="store_true")
     r.add_argument("--note", default="")
     r.add_argument("--qualification", default="", help="the reviewer's FRC-domain qualification (approval)")
-    r.add_argument("--checklist", type=Path, help="JSON file: R1..R15 each true (approval)")
+    r.add_argument("--checklist", type=Path, help="JSON file: R1..R14 each true (approval)")
     r.add_argument("--sha256", default="", help="the full stored ruleset sha256 the reviewer verified (approval)")
     r.add_argument("--record-dir", type=Path, default=Path(".agent/phase6/decisions"))
     lst = sub.add_parser("list")
@@ -109,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
             checklist = None
             if args.approve:
                 if args.checklist is None or not args.checklist.exists():
-                    raise RulesetError("review_incomplete", "approval needs --checklist (R1..R15 each true)")
+                    raise RulesetError("review_incomplete", "approval needs --checklist (R1..R14 each true)")
                 checklist = json.loads(args.checklist.read_text(encoding="utf-8"))
                 record_path = _record_path(database, args.id, args.record_dir)
             row = review_ruleset(database, args.id, reviewer=args.reviewer, approve=args.approve, note=args.note,
@@ -154,6 +154,7 @@ def _write_approval_record(path: Path, row: dict) -> None:
               "reviewer_qualification": review["reviewer_qualification"],
               "review_date": row["reviewed_at"].isoformat(), "checklist_result": review["checklist"],
               "approved_ruleset_sha256": row["ruleset_sha256"], "note": review["note"],
+              "R15": "this write-once file, written at approval; the reviewer commits it",
               "control": ".agent/phase6/decisions/P6_M1_REVIEW_CONTROL.md"}
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n", encoding="utf-8")

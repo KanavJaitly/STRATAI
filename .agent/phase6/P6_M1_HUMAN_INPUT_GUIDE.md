@@ -106,7 +106,7 @@ The section numbers are **not** given here. Read them from the manual you provid
 P6-M1 requires a named, qualified human FRC-domain reviewer who independently verifies the submitted ruleset against authoritative FIRST sources and completes R1–R15. The reviewer may also be the ruleset author when the reviewer satisfies the qualification requirement.
 - **'Independently'** means you verify the **stored** ruleset against the authoritative FIRST sources: the Game Manuals, Team Updates and FIRST event/division pages, plus TBA only for the slot mapping (R7).
 - **It does not mean** accepting the author's transcription, Claude's research draft or the entry sheets as evidence. They are aids that point you to the sources.
-- **The CLI refuses approval without:** your name; `--qualification`; `--checklist` with R1–R15 each `true`; `--sha256`, the full stored hash.
+- **The CLI refuses approval without:** your name; `--qualification`; `--checklist` with R1–R14 each `true`; `--sha256`, the full stored hash. **R15 is not attested in advance:** the approval command writes the approval record, and you commit it.
 
 - **R1 Identity and qualification.** Use your full name exactly as recorded (U3). State your FRC-domain qualification accurately, without claiming any credential you do not hold; it is recorded in the approval record. You may be the author. If you are, the R2–R15 verification against the sources is still required in full.
 - **R2 Documents.** Use the same manual version and Team Updates the author used. Confirm that `manual.title` and `manual.version` match them, and that **Team Update precedence** is correctly reflected (a later Team Update overrides the manual).
@@ -134,7 +134,7 @@ P6-M1 requires a named, qualified human FRC-domain reviewer who independently ve
   - `event_exclusions` contains the D-PX1-3 anomalies (2024: `2024isde2`; 2026: `2026tuak2`, `2026tuis4`) with their findings, unless an authoritative FIRST document resolving one is cited in the approval record.
   - The H1 small-event choice (O1 or O2) is applied as recorded.
   - No other exclusion appears without a dated decision.
-- **R15 Approval recorded with its hash.** `review --approve` writes the approval record `.agent/phase6/decisions/P6_M1_APPROVAL_<season>_v<version>.json`: reviewer name, qualification, review date, checklist result, full approved sha256. Commit it. Then complete `rulesets_entry/APPROVAL_RECORD_TEMPLATE.md` as `.agent/phase6/decisions/P6_M1_APPROVAL_<season>.md` for the narrative and decisions. Include the **full** approved `ruleset_sha256` (read-only query in the template), the decisions H1–H3, and this checklist's result. Commit it.
+- **R15 Approval recorded with its hash.** Not attested in advance and not in the `--checklist` file (R1–R14). The approval command writes the write-once record `.agent/phase6/decisions/P6_M1_APPROVAL_<season>_v<version>.json` (reviewer name, qualification, review date, checklist result, full approved sha256); R15 is complete when you commit it. Optionally also complete `rulesets_entry/APPROVAL_RECORD_TEMPLATE.md` as `.agent/phase6/decisions/P6_M1_APPROVAL_<season>.md` for narrative notes.
 - **Decision:** approve (`--approve`, with an optional note), or return (`--return --note "what to fix"`; a note is required).
 
 ## 6. Procedure once you have the manuals
