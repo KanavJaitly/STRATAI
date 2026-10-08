@@ -40,7 +40,7 @@ def database():
 
 
 QUALIFICATION = "synthetic test qualification: FRC strategy reviewer"
-CHECKLIST = {f"R{i}": True for i in range(1, 16)}
+CHECKLIST = {f"R{i}": True for i in range(1, 15)}  # R1-R14; R15 is the written record
 
 
 def _approve(database, row, reviewer="Reviewer B", **overrides):
@@ -118,14 +118,16 @@ def test_approval_needs_the_reviewer_qualification(database, qualification):
     assert list_rulesets(database, SEASON)[0]["status"] == "awaiting_review"
 
 
-@pytest.mark.parametrize("change", ["missing_R7", "R15_false", "none", "extra_item", "string_true"])
+@pytest.mark.parametrize("change", ["missing_R7", "R14_false", "none", "extra_item", "R15_preattested", "string_true"])
 def test_approval_needs_every_checklist_item_completed(database, change):
     row = _submitted(database)
     checklist = dict(CHECKLIST)
     if change == "missing_R7":
         del checklist["R7"]
-    elif change == "R15_false":
-        checklist["R15"] = False
+    elif change == "R14_false":
+        checklist["R14"] = False
+    elif change == "R15_preattested":
+        checklist["R15"] = True  # R15 cannot be attested before the record exists
     elif change == "none":
         checklist = None
     elif change == "extra_item":
@@ -210,7 +212,7 @@ def test_cli_approval_writes_the_approval_record(database, tmp_path):
     record = json.loads((tmp_path / f"P6_M1_APPROVAL_{SEASON}_v1.json").read_text(encoding="utf-8"))
     assert record["reviewer_name"] == "Same Person" and record["reviewer_qualification"] == QUALIFICATION
     assert record["checklist_result"] == CHECKLIST and record["approved_ruleset_sha256"] == row["ruleset_sha256"]
-    assert record["status"] == "approved" and record["review_date"]
+    assert record["status"] == "approved" and record["review_date"] and "R15" in record
 
 
 def test_a_new_approval_supersedes_and_versions_are_kept(database):

@@ -9,7 +9,7 @@ docs/P6Milestones.md P6-M1 (frozen at P6-M0).
   - the human review.
 - **Review control (Kanav, 2026-10-07; `.agent/phase6/decisions/P6_M1_REVIEW_CONTROL.md`).** P6-M1 requires a
   named, qualified human FRC-domain reviewer who independently verifies the submitted ruleset against the
-  authoritative FIRST sources and completes R1–R15.
+  authoritative FIRST sources and completes R1–R15. R1–R14 are attested before approval. R15, the approval record, is written by the approval itself (`scripts/phase6_rulesets.py`) and committed afterwards, so it is never attested in advance.
   - "Independently" means against the sources, never by accepting the author's transcription or the research
     draft.
   - The reviewer may also be the ruleset's author when the reviewer satisfies the qualification requirement.
@@ -17,8 +17,8 @@ docs/P6Milestones.md P6-M1 (frozen at P6-M0).
   - No LLM is in the runtime path (CLAUDE.md).
 - **Draft → approval:** a ruleset becomes authoritative only when a qualified named reviewer approves it: draft →
   submit → approve, or return with a note. Every version is kept.
-  - **Approval refuses unless** all of these hold: a reviewer name; the reviewer's FRC-domain qualification; R1–R15
-    all completed; the full sha256 the reviewer verified equals the stored one; the stored content still validates
+  - **Approval refuses unless** all of these hold: a reviewer name; the reviewer's FRC-domain qualification; R1–R14
+    all completed (R15 is the record the approval writes); the full sha256 the reviewer verified equals the stored one; the stored content still validates
     and still hashes to it.
   - **Recording:** the qualification, the checklist result and the verified sha256 are stored as a JSON document in
     `review_note`.
@@ -433,7 +433,9 @@ def submit_ruleset(database: Database, ruleset_id: int) -> dict[str, Any]:
         return _rows(cursor)[0]
 
 
-REVIEW_CHECKLIST = tuple(f"R{i}" for i in range(1, 16))  # P6_M1_HUMAN_INPUT_GUIDE.md §5
+# P6_M1_HUMAN_INPUT_GUIDE.md §5. Attested before approval: R1-R14. R15 (the approval record with its hash) is
+# produced by the approval command and committed after it, so it is not part of the pre-approval attestation.
+REVIEW_CHECKLIST = tuple(f"R{i}" for i in range(1, 15))
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -443,11 +445,11 @@ def _approval_record(row: dict[str, Any], *, reviewer_qualification: str, checkl
     if not isinstance(reviewer_qualification, str) or not reviewer_qualification.strip():
         raise RulesetError("invalid_input", "approval needs the reviewer's FRC-domain qualification")
     if not isinstance(checklist, dict):
-        raise RulesetError("review_incomplete", "approval needs the R1-R15 checklist result")
+        raise RulesetError("review_incomplete", "approval needs the R1-R14 checklist result")
     unknown = sorted(set(checklist) - set(REVIEW_CHECKLIST))
     incomplete = [item for item in REVIEW_CHECKLIST if checklist.get(item) is not True]
     if unknown or incomplete:
-        raise RulesetError("review_incomplete", "every checklist item R1-R15 must be completed (true)",
+        raise RulesetError("review_incomplete", "every checklist item R1-R14 must be completed (true)",
                            {"incomplete": incomplete, "unknown": unknown})
     sha_ok = isinstance(verified_sha256, str) and SHA256_PATTERN.fullmatch(verified_sha256)
     if not sha_ok or verified_sha256 != row["ruleset_sha256"]:
