@@ -31,8 +31,10 @@
 - the 2025 TU19 note.
 
 **Already decided, not open:**
-- `declined_team_may_become_captain` = `null` in all seasons (D-PX1-4);
-- 2025 `captain_rule` = `null` (D-PX1-5);
+- `declined_team_may_become_captain` = `true` in all seasons (HD-1, 2026-10-08; supersedes D-PX1-4's null; `.agent/phase6/decisions/P6_M1_HUMAN_DECISIONS_2026-10-08.md`);
+- 2025 `captain_rule` = `null` (D-PX1-5; HD-2 recorded, still unresolved);
+- 2026 `captain_rule` = `highest_ranked_available` (H3, confirmed by HD-3); 2024 tie-rule wording (HD-4); the pick timer is out of scope (HD-5);
+- **v2 forms with these decisions:** `resolved_v2/ruleset_<season>.json` (prepared; not stored, not approved);
 - the Championship variant (P1; 3 picks, no backups);
 - the three anomaly exclusions (D-PX1-3);
 - C1/C2.

@@ -240,3 +240,15 @@ For all 24 keys, the stored `url` (FRC Events) lists exactly the same team numbe
 If you accept all five, nothing needs to change, and the three stored rulesets can be approved as audited, by sha256. Rejecting P4, or ruling on P1 or P3, means a new ruleset version: draft, submit, review.
 
 **R1 (your identity and qualification) and R15 (the approval record) are yours by definition.**
+
+## Resolution (2026-10-08)
+
+Kanav decided P1–P5 as HD-1 to HD-5 in `.agent/phase6/decisions/P6_M1_HUMAN_DECISIONS_2026-10-08.md`:
+- **P1:** true in all seasons;
+- **P3:** stays null;
+- **P4:** the interpretation is accepted;
+- **P2:** compatible in intent;
+- **P5:** out of scope.
+
+The audit above is unchanged and describes the v1 rows (ids 1–3). The decisions are applied in the prepared v2
+rulesets (`rulesets_entry/resolved_v2/`), which are not yet stored or approved.

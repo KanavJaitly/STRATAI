@@ -1,0 +1,354 @@
+{
+ "season": 2025,
+ "game_name": "REEFSCAPE",
+ "manual": {
+  "title": "2025 FIRST Robotics Competition Game Manual",
+  "version": "2025 Game Manual, final consolidated PDF (no single manual version number; Section 10 'Tournaments (T)' V6, Section 11 'District Tournaments' V3, Section 13 'FIRST Championship Tournament (C)' V0), incorporating Team Updates 00-21 (TU21, 2025-04-08, is the last update). PDF sha256 dc6aa9ddbeba25c679c58bae746bde14dba2af79a61a65d8c5f575ca6cdfd523"
+ },
+ "alliance_counts": [
+  {
+   "min_teams": 25,
+   "max_teams": null,
+   "alliances": 8,
+   "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.1 p.123-125 ('the top 8 ranked teams become the ALLIANCE Leads'); 2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.6 p.131 (24 teams or fewer is the modified format, so 25+ uses 8); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+  }
+ ],
+ "selection": {
+  "order": "serpentine",
+  "picks_per_alliance": 2,
+  "captain_rule": null,
+  "captain_may_accept_higher_alliance": true,
+  "declined_team_may_be_picked_later": false,
+  "declined_team_may_become_captain": true,
+  "backup_robots": true,
+  "unresolved": [
+   {
+    "field": "captain_rule",
+    "note": "Not established by FIRST. The 2025 sources give the top 8 ranked teams as ALLIANCE Leads, promotion after an absent Lead, Leads as valid selections ('join or form your own Alliance') and 'bringing in new Alliance Leads', but not which team fills a captain position vacated by a Lead who accepts an invitation (2024's §10.6.1 promotion sentence is absent in 2025). TBA behaviour is not a rule. Decision D-PX1-5 (Kanav, 2026-10-06). Kanav's FRC-domain interpretation HD-2 (2026-10-08): a lower-ranked team cannot ask a higher-ranked team to join its alliance (stated in the manual: each ALLIANCE CAPTAIN 'invites a team ranked below them in the standings', §10.6.1 p.124), and once a team has made a selection as captain it is an ALLIANCE CAPTAIN and can no longer be selected by another alliance (his interpretation; not stated in the manual). Neither establishes which team fills a captain position vacated by a Lead who accepts an invitation, so the field stays null.",
+    "sources_checked": "2025 Game Manual §10.6.1 (https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf); 2025 Team Updates 00-21 (https://firstfrc.blob.core.windows.net/frc2025/Manual/TeamUpdates/TeamUpdate-Combined.pdf); FIRST Alliance Selection Changes Rev. Sep 2024; 2025 FRC Emcee Training; FRC Alliance Selection Script 2025 v3-5bh; Alliance Selection Pick Process Rev. Feb 26, 2025 (URLs and sha256 in .agent/phase6/decisions/P6_PX1_COMPOSITION_DECISIONS.md §2). FIRST Q&A 2025 board: login-gated, not searched"
+   }
+  ],
+  "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.1 p.123-125 (selection; T606 declines); 2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.3 p.128 (BACKUP TEAMS); 2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §13.2 p.147 (FIRST Championship 4-ROBOT ALLIANCES); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf; declined_team_may_become_captain = true: Kanav's FRC-domain decision HD-1 (2026-10-08, .agent/phase6/decisions/P6_M1_HUMAN_DECISIONS_2026-10-08.md), consistent with but not stated in full by the manual; supporting official text: 2025 Game Manual §10.6.1 p.125: 'An ALLIANCE Lead that declines an invitation from another ALLIANCE is able to invite teams to join their ALLIANCE'"
+ },
+ "selection_variants": [
+  {
+   "name": "first_championship_division",
+   "selection": {
+    "order": "serpentine",
+    "picks_per_alliance": 3,
+    "captain_rule": null,
+    "captain_may_accept_higher_alliance": true,
+    "declined_team_may_be_picked_later": false,
+    "declined_team_may_become_captain": true,
+    "backup_robots": false,
+    "unresolved": [
+     {
+      "field": "captain_rule",
+      "note": "Not established by FIRST. The 2025 sources give the top 8 ranked teams as ALLIANCE Leads, promotion after an absent Lead, Leads as valid selections ('join or form your own Alliance') and 'bringing in new Alliance Leads', but not which team fills a captain position vacated by a Lead who accepts an invitation (2024's §10.6.1 promotion sentence is absent in 2025). TBA behaviour is not a rule. Decision D-PX1-5 (Kanav, 2026-10-06). Kanav's FRC-domain interpretation HD-2 (2026-10-08): a lower-ranked team cannot ask a higher-ranked team to join its alliance (stated in the manual: each ALLIANCE CAPTAIN 'invites a team ranked below them in the standings', §10.6.1 p.124), and once a team has made a selection as captain it is an ALLIANCE CAPTAIN and can no longer be selected by another alliance (his interpretation; not stated in the manual). Neither establishes which team fills a captain position vacated by a Lead who accepts an invitation, so the field stays null.",
+      "sources_checked": "2025 Game Manual §10.6.1 (https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf); 2025 Team Updates 00-21 (https://firstfrc.blob.core.windows.net/frc2025/Manual/TeamUpdates/TeamUpdate-Combined.pdf); FIRST Alliance Selection Changes Rev. Sep 2024; 2025 FRC Emcee Training; FRC Alliance Selection Script 2025 v3-5bh; Alliance Selection Pick Process Rev. Feb 26, 2025 (URLs and sha256 in .agent/phase6/decisions/P6_PX1_COMPOSITION_DECISIONS.md §2). FIRST Q&A 2025 board: login-gated, not searched"
+     }
+    ],
+    "citation": "2025 FIRST Robotics Competition Game Manual, final PDF (Section 10 V6, Section 13 V0) §13.2 p.147 '4-ROBOT ALLIANCES': 'There is no provision for BACKUP TEAMS at the FIRST Championship ... the process continues with a third round of selection ... Round 3 ... reversed again, with ALLIANCE 1 picking first'; otherwise §10.6.1 pp.123-125 (T606 p.125); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf; declined_team_may_become_captain = true: Kanav's FRC-domain decision HD-1 (2026-10-08, .agent/phase6/decisions/P6_M1_HUMAN_DECISIONS_2026-10-08.md), consistent with but not stated in full by the manual; supporting official text: 2025 Game Manual §10.6.1 p.125: 'An ALLIANCE Lead that declines an invitation from another ALLIANCE is able to invite teams to join their ALLIANCE'"
+   },
+   "events": [
+    {
+     "event_key": "2025arc",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2025 FIRST Robotics Competition Game Manual, final PDF (Section 10 V6, Section 13 V0) (https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf); division listed by FIRST as 'Archimedes Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V6, Section 13 V0)",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2025/ARCHIMEDES"
+    },
+    {
+     "event_key": "2025cur",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2025 FIRST Robotics Competition Game Manual, final PDF (Section 10 V6, Section 13 V0) (https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf); division listed by FIRST as 'Curie Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V6, Section 13 V0)",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2025/CURIE"
+    },
+    {
+     "event_key": "2025dal",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2025 FIRST Robotics Competition Game Manual, final PDF (Section 10 V6, Section 13 V0) (https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf); division listed by FIRST as 'Daly Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V6, Section 13 V0)",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2025/DALY"
+    },
+    {
+     "event_key": "2025gal",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2025 FIRST Robotics Competition Game Manual, final PDF (Section 10 V6, Section 13 V0) (https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf); division listed by FIRST as 'Galileo Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V6, Section 13 V0)",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2025/GALILEO"
+    },
+    {
+     "event_key": "2025hop",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2025 FIRST Robotics Competition Game Manual, final PDF (Section 10 V6, Section 13 V0) (https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf); division listed by FIRST as 'Hopper Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V6, Section 13 V0)",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2025/HOPPER"
+    },
+    {
+     "event_key": "2025joh",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2025 FIRST Robotics Competition Game Manual, final PDF (Section 10 V6, Section 13 V0) (https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf); division listed by FIRST as 'Johnson Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V6, Section 13 V0)",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2025/JOHNSON"
+    },
+    {
+     "event_key": "2025mil",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2025 FIRST Robotics Competition Game Manual, final PDF (Section 10 V6, Section 13 V0) (https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf); division listed by FIRST as 'Milstein Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V6, Section 13 V0)",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2025/MILSTEIN"
+    },
+    {
+     "event_key": "2025new",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2025 FIRST Robotics Competition Game Manual, final PDF (Section 10 V6, Section 13 V0) (https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf); division listed by FIRST as 'Newton Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V6, Section 13 V0)",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2025/NEWTON"
+    }
+   ]
+  }
+ ],
+ "event_exclusions": [
+  {
+   "event_key": "2025ncash",
+   "reason": "small_event_byes_not_represented",
+   "finding": "22 qualification teams: §10.6.6 gives 7 ALLIANCES with byes; TBA records 8 alliances, alliance 8 made of placeholder teams 9991-9993 with recorded 'bye' results (mismatch M3)."
+  }
+ ],
+ "brackets": [
+  {
+   "alliances": 8,
+   "slots": [
+    {
+     "slot": "M1",
+     "competition_level": "semifinal",
+     "set_number": 1,
+     "round": 1,
+     "red": {
+      "kind": "seed",
+      "seed": 1
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 8
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 1 (Upper, Blue 8 / Red 1); TBA semifinal set 1 = MATCH 1 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M2",
+     "competition_level": "semifinal",
+     "set_number": 2,
+     "round": 1,
+     "red": {
+      "kind": "seed",
+      "seed": 4
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 5
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 2 (Upper, Blue 5 / Red 4); TBA semifinal set 2 = MATCH 2 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M3",
+     "competition_level": "semifinal",
+     "set_number": 3,
+     "round": 1,
+     "red": {
+      "kind": "seed",
+      "seed": 2
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 7
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 3 (Upper, Blue 7 / Red 2); TBA semifinal set 3 = MATCH 3 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M4",
+     "competition_level": "semifinal",
+     "set_number": 4,
+     "round": 1,
+     "red": {
+      "kind": "seed",
+      "seed": 3
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 6
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 4 (Upper, Blue 6 / Red 3); TBA semifinal set 4 = MATCH 4 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M5",
+     "competition_level": "semifinal",
+     "set_number": 5,
+     "round": 2,
+     "red": {
+      "kind": "loser",
+      "slot": "M1"
+     },
+     "blue": {
+      "kind": "loser",
+      "slot": "M2"
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 5 (Lower, Blue L2 / Red L1); TBA semifinal set 5 = MATCH 5 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M6",
+     "competition_level": "semifinal",
+     "set_number": 6,
+     "round": 2,
+     "red": {
+      "kind": "loser",
+      "slot": "M3"
+     },
+     "blue": {
+      "kind": "loser",
+      "slot": "M4"
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 6 (Lower, Blue L4 / Red L3); TBA semifinal set 6 = MATCH 6 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M7",
+     "competition_level": "semifinal",
+     "set_number": 7,
+     "round": 2,
+     "red": {
+      "kind": "winner",
+      "slot": "M1"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M2"
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 7 (Upper, Blue W2 / Red W1); TBA semifinal set 7 = MATCH 7 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M8",
+     "competition_level": "semifinal",
+     "set_number": 8,
+     "round": 2,
+     "red": {
+      "kind": "winner",
+      "slot": "M3"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M4"
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 8 (Upper, Blue W4 / Red W3); TBA semifinal set 8 = MATCH 8 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M9",
+     "competition_level": "semifinal",
+     "set_number": 9,
+     "round": 3,
+     "red": {
+      "kind": "loser",
+      "slot": "M7"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M6"
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 9 (Lower, Blue W6 / Red L7); TBA semifinal set 9 = MATCH 9 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M10",
+     "competition_level": "semifinal",
+     "set_number": 10,
+     "round": 3,
+     "red": {
+      "kind": "loser",
+      "slot": "M8"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M5"
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 10 (Lower, Blue W5 / Red L8); TBA semifinal set 10 = MATCH 10 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M11",
+     "competition_level": "semifinal",
+     "set_number": 11,
+     "round": 4,
+     "red": {
+      "kind": "winner",
+      "slot": "M7"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M8"
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 11 (Upper, Blue W8 / Red W7); TBA semifinal set 11 = MATCH 11 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M12",
+     "competition_level": "semifinal",
+     "set_number": 12,
+     "round": 4,
+     "red": {
+      "kind": "winner",
+      "slot": "M10"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M9"
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 12 (Lower, Blue W9 / Red W10); TBA semifinal set 12 = MATCH 12 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    },
+    {
+     "slot": "M13",
+     "competition_level": "semifinal",
+     "set_number": 13,
+     "round": 5,
+     "red": {
+      "kind": "loser",
+      "slot": "M11"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M12"
+     },
+     "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 row MATCH 13 (Lower, Blue W12 / Red L11); TBA semifinal set 13 = MATCH 13 at 198/198 seeded 8-alliance 2025 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+    }
+   ],
+   "finals": {
+    "competition_level": "final",
+    "set_number": 1,
+    "round": 6,
+    "wins_needed": 2,
+    "red": {
+     "kind": "winner",
+     "slot": "M11"
+    },
+    "blue": {
+     "kind": "winner",
+     "slot": "M13"
+    },
+    "citation": "2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2 Table 10-2 p.127 Finals 14-16 (Blue W13 / Red W11); 2025 Game Manual, final PDF (Sec. 10 V6, Sec. 11 V3, Sec. 13 V0) §10.6.2.2 p.128 ('The first ALLIANCE to win 2 MATCHES in the Finals'); TBA final set 1 = Finals at 198/198 events; https://firstfrc.blob.core.windows.net/frc2025/Manual/2025GameManual.pdf"
+   }
+  }
+ ],
+ "tie_rule": "Non-finals playoff MATCH tied: Table 10-3, in order: 1st cumulative MAJOR FOUL points due to opponent rule violations; 2nd ALLIANCE LEAVE + AUTO CORAL points; 3rd ALLIANCE BARGE points; 4th MATCH is replayed (§10.6.2.1, p.128). Team Update 19 (2025-03-25) revised the 2nd criterion to this wording 'to reflect how the FMS has been calculating AUTO points'. Finals: a tied Finals MATCH remains a tie; up to 3 Overtime MATCHES; a tied Overtime MATCH is decided by Table 10-3 (§10.6.2.2, p.128). Einstein Finals: a tied MATCH is replayed (§13.4, p.148)."
+}

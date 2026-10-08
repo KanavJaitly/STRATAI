@@ -1,0 +1,347 @@
+{
+ "season": 2024,
+ "game_name": "CRESCENDO",
+ "manual": {
+  "title": "2024 FIRST Robotics Competition Game Manual",
+  "version": "2024 Game Manual, final consolidated PDF (no single manual version number; Section 10 'Tournaments' V5, Section 11 'District Tournaments' V5, Section 12 'FIRST Championship Tournament' V0), incorporating Team Updates 00-21 (TU21, 2024-04-09, is the final update). PDF sha256 1b7e1dc3fe1b1bd64d97a482d7e78eb419ec77d611a15226a16b0c7011069b94"
+ },
+ "alliance_counts": [
+  {
+   "min_teams": 25,
+   "max_teams": null,
+   "alliances": 8,
+   "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.1 p.121 ('the top 8 ranked teams become the ALLIANCE Leads'); 2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.6 p.127 (24 teams or fewer is the modified format, so 25+ uses 8); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+  }
+ ],
+ "selection": {
+  "order": "serpentine",
+  "picks_per_alliance": 2,
+  "captain_rule": "highest_ranked_available",
+  "captain_may_accept_higher_alliance": true,
+  "declined_team_may_be_picked_later": false,
+  "declined_team_may_become_captain": true,
+  "backup_robots": true,
+  "unresolved": [],
+  "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.1 p.121 (selection; T602 declines); 2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.3 p.124 (BACKUP TEAMS); 2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §12.2 p.137 (FIRST Championship 4-ROBOT ALLIANCES); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf; declined_team_may_become_captain = true: Kanav's FRC-domain decision HD-1 (2026-10-08, .agent/phase6/decisions/P6_M1_HUMAN_DECISIONS_2026-10-08.md), consistent with but not stated in full by the manual; supporting official text: 2024 Game Manual §10.6.1 p.121: 'An ALLIANCE Lead that declines an invitation from another ALLIANCE is able to invite teams to join their ALLIANCE'; 'The highest-ranked, unselected team becomes the ALLIANCE 8 Lead'"
+ },
+ "selection_variants": [
+  {
+   "name": "first_championship_division",
+   "selection": {
+    "order": "serpentine",
+    "picks_per_alliance": 3,
+    "captain_rule": "highest_ranked_available",
+    "captain_may_accept_higher_alliance": true,
+    "declined_team_may_be_picked_later": false,
+    "declined_team_may_become_captain": true,
+    "backup_robots": false,
+    "unresolved": [],
+    "citation": "2024 FIRST Robotics Competition Game Manual, final PDF (Section 10 V5, Section 12 V0) §12.2 p.137 '4-ROBOT ALLIANCES': 'There is no provision for BACKUP TEAMS at the FIRST Championship ... the process continues with a third round of selection ... Round 3 ... reversed again, with ALLIANCE 1 picking first'; otherwise §10.6.1 p.121 (T602 p.121); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf; declined_team_may_become_captain = true: Kanav's FRC-domain decision HD-1 (2026-10-08, .agent/phase6/decisions/P6_M1_HUMAN_DECISIONS_2026-10-08.md), consistent with but not stated in full by the manual; supporting official text: 2024 Game Manual §10.6.1 p.121: 'An ALLIANCE Lead that declines an invitation from another ALLIANCE is able to invite teams to join their ALLIANCE'; 'The highest-ranked, unselected team becomes the ALLIANCE 8 Lead'"
+   },
+   "events": [
+    {
+     "event_key": "2024arc",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §12.2",
+     "document": "2024 FIRST Robotics Competition Game Manual, final PDF (Section 10 V5, Section 12 V0) (https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf); division listed by FIRST as 'Archimedes Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V5, Section 12 V0)",
+     "team_update": null,
+     "section": "§12.2 p.137",
+     "url": "https://frc-events.firstinspires.org/2024/ARCHIMEDES"
+    },
+    {
+     "event_key": "2024cur",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §12.2",
+     "document": "2024 FIRST Robotics Competition Game Manual, final PDF (Section 10 V5, Section 12 V0) (https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf); division listed by FIRST as 'Curie Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V5, Section 12 V0)",
+     "team_update": null,
+     "section": "§12.2 p.137",
+     "url": "https://frc-events.firstinspires.org/2024/CURIE"
+    },
+    {
+     "event_key": "2024dal",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §12.2",
+     "document": "2024 FIRST Robotics Competition Game Manual, final PDF (Section 10 V5, Section 12 V0) (https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf); division listed by FIRST as 'Daly Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V5, Section 12 V0)",
+     "team_update": null,
+     "section": "§12.2 p.137",
+     "url": "https://frc-events.firstinspires.org/2024/DALY"
+    },
+    {
+     "event_key": "2024gal",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §12.2",
+     "document": "2024 FIRST Robotics Competition Game Manual, final PDF (Section 10 V5, Section 12 V0) (https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf); division listed by FIRST as 'Galileo Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V5, Section 12 V0)",
+     "team_update": null,
+     "section": "§12.2 p.137",
+     "url": "https://frc-events.firstinspires.org/2024/GALILEO"
+    },
+    {
+     "event_key": "2024hop",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §12.2",
+     "document": "2024 FIRST Robotics Competition Game Manual, final PDF (Section 10 V5, Section 12 V0) (https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf); division listed by FIRST as 'Hopper Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V5, Section 12 V0)",
+     "team_update": null,
+     "section": "§12.2 p.137",
+     "url": "https://frc-events.firstinspires.org/2024/HOPPER"
+    },
+    {
+     "event_key": "2024joh",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §12.2",
+     "document": "2024 FIRST Robotics Competition Game Manual, final PDF (Section 10 V5, Section 12 V0) (https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf); division listed by FIRST as 'Johnson Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V5, Section 12 V0)",
+     "team_update": null,
+     "section": "§12.2 p.137",
+     "url": "https://frc-events.firstinspires.org/2024/JOHNSON"
+    },
+    {
+     "event_key": "2024mil",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §12.2",
+     "document": "2024 FIRST Robotics Competition Game Manual, final PDF (Section 10 V5, Section 12 V0) (https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf); division listed by FIRST as 'Milstein Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V5, Section 12 V0)",
+     "team_update": null,
+     "section": "§12.2 p.137",
+     "url": "https://frc-events.firstinspires.org/2024/MILSTEIN"
+    },
+    {
+     "event_key": "2024new",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §12.2",
+     "document": "2024 FIRST Robotics Competition Game Manual, final PDF (Section 10 V5, Section 12 V0) (https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf); division listed by FIRST as 'Newton Division' of the FIRST Championship (FRC Events)",
+     "version": "final PDF (Section 10 V5, Section 12 V0)",
+     "team_update": null,
+     "section": "§12.2 p.137",
+     "url": "https://frc-events.firstinspires.org/2024/NEWTON"
+    }
+   ]
+  }
+ ],
+ "event_exclusions": [
+  {
+   "event_key": "2024isde2",
+   "reason": "backup_before_first_match",
+   "finding": "Seed 7 lists 5554, 4590, 2212, 4416: 4416 (listed 4th) played both of the alliance's playoff matches and 2212 (a round-2 pick) none. 2024 T604 forbids a BACKUP TEAM before the alliance's first playoff match; no FIRST document explains it. Unresolved (D-PX1-3)."
+  },
+  {
+   "event_key": "2024vapor",
+   "reason": "small_event_byes_not_represented",
+   "finding": "23 qualification teams: §10.6.6 gives 7 ALLIANCES with byes; TBA records 8 alliances, alliance 8 made of placeholder teams 9990-9992 with recorded 'bye' results. Byes/placeholder alliances are not representable in the bracket schema (mismatch M3)."
+  }
+ ],
+ "brackets": [
+  {
+   "alliances": 8,
+   "slots": [
+    {
+     "slot": "M1",
+     "competition_level": "semifinal",
+     "set_number": 1,
+     "round": 1,
+     "red": {
+      "kind": "seed",
+      "seed": 1
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 8
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 1 (Upper, Blue 8 / Red 1); TBA semifinal set 1 = MATCH 1 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M2",
+     "competition_level": "semifinal",
+     "set_number": 2,
+     "round": 1,
+     "red": {
+      "kind": "seed",
+      "seed": 4
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 5
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 2 (Upper, Blue 5 / Red 4); TBA semifinal set 2 = MATCH 2 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M3",
+     "competition_level": "semifinal",
+     "set_number": 3,
+     "round": 1,
+     "red": {
+      "kind": "seed",
+      "seed": 2
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 7
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 3 (Upper, Blue 7 / Red 2); TBA semifinal set 3 = MATCH 3 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M4",
+     "competition_level": "semifinal",
+     "set_number": 4,
+     "round": 1,
+     "red": {
+      "kind": "seed",
+      "seed": 3
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 6
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 4 (Upper, Blue 6 / Red 3); TBA semifinal set 4 = MATCH 4 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M5",
+     "competition_level": "semifinal",
+     "set_number": 5,
+     "round": 2,
+     "red": {
+      "kind": "loser",
+      "slot": "M1"
+     },
+     "blue": {
+      "kind": "loser",
+      "slot": "M2"
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 5 (Lower, Blue L2 / Red L1); TBA semifinal set 5 = MATCH 5 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M6",
+     "competition_level": "semifinal",
+     "set_number": 6,
+     "round": 2,
+     "red": {
+      "kind": "loser",
+      "slot": "M3"
+     },
+     "blue": {
+      "kind": "loser",
+      "slot": "M4"
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 6 (Lower, Blue L4 / Red L3); TBA semifinal set 6 = MATCH 6 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M7",
+     "competition_level": "semifinal",
+     "set_number": 7,
+     "round": 2,
+     "red": {
+      "kind": "winner",
+      "slot": "M1"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M2"
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 7 (Upper, Blue W2 / Red W1); TBA semifinal set 7 = MATCH 7 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M8",
+     "competition_level": "semifinal",
+     "set_number": 8,
+     "round": 2,
+     "red": {
+      "kind": "winner",
+      "slot": "M3"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M4"
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 8 (Upper, Blue W4 / Red W3); TBA semifinal set 8 = MATCH 8 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M9",
+     "competition_level": "semifinal",
+     "set_number": 9,
+     "round": 3,
+     "red": {
+      "kind": "loser",
+      "slot": "M7"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M6"
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 9 (Lower, Blue W6 / Red L7); TBA semifinal set 9 = MATCH 9 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M10",
+     "competition_level": "semifinal",
+     "set_number": 10,
+     "round": 3,
+     "red": {
+      "kind": "loser",
+      "slot": "M8"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M5"
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 10 (Lower, Blue W5 / Red L8); TBA semifinal set 10 = MATCH 10 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M11",
+     "competition_level": "semifinal",
+     "set_number": 11,
+     "round": 4,
+     "red": {
+      "kind": "winner",
+      "slot": "M7"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M8"
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 11 (Upper, Blue W8 / Red W7); TBA semifinal set 11 = MATCH 11 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M12",
+     "competition_level": "semifinal",
+     "set_number": 12,
+     "round": 4,
+     "red": {
+      "kind": "winner",
+      "slot": "M10"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M9"
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 12 (Lower, Blue W9 / Red W10); TBA semifinal set 12 = MATCH 12 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    },
+    {
+     "slot": "M13",
+     "competition_level": "semifinal",
+     "set_number": 13,
+     "round": 5,
+     "red": {
+      "kind": "loser",
+      "slot": "M11"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M12"
+     },
+     "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 row MATCH 13 (Lower, Blue W12 / Red L11); TBA semifinal set 13 = MATCH 13 at 185/185 seeded 8-alliance 2024 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+    }
+   ],
+   "finals": {
+    "competition_level": "final",
+    "set_number": 1,
+    "round": 6,
+    "wins_needed": 2,
+    "red": {
+     "kind": "winner",
+     "slot": "M11"
+    },
+    "blue": {
+     "kind": "winner",
+     "slot": "M13"
+    },
+    "citation": "2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2 Table 10-2 p.123 Finals 14-16 (Blue W13 / Red W11); 2024 Game Manual, final PDF (Sec. 10 V5, Sec. 11 V5, Sec. 12 V0) §10.6.2.2 p.124 ('The first ALLIANCE to win 2 MATCHES in the Finals'); TBA final set 1 = Finals at 185/185 events; https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+   }
+  }
+ ],
+ "tie_rule": "Non-finals playoff MATCH tied: the win goes to the ALLIANCE per Table 10-3, in order: 1st cumulative TECH FOUL points due to opponent rule violations; 2nd ALLIANCE AUTO points; 3rd ALLIANCE STAGE points; 4th MATCH is replayed (§10.6.2.1, pp.123-124). Finals: a tied Finals MATCH remains a tie; if no ALLIANCE has 2 wins after 3 Finals MATCHES, up to 3 Overtime MATCHES are played, and a tied Overtime MATCH is decided by Table 10-3 (§10.6.2.2, p.124). Einstein Finals: a tied MATCH is replayed (§12.4, p.138). Source: 2024 Game Manual final PDF; Team Update 04 (2024-01-19) set the 3rd criterion as 'ALLIANCE PARK, ONSTAGE, and NOTE in TRAP STAGE points'. Kanav's FRC-domain interpretation HD-4 (2026-10-08): not a substantive discrepancy. PARK, ONSTAGE and NOTE in TRAP are all STAGE (endgame) scoring elements, so the Team Update 04 wording and the final manual's 'ALLIANCE STAGE points' are compatible in intent; both official sources are cited above."
+}

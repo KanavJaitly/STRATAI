@@ -215,6 +215,14 @@ decision (D9).
     - P6-M1 (b) counts unchecked alliances (`captain_rule_not_established`, `decline_rule_not_established`).
     - 2025 `captain_rule` is `null`: the official 2025 sources do not establish who replaces a Lead who accepts an
       invitation.
+    - **Kanav's FRC-domain decisions of 2026-10-08 (HD-1 to HD-5,
+      `.agent/phase6/decisions/P6_M1_HUMAN_DECISIONS_2026-10-08.md`):**
+      - `declined_team_may_become_captain` = true in all seasons (HD-1);
+      - 2025 `captain_rule` stays null (HD-2 recorded);
+      - 2026 `captain_rule` = `highest_ranked_available` confirmed (HD-3);
+      - the 2024 tie-rule wordings are compatible (HD-4);
+      - pick-timer behaviour is out of scope (HD-5).
+      The v2 rulesets (`.agent/phase6/rulesets_entry/resolved_v2/`) are prepared, not stored, not approved.
   - **Precedence:** an explicit variant listing the event, otherwise the season default. Nothing is inferred
     (not from `events.event_type`, not from data).
   - Selection consumers take one event's rules from `SeasonRuleset.for_event(event_key)`. `ml.playoffs.selection`
