@@ -281,6 +281,39 @@ def test_m1_counts_ruleset_exclusions_and_records_the_variant_applied(database):
         assert result["events"][variant_key]["selection_variant"] == "three_picks"
 
 
+def test_m8_future_playoff_sentinel_changes_no_selection_moment_input_and_is_removed(database):
+    """The frozen P6-M8 leakage sentinel: a far-future playoff result (with scouting rows) inserted into the isolated
+    copy must not change any selection-moment feature, and must be gone afterwards."""
+    from ml.features.assembler import build_team_features
+    from ml.playoffs.data import read_event_playoffs
+    from ml.features.scale import ScaleLookup
+    from ml.ratings.d18_source import load_d18_provider
+    from scripts.phase6_playoff_track import CHAIN, SNAPSHOT, future_playoff_sentinel
+
+    provider, _ = load_d18_provider(database, SNAPSHOT, CHAIN)  # the EPA source M8 uses
+    scales = ScaleLookup(database)
+    event = next(e for e in read_event_playoffs(database, 2026)
+                 if e.alliances and not e.division_champion and e.latest_qualification is not None)
+    red, blue = event.alliances[0].picks[:3], event.alliances[1].picks[:3]
+    as_of = event.selection_as_of()
+
+    def features():
+        return [build_team_features(database, t, event.event_key, as_of, epa_provider=provider,
+                                    scale_lookup=scales).model_dump() for t in (*red, *blue)]
+
+    before = features()
+    with future_playoff_sentinel(database, event.event_key, event.season, red, blue) as key:
+        with database.cursor() as c:
+            c.execute("SELECT count(*) FROM match_teams WHERE match_key = %s", (key,))
+            assert c.fetchone()[0] == 6
+        assert features() == before
+    with database.cursor() as c:
+        c.execute("SELECT (SELECT count(*) FROM matches WHERE match_key = %s) + "
+                  "(SELECT count(*) FROM match_teams WHERE match_key = %s) + "
+                  "(SELECT count(*) FROM scouting_observations WHERE source = 'p6m8_sentinel')", (key, key))
+        assert c.fetchone()[0] == 0
+
+
 def test_captain_rule_respects_serpentine_timing():
     """Round-2 picks happen after later seeds choose captains: a better-ranked team picked in round 2 should have
     been the next captain, so that is a violation."""

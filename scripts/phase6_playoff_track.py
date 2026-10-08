@@ -32,6 +32,7 @@ import sys
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
+from contextlib import contextmanager
 from typing import Any
 
 from scripts.phase6_common import (REGISTRY_DIR, RESULTS_DIR, git_blob, isolated_database, load_m6m7, read_record,
@@ -439,6 +440,38 @@ def _m8_sample(events: list, weeks: dict[str, int | None], config: dict[str, Any
     return sample
 
 
+M8_SENTINEL_PREFIX = "t_p6m8_sentinel"
+M8_FAR_FUTURE = "2026-12-31T00:00:00+00:00"
+
+
+@contextmanager
+def future_playoff_sentinel(database, event_key: str, season: int, red: tuple[int, ...], blue: tuple[int, ...]):
+    """P6-M8 leakage sentinel (docs/P6Milestones.md P6-M8 'Leakage'): a far-future playoff result, with scouting rows,
+    inserted into the ISOLATED copy for the duration of the block, then always deleted. Every M8 input is assembled
+    at the selection moment, so nothing computed inside the block may change."""
+    match_key = f"{event_key}_{M8_SENTINEL_PREFIX}"
+    with database.cursor() as cursor:
+        cursor.execute("INSERT INTO matches (match_key, event_key, season, competition_level, set_number, match_number, "
+                       "scheduled_time, score_red, score_blue, winning_alliance, last_updated) "
+                       "VALUES (%s, %s, %s, 'final', 99, 1, %s, 999, 0, 'red', NOW())",
+                       (match_key, event_key, season, M8_FAR_FUTURE))
+        for colour, teams in (("red", red), ("blue", blue)):
+            for team in teams:
+                cursor.execute("INSERT INTO match_teams (match_key, team_number, alliance_color, last_updated) "
+                               "VALUES (%s, %s, %s, NOW())", (match_key, team, colour))
+                cursor.execute("INSERT INTO scouting_observations (match_key, event_key, team_number, scout_identifier, "
+                               "defense_rating, feeding_rating, source, submitted_at) "
+                               "VALUES (%s, %s, %s, 'p6m8-sentinel', 5, 5, 'p6m8_sentinel', %s)",
+                               (match_key, event_key, team, M8_FAR_FUTURE))
+    try:
+        yield match_key
+    finally:
+        with database.cursor() as cursor:
+            cursor.execute("DELETE FROM scouting_observations WHERE source = 'p6m8_sentinel'")
+            cursor.execute("DELETE FROM match_teams WHERE match_key = %s", (match_key,))
+            cursor.execute("DELETE FROM matches WHERE match_key = %s", (match_key,))
+
+
 WEEK_SQL = """
 SELECT DISTINCT ON (r.source_object_id) r.source_object_id, (r.payload_json->>'week')::int
 FROM raw_source_payloads r
@@ -488,10 +521,9 @@ def run_m8(database, rulesets) -> dict[str, Any]:
     engine_hits: dict[str, list[bool]] = defaultdict(list)
     baselines: dict[str, dict[str, list[bool]]] = {"raw_epa_draft": defaultdict(list),
                                                    "actual_seed_order": defaultdict(list)}
-    for event in sample:
-        if time.time() - started > BUDGET_SECONDS:
-            raise SystemExit("P6-M8 exceeded its 45-minute budget: nothing recorded; redesign before re-running")
-        info = m1["events"][event.event_key]
+
+    def engine_outputs(event) -> dict[str, Any]:
+        """Everything the engine computes for one event at its selection moment (inputs only, never labels)."""
         ranks = ranks_by_event.get(event.event_key, {})
         with database.cursor() as cursor:
             cursor.execute(ROSTER_SQL, (event.event_key,))
@@ -524,27 +556,55 @@ def run_m8(database, rulesets) -> dict[str, Any]:
             return [PredictedAlliance(a, field_outcome(alliances, bracket, p_match, i + 1).p_win_event)
                     for i, a in enumerate(alliances)]
 
-        engine_contenders, raw_contenders = contenders(predicted), contenders(raw_field)
+        return {"ordering": ordering, "features": features, "predicted": predicted, "raw_field": raw_field,
+                "engine_contenders": contenders(predicted), "raw_contenders": contenders(raw_field)}
+
+    def fingerprint(out: dict[str, Any]) -> tuple:
+        return (tuple(out["ordering"]), tuple(map(tuple, out["predicted"])), tuple(map(tuple, out["raw_field"])),
+                tuple((a.teams, a.p_win_event) for a in out["engine_contenders"]),
+                tuple((a.teams, a.p_win_event) for a in out["raw_contenders"]))
+
+    fingerprints: dict[str, tuple] = {}
+    for event in sample:
+        if time.time() - started > BUDGET_SECONDS:
+            raise SystemExit("P6-M8 exceeded its 45-minute budget: nothing recorded; redesign before re-running")
+        info = m1["events"][event.event_key]
+        out = engine_outputs(event)
+        fingerprints[event.event_key] = fingerprint(out)
+        ordering, features = out["ordering"], out["features"]
+        predicted, engine_contenders, raw_contenders = out["predicted"], out["engine_contenders"], out["raw_contenders"]
         actual = members_by_event[event.event_key]  # selection-time members: a backup is never an actual pick
         seed_order = [PredictedAlliance(actual[s], 1.0 / s) for s in sorted(actual)]
         strong_rows = []
         for label, seed in (("winner", info["winner_seed"]), ("finalist", info["finalist_seed"])):
             alliance = actual[seed]
             hit = identifies(alliance, engine_contenders)
+            raw_hit, seed_hit = identifies(alliance, raw_contenders), identifies(alliance, seed_order)
             facts = None if hit else {
                 "actual": list(alliance), "actual_seed": seed,
+                "raw_epa_draft_hit": raw_hit, "actual_seed_order_hit": seed_hit,  # evidence for the mentor review
                 "declines_at_event": sorted(t for a in event.alliances for t in a.declines),
                 "ordering_positions": {str(t): ordering.index(t) for t in alliance if t in ordering},
                 "reliability": {str(t): features[t].reliability_score for t in alliance if t in features}}
             strong_rows.append({"strong": label, "hit": hit, "facts": facts})
             engine_hits[event.event_key].append(hit)
-            baselines["raw_epa_draft"][event.event_key].append(identifies(alliance, raw_contenders))
-            baselines["actual_seed_order"][event.event_key].append(identifies(alliance, seed_order))
+            baselines["raw_epa_draft"][event.event_key].append(raw_hit)
+            baselines["actual_seed_order"][event.event_key].append(seed_hit)
         per_event[event.event_key] = {"predicted_field": [list(a) for a in predicted],
                                       "top2": [list(a.teams) for a in sorted(engine_contenders,
                                                                              key=lambda a: -a.p_win_event)[:2]],
                                       "strong": strong_rows}
+    # The frozen leakage sentinel, on the pre-registered sentinel event: the sampled event with the fewest
+    # qualification teams (ties: event key), the cheapest re-run. A future playoff result must change nothing.
+    target = min(sample, key=lambda e: (e.team_count, e.event_key))
+    members = members_by_event[target.event_key]
+    with future_playoff_sentinel(database, target.event_key, target.season, members[1], members[2]) as sentinel_key:
+        unchanged = fingerprint(engine_outputs(target)) == fingerprints[target.event_key]
+    if time.time() - started > BUDGET_SECONDS:
+        raise SystemExit("P6-M8 exceeded its 45-minute budget: nothing recorded; redesign before re-running")
+    sentinel = {"event": target.event_key, "inserted": sentinel_key, "unchanged": unchanged, "passed": unchanged}
     return {"milestone": "P6-M8", "step": "run (P6-DM1 is decided only after the named mentor's review)",
+            "leakage_sentinel": sentinel,
             "decision": "P6-Q1", "pre_run": str(M8_PRE_RUN_JSON), "pre_run_blob": git_blob(str(M8_PRE_RUN_JSON)),
             "composition_decisions_blob": git_blob(COMPOSITION_DECISIONS), "population": population,
             "events": per_event, "identified_before_review": dm1_result(engine_hits, seed=BOOTSTRAP_SEED),
