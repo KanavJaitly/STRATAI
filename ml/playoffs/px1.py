@@ -5,7 +5,8 @@
   their interactions with the bracket round.
 - **Point in time:** features are assembled at each event's selection moment, never from playoff results.
 - **Antisymmetry:** swapping the alliances gives exactly the complement, by construction.
-- **Seed-only baseline:** the same machinery on the seed difference alone, for the P6-Q3 gate.
+- **Seed-only baseline:** the same machinery on the seed difference alone (spec §4: no round interactions), for
+  the P6-Q3 gate.
 
 Real assembly needs approved P6-M1 rulesets, because the bracket round comes from their slot mapping. This module
 never hard-codes a bracket.
@@ -110,7 +111,9 @@ class Design:
         return None if raw is None else raw / np.array(self.scale)
 
 
-def fit_design(rows: Sequence[PlayoffRow], *, seed: bool = True, composition: bool = True) -> Design:
+def fit_design(rows: Sequence[PlayoffRow], *, seed: bool = True, composition: bool = True,
+               round_interactions: bool = True) -> Design:
+    """PX-1's design (§2), or with `composition` and `round_interactions` off the seed-only baseline's (§4)."""
     dropped: dict[str, str] = {}
     columns: list[str] = []
     if composition:
@@ -125,7 +128,7 @@ def fit_design(rows: Sequence[PlayoffRow], *, seed: bool = True, composition: bo
                 dropped[name] = "no variation"
             else:
                 columns.append(name)
-    rounds = sorted({r.round for r in rows})[1:]
+    rounds = sorted({r.round for r in rows})[1:] if round_interactions else []
     design = Design(seed, columns, dropped, rounds)
     matrix = np.vstack([design.raw(r) for r in rows])
     rms = np.sqrt(np.mean(matrix ** 2, axis=0))
@@ -152,7 +155,7 @@ class PlayoffLogisticModel:
             fit_info: dict[str, Any] | None = None) -> PlayoffLogisticModel:
         from sklearn.linear_model import LogisticRegression
 
-        design = fit_design(rows, composition=not seed_only)
+        design = fit_design(rows, composition=not seed_only, round_interactions=not seed_only)
         usable = [(design.transform(r), r.red_win) for r in rows]
         excluded = sum(1 for x, _ in usable if x is None)
         usable = [(x, y) for x, y in usable if x is not None]

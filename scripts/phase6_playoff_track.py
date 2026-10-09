@@ -236,6 +236,10 @@ def _m6m7_on(row) -> float:
 
 
 M6M7 = None
+# P6-M2 rerun1 after the PX-1 audit (2026-10-08). The run-1 registry entries (px1-v1) and rows cache are kept;
+# PX-2/PX-4 still read run 1's record and models, so the dependency chain is unchanged.
+PX1_RERUN_TAG = "px1-v2"
+PX1_DEFECT_RECORD = ".agent/phase6/decisions/P6_PX1_AUDIT_DEFECTS_2026-10-08.md"
 
 
 def run_m2(database, rulesets) -> dict[str, Any]:
@@ -265,11 +269,16 @@ def run_m2(database, rulesets) -> dict[str, Any]:
     created = datetime.now(timezone.utc)
     for model, model_type in ((px1, MODEL_TYPE), (seed_only, SEED_ONLY_MODEL_TYPE)):
         register_model(model, registry_dir=REGISTRY_DIR, model_type=model_type, model_version="1.0.0",
-                       version_tag="px1-v1", training_dataset_hash="phase6-playoff-rows",
+                       version_tag=PX1_RERUN_TAG, training_dataset_hash="phase6-playoff-rows",
                        feature_list=model.design.names(), created_at=created)
     ROWS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    (ROWS_CACHE_DIR / "px_rows.pkl.gz").write_bytes(gzip.compress(pickle.dumps(rows)))
-    return {"milestone": "P6-M2", "decision": "P6-Q3", "spec_blob": git_blob(".agent/phase6/P6_M2_PX1_SPEC.md"),
+    (ROWS_CACHE_DIR / f"px_rows_{PX1_RERUN_TAG}.pkl.gz").write_bytes(gzip.compress(pickle.dumps(rows)))
+    return {"milestone": "P6-M2", "decision": "P6-Q3", "version_tag": PX1_RERUN_TAG,
+            "supersedes": {"record": "p6_m2_px1.json", "defects": PX1_DEFECT_RECORD,
+                           "reason": "two confirmed defects, same frozen spec, populations, gate and seed: (1) the "
+                                     "seed-only baseline carried seed x round interactions, not the seed difference "
+                                     "alone (spec §4); (2) events whose playoffs are scheduled before the selection "
+                                     "moment leaked those results into the features (P6-Q2). Run 1 is kept"}, "spec_blob": git_blob(".agent/phase6/P6_M2_PX1_SPEC.md"),
             "composition_decisions_blob": git_blob(COMPOSITION_DECISIONS),
             "epa_integrity": integrity, "rows": {"train": len(train), "test": len(evaluated),
                                                  "test_insufficient_data": missing, "excluded": dict(excluded),
@@ -742,7 +751,7 @@ def run_m6b(database, rulesets) -> dict[str, Any]:
                                      "method, population and ordering; run 1 is kept"}}
 
 
-RUNS = {"m1": ("p6_m1_ruleset_check.json", run_m1), "m2": ("p6_m2_px1.json", run_m2),
+RUNS = {"m1": ("p6_m1_ruleset_check.json", run_m1), "m2": ("p6_m2_px1_rerun1.json", run_m2),
         "m3": ("p6_m3_px2.json", run_m3), "m6b": ("p6_m6b_draft_accuracy_rerun1.json", run_m6b), "m5": ("p6_m5_px4.json", run_m5), "m8": ("p6_m8_dm1_run.json", run_m8),
         "m8-review": ("p6_m8_dm1.json", run_m8_review)}
 
