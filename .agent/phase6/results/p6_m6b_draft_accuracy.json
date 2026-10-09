@@ -1,0 +1,18 @@
+{
+ "criterion": "b",
+ "events": 202,
+ "gating": false,
+ "milestone": "P6-M6",
+ "minutes": 0.6,
+ "notes": {},
+ "over_budget": false,
+ "picks": 3296,
+ "policy": "ranking_xgb_v2",
+ "provenance": {
+  "commit": "effb2903a19b782e02b6b1150125c33400cf2b08",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-09T00:28:17.757558+00:00"
+ },
+ "top1_rate": 0.2111650485436893,
+ "top3_rate": 0.45145631067961167
+}
