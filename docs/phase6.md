@@ -28,14 +28,14 @@ The specification is `docs/P6Milestones.md`, **frozen at P6-M0** (`9964001`). It
 | Milestone | Implementation | Validation | Record |
 |---|---|---|---|
 | P6-M0 Specification freeze | — | **FROZEN** (`9964001`) | `.agent/phase6/P6_M0_FREEZE.md` |
-| P6-M1 Season rulesets | built: schema, migration 0011, review workflow, CLI, reproduction and selection-rule checks | **BLOCKED: required human input** (no approved ruleset) | not run |
-| P6-M2 PX-1 playoff model | built: frozen spec `.agent/phase6/P6_M2_PX1_SPEC.md`, model, data assembly, gate | **not run** (needs P6-M1) | — |
-| P6-M3 PX-2 calibration | built: calibration and M7/D16 gate pipeline | **not run** (needs PX-1) | — |
-| P6-M4 PX-3 simulator | built: exact vectorized plus recursive, Monte Carlo oracle | **implementation correctness passed** (synthetic brackets); the real-structure criterion needs P6-M1 | tests |
-| P6-M5 PX-4 simulator validation | built | **not run** (needs PX-2) | — |
-| P6-M6 Candidate profiles and draft model | built | (a) profile equality **passed** (768 teams, 30 events, 0 mismatches); (b) draft accuracy **not run** (needs P6-M1) | `p6_m6a_profiles.json` |
+| P6-M1 Season rulesets | built: schema v3, migration 0011 (serving), review workflow, CLI, checks | **recorded**: 2024–2026 v2 rulesets approved (ids 4–6, Kanav Jaitly, 2026-10-08). (a) 582 events reproduced, 0 failures; excluded 3.7% / 3.0% / 5.2%, no escalation. (b) 0 / not established (2025) / 1 captain-rule violations | `p6_m1_ruleset_check.json` |
+| P6-M2 PX-1 playoff model | built: frozen spec `.agent/phase6/P6_M2_PX1_SPEC.md`, model, data assembly, gate | **FAILED** P6-Q3 (D9). Held-out log-loss 0.642 vs M6/M7 0.560 (Δ +0.082 [+0.023, +0.148]) and vs seed-only 0.518 (Δ +0.123 [+0.063, +0.189]); `.agent/phase6/P6_M2_PX1_FAILURE.md` | `p6_m2_px1.json` |
+| P6-M3 PX-2 calibration | built: calibration and M7/D16 gate pipeline | **blocked** by the PX-1 failure (D9) | — |
+| P6-M4 PX-3 simulator | built: exact vectorized plus recursive, Monte Carlo oracle | **implementation correctness passed**. Real structure: the approved brackets reproduce every included event (P6-M1, 0 failures), and the simulator on them sums to 1 (win) and 2 (finals) | tests; `p6_m1_ruleset_check.json` |
+| P6-M5 PX-4 simulator validation | built | **blocked** by the PX-1 failure (D9) | — |
+| P6-M6 Candidate profiles and draft model | built | (a) profile equality **passed** (768 teams, 30 events, 0 mismatches); (b) draft accuracy **measured** (non-gating): top-1 0.211 [0.199, 0.224], top-3 0.451, vs raw-EPA order 0.227 / 0.470; run 1 pooled-only (harness defect, kept), rerun1 per slot with CIs | `p6_m6a_profiles.json`, `p6_m6b_draft_accuracy.json`, `p6_m6b_draft_accuracy_rerun1.json` |
 | P6-M7 Alliance selection engine | built: P(win event) objective, exact nested search, alternatives | **optimization correctness passed** (brute force, synthetic); probabilities `not_validated` until PX-2/PX-4 | tests |
-| P6-M8 P6-DM1 validation | built: run plus named-mentor review finalization | **not run** (needs P6-M1 … M5, its pre-run record and a named mentor) | — |
+| P6-M8 P6-DM1 validation | built: run plus named-mentor review; frozen leakage sentinel added | **blocked** by the PX-1 failure (needs PX-4). Pre-run record committed (`36b52c7`); mentor Mr. Biery proposed, not yet confirmed | — |
 | P6-M9 Strategy representation, coach inputs | built | **passed** (schema, leakage, raw-first, point-in-time tests) | tests |
 | P6-M10 Strategy outcome model | built, fit and registered | **FAILED** its M7/D16 gate (G2), so it is served `not_validated` (D9) | `p6_m10_fit.json`, `p6_m10_outcome_model.json` |
 | P6-M11 Strategy recommender | built | **optimization correctness passed** (exhaustive search, brute force, bit identity) | tests |
@@ -319,3 +319,7 @@ decision (D9).
 | `p6_m13_parity_audit.json` | P6-M13 run 1 (FAILED; kept) |
 | `p6_m13_parity_audit_rerun1.json` | P6-M13 rerun1 (PASSED; P6-DM2 met) |
 | `p6_m6a_profiles.json` | P6-M6 (a) profile equality |
+| `p6_m1_ruleset_check.json` | P6-M1 (a) bracket reproduction and (b) captain-rule check |
+| `p6_m2_px1.json` | P6-M2 PX-1 (gate FAILED) |
+| `p6_m6b_draft_accuracy.json` | P6-M6 (b) run 1 (pooled rates only: harness defect; kept) |
+| `p6_m6b_draft_accuracy_rerun1.json` | P6-M6 (b) rerun1 (per slot, CIs, raw-EPA baseline) |

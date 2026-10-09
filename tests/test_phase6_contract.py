@@ -66,7 +66,9 @@ def test_done_means_match_the_records():
 
     assert dm2()["met"] is True and dm2()["record"] == "p6_m13_parity_audit_rerun1.json"
     one = dm1()
-    assert one["met"] is False and any("P6-M1 season rulesets" in b for b in one["blocked_on"])
+    # 2026-10-08: the P6-M1 rulesets are approved and checked; PX-1 then failed its P6-Q3 gate (D9)
+    assert one["met"] is False and any("PX-1 failed its gate" in b for b in one["blocked_on"])
+    assert not any("P6-M1 season rulesets" in b for b in one["blocked_on"])
 
 
 def test_every_phase6_record_carries_commit_provenance():
