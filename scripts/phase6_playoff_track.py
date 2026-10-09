@@ -653,7 +653,13 @@ WHERE m.event_key = %s AND m.competition_level = 'qualification'
 def run_m6b(database, rulesets) -> dict[str, Any]:
     """P6-M6 (b): the draft model's pick prediction on held-out 2026 events, measured once (P6-Q6: not gating).
     Each real pick is compared with the draft model's choice from the real draft state before it. The ordering is
-    the validated P5-M4 policy at the selection moment, where the event switch has passed."""
+    the validated P5-M4 policy at the selection moment, where the event switch has passed.
+
+    Reported as the frozen P6-M6 (b) row requires: top-1 / top-3 per pick slot (selection round), with
+    event-bootstrap 95% CIs, next to a raw-EPA-order baseline (the rerun1 fix of a harness that reported only the
+    pooled rates; run 1 is kept)."""
+    from ml.backtest.bootstrap import event_bootstrap_mean_ci
+    from ml.playoffs.selection import pick_hits
     from ml.features.assembler import build_team_features
     from ml.features.scale import ScaleLookup
     from ml.models.ranking_xgb_v2 import FEATURE_NAMES_V2, RankingXGBModelV2
@@ -672,6 +678,9 @@ def run_m6b(database, rulesets) -> dict[str, Any]:
     ruleset = rulesets[HELD_OUT]
     top1 = top3 = picks = events = 0
     notes: Counter[str] = Counter()
+    # {ordering: {slot: {metric: {event: [0/1 per pick]}}}}; slot 0 = all picks
+    units: dict[str, dict[int, dict[str, dict[str, list[float]]]]] = {
+        o: defaultdict(lambda: {"top1": defaultdict(list), "top3": defaultdict(list)}) for o in ("model", "raw_epa")}
     for event in read_event_playoffs(database, HELD_OUT):
         if m1["events"].get(event.event_key, {}).get("status") != "reproduced":
             continue
@@ -705,13 +714,35 @@ def run_m6b(database, rulesets) -> dict[str, Any]:
             current[seed - 1].append(alliance.picks[index])
         result = pick_prediction_accuracy(actual, ordering, event_rules, roster)
         top1, top3, picks, events = top1 + result["top1"], top3 + result["top3"], picks + result["picks"], events + 1
+        raw_ordering = sorted(roster, key=lambda t: (-(features[t].epa_total if features[t].epa_total is not None
+                                                       else float("-inf")), t))
+        slots = [state.turns_taken // len(alliances) + 1 for state, _, _ in actual]
+        for name, order in (("model", ordering), ("raw_epa", raw_ordering)):
+            for slot, (hit1, hit3) in zip(slots, pick_hits(actual, order, event_rules, roster)):
+                for key in (0, slot):
+                    units[name][key]["top1"][event.event_key].append(float(hit1))
+                    units[name][key]["top3"][event.event_key].append(float(hit3))
+    def summary(by_slot) -> dict[str, Any]:
+        out = {}
+        for slot in sorted(by_slot):
+            label = "all_picks" if slot == 0 else f"round_{slot}"
+            out[label] = {metric: event_bootstrap_mean_ci(by_slot[slot][metric], seed=BOOTSTRAP_SEED)
+                          for metric in ("top1", "top3")}
+            out[label]["picks"] = sum(len(v) for v in by_slot[slot]["top1"].values())
+        return out
+
     return {"milestone": "P6-M6", "criterion": "b", "gating": False, "policy": policy, "events": events,
             "picks": picks, "top1_rate": top1 / picks if picks else None,
-            "top3_rate": top3 / picks if picks else None, "notes": dict(notes)}
+            "top3_rate": top3 / picks if picks else None, "notes": dict(notes),
+            "per_slot": {"model": summary(units["model"]), "raw_epa_order_baseline": summary(units["raw_epa"])},
+            "supersedes": {"record": "p6_m6b_draft_accuracy.json",
+                           "reason": "harness defect: run 1 reported pooled rates only; the frozen P6-M6 (b) row "
+                                     "requires per pick slot, with CIs, next to a raw-EPA-order baseline. Same "
+                                     "method, population and ordering; run 1 is kept"}}
 
 
 RUNS = {"m1": ("p6_m1_ruleset_check.json", run_m1), "m2": ("p6_m2_px1.json", run_m2),
-        "m3": ("p6_m3_px2.json", run_m3), "m6b": ("p6_m6b_draft_accuracy.json", run_m6b), "m5": ("p6_m5_px4.json", run_m5), "m8": ("p6_m8_dm1_run.json", run_m8),
+        "m3": ("p6_m3_px2.json", run_m3), "m6b": ("p6_m6b_draft_accuracy_rerun1.json", run_m6b), "m5": ("p6_m5_px4.json", run_m5), "m8": ("p6_m8_dm1_run.json", run_m8),
         "m8-review": ("p6_m8_dm1.json", run_m8_review)}
 
 

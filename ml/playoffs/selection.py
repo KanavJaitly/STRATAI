@@ -215,16 +215,23 @@ def best_available(ordering: Sequence[int]) -> Chooser:
     return choose
 
 
+def pick_hits(actual: Sequence[tuple[DraftState, int, int]], ordering: Sequence[int], rules: EventRules,
+              teams: Sequence[int]) -> list[tuple[bool, bool]]:
+    """Per actual pick (state before it, seed, team picked): (top-1 hit, top-3 hit) of the draft model's choice."""
+    position = {t: i for i, t in enumerate(ordering)}
+    hits = []
+    for state, seed, picked in actual:
+        options = sorted(available_for_pick(state, teams, rules), key=lambda t: (position.get(t, len(position)), t))
+        hits.append((bool(options) and options[0] == picked, picked in options[:3]))
+    return hits
+
+
 def pick_prediction_accuracy(actual: Sequence[tuple[DraftState, int, int]], ordering: Sequence[int],
                              rules: EventRules, teams: Sequence[int]) -> dict[str, Any]:
     """P6-M6 (b): for each actual pick (state before it, seed, team picked), whether the draft model's choice
     matches (top-1), or the pick is among its top 3 available. Measured, not gating (P6-Q6)."""
-    position = {t: i for i, t in enumerate(ordering)}
-    top1 = top3 = 0
-    for state, seed, picked in actual:
-        options = sorted(available_for_pick(state, teams, rules), key=lambda t: (position.get(t, len(position)), t))
-        top1 += bool(options) and options[0] == picked
-        top3 += picked in options[:3]
+    hits = pick_hits(actual, ordering, rules, teams)
+    top1, top3 = sum(h[0] for h in hits), sum(h[1] for h in hits)
     n = len(actual)
     return {"picks": n, "top1": top1, "top3": top3, "top1_rate": top1 / n if n else None,
             "top3_rate": top3 / n if n else None}
