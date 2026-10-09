@@ -1,0 +1,43 @@
+{
+ "acceptance": false,
+ "approved": "Kanav 2026-10-09 (G3)",
+ "calibrator": "not pinned here: PX-2b's own write-once record carries its sha256 (it does not exist yet)",
+ "derived_from": {
+  "pin_version": 1,
+  "record": "p6_px1b_chain_pins.json",
+  "sha256": "b462e983cd4008cc1d009b270d6c0baac3976570f3019b292a9dcc5cf002185c"
+ },
+ "minutes": 0.0,
+ "models": {
+  "playoff_px1b/px1b-v1": "70d448e20a0cc1f67e6e0cc8779f18996253f39dc6cb83c26be7f8ef6dfd7f1c",
+  "playoff_px1b_calbase/px2b-v2": "f2b72023eda0b7b034ca28a79c7ee11a19dd5da14d194537dc00a02d0fdc0fa4",
+  "playoff_px1b_seed_only/px1b-v1": "99478f02d5b1baca500df087e3879935234da776b24f0fb40bddfedbc85e063b",
+  "ranking_xgb_v2/d18": "1f0fe5aae90244e2736950928a88e733c85214b8def547b399b87c0cdd136312"
+ },
+ "over_budget": false,
+ "pin_version": 2,
+ "population_fingerprint": "52a4d7f0ac464886b0ea020b401b71f7f1d668c49a783bab4eb2ecf7b3f12c30",
+ "provenance": {
+  "commit": "503ba38218c33bb76d4e08ef435ef703251f315e",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-09T21:33:36.302638+00:00"
+ },
+ "ranking_cross_check": {
+  "matches": true,
+  "recorded_by": "Phase 5 p5_m4 / p5_m6 records and ML_RANKING_MODEL_SHA256",
+  "sha256": "1f0fe5aae90244e2736950928a88e733c85214b8def547b399b87c0cdd136312"
+ },
+ "slice_content": {
+  "fingerprint": "1faa617b950e30d4d6872bb4846e44c11e36f600e7ba66aa58bcd0692e85cdda",
+  "keys_from": ".agent\\phase6\\diagnostics\\px2b_c1_slice_provenance.json",
+  "keys_sha256": "feef3ed0f9863dec4e8214c6ec89c0c46e1b6b78246a1904cae57c9c4a69383b",
+  "rows": 526,
+  "serialization": {
+   "function": "ml.playoffs.px1b.dataset_fingerprint",
+   "method": "rows sorted by match_key; per row json.dumps(sort_keys=True) of {match_key, season, round, red_seed, blue_seed, red_win, red, blue, fields}; red/blue = per member {team, values (TEAM_FEATURE_NAMES order, NaN -> null), score_scale, epa_scale (null unless present)}; fields = TEAM_FEATURE_NAMES; lines joined with '\\n', UTF-8, sha256",
+   "name": "px1b-dataset-fingerprint-v1",
+   "scope": "the 526 PX-2b v2 calibration-slice rows (PX-1b spec \u00a71 rows of 2026, the last 20% by (scheduled_time, match_key)), as assembled from the isolated database at the selection moment",
+   "signature_sha256": "613097e266d37d7e37214989246b014979b493c8cf2ad4475d64b797ed941b2e"
+  }
+ }
+}
