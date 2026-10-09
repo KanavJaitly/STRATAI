@@ -91,6 +91,22 @@ Because the root cause is in the frozen specification (§2: raw-unit composition
 - **Runtime:** expected about 1 min; the harness enforces 45 min.
 - **Downstream:** PX-2 and PX-4 still read run 1's record and `px1-v1`. A pass would not unlock them automatically, and any change to that pointer is a separate, reviewed step.
 
+## Verification result (rerun1, run after this record was committed at `28a89e4`)
+
+`results/p6_m2_px1_rerun1.json`: provenance `28a89e4`; spec blob identical to run 1's; the same 66 columns; 0.7 min; within budget.
+
+**Rows:**
+- **Fit:** 3,441, against 3,465 in run 1. The 24 leaky rows are gone.
+- **Evaluation:** 2,632, 194 events, 0 `insufficient_data`.
+- **`playoff_before_selection_moment`:** 30 matches. 6 of them were previously excluded as `epa_incomplete` (2,392 → 2,386).
+
+| Comparison (P6-Q3, 2,000 resamples, seed 20261010) | PX-1 | Baseline | Δ (95% CI) | Result |
+|---|---|---|---|---|
+| vs M6/M7 `d18` | 0.6419 | 0.5599 | +0.0820 [+0.0236, +0.1486] | **FAIL** |
+| vs seed-only (spec §4: seed difference alone) | 0.6419 | 0.5228 | +0.1190 [+0.0583, +0.1865] | **FAIL** |
+
+**PX-1 stays `not_validated`.** Both defects are corrected, and neither caused the failure. PX-2, PX-4 and P6-M8 stay blocked (D9).
+
 ## Next defensible experiment (proposal only; not implemented or evaluated)
 
 **PX-1b:** the same structure, with each composition column divided by the causal season scale S(Y, t). That is D16's `score_scale` / `epa_scale`, which `build_team_features` already supplies point-in-time, so the inputs become unit-free across seasons.
