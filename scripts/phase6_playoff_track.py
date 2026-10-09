@@ -187,7 +187,7 @@ def _captain_rule_violations(event, ranks: dict[int, int], event_rules) -> tuple
 # --- PX-1 / PX-2 / PX-4 -------------------------------------------------------------------------------------
 
 
-def assemble_rows(database, rulesets, m1: dict[str, Any], *, limit: int | None = None):
+def assemble_rows(database, rulesets, m1: dict[str, Any], *, limit: int | None = None, seasons=SEASONS):
     """PX-1 rows for every reproduced, seeded event (§1), with selection-moment features.
 
     Compositions are the selection-time members (D-PX1-1). Four-member rows are excluded and counted per event
@@ -201,7 +201,7 @@ def assemble_rows(database, rulesets, m1: dict[str, Any], *, limit: int | None =
     scales = ScaleLookup(database)
     rows, excluded, features_by_event, events_by_key = [], Counter(), {}, {}
     by_event: dict[str, dict[str, Any]] = {}
-    for season in SEASONS:
+    for season in seasons:
         for event in read_event_playoffs(database, season)[:limit]:
             if m1["events"].get(event.event_key, {}).get("status") != "reproduced":
                 excluded["event_not_reproduced_or_excluded"] += 1
