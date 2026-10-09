@@ -327,5 +327,6 @@ decision (D9).
 | `p6_px1b_final_fit.json` | PX-1b final candidate `px1b-v1` (fit 2024–2026; no evaluation; awaits FINAL-1 on 2027) |
 | `p6_px2b_calbase.json` | PX-2b v2 calibration base (fit only; isolated from the frozen slice; no evaluation) |
 | `p6_px1b_chain_pins.json` | G1/G2 integrity pins (v1): sha256 of the `px1b-v1`, seed-only and `px2b-v2` model files, and the 526-row slice content fingerprint with its serialization; FINAL-1 and PX-2b load only matching artifacts |
+| `p6_px_hv1.json` | HV-1 PX historical validation (diagnostic, NOT acceptance; walk-forward refits): PX-1b better than seed-only in 2025 and than seed-only/PX-1 raw/M6-M7 in 2026, but worse than seed-only in the 2024 within-season fold; see `.agent/phase6/decisions/P6_PX_HV1_FINDINGS_2026-10-09.md` |
 | `p6_m6b_draft_accuracy.json` | P6-M6 (b) run 1 (pooled rates only: harness defect; kept) |
 | `p6_m6b_draft_accuracy_rerun1.json` | P6-M6 (b) rerun1 (per slot, CIs, raw-EPA baseline) |
