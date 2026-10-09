@@ -573,11 +573,9 @@ docs/metrics_pipeline.md section 9.1.
 Phase 6 – Strategy & Alliance Selection Engines (implementation on branch `phase6/build`, 2026-10-05): **NOT
 complete.**
 - **P6-DM2 MET:** the parity audit (`.agent/phase6/results/p6_m13_parity_audit_rerun1.json`).
-- **P6-DM1 NOT MET:** it is blocked by required human input. The 2024–2026 season rulesets must be entered from
-  the manuals and approved by a named, qualified human FRC-domain reviewer (`scripts/phase6_rulesets.py`; review
-  control of 2026-10-07). Migration 0011 is applied to serving (2026-10-06, Kanav's approval); the three rulesets
-  are stored `awaiting_review` and need that review
-  (`.agent/phase6/decisions/P6_M1_ENTRY_STATUS.md`).
+- **P6-DM1 NOT MET:** the 2024–2026 P6-M1 rulesets are approved (ids 4–6, 2026-10-08) and the M1 check is
+  recorded, but **PX-1 FAILED its P6-Q3 gate** (worse than M6/M7 and seed-only; `.agent/phase6/P6_M2_PX1_FAILURE.md`).
+  Under D9, PX-2, PX-4 and P6-M8 do not run until Kanav makes a dated decision.
 - **P6-M10 FAILED** its gate (D9). Strategy odds are served `not_validated`.
 - **Records:** `docs/phase6.md`, `.agent/phase6/PHASE_STATUS.md`, `.agent/phase6/PHASE_ACCEPTANCE.md`.
 - **Spec:** frozen at P6-M0, in `docs/P6Milestones.md` and `.agent/phase6/P6_M0_DECISIONS.md`.
