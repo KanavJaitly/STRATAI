@@ -75,6 +75,18 @@ def test_done_means_match_the_records():
     assert not any("P6-M1 season rulesets" in b for b in one["blocked_on"])
 
 
+def test_failed_px1_record_blocks_dependent_runs_under_d9(capsys):
+    """The recorded PX-1 gate failure still stops PX-2 (and so PX-4 and P6-M8) under the frozen D9 rule."""
+    from scripts.phase6_playoff_track import Blocked, _require
+
+    with pytest.raises(Blocked) as blocked:
+        _require("p6_m2_px1.json", passed_key="passed")
+    assert blocked.value.code == 2
+    message = capsys.readouterr().err
+    assert "the prerequisite gate failed, so dependent runs remain blocked under the frozen D9 rule" in message
+    assert "until Kanav decides" not in message
+
+
 def test_every_phase6_record_carries_commit_provenance():
     for path in RESULTS.glob("*.json"):
         provenance = json.loads(path.read_text(encoding="utf-8"))["provenance"]

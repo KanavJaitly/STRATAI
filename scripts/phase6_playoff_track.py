@@ -77,7 +77,8 @@ def _require(name: str, *, passed_key: str | None = None) -> dict[str, Any]:
     if record is None:
         raise Blocked(f"{name} has not been recorded")
     if passed_key and not record.get(passed_key):
-        raise Blocked(f"{name} did not pass ({passed_key} false): D9 stops dependent runs until Kanav decides")
+        raise Blocked(f"{name} did not pass ({passed_key} false): the prerequisite gate failed, so dependent "
+                      "runs remain blocked under the frozen D9 rule")
     return record
 
 
