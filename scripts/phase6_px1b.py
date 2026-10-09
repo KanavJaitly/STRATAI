@@ -3,6 +3,7 @@
     python -m scripts.phase6_px1b dev        # DEV-1 (§5): fit 2024, evaluate 2025 -- development, NOT acceptance
     python -m scripts.phase6_px1b final      # §6 final fit on 2024-2026, only if DEV-1 proceeds and before any 2027 data
     python -m scripts.phase6_px1b gate2027   # §6 FINAL-1 on held-out 2027 -- refuses until its prerequisites exist
+    python -m scripts.phase6_px1b calbase    # PX-2b v2 §2.2: the calibration-base model, once, before any 2027 data
 
 - **Records:** write-once, in `.agent/phase6/results/`. Each carries the commit, the spec's blob and sha256, the
   dataset fingerprint, the seed and the runtime.
@@ -23,6 +24,7 @@ from scripts.phase6_common import REGISTRY_DIR, file_sha256, git_blob, isolated_
 from scripts.phase6_playoff_track import BUDGET_SECONDS, Blocked, assemble_rows, require_rulesets
 
 DEV_RECORD, FINAL_RECORD, GATE_RECORD = "p6_px1b_dev.json", "p6_px1b_final_fit.json", "p6_px1b_gate_2027.json"
+CALBASE_RECORD = "p6_px2b_calbase.json"
 DEV_FIT, DEV_EVAL, FINAL_SEASONS, HOLDOUT = 2024, 2025, (2024, 2025, 2026), 2027
 
 
@@ -119,7 +121,57 @@ def run_gate2027(database, rulesets) -> dict[str, Any]:
     raise Blocked("FINAL-1 cannot be evaluated yet; missing: " + "; ".join(missing))
 
 
-RUNS = {"dev": (DEV_RECORD, run_dev), "final": (FINAL_RECORD, run_final), "gate2027": (GATE_RECORD, run_gate2027)}
+def run_calbase(database, rulesets) -> dict[str, Any]:
+    """PX-2b v2 §2.2 (approved 2026-10-08): the calibration-base model, fit once and registered write-once before any
+    2027 data exists. The rows are px1b-v1's own population (proven by fingerprint); the slice must be the frozen 526
+    keys; the fit set is the rows strictly before the slice from no slice event, proven isolated row by row."""
+    import hashlib
+
+    from ml.playoffs.px1b import dataset_fingerprint
+    from ml.playoffs.px2b import (CALBASE_MODEL_TYPE, CALBASE_VERSION_TAG, SLICE_PROVENANCE, SPEC_BLOB, SPEC_PATH,
+                                  calibration_base_rows, calibration_slice, fit_calibration_base, frozen_slice_keys,
+                                  isolation_report, require_frozen_slice, require_isolated, straddling_events)
+    from ml.registry import register_model
+
+    if git_blob(SPEC_PATH) != SPEC_BLOB:
+        raise Blocked(f"{SPEC_PATH} is not the approved PX-2b v2 blob {SPEC_BLOB}")
+    final = read_record(FINAL_RECORD)
+    if final is None:
+        raise Blocked(f"{FINAL_RECORD} (px1b-v1) is required")
+    if _playoff_matches(database, HOLDOUT):
+        raise Blocked("2027 playoff matches exist: the calibration base must be frozen before any 2027 data (v2 §2.2)")
+    rows, excluded, extra = _rows(database, rulesets, FINAL_SEASONS)
+    population = dataset_fingerprint(rows)
+    if population != final["dataset_fingerprint"]:
+        raise Blocked("the 2024-2026 rows differ from px1b-v1's training population (fingerprint mismatch)")
+    slice_rows = calibration_slice(rows)
+    frozen = frozen_slice_keys()
+    require_frozen_slice(slice_rows, frozen)
+    base = calibration_base_rows(rows, slice_rows)
+    base_latest = max(r.scheduled_time for r in base)
+    report = isolation_report([r.match_key for r in base], [r.event_key for r in base], base_latest, slice_rows)
+    require_isolated(report)
+    model = fit_calibration_base(base)
+    fingerprint = dataset_fingerprint(base)
+    register_model(model, registry_dir=REGISTRY_DIR, model_type=CALBASE_MODEL_TYPE, model_version="1.0.0",
+                   version_tag=CALBASE_VERSION_TAG, training_dataset_hash=fingerprint,
+                   feature_list=model.design.names(), created_at=datetime.now(timezone.utc))
+    return {"milestone": "PX-2b v2 calibration base", "acceptance": False,
+            "spec": {"path": SPEC_PATH, "blob": SPEC_BLOB, "sha256": file_sha256(SPEC_PATH)},
+            "population": {"rows": len(rows), "fingerprint": population, "equals_px1b_v1_training": True},
+            "slice": {"rows": len(slice_rows), "provenance": str(SLICE_PROVENANCE),
+                      "provenance_sha256": file_sha256(SLICE_PROVENANCE), "equals_frozen_keys": True,
+                      "keys_sha256": hashlib.sha256("\n".join(frozen).encode("utf-8")).hexdigest()},
+            "base": {"rows": len(base), "fingerprint": fingerprint, "by_season": dict(Counter(r.season for r in base)),
+                     "latest": base_latest.isoformat(), "events": sorted({r.event_key for r in base}),
+                     "match_keys": [r.match_key for r in base]},
+            "straddling_events_excluded": straddling_events(rows, slice_rows), "isolation": report,
+            "registry": {"model_type": CALBASE_MODEL_TYPE, "version_tag": CALBASE_VERSION_TAG},
+            "columns": model.design.names(), "excluded": dict(excluded), **extra}
+
+
+RUNS = {"dev": (DEV_RECORD, run_dev), "final": (FINAL_RECORD, run_final), "gate2027": (GATE_RECORD, run_gate2027),
+        "calbase": (CALBASE_RECORD, run_calbase)}
 
 
 def main(argv: list[str] | None = None) -> int:

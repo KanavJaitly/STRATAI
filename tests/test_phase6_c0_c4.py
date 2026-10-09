@@ -265,11 +265,16 @@ def test_the_leakage_exclusion_applies_to_the_px1b_population_only():
     assert representable_events(rules, m1, [clean], exclude_playoffs_before_selection=True)["validated_events"] == 1
 
 
-def test_px2b_runs_end_to_end_on_synthetic_rows_through_the_pointers(px1b_results, tmp_path, monkeypatch):
+def test_px2b_no_longer_has_the_v1_in_sample_path(px1b_results, tmp_path, monkeypatch):
+    """PX-2b v2 governs (approved 2026-10-08): with PX-1b accepted (SYNTHETIC) but no calibration-base record, PX-2b
+    refuses. It never falls back to v1's calibration on px1b-v1's own predictions. The v2 path is tested end to end
+    in tests/test_phase6_px2b_v2.py."""
     from dataclasses import replace
 
+    from ml.calibration.calibrator import SymmetricIsotonicCalibrator
     from ml.playoffs.px1 import PlayoffLogisticModel
     from scripts import phase6_playoff_track as track
+    from scripts.phase6_playoff_track import Blocked
     from tests.test_phase6_px1 import synthetic_rows
 
     t, results, write = px1b_results
@@ -283,11 +288,12 @@ def test_px2b_runs_end_to_end_on_synthetic_rows_through_the_pointers(px1b_result
     monkeypatch.setattr(track, "_models", lambda tr=None: (model, model))
     monkeypatch.setattr(track, "_track_rows", lambda database, rulesets, tr: rows)
     monkeypatch.setattr(track, "ROWS_CACHE_DIR", tmp_path)
-    result = track.run_m3(None, None, t)
-    assert result["slice_rows"] == 60 and result["evaluated"] == 200  # the last 20% of 2026; all of 2027
-    assert result["track"] == "PX-1b" and set(result["specs"]) == {"px2b", "px4b", "m8b"}
-    assert isinstance(result["passed"], bool)  # SYNTHETIC: the outcome is not evidence either way
-    assert (tmp_path / "px2b_calibrator.json").exists() and not (tmp_path / "px2_calibrator.json").exists()
+    fitted = []
+    monkeypatch.setattr(SymmetricIsotonicCalibrator, "fit", lambda self, p, y: fitted.append(p))
+    assert t.calibration_base_record == "p6_px2b_calbase.json" and t.specs["px2b"].endswith("_V2.md")
+    with pytest.raises(Blocked):
+        track.run_m3(None, None, t)  # no p6_px2b_calbase.json: refused
+    assert fitted == [] and not (tmp_path / "px2b_calibrator.json").exists()
 
 
 def test_the_frozen_px2_still_refuses_on_the_real_px1_record():

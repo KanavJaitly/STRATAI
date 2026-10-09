@@ -88,6 +88,7 @@ class PlayoffTrack:
     exclude_playoffs_before_selection: bool
     specs: dict[str, str] | None = None  # the versioned specs, cited in each record (PX-1b only)
     requires_mentor_agreement: bool = False
+    calibration_base_record: str | None = None  # PX-2b v2: out-of-sample calibration from this base model's record
 
 
 class Blocked(SystemExit):
@@ -412,11 +413,15 @@ def run_m3(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, A
     _require_model(track)
     px1, _ = _models(track)
     rows = _track_rows(database, rulesets, track)
-    season_2025 = sorted((r for r in rows if r.season == track.calibration_season),
-                         key=lambda r: (r.scheduled_time, r.match_key))
-    slice_rows = season_2025[int(len(season_2025) * 0.8):]
-    calibrator = SymmetricIsotonicCalibrator()
-    calibrator.fit([px1.predict(r) for r in slice_rows], [r.red_win for r in slice_rows])
+    calibration: dict[str, Any] = {}
+    if track.calibration_base_record is not None:  # PX-2b v2: out-of-sample, never px1b-v1's own predictions
+        calibrator, slice_rows, calibration = _out_of_sample_calibrator(rows, track)
+    else:  # the frozen PX-2 (P6-Q4), unchanged
+        season_2025 = sorted((r for r in rows if r.season == track.calibration_season),
+                             key=lambda r: (r.scheduled_time, r.match_key))
+        slice_rows = season_2025[int(len(season_2025) * 0.8):]
+        calibrator = SymmetricIsotonicCalibrator()
+        calibrator.fit([px1.predict(r) for r in slice_rows], [r.red_win for r in slice_rows])
     test = [r for r in rows if r.season == track.holdout and px1.predict(r) is not None]
     q = [calibrator.calibrate(px1.predict(r)) for r in test]
     swapped = [calibrator.calibrate(px1.predict(r.swapped())) for r in test]
@@ -427,7 +432,36 @@ def run_m3(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, A
                                      order_independent=q == list(reversed(backward)), fit_isolated=fit_isolated)
     calibrator.save(ROWS_CACHE_DIR / track.calibrator_file)
     return {"milestone": "P6-M3", "decision": "P6-Q4", "slice_rows": len(slice_rows), "evaluated": len(test),
-            "gate": gate.to_dict(), "passed": gate.passed, **_track_info(track)}
+            "gate": gate.to_dict(), "passed": gate.passed, **_track_info(track),
+            **({"calibration": calibration} if calibration else {})}
+
+
+def _out_of_sample_calibrator(rows, track: PlayoffTrack):
+    """PX-2b v2 §2.2: the calibrator is fit on the calibration-base model's predictions of the frozen slice, after a
+    per-row proof that no slice match or event is in the base model's fit set. It is then applied to the candidate
+    (px1b-v1) by the caller; the base model is never the candidate."""
+    from datetime import datetime
+
+    from ml.playoffs.px1 import PlayoffLogisticModel
+    from ml.playoffs.px2b import (SPEC_BLOB, SPEC_PATH, calibration_slice, fit_out_of_sample_calibrator,
+                                  frozen_slice_keys, require_frozen_slice)
+
+    if git_blob(SPEC_PATH) != SPEC_BLOB:
+        raise Blocked(f"{SPEC_PATH} is not the approved PX-2b v2 blob {SPEC_BLOB}")
+    record = _require(track.calibration_base_record)
+    base_dir = REGISTRY_DIR / record["registry"]["model_type"] / record["registry"]["version_tag"]
+    manifest = json.loads((base_dir / "manifest.json").read_text(encoding="utf-8"))
+    if manifest["training_dataset_hash"] != record["base"]["fingerprint"]:
+        raise Blocked("the registered calibration-base model was not trained on the recorded fit set")
+    base_model = PlayoffLogisticModel.load(base_dir / "model.json")
+    slice_rows = calibration_slice(rows, track.calibration_season)
+    require_frozen_slice(slice_rows, frozen_slice_keys())
+    calibrator, report = fit_out_of_sample_calibrator(
+        base_model, record["base"]["match_keys"], record["base"]["events"],
+        datetime.fromisoformat(record["base"]["latest"]), slice_rows)
+    return calibrator, slice_rows, {"procedure": "PX-2b v2 out-of-sample (calibration base)",
+                                    "calibration_base": record["registry"], "base_fingerprint": record["base"]["fingerprint"],
+                                    "isolation": report, "applied_to": f"{track.model_type} {track.version_tag}"}
 
 
 def run_m5(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, Any]:
@@ -646,9 +680,9 @@ PX1B_TRACK = PlayoffTrack(
     sentinel_time="2027-12-31T00:00:00+00:00",
     epa_snapshot=None, epa_chain=None,  # D9 v1 Part B 3(d): a D18 source covering 2027 must be configured first
     exclude_playoffs_before_selection=True,
-    specs={"px2b": ".agent/phase6/P6_M3_PX2B_SPEC.md", "px4b": ".agent/phase6/P6_M5_PX4B_SPEC.md",
-           "m8b": ".agent/phase6/P6_M8B_SPEC.md"},
-    requires_mentor_agreement=True)
+    specs={"px2b": ".agent/phase6/P6_M3_PX2B_SPEC_V2.md", "px4b": ".agent/phase6/P6_M5_PX4B_SPEC.md",
+           "m8b": ".agent/phase6/P6_M8B_SPEC.md"},  # PX-2b v2 governs (approved 2026-10-08); v1 is kept as history
+    requires_mentor_agreement=True, calibration_base_record="p6_px2b_calbase.json")
 
 
 WEEK_SQL = """
