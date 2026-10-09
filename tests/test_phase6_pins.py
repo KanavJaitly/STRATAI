@@ -151,7 +151,7 @@ def test_a_missing_model_file_or_pin_record_is_refused_with_no_unpinned_fallback
 def test_the_px1_chain_stays_unpinned():
     from scripts import phase6_playoff_track as track
 
-    assert track.PX1_TRACK.pins_record is None and track.PX1B_TRACK.pins_record == "p6_px1b_chain_pins.json"
+    assert track.PX1_TRACK.pins_record is None and track.PX1B_TRACK.pins_record == "p6_px1b_chain_pins_v2.json"
 
 
 # --- the PX-2b v2 and FINAL-1 paths use the pins ----------------------------------------------------------------
@@ -209,27 +209,34 @@ def test_final1_lists_the_pin_record_and_refuses_an_altered_model(pinned_world, 
     assert "integrity pins" in capsys.readouterr().err
 
 
-# --- the real pins (after `phase6_px1b pins` has run) --------------------------------------------------------------
+# --- the real pins (v1 after `phase6_px1b pins`; v2 after `phase6_px1b pins-v2`) -----------------------------------
 
 
 @pytest.fixture
 def real_pins():
+    """The v1 record (G1/G2), kept unchanged as history."""
     path = RESULTS / "p6_px1b_chain_pins.json"
     if not path.exists() or not REGISTRY.exists():
         pytest.skip("the real pin record or registry is not present")
-    return read_pins(path)
+    return read_pins(path, version=1)
 
 
-def test_the_real_pinned_artifacts_match_and_load(real_pins):
+def test_the_real_v1_pins_still_match_their_files(real_pins):
     from ml.registry import model_file_sha256
-    from scripts import phase6_playoff_track as track
 
     for key, sha in real_pins["models"].items():
         model_type, tag = key.split("/")
         assert model_file_sha256(REGISTRY, model_type, tag) == sha
-    px1b, seed_only = track._models(track.PX1B_TRACK)  # loads only through the G1 check
-    assert px1b.model_type == "playoff_px1b" and seed_only.model_type == "playoff_px1b_seed_only"
     assert real_pins["slice_content"]["serialization"]["signature_sha256"] == serialization_signature()
+
+
+def test_the_real_pinned_artifacts_load_through_the_v2_record():
+    from scripts import phase6_playoff_track as track
+
+    if not (RESULTS / track.PX1B_TRACK.pins_record).exists() or not REGISTRY.exists():
+        pytest.skip("the real v2 pin record or registry is not present")
+    px1b, seed_only = track._models(track.PX1B_TRACK)  # loads only through the G1 check, against v2
+    assert px1b.model_type == "playoff_px1b" and seed_only.model_type == "playoff_px1b_seed_only"
 
 
 def test_the_real_slice_content_matches_its_pin(real_pins):

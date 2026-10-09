@@ -26,8 +26,11 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-PIN_RECORD = "p6_px1b_chain_pins.json"
-PIN_VERSION = 1
+PIN_RECORD_V1, PIN_VERSION_V1 = "p6_px1b_chain_pins.json", 1  # G1/G2 (a52641e); kept unchanged
+# G3 (approved 2026-10-09): v2 = every v1 pin, re-verified and copied, plus ranking_xgb_v2/d18 (used by M8b). The PX-1b
+# chain reads v2; v1 stays as the record of what was pinned first.
+PIN_RECORD, PIN_VERSION = "p6_px1b_chain_pins_v2.json", 2
+RANKING_D18 = ("ranking_xgb_v2", "d18")
 SERIALIZATION_NAME = "px1b-dataset-fingerprint-v1"
 
 
@@ -57,13 +60,24 @@ def model_key(model_type: str, version_tag: str) -> str:
     return f"{model_type}/{version_tag}"
 
 
-def read_pins(path: Path) -> dict[str, Any]:
+def read_pins(path: Path, version: int = PIN_VERSION) -> dict[str, Any]:
     if not Path(path).exists():
         raise PinError(f"{path} (the PX-1b chain pin record) does not exist")
     pins = json.loads(Path(path).read_text(encoding="utf-8"))
-    if pins.get("pin_version") != PIN_VERSION or "models" not in pins or "slice_content" not in pins:
-        raise PinError(f"{path} is not a version-{PIN_VERSION} pin record")
+    if pins.get("pin_version") != version or "models" not in pins or "slice_content" not in pins:
+        raise PinError(f"{path} is not a version-{version} pin record")
     return pins
+
+
+def require_file_hash(label: str, path: Path, expected: str | None) -> None:
+    """G3: an artifact file (the PX-2b calibrator) exists and hashes to the sha256 its producing record carries."""
+    if not expected:
+        raise PinError(f"{label}: its producing record carries no sha256 (inconsistent provenance)")
+    if not Path(path).exists():
+        raise PinError(f"{label}: {path} is missing")
+    actual = hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    if actual != expected:
+        raise PinError(f"{label}: file sha256 {actual} is not the recorded {expected}")
 
 
 def require_model_pin(pins: dict[str, Any], model_type: str, version_tag: str, actual_sha256: str | None) -> None:

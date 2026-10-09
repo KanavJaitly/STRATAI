@@ -4,7 +4,8 @@
     python -m scripts.phase6_px1b final      # §6 final fit on 2024-2026, only if DEV-1 proceeds and before any 2027 data
     python -m scripts.phase6_px1b gate2027   # §6 FINAL-1 on held-out 2027 -- refuses until its prerequisites exist
     python -m scripts.phase6_px1b calbase    # PX-2b v2 §2.2: the calibration-base model, once, before any 2027 data
-    python -m scripts.phase6_px1b pins       # G1/G2: pin the three model files and the slice content (write-once)
+    python -m scripts.phase6_px1b pins       # G1/G2: pin the three model files and the slice content (write-once; done)
+    python -m scripts.phase6_px1b pins-v2    # G3: v1's pins re-verified and copied, plus ranking_xgb_v2/d18 (write-once)
 
 - **Records:** write-once, in `.agent/phase6/results/`. Each carries the commit, the spec's blob and sha256, the
   dataset fingerprint, the seed and the runtime.
@@ -21,7 +22,8 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
 
-from scripts.phase6_common import REGISTRY_DIR, file_sha256, git_blob, isolated_database, read_record, write_once
+from scripts.phase6_common import (REGISTRY_DIR, RESULTS_DIR, file_sha256, git_blob, isolated_database, read_record,
+                                   write_once)
 from scripts.phase6_playoff_track import BUDGET_SECONDS, Blocked, assemble_rows, require_rulesets
 
 DEV_RECORD, FINAL_RECORD, GATE_RECORD = "p6_px1b_dev.json", "p6_px1b_final_fit.json", "p6_px1b_gate_2027.json"
@@ -124,7 +126,7 @@ def run_gate2027(database, rulesets) -> dict[str, Any]:
 
     missing = []
     if read_record(PIN_RECORD) is None:
-        missing.append(f"{PIN_RECORD} (the G1/G2 integrity pins)")
+        missing.append(f"{PIN_RECORD} (the G1/G2/G3 integrity pins)")
     else:
         pinned_px1b_models()
     if read_record(FINAL_RECORD) is None:
@@ -191,8 +193,8 @@ def run_pins(database, rulesets) -> dict[str, Any]:
     - The sha256 of each pinned model file, after checking that its registry training hash is the recorded population.
     - The content fingerprint of the 526-row slice, rebuilt from px1b-v1's own population (proven by fingerprint),
       with the exact serialization (name, method, code signature)."""
-    from ml.playoffs.pins import (PIN_VERSION, SERIALIZATION_NAME, model_key, serialization_signature,
-                                  slice_content_fingerprint)
+    from ml.playoffs.pins import (PIN_VERSION_V1 as PIN_VERSION, SERIALIZATION_NAME, model_key,
+                                  serialization_signature, slice_content_fingerprint)
     from ml.playoffs.px1b import dataset_fingerprint
     from ml.playoffs.px2b import SLICE_PROVENANCE, calibration_slice, frozen_slice_keys, require_frozen_slice
     from ml.registry import model_file_sha256
@@ -234,8 +236,42 @@ def run_pins(database, rulesets) -> dict[str, Any]:
             "population_fingerprint": final["dataset_fingerprint"]}
 
 
+# The ranking_xgb_v2 d18 file identity already recorded by Phase 5 (p5_m4/p5_m6 records; ML_RANKING_MODEL_SHA256).
+RANKING_D18_RECORDED_SHA256 = "1f0fe5aae90244e2736950928a88e733c85214b8def547b399b87c0cdd136312"
+
+
+def run_pins_v2(database, rulesets) -> dict[str, Any]:
+    """G3 (approved 2026-10-09): an additive, write-once v2 pin record. Each v1 pin is re-verified against its file
+    and copied unchanged; ranking_xgb_v2/d18 (M8b's ordering model) is added after its file is checked against the
+    sha256 Phase 5 recorded. v1 is never modified."""
+    from ml.playoffs.pins import (PIN_RECORD_V1, PIN_VERSION, PIN_VERSION_V1, RANKING_D18, model_key, read_pins,
+                                  serialization_signature)
+    from ml.registry import model_file_sha256
+
+    v1_path = RESULTS_DIR / PIN_RECORD_V1
+    v1 = read_pins(v1_path, version=PIN_VERSION_V1)
+    if _playoff_matches(database, HOLDOUT):
+        raise Blocked("2027 playoff matches exist: the pins are taken before any 2027 data")
+    for key, sha in v1["models"].items():
+        if model_file_sha256(REGISTRY_DIR, *key.split("/")) != sha:
+            raise Blocked(f"{key} no longer matches its v1 pin: refusing to copy it")
+    if v1["slice_content"]["serialization"]["signature_sha256"] != serialization_signature():
+        raise Blocked("the slice serialization changed since v1: refusing to copy its content pin")
+    ranking = model_file_sha256(REGISTRY_DIR, *RANKING_D18)
+    if ranking != RANKING_D18_RECORDED_SHA256:
+        raise Blocked(f"{model_key(*RANKING_D18)} sha256 {ranking} is not the Phase 5 recorded identity")
+    return {"pin_version": PIN_VERSION, "approved": "Kanav 2026-10-09 (G3)", "acceptance": False,
+            "derived_from": {"record": PIN_RECORD_V1, "sha256": file_sha256(v1_path), "pin_version": PIN_VERSION_V1},
+            "models": {**v1["models"], model_key(*RANKING_D18): ranking},
+            "ranking_cross_check": {"recorded_by": "Phase 5 p5_m4 / p5_m6 records and ML_RANKING_MODEL_SHA256",
+                                    "sha256": RANKING_D18_RECORDED_SHA256, "matches": True},
+            "slice_content": v1["slice_content"], "population_fingerprint": v1["population_fingerprint"],
+            "calibrator": "not pinned here: PX-2b's own write-once record carries its sha256 (it does not exist yet)"}
+
+
 RUNS = {"dev": (DEV_RECORD, run_dev), "final": (FINAL_RECORD, run_final), "gate2027": (GATE_RECORD, run_gate2027),
-        "calbase": (CALBASE_RECORD, run_calbase), "pins": ("p6_px1b_chain_pins.json", run_pins)}
+        "calbase": (CALBASE_RECORD, run_calbase), "pins": ("p6_px1b_chain_pins.json", run_pins),
+        "pins-v2": ("p6_px1b_chain_pins_v2.json", run_pins_v2)}
 
 
 def main(argv: list[str] | None = None) -> int:

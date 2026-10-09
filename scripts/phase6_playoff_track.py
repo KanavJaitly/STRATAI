@@ -62,8 +62,10 @@ class PlayoffTrack:
     """Where one playoff-model chain's PX-2 -> PX-4 -> M8 runs point (C4, approved 2026-10-08).
 
     `PX1_TRACK` is the frozen P6-M3/M5/M8 chain and every run's default, with its pointers exactly as before.
-    `PX1B_TRACK` is the versioned PX-2b/PX-4b/M8b chain (`P6_M3_PX2B_SPEC.md`, `P6_M5_PX4B_SPEC.md`,
-    `P6_M8B_SPEC.md`). Its model prerequisite is PX-1b's FINAL-1 pass plus Kanav's sha-matched confirmation."""
+    `PX1B_TRACK` is the versioned PX-2b/PX-4b/M8b chain (`P6_M3_PX2B_SPEC_V2.md`, which governs PX-2b and
+    supersedes v1; `P6_M5_PX4B_SPEC.md`; `P6_M8B_SPEC.md`). Its model prerequisite is PX-1b's FINAL-1 pass plus Kanav's
+    sha-matched confirmation. Its models, calibration slice, PX-2b calibrator and M8b ranking model load only after
+    they match their pins (G1/G2/G3)."""
 
     name: str
     model_record: str  # the playoff model's own gate record (passed required)
@@ -355,6 +357,44 @@ def _models(track: PlayoffTrack | None = None):
     return px1, seed_only
 
 
+def _load_calibrator(track: PlayoffTrack):
+    """The PX-2 calibrator. On a pinned track (G3) it loads only if the file hashes to the sha256 its PX-2b record
+    carries: a missing hash, a missing file or a mismatch is refused, never loaded unverified."""
+    from ml.calibration.calibrator import SymmetricIsotonicCalibrator
+    from ml.playoffs.pins import PinError, require_file_hash
+
+    path = ROWS_CACHE_DIR / track.calibrator_file
+    if track.pins_record is not None:
+        expected = (_require(track.px2_record).get("calibrator") or {}).get("sha256")
+        try:
+            require_file_hash(f"{track.name} PX-2 calibrator", path, expected)
+        except PinError as exc:
+            raise Blocked(str(exc)) from exc
+    return SymmetricIsotonicCalibrator.load(path)
+
+
+def _ranking_model(track: PlayoffTrack):
+    """M8's ranking model (ranking_xgb_v2 d18). On a pinned track (G3) it loads only with its pinned sha256."""
+    from ml.models.ranking_xgb_v2 import FEATURE_NAMES_V2, RankingXGBModelV2
+    from ml.playoffs.pins import RANKING_D18, model_key
+    from ml.registry import load_registered_model
+
+    expected = None
+    if track.pins_record is not None:
+        expected = _pins(track)["models"].get(model_key(*RANKING_D18))
+        if not expected:
+            raise Blocked(f"no pin for {model_key(*RANKING_D18)}")
+    try:
+        ranking, _ = load_registered_model(RankingXGBModelV2, registry_dir=REGISTRY_DIR, model_type=RANKING_D18[0],
+                                           version_tag=RANKING_D18[1], current_feature_list=FEATURE_NAMES_V2,
+                                           expected_sha256=expected)
+    except (FileNotFoundError, ValueError) as exc:
+        if expected is None:
+            raise
+        raise Blocked(f"{model_key(*RANKING_D18)}: {exc}") from exc
+    return ranking
+
+
 def _pins(track: PlayoffTrack) -> dict[str, Any]:
     from ml.playoffs.pins import PinError, read_pins
 
@@ -457,9 +497,14 @@ def run_m3(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, A
                                      symmetry_errors=[abs(a + b - 1.0) for a, b in zip(q, swapped)],
                                      order_independent=q == list(reversed(backward)), fit_isolated=fit_isolated)
     calibrator.save(ROWS_CACHE_DIR / track.calibrator_file)
+    saved = {}
+    if track.pins_record is not None:  # G3: the calibrator PX-4b/M8b load is identified by this record
+        from scripts.phase6_common import file_sha256
+        saved = {"calibrator": {"file": track.calibrator_file,
+                                "sha256": file_sha256(ROWS_CACHE_DIR / track.calibrator_file)}}
     return {"milestone": "P6-M3", "decision": "P6-Q4", "slice_rows": len(slice_rows), "evaluated": len(test),
             "gate": gate.to_dict(), "passed": gate.passed, **_track_info(track),
-            **({"calibration": calibration} if calibration else {})}
+            **({"calibration": calibration} if calibration else {}), **saved}
 
 
 def _out_of_sample_calibrator(rows, track: PlayoffTrack):
@@ -499,7 +544,6 @@ def _out_of_sample_calibrator(rows, track: PlayoffTrack):
 
 
 def run_m5(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, Any]:
-    from ml.calibration.calibrator import SymmetricIsotonicCalibrator
     from ml.playoffs.data import event_bracket, read_event_playoffs
     from ml.playoffs.evaluation import paired_log_loss_gate
     from ml.playoffs.px1 import alliance_match_probability
@@ -511,7 +555,7 @@ def run_m5(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, A
         _require_model(track)
     m1 = _m1(track)
     px1, seed_only = _models(track)
-    calibrator = SymmetricIsotonicCalibrator.load(ROWS_CACHE_DIR / track.calibrator_file)
+    calibrator = _load_calibrator(track)
     snapshot, chain = _epa_source(track)
     _, _, features_by_event, events_by_key, _, population = assemble_rows_for(
         database, rulesets, m1, track.holdout, snapshot=snapshot, chain=chain,
@@ -717,7 +761,7 @@ PX1B_TRACK = PlayoffTrack(
     specs={"px2b": ".agent/phase6/P6_M3_PX2B_SPEC_V2.md", "px4b": ".agent/phase6/P6_M5_PX4B_SPEC.md",
            "m8b": ".agent/phase6/P6_M8B_SPEC.md"},  # PX-2b v2 governs (approved 2026-10-08); v1 is kept as history
     requires_mentor_agreement=True, calibration_base_record="p6_px2b_calbase.json",
-    pins_record="p6_px1b_chain_pins.json")
+    pins_record="p6_px1b_chain_pins_v2.json")  # G3: v2 = v1's pins + ranking_xgb_v2/d18
 
 
 WEEK_SQL = """
@@ -733,16 +777,13 @@ def run_m8(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, A
     identification of the actual winner and finalist, both baselines, and the data facts for every miss.
     P6-DM1 is decided only after the named mentor's review (`m8-review`), never here."""
     from data.rankings import read_final_ranks_for_season
-    from ml.calibration.calibrator import SymmetricIsotonicCalibrator
     from ml.features.assembler import build_team_features
     from ml.features.scale import ScaleLookup
-    from ml.models.ranking_xgb_v2 import FEATURE_NAMES_V2, RankingXGBModelV2
     from ml.playoffs.data import event_bracket, read_event_playoffs
     from ml.playoffs.evaluation import PredictedAlliance, dm1_result, identifies
     from ml.playoffs.px1 import alliance_match_probability
     from ml.playoffs.selection import DraftState, SelectionEngine, best_available, field_outcome, run_draft
     from ml.ratings.d18_source import load_d18_provider
-    from ml.registry import load_registered_model
     from ml.views.event_analysis import POLICY_M5V2, policy_model
 
     track = track or PX1_TRACK
@@ -752,12 +793,11 @@ def run_m8(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, A
         _require_model(track)
     m1 = _m1(track)
     px1, _ = _models(track)
-    calibrator = SymmetricIsotonicCalibrator.load(ROWS_CACHE_DIR / track.calibrator_file)
+    calibrator = _load_calibrator(track)
+    ranking = _ranking_model(track)  # verified before any data is read
     snapshot, chain = _epa_source(track)
     provider, _ = load_d18_provider(database, snapshot, chain)
     scales = ScaleLookup(database)
-    ranking, _ = load_registered_model(RankingXGBModelV2, registry_dir=REGISTRY_DIR, model_type="ranking_xgb_v2",
-                                       version_tag="d18", current_feature_list=FEATURE_NAMES_V2)
     policy = policy_model(True)
     ranks_by_event = read_final_ranks_for_season(database, track.holdout)
     ruleset = rulesets[track.holdout]
