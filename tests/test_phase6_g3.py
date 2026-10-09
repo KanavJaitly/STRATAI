@@ -243,3 +243,33 @@ def test_the_real_v2_record_is_additive_when_present():
     assert {k: v for k, v in v2["models"].items() if k in v1["models"]} == v1["models"]
     assert set(v2["models"]) - set(v1["models"]) == {"/".join(RANKING_D18)}
     assert v2["slice_content"] == v1["slice_content"]
+
+
+def test_px2b_records_the_saved_calibrators_sha256_and_px4b_accepts_exactly_it(tmp_path, monkeypatch):
+    """G3: the PX-2b record carries the sha256 of the calibrator file it saved, and the loader accepts exactly that
+    file (a synthetic run_m3 through the real v2 path)."""
+    import scripts.phase6_common as common
+    from scripts import phase6_playoff_track as track
+    from scripts.phase6_common import file_sha256
+    from scripts.phase6_playoff_track import Blocked
+    from tests.test_phase6_px2b_v2 import _synthetic_track_world
+
+    results, registry = tmp_path / "results", tmp_path / "registry"
+    results.mkdir()
+    for module in (common, track):
+        monkeypatch.setattr(module, "RESULTS_DIR", results)
+    monkeypatch.setattr(track, "REGISTRY_DIR", registry)
+    monkeypatch.setattr(track, "ROWS_CACHE_DIR", tmp_path)
+    t = replace(track.PX1B_TRACK, confirmation=tmp_path / "confirmation.json")
+    (results / t.model_record).write_text(json.dumps({"passed": True}), encoding="utf-8")
+    t.confirmation.write_text(json.dumps({"confirmed": True, "confirmed_by": "SYNTHETIC", "date": "2099-01-01",
+                                          "record": t.model_record,
+                                          "record_sha256": file_sha256(results / t.model_record)}), encoding="utf-8")
+    _synthetic_track_world(t, results, registry, monkeypatch)
+    result = track.run_m3(None, None, t)
+    assert result["calibrator"] == {"file": t.calibrator_file, "sha256": file_sha256(tmp_path / t.calibrator_file)}
+    (results / t.px2_record).write_text(json.dumps(result), encoding="utf-8")
+    assert track._load_calibrator(t) is not None
+    (tmp_path / t.calibrator_file).write_text("{}", encoding="utf-8")
+    with pytest.raises(Blocked):
+        track._load_calibrator(t)
