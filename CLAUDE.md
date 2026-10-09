@@ -575,7 +575,8 @@ complete.**
 - **P6-DM2 MET:** the parity audit (`.agent/phase6/results/p6_m13_parity_audit_rerun1.json`).
 - **P6-DM1 NOT MET:** the 2024–2026 P6-M1 rulesets are approved (ids 4–6, 2026-10-08) and the M1 check is
   recorded, but **PX-1 FAILED its P6-Q3 gate** (worse than M6/M7 and seed-only; `.agent/phase6/P6_M2_PX1_FAILURE.md`).
-  Under D9, PX-2, PX-4 and P6-M8 do not run until Kanav makes a dated decision.
+  Kanav accepted PX-1 as `not_validated` (2026-10-08). Under D9, PX-2, PX-4 and P6-M8 do not run, and Phase 6 / M14
+  stay incomplete. A redesign would be a separate, pre-registered effort that 2026 cannot validate.
 - **P6-M10 FAILED** its gate (D9). Strategy odds are served `not_validated`.
 - **Records:** `docs/phase6.md`, `.agent/phase6/PHASE_STATUS.md`, `.agent/phase6/PHASE_ACCEPTANCE.md`.
 - **Spec:** frozen at P6-M0, in `docs/P6Milestones.md` and `.agent/phase6/P6_M0_DECISIONS.md`.

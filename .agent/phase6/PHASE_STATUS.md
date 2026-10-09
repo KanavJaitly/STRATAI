@@ -6,7 +6,8 @@ done_means: {P6-DM1: NOT MET (PX-1 gate FAILED 2026-10-08 -> PX-2/PX-4/M8 blocke
 accepted: [P6-M0 frozen, P6-M1 (rulesets approved ids 4-6; check recorded), P6-M4 (correctness + real structure), P6-M6 (a), P6-M6 (b) measured (non-gating), P6-M7 optimization correctness, P6-M9, P6-M11, P6-M12 (rerun1), P6-M13 (rerun1), P6-M14]
 failed_d9: [P6-M10 gate (G2) -> baseline strategy odds not_validated; P6-M2 PX-1 gate (P6-Q3: worse than M6/M7 and seed-only) -> PX-2, PX-4, P6-M8 not run; no redesign without Kanav's dated decision]
 failed_and_superseded: [P6-M12 run 1 (harness defect), P6-M13 run 1 (two demonstrated defects), P6-M6 (b) run 1 (pooled rates only)] -- all kept
-blocked_by_human_input: [a dated decision on the PX-1 failure (redesign or accept not_validated); P6-M8 mentor (Mr. Biery) agreement and review, after PX-4]
+decided: [PX-1 accepted as not_validated under the frozen spec (Kanav, 2026-10-08; decisions/P6_PX1_NOT_VALIDATED_2026-10-08.md) -> PX-2, PX-4, P6-M8 stay not run (D9); any redesign is a separate pre-registered effort, not validatable on 2026]
+blocked_by_human_input: [P6-M8 mentor (Mr. Biery) agreement and review -- outstanding, and moot unless PX-4 can run]
 prerequisites:
   - migration 0011 on the serving database: APPLIED 2026-10-06 (Kanav's approval)
 records: .agent/phase6/results/ (p6_m10_fit, p6_m10_outcome_model, p6_m12_strategy_validation(+_rerun1), p6_m13_parity_audit(+_rerun1), p6_m6a_profiles, p6_m1_ruleset_check, p6_m2_px1, p6_m6b_draft_accuracy(+_rerun1))
