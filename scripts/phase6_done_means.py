@@ -47,7 +47,8 @@ def dm1(results: Path = RESULTS) -> dict[str, Any]:
         for name, label in (("p6_m2_px1.json", "PX-1"), ("p6_m3_px2.json", "PX-2"), ("p6_m5_px4.json", "PX-4")):
             r = _load(name, results)
             if r is not None and not r.get("passed"):
-                blocked.append(f"{label} failed its gate: D9 stop until Kanav decides")
+                blocked.append(f"{label} failed its gate and stands as not_validated; the frozen D9 stop on "
+                               "its dependent milestones remains in effect")
         if record is None:
             blocked.append("P6-M8 has not run (it also needs its dated pre-run record and a named mentor's review)")
     return {"done_means": "P6-DM1", "met": met, "record": None if record is None else "p6_m8_dm1.json",

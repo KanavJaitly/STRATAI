@@ -66,8 +66,12 @@ def test_done_means_match_the_records():
 
     assert dm2()["met"] is True and dm2()["record"] == "p6_m13_parity_audit_rerun1.json"
     one = dm1()
-    # 2026-10-08: the P6-M1 rulesets are approved and checked; PX-1 then failed its P6-Q3 gate (D9)
-    assert one["met"] is False and any("PX-1 failed its gate" in b for b in one["blocked_on"])
+    # 2026-10-08: the P6-M1 rulesets are approved and checked; PX-1 then failed its P6-Q3 gate (D9), and Kanav
+    # accepted it as not_validated (decisions/P6_PX1_NOT_VALIDATED_2026-10-08.md). The D9 stop remains.
+    assert one["met"] is False
+    assert any("PX-1 failed its gate and stands as not_validated" in b and "D9 stop" in b and "remains in effect" in b
+               for b in one["blocked_on"])
+    assert not any("until Kanav decides" in b for b in one["blocked_on"])
     assert not any("P6-M1 season rulesets" in b for b in one["blocked_on"])
 
 
