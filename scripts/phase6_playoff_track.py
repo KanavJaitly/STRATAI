@@ -1,6 +1,7 @@
 """The playoff track and alliance-selection validations: P6-M1 (a/b), PX-1, PX-2, PX-4, P6-M6 (b) and P6-M8.
 
     python -m scripts.phase6_playoff_track m1|m2|m3|m5|m6b|m8|m8-review   # DATABASE_URL = an isolated stratai_test copy
+    python -m scripts.phase6_playoff_track m1-2027                        # C0: P6-M1 on 2027 events (approved 2027 ruleset)
 
 **Every run refuses, writing nothing, unless approved P6-M1 rulesets exist for 2024, 2025 and 2026.** They are
 human inputs entered from the manuals with a named reviewer, and no rule is hard-coded instead.
@@ -58,18 +59,21 @@ class Blocked(SystemExit):
         super().__init__(2)
 
 
-def require_rulesets(database) -> dict[int, Any]:
+def require_rulesets(database, seasons=None) -> dict[int, Any]:
+    """The approved ruleset of every season in `seasons` (default: SEASONS, read at call time); refuses if any is
+    not approved."""
     from data.rulesets import approved_ruleset, approved_seasons
 
+    required = tuple(SEASONS if seasons is None else seasons)
     try:
-        seasons = approved_seasons(database)
+        approved = approved_seasons(database)
     except Exception as exc:  # e.g. migration 0011 not applied to this database
         raise Blocked(f"no season_rulesets table ({type(exc).__name__}): migration 0011 must be applied") from exc
-    missing = [s for s in SEASONS if s not in seasons]
+    missing = [s for s in required if s not in approved]
     if missing:
         raise Blocked(f"no approved P6-M1 ruleset for {missing}: rulesets are entered from the manuals and approved "
                       "by a named reviewer (scripts.phase6_rulesets)")
-    return {s: approved_ruleset(database, s) for s in SEASONS}
+    return {s: approved_ruleset(database, s) for s in required}
 
 
 def _require(name: str, *, passed_key: str | None = None) -> dict[str, Any]:
@@ -85,14 +89,14 @@ def _require(name: str, *, passed_key: str | None = None) -> dict[str, Any]:
 # --- P6-M1 (a)/(b) -------------------------------------------------------------------------------------------
 
 
-def run_m1(database, rulesets: dict[int, Any], *, limit: int | None = None) -> dict[str, Any]:
+def run_m1(database, rulesets: dict[int, Any], *, limit: int | None = None, seasons=None) -> dict[str, Any]:
     from data.rankings import read_final_ranks_for_season
     from data.rulesets import RulesetError
     from ml.playoffs.data import event_bracket, map_matches, read_event_playoffs
     from ml.playoffs.evaluation import reproduce_bracket
 
     per_season, events_out = {}, {}
-    for season in SEASONS:
+    for season in (SEASONS if seasons is None else seasons):
         ruleset = rulesets[season]
         events = read_event_playoffs(database, season)[:limit]
         ranks = read_final_ranks_for_season(database, season)
@@ -151,6 +155,17 @@ def run_m1(database, rulesets: dict[int, Any], *, limit: int | None = None) -> d
             "escalate": any(s["escalate"] for s in per_season.values())}
 
 
+def run_m1_2027(database, rulesets) -> dict[str, Any]:
+    """C0 (D9 v1, approved 2026-10-08): the frozen P6-M1 check, unchanged, on 2027 events only, as its own record.
+    It needs the approved 2027 ruleset (`main` refuses without it) and 2027 playoff data."""
+    from scripts.phase6_px1b import _playoff_matches
+
+    if not _playoff_matches(database, 2027):
+        raise Blocked("no 2027 playoff data: the 2027 P6-M1 check runs after the 2027 season is complete and synced")
+    return {**run_m1(database, rulesets, seasons=(2027,)), "proposal": "C0",
+            "decisions": ".agent/phase6/decisions/P6_D9_PX1B_APPROVALS_C0_C4_2026-10-08.md"}
+
+
 def _captain_rule_violations(event, ranks: dict[int, int], event_rules) -> tuple[list[str], Counter[str]]:
     """P6-M1 (b): alliance k's captain is the best-ranked team still available when seed k's first turn comes.
 
@@ -187,7 +202,7 @@ def _captain_rule_violations(event, ranks: dict[int, int], event_rules) -> tuple
 # --- PX-1 / PX-2 / PX-4 -------------------------------------------------------------------------------------
 
 
-def assemble_rows(database, rulesets, m1: dict[str, Any], *, limit: int | None = None, seasons=SEASONS):
+def assemble_rows(database, rulesets, m1: dict[str, Any], *, limit: int | None = None, seasons=None):
     """PX-1 rows for every reproduced, seeded event (§1), with selection-moment features.
 
     Compositions are the selection-time members (D-PX1-1). Four-member rows are excluded and counted per event
@@ -201,7 +216,7 @@ def assemble_rows(database, rulesets, m1: dict[str, Any], *, limit: int | None =
     scales = ScaleLookup(database)
     rows, excluded, features_by_event, events_by_key = [], Counter(), {}, {}
     by_event: dict[str, dict[str, Any]] = {}
-    for season in seasons:
+    for season in (SEASONS if seasons is None else seasons):
         for event in read_event_playoffs(database, season)[:limit]:
             if m1["events"].get(event.event_key, {}).get("status") != "reproduced":
                 excluded["event_not_reproduced_or_excluded"] += 1
@@ -753,7 +768,10 @@ def run_m6b(database, rulesets) -> dict[str, Any]:
 
 RUNS = {"m1": ("p6_m1_ruleset_check.json", run_m1), "m2": ("p6_m2_px1_rerun1.json", run_m2),
         "m3": ("p6_m3_px2.json", run_m3), "m6b": ("p6_m6b_draft_accuracy_rerun1.json", run_m6b), "m5": ("p6_m5_px4.json", run_m5), "m8": ("p6_m8_dm1_run.json", run_m8),
-        "m8-review": ("p6_m8_dm1.json", run_m8_review)}
+        "m8-review": ("p6_m8_dm1.json", run_m8_review),
+        "m1-2027": ("p6_m1_ruleset_check_2027.json", run_m1_2027)}
+# The seasons whose approved rulesets a run needs (default: 2024-2026).
+RUN_SEASONS = {"m1-2027": (2027,)}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -763,7 +781,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     started = time.time()
     database = isolated_database()
-    rulesets = require_rulesets(database)
+    rulesets = require_rulesets(database, RUN_SEASONS.get(args[0]))
     name, run = RUNS[args[0]]
     result = run(database, rulesets)
     result["minutes"] = round((time.time() - started) / 60, 1)
