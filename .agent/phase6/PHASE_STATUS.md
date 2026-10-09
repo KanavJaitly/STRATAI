@@ -8,6 +8,7 @@ failed_d9: [P6-M10 gate (G2) -> baseline strategy odds not_validated; P6-M2 PX-1
 failed_and_superseded: [P6-M12 run 1 (harness defect), P6-M13 run 1 (two demonstrated defects), P6-M6 (b) run 1 (pooled rates only)] -- all kept
 decided: [PX-1 accepted as not_validated under the frozen spec (Kanav, 2026-10-08; decisions/P6_PX1_NOT_VALIDATED_2026-10-08.md) -> PX-2, PX-4, P6-M8 stay not run (D9); any redesign is a separate pre-registered effort, not validatable on 2026]
 px1b: [spec v1 frozen (P6_M2_PX1B_SPEC.md, ca13e98); PX-1 amendment A1 (P6_M2_PX1_SPEC_A1.md); DEV-1 2024->2025 DV1+DV2 met (development, not acceptance); final candidate px1b-v1 frozen (fit 2024-2026, before 2027 data); FINAL-1 needs 2027 data, an approved 2027 ruleset, a 2027 M1 check and 2027 EPA -> not evaluable; does NOT unblock PX-2/PX-4/M8 without a versioned D9 decision (spec §8)]
+d9_px1b: [decisions/P6_D9_PX1B_REPLACEMENT_V1.md -- Kanav's policy: PX-1b is the candidate replacement, NOT accepted; PX-2/PX-4/M8 blocked; acceptance = FINAL-1 pass on 2027 + Kanav's dated confirmation; dependent specs PX-2b/PX-4b/M8b (on 2027) and C0/C4 are proposals awaiting explicit approval]
 blocked_by_human_input: [P6-M8 mentor (Mr. Biery) agreement and review -- outstanding, and moot unless PX-4 can run]
 prerequisites:
   - migration 0011 on the serving database: APPLIED 2026-10-06 (Kanav's approval)
