@@ -89,6 +89,7 @@ class PlayoffTrack:
     specs: dict[str, str] | None = None  # the versioned specs, cited in each record (PX-1b only)
     requires_mentor_agreement: bool = False
     calibration_base_record: str | None = None  # PX-2b v2: out-of-sample calibration from this base model's record
+    pins_record: str | None = None  # G1/G2: models and the calibration slice load only if they match these pins
 
 
 class Blocked(SystemExit):
@@ -349,9 +350,34 @@ def _models(track: PlayoffTrack | None = None):
     from ml.playoffs.px1 import PlayoffLogisticModel
 
     track = track or PX1_TRACK
-    px1 = PlayoffLogisticModel.load(REGISTRY_DIR / track.model_type / track.version_tag / "model.json")
-    seed_only = PlayoffLogisticModel.load(REGISTRY_DIR / track.seed_only_type / track.version_tag / "model.json")
+    px1 = PlayoffLogisticModel.load(_model_path(track, track.model_type, track.version_tag))
+    seed_only = PlayoffLogisticModel.load(_model_path(track, track.seed_only_type, track.version_tag))
     return px1, seed_only
+
+
+def _pins(track: PlayoffTrack) -> dict[str, Any]:
+    from ml.playoffs.pins import PinError, read_pins
+
+    try:
+        return read_pins(RESULTS_DIR / track.pins_record)
+    except PinError as exc:
+        raise Blocked(str(exc)) from exc
+
+
+def _model_path(track: PlayoffTrack, model_type: str, version_tag: str) -> Path:
+    """The registered model file. On a pinned track (G1) it is returned only once it hashes to its pin, so an altered
+    or missing file is refused, never loaded unpinned."""
+    from ml.playoffs.pins import PinError, require_model_pin
+    from ml.registry import model_file_sha256
+
+    path = REGISTRY_DIR / model_type / version_tag / "model.json"
+    if track.pins_record is not None:
+        actual = model_file_sha256(REGISTRY_DIR, model_type, version_tag) if path.exists() else None
+        try:
+            require_model_pin(_pins(track), model_type, version_tag, actual)
+        except PinError as exc:
+            raise Blocked(str(exc)) from exc
+    return path
 
 
 def _require_model(track: PlayoffTrack) -> dict[str, Any]:
@@ -448,14 +474,22 @@ def _out_of_sample_calibrator(rows, track: PlayoffTrack):
 
     if git_blob(SPEC_PATH) != SPEC_BLOB:
         raise Blocked(f"{SPEC_PATH} is not the approved PX-2b v2 blob {SPEC_BLOB}")
+    from ml.playoffs.pins import PinError, require_slice_content
+
     record = _require(track.calibration_base_record)
     base_dir = REGISTRY_DIR / record["registry"]["model_type"] / record["registry"]["version_tag"]
     manifest = json.loads((base_dir / "manifest.json").read_text(encoding="utf-8"))
     if manifest["training_dataset_hash"] != record["base"]["fingerprint"]:
         raise Blocked("the registered calibration-base model was not trained on the recorded fit set")
-    base_model = PlayoffLogisticModel.load(base_dir / "model.json")
+    base_model = PlayoffLogisticModel.load(_model_path(track, record["registry"]["model_type"],
+                                                       record["registry"]["version_tag"]))
     slice_rows = calibration_slice(rows, track.calibration_season)
     require_frozen_slice(slice_rows, frozen_slice_keys())
+    if track.pins_record is not None:
+        try:
+            require_slice_content(_pins(track), slice_rows)  # G2: same keys AND same content
+        except PinError as exc:
+            raise Blocked(str(exc)) from exc
     calibrator, report = fit_out_of_sample_calibrator(
         base_model, record["base"]["match_keys"], record["base"]["events"],
         datetime.fromisoformat(record["base"]["latest"]), slice_rows)
@@ -682,7 +716,8 @@ PX1B_TRACK = PlayoffTrack(
     exclude_playoffs_before_selection=True,
     specs={"px2b": ".agent/phase6/P6_M3_PX2B_SPEC_V2.md", "px4b": ".agent/phase6/P6_M5_PX4B_SPEC.md",
            "m8b": ".agent/phase6/P6_M8B_SPEC.md"},  # PX-2b v2 governs (approved 2026-10-08); v1 is kept as history
-    requires_mentor_agreement=True, calibration_base_record="p6_px2b_calbase.json")
+    requires_mentor_agreement=True, calibration_base_record="p6_px2b_calbase.json",
+    pins_record="p6_px1b_chain_pins.json")
 
 
 WEEK_SQL = """
