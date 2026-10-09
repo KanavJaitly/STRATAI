@@ -1,0 +1,196 @@
+{
+ "criterion": "b",
+ "events": 202,
+ "gating": false,
+ "milestone": "P6-M6",
+ "minutes": 0.6,
+ "notes": {},
+ "over_budget": false,
+ "per_slot": {
+  "model": {
+   "all_picks": {
+    "picks": 3296,
+    "top1": {
+     "ci_high": 0.22416287820904643,
+     "ci_low": 0.198740625218272,
+     "events": 202,
+     "mean": 0.2111650485436893,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 3296
+    },
+    "top3": {
+     "ci_high": 0.4720211625682092,
+     "ci_low": 0.43092026189271254,
+     "events": 202,
+     "mean": 0.45145631067961167,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 3296
+    }
+   },
+   "round_1": {
+    "picks": 1616,
+    "top1": {
+     "ci_high": 0.3087871287128713,
+     "ci_low": 0.2660736386138614,
+     "events": 202,
+     "mean": 0.286509900990099,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 1616
+    },
+    "top3": {
+     "ci_high": 0.5742574257425742,
+     "ci_low": 0.525990099009901,
+     "events": 202,
+     "mean": 0.5501237623762376,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 1616
+    }
+   },
+   "round_2": {
+    "picks": 1616,
+    "top1": {
+     "ci_high": 0.15655940594059406,
+     "ci_low": 0.125,
+     "events": 202,
+     "mean": 0.14047029702970298,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 1616
+    },
+    "top3": {
+     "ci_high": 0.3886138613861386,
+     "ci_low": 0.3353960396039604,
+     "events": 202,
+     "mean": 0.3613861386138614,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 1616
+    }
+   },
+   "round_3": {
+    "picks": 64,
+    "top1": {
+     "ci_high": 0.1875,
+     "ci_low": 0.03125,
+     "events": 8,
+     "mean": 0.09375,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 64
+    },
+    "top3": {
+     "ci_high": 0.375,
+     "ci_low": 0.109375,
+     "events": 8,
+     "mean": 0.234375,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 64
+    }
+   }
+  },
+  "raw_epa_order_baseline": {
+   "all_picks": {
+    "picks": 3296,
+    "top1": {
+     "ci_high": 0.24061912498253865,
+     "ci_low": 0.21363837249087592,
+     "events": 202,
+     "mean": 0.2266383495145631,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 3296
+    },
+    "top3": {
+     "ci_high": 0.4883870162204067,
+     "ci_low": 0.4520136813998214,
+     "events": 202,
+     "mean": 0.4699635922330097,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 3296
+    }
+   },
+   "round_1": {
+    "picks": 1616,
+    "top1": {
+     "ci_high": 0.30261448019801973,
+     "ci_low": 0.2629950495049505,
+     "events": 202,
+     "mean": 0.28279702970297027,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 1616
+    },
+    "top3": {
+     "ci_high": 0.5693069306930693,
+     "ci_low": 0.5216584158415841,
+     "events": 202,
+     "mean": 0.5451732673267327,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 1616
+    }
+   },
+   "round_2": {
+    "picks": 1616,
+    "top1": {
+     "ci_high": 0.19492574257425743,
+     "ci_low": 0.1565439356435644,
+     "events": 202,
+     "mean": 0.1751237623762376,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 1616
+    },
+    "top3": {
+     "ci_high": 0.4313118811881188,
+     "ci_low": 0.37995049504950495,
+     "events": 202,
+     "mean": 0.40470297029702973,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 1616
+    }
+   },
+   "round_3": {
+    "picks": 64,
+    "top1": {
+     "ci_high": 0.25,
+     "ci_low": 0.015625,
+     "events": 8,
+     "mean": 0.109375,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 64
+    },
+    "top3": {
+     "ci_high": 0.359375,
+     "ci_low": 0.09375,
+     "events": 8,
+     "mean": 0.21875,
+     "resamples": 2000,
+     "seed": 20261010,
+     "units": 64
+    }
+   }
+  }
+ },
+ "picks": 3296,
+ "policy": "ranking_xgb_v2",
+ "provenance": {
+  "commit": "30c55b1aa58b58c9cdbcd533c6dd03e4192b7ab7",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-09T00:29:57.075734+00:00"
+ },
+ "supersedes": {
+  "reason": "harness defect: run 1 reported pooled rates only; the frozen P6-M6 (b) row requires per pick slot, with CIs, next to a raw-EPA-order baseline. Same method, population and ordering; run 1 is kept",
+  "record": "p6_m6b_draft_accuracy.json"
+ },
+ "top1_rate": 0.2111650485436893,
+ "top3_rate": 0.45145631067961167
+}
