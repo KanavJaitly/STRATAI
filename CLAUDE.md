@@ -579,8 +579,12 @@ complete.**
   rerun (`p6_m2_px1_rerun1.json`) also FAILED, because of a 2026 scale shift in the frozen raw-unit design
   (`.agent/phase6/decisions/P6_PX1_AUDIT_DEFECTS_2026-10-08.md`). PX-1b (normalized composition) has a frozen spec
   (`.agent/phase6/P6_M2_PX1B_SPEC.md`). Its DEV-1 (2024 → 2025, development only) met DV1/DV2, and the final candidate `px1b-v1` is frozen. Its acceptance gate
-  needs an untouched 2027 holdout and cannot be evaluated yet, and it unblocks nothing without a versioned D9
-  decision. Under D9, PX-2, PX-4 and P6-M8 do not run, and Phase 6 / M14
+  needs an untouched 2027 holdout and cannot be evaluated yet. D9 record v1
+  (`.agent/phase6/decisions/P6_D9_PX1B_REPLACEMENT_V1.md`; Kanav's confirmation of it is outstanding) makes PX-1b the
+  candidate replacement, NOT accepted. Kanav approved its C0-C4 preparation: a 2027 P6-M1 check, versioned
+  PX-2b/PX-4b/M8b specs on 2027, and harness pointers. All of it is prepared; nothing has run. PX-2b spec v1
+  calibrated in-sample and is superseded by v2 (out-of-sample calibration base, fit before any 2027 data).
+  Under D9, PX-2, PX-4 and P6-M8 do not run, and Phase 6 / M14
   stay incomplete. A redesign would be a separate, pre-registered effort that 2026 cannot validate.
 - **P6-M10 FAILED** its gate (D9). Strategy odds are served `not_validated`.
 - **Records:** `docs/phase6.md`, `.agent/phase6/PHASE_STATUS.md`, `.agent/phase6/PHASE_ACCEPTANCE.md`.
