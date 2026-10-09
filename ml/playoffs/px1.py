@@ -38,6 +38,7 @@ class OutsidePX1Domain(ValueError):
     """An alliance that is not three selection-time members: PX-1 defines no probability for it (D-PX1-2)."""
 MODEL_VERSION = "1.0.0"
 SPEC_PATH = ".agent/phase6/P6_M2_PX1_SPEC.md"
+PX1B_SPEC_PATH = ".agent/phase6/P6_M2_PX1B_SPEC.md"
 SELECTION_MOMENT_OFFSET = timedelta(minutes=1)
 REGULARIZATION_C = 1.0
 
@@ -73,10 +74,17 @@ class PlayoffRow:
                           self.blue_seed, self.red_seed, self.blue_teams, self.red_teams, not self.red_win)
 
 
-def composition_difference(red: Sequence[TeamFeatures], blue: Sequence[TeamFeatures]) -> np.ndarray:
-    """Red − blue of the M6 alliance sums (NaN where any team lacks the value)."""
+def composition_difference(red: Sequence[TeamFeatures], blue: Sequence[TeamFeatures], *,
+                           normalized: bool = False) -> np.ndarray:
+    """Red − blue of the M6 alliance sums (NaN where any team lacks the value). With `normalized` (PX-1b spec §2),
+    each team's point-unit fields are first divided by its causal scales (D16's `team_vector_v2`)."""
+    if normalized:
+        from ml.models.ranking_xgb_v2 import team_vector_v2 as vector
+    else:
+        vector = team_features_to_vector
+
     def alliance(teams):
-        return np.sum(np.vstack([team_features_to_vector(t) for t in teams]), axis=0)
+        return np.sum(np.vstack([vector(t) for t in teams]), axis=0)
     return alliance(red) - alliance(blue)
 
 
@@ -89,6 +97,7 @@ class Design:
     dropped: dict[str, str]
     rounds: list[int]  # interaction rounds (every training round except the lowest)
     scale: list[float] = field(default_factory=list)
+    normalized: bool = False  # PX-1b: causal-scale-normalized composition (P6_M2_PX1B_SPEC.md §2)
 
     def names(self) -> list[str]:
         base = (["seed_difference"] if self.seed else []) + [f"d_{c}" for c in self.composition_columns]
@@ -97,7 +106,7 @@ class Design:
     def raw(self, row: PlayoffRow) -> np.ndarray | None:
         parts = [float(row.red_seed - row.blue_seed)] if self.seed else []
         if self.composition_columns:
-            diff = composition_difference(row.red_teams, row.blue_teams)
+            diff = composition_difference(row.red_teams, row.blue_teams, normalized=self.normalized)
             values = [diff[TEAM_FEATURE_NAMES.index(c)] for c in self.composition_columns]
             if any(math.isnan(v) for v in values):
                 return None
@@ -112,12 +121,13 @@ class Design:
 
 
 def fit_design(rows: Sequence[PlayoffRow], *, seed: bool = True, composition: bool = True,
-               round_interactions: bool = True) -> Design:
-    """PX-1's design (§2), or with `composition` and `round_interactions` off the seed-only baseline's (§4)."""
+               round_interactions: bool = True, normalized: bool = False) -> Design:
+    """PX-1's design (§2), or with `composition` and `round_interactions` off the seed-only baseline's (§4), or
+    with `normalized` PX-1b's (its spec §2: the same rules on the normalized composition)."""
     dropped: dict[str, str] = {}
     columns: list[str] = []
     if composition:
-        diffs = np.vstack([composition_difference(r.red_teams, r.blue_teams) for r in rows])
+        diffs = np.vstack([composition_difference(r.red_teams, r.blue_teams, normalized=normalized) for r in rows])
         for i, name in enumerate(TEAM_FEATURE_NAMES):
             column = diffs[:, i]
             if np.all(np.isnan(column)):
@@ -129,7 +139,7 @@ def fit_design(rows: Sequence[PlayoffRow], *, seed: bool = True, composition: bo
             else:
                 columns.append(name)
     rounds = sorted({r.round for r in rows})[1:] if round_interactions else []
-    design = Design(seed, columns, dropped, rounds)
+    design = Design(seed, columns, dropped, rounds, normalized=normalized)
     matrix = np.vstack([design.raw(r) for r in rows])
     rms = np.sqrt(np.mean(matrix ** 2, axis=0))
     design.scale = [float(v) if v > 0 else 1.0 for v in rms]
@@ -151,11 +161,12 @@ class PlayoffLogisticModel:
         self.fit_info = fit_info or {}
 
     @classmethod
-    def fit(cls, rows: Sequence[PlayoffRow], *, seed_only: bool = False,
-            fit_info: dict[str, Any] | None = None) -> PlayoffLogisticModel:
+    def fit(cls, rows: Sequence[PlayoffRow], *, seed_only: bool = False, normalized: bool = False,
+            model_type: str | None = None, fit_info: dict[str, Any] | None = None) -> PlayoffLogisticModel:
         from sklearn.linear_model import LogisticRegression
 
-        design = fit_design(rows, composition=not seed_only, round_interactions=not seed_only)
+        design = fit_design(rows, composition=not seed_only, round_interactions=not seed_only,
+                            normalized=normalized and not seed_only)
         usable = [(design.transform(r), r.red_win) for r in rows]
         excluded = sum(1 for x, _ in usable if x is None)
         usable = [(x, y) for x, y in usable if x is not None]
@@ -166,8 +177,8 @@ class PlayoffLogisticModel:
         model.fit(x, y)
         info = {**(fit_info or {}), "fit_rows": len(usable), "fit_rows_excluded_missing": excluded,
                 "columns": design.names(), "dropped": design.dropped}
-        return cls(design, model.coef_[0].tolist(), model_type=SEED_ONLY_MODEL_TYPE if seed_only else MODEL_TYPE,
-                   fit_info=info)
+        default_type = SEED_ONLY_MODEL_TYPE if seed_only else MODEL_TYPE
+        return cls(design, model.coef_[0].tolist(), model_type=model_type or default_type, fit_info=info)
 
     def margin(self, row: PlayoffRow) -> float | None:
         x = self.design.transform(row)
@@ -179,10 +190,13 @@ class PlayoffLogisticModel:
         return None if z is None else _expit(z)
 
     def to_dict(self) -> dict[str, Any]:
+        design = {"seed": self.design.seed, "composition_columns": self.design.composition_columns,
+                  "dropped": self.design.dropped, "rounds": self.design.rounds, "scale": self.design.scale}
+        if self.design.normalized:  # PX-1 artifacts keep their exact form
+            design["normalized"] = True
         return {"model_type": self.model_type, "model_version": MODEL_VERSION, "coef": self.coef.tolist(),
-                "design": {"seed": self.design.seed, "composition_columns": self.design.composition_columns,
-                           "dropped": self.design.dropped, "rounds": self.design.rounds, "scale": self.design.scale},
-                "fit_info": self.fit_info, "spec": SPEC_PATH}
+                "design": design, "fit_info": self.fit_info,
+                "spec": PX1B_SPEC_PATH if self.design.normalized else SPEC_PATH}
 
     def save(self, path: Path) -> None:
         Path(path).write_text(json.dumps(self.to_dict(), indent=1, sort_keys=True) + "\n", encoding="utf-8")
@@ -191,7 +205,8 @@ class PlayoffLogisticModel:
     def load(cls, path: Path) -> PlayoffLogisticModel:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
         d = data["design"]
-        return cls(Design(d["seed"], d["composition_columns"], d["dropped"], d["rounds"], d["scale"]), data["coef"],
+        return cls(Design(d["seed"], d["composition_columns"], d["dropped"], d["rounds"], d["scale"],
+                          normalized=d.get("normalized", False)), data["coef"],
                    model_type=data["model_type"], fit_info=data["fit_info"])
 
 
