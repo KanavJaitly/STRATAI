@@ -577,7 +577,10 @@ complete.**
   recorded, but **PX-1 FAILED its P6-Q3 gate** (worse than M6/M7 and seed-only; `.agent/phase6/P6_M2_PX1_FAILURE.md`).
   Kanav accepted PX-1 as `not_validated` (2026-10-08). A root-cause audit fixed two confirmed defects; the frozen-protocol
   rerun (`p6_m2_px1_rerun1.json`) also FAILED, because of a 2026 scale shift in the frozen raw-unit design
-  (`.agent/phase6/decisions/P6_PX1_AUDIT_DEFECTS_2026-10-08.md`). Under D9, PX-2, PX-4 and P6-M8 do not run, and Phase 6 / M14
+  (`.agent/phase6/decisions/P6_PX1_AUDIT_DEFECTS_2026-10-08.md`). PX-1b (normalized composition) has a frozen spec
+  (`.agent/phase6/P6_M2_PX1B_SPEC.md`). Its DEV-1 (2024 → 2025, development only) met DV1/DV2. Its acceptance gate
+  needs an untouched 2027 holdout and cannot be evaluated yet, and it unblocks nothing without a versioned D9
+  decision. Under D9, PX-2, PX-4 and P6-M8 do not run, and Phase 6 / M14
   stay incomplete. A redesign would be a separate, pre-registered effort that 2026 cannot validate.
 - **P6-M10 FAILED** its gate (D9). Strategy odds are served `not_validated`.
 - **Records:** `docs/phase6.md`, `.agent/phase6/PHASE_STATUS.md`, `.agent/phase6/PHASE_ACCEPTANCE.md`.
