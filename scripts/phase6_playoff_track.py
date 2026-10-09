@@ -2,6 +2,8 @@
 
     python -m scripts.phase6_playoff_track m1|m2|m3|m5|m6b|m8|m8-review   # DATABASE_URL = an isolated stratai_test copy
     python -m scripts.phase6_playoff_track m1-2027                        # C0: P6-M1 on 2027 events (approved 2027 ruleset)
+    python -m scripts.phase6_playoff_track px2b|px4b|m8b|m8b-review       # C4: the versioned PX-1b chain; each refuses
+                                                                          # until PX-1b is accepted and its prerequisites exist
 
 **Every run refuses, writing nothing, unless approved P6-M1 rulesets exist for 2024, 2025 and 2026.** They are
 human inputs entered from the manuals with a named reviewer, and no rule is hard-coded instead.
@@ -34,6 +36,7 @@ import time
 from collections import Counter, defaultdict
 from pathlib import Path
 from contextlib import contextmanager
+from dataclasses import dataclass
 from typing import Any
 
 from scripts.phase6_common import (REGISTRY_DIR, RESULTS_DIR, git_blob, isolated_database, load_m6m7, read_record,
@@ -51,6 +54,40 @@ M8_PRE_RUN = Path(".agent/phase6/decisions/P6_M8_PRE_RUN.md")
 # (FIRST Championship division) exclusion from PX-1, PX-4 and M8. Every affected record carries this file's blob.
 COMPOSITION_DECISIONS = ".agent/phase6/decisions/P6_PX1_COMPOSITION_DECISIONS.md"
 FOUR_MEMBER = "four_member_alliance"
+PLAYOFF_BEFORE_SELECTION = "playoff_before_selection_moment"
+
+
+@dataclass(frozen=True)
+class PlayoffTrack:
+    """Where one playoff-model chain's PX-2 -> PX-4 -> M8 runs point (C4, approved 2026-10-08).
+
+    `PX1_TRACK` is the frozen P6-M3/M5/M8 chain and every run's default, with its pointers exactly as before.
+    `PX1B_TRACK` is the versioned PX-2b/PX-4b/M8b chain (`P6_M3_PX2B_SPEC.md`, `P6_M5_PX4B_SPEC.md`,
+    `P6_M8B_SPEC.md`). Its model prerequisite is PX-1b's FINAL-1 pass plus Kanav's sha-matched confirmation."""
+
+    name: str
+    model_record: str  # the playoff model's own gate record (passed required)
+    confirmation: Path | None  # Kanav's dated confirmation of that record (PX-1b only)
+    model_type: str
+    seed_only_type: str
+    version_tag: str
+    calibration_season: int
+    holdout: int
+    m1_records: tuple[str, ...]
+    px2_record: str
+    px4_record: str
+    m8_run_record: str
+    m8_record: str
+    calibrator_file: str
+    m8_pre_run: Path
+    m8_pre_run_json: Path
+    m8_review_json: Path
+    sentinel_time: str
+    epa_snapshot: Path | None  # the D18 EPA source; None = not yet configured for this track's seasons
+    epa_chain: Path | None
+    exclude_playoffs_before_selection: bool
+    specs: dict[str, str] | None = None  # the versioned specs, cited in each record (PX-1b only)
+    requires_mentor_agreement: bool = False
 
 
 class Blocked(SystemExit):
@@ -202,7 +239,8 @@ def _captain_rule_violations(event, ranks: dict[int, int], event_rules) -> tuple
 # --- PX-1 / PX-2 / PX-4 -------------------------------------------------------------------------------------
 
 
-def assemble_rows(database, rulesets, m1: dict[str, Any], *, limit: int | None = None, seasons=None):
+def assemble_rows(database, rulesets, m1: dict[str, Any], *, limit: int | None = None, seasons=None, snapshot=None,
+                  chain=None):
     """PX-1 rows for every reproduced, seeded event (§1), with selection-moment features.
 
     Compositions are the selection-time members (D-PX1-1). Four-member rows are excluded and counted per event
@@ -212,7 +250,7 @@ def assemble_rows(database, rulesets, m1: dict[str, Any], *, limit: int | None =
     from ml.playoffs.data import event_bracket, event_members, playoff_rows, read_event_playoffs, selection_features
     from ml.ratings.d18_source import load_d18_provider
 
-    provider, integrity = load_d18_provider(database, SNAPSHOT, CHAIN)
+    provider, integrity = load_d18_provider(database, snapshot or SNAPSHOT, chain or CHAIN)
     scales = ScaleLookup(database)
     rows, excluded, features_by_event, events_by_key = [], Counter(), {}, {}
     by_event: dict[str, dict[str, Any]] = {}
@@ -306,26 +344,80 @@ def _rows_cache():
     return pickle.loads(gzip.decompress((ROWS_CACHE_DIR / "px_rows.pkl.gz").read_bytes()))
 
 
-def _models():
-    from ml.playoffs.px1 import MODEL_TYPE, SEED_ONLY_MODEL_TYPE, PlayoffLogisticModel
+def _models(track: PlayoffTrack | None = None):
+    from ml.playoffs.px1 import PlayoffLogisticModel
 
-    px1 = PlayoffLogisticModel.load(REGISTRY_DIR / MODEL_TYPE / "px1-v1" / "model.json")
-    seed_only = PlayoffLogisticModel.load(REGISTRY_DIR / SEED_ONLY_MODEL_TYPE / "px1-v1" / "model.json")
+    track = track or PX1_TRACK
+    px1 = PlayoffLogisticModel.load(REGISTRY_DIR / track.model_type / track.version_tag / "model.json")
+    seed_only = PlayoffLogisticModel.load(REGISTRY_DIR / track.seed_only_type / track.version_tag / "model.json")
     return px1, seed_only
 
 
-def run_m3(database, rulesets) -> dict[str, Any]:
+def _require_model(track: PlayoffTrack) -> dict[str, Any]:
+    """The track's playoff model has passed its own gate. For PX-1b, Kanav's dated confirmation must also name that
+    exact record by sha256 (D9 v1 Part B, condition 4)."""
+    from scripts.phase6_common import file_sha256
+
+    record = _require(track.model_record, passed_key="passed")
+    if track.confirmation is not None:
+        if not track.confirmation.exists():
+            raise Blocked(f"{track.confirmation} (Kanav's dated confirmation of {track.model_record}) is required")
+        confirmation = json.loads(track.confirmation.read_text(encoding="utf-8"))
+        if not (confirmation.get("confirmed") is True and confirmation.get("confirmed_by") and confirmation.get("date")
+                and confirmation.get("record") == track.model_record
+                and confirmation.get("record_sha256") == file_sha256(RESULTS_DIR / track.model_record)):
+            raise Blocked(f"{track.confirmation} does not confirm the current {track.model_record}")
+    return record
+
+
+def _m1(track: PlayoffTrack) -> dict[str, Any]:
+    """The P6-M1 records the track's seasons need, merged by event (each event appears in exactly one)."""
+    events: dict[str, Any] = {}
+    for name in track.m1_records:
+        events.update(_require(name)["events"])
+    return {"events": events}
+
+
+def _epa_source(track: PlayoffTrack) -> tuple[Path, Path]:
+    if track.epa_snapshot is None or track.epa_chain is None:
+        raise Blocked(f"{track.name}: no D18 EPA source is configured for {track.holdout} (D9 v1 Part B, 3(d))")
+    return track.epa_snapshot, track.epa_chain
+
+
+def _track_rows(database, rulesets, track: PlayoffTrack) -> list:
+    """PX-2's rows: PX-1's cached rows, or PX-1b's spec §1 rows of the calibration and held-out seasons."""
+    if track is PX1_TRACK:
+        return _rows_cache()
+    from ml.playoffs.px1b import drop_scale_absent
+
+    snapshot, chain = _epa_source(track)
+    rows, *_ = assemble_rows(database, rulesets, _m1(track), seasons=(track.calibration_season, track.holdout),
+                             snapshot=snapshot, chain=chain)
+    return drop_scale_absent(rows)[0]
+
+
+def _track_info(track: PlayoffTrack) -> dict[str, Any]:
+    """What a versioned track's record adds: the track and its frozen specs' blobs (nothing for PX-1)."""
+    if track.specs is None:
+        return {}
+    return {"track": track.name, "version_tag": track.version_tag,
+            "specs": {k: {"path": v, "blob": git_blob(v)} for k, v in track.specs.items()}}
+
+
+def run_m3(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, Any]:
     from ml.calibration.calibrator import SymmetricIsotonicCalibrator
     from ml.calibration.gate import evaluate_calibration_gate
 
-    _require("p6_m2_px1.json", passed_key="passed")
-    px1, _ = _models()
-    rows = _rows_cache()
-    season_2025 = sorted((r for r in rows if r.season == 2025), key=lambda r: (r.scheduled_time, r.match_key))
+    track = track or PX1_TRACK
+    _require_model(track)
+    px1, _ = _models(track)
+    rows = _track_rows(database, rulesets, track)
+    season_2025 = sorted((r for r in rows if r.season == track.calibration_season),
+                         key=lambda r: (r.scheduled_time, r.match_key))
     slice_rows = season_2025[int(len(season_2025) * 0.8):]
     calibrator = SymmetricIsotonicCalibrator()
     calibrator.fit([px1.predict(r) for r in slice_rows], [r.red_win for r in slice_rows])
-    test = [r for r in rows if r.season == HELD_OUT and px1.predict(r) is not None]
+    test = [r for r in rows if r.season == track.holdout and px1.predict(r) is not None]
     q = [calibrator.calibrate(px1.predict(r)) for r in test]
     swapped = [calibrator.calibrate(px1.predict(r.swapped())) for r in test]
     backward = [calibrator.calibrate(px1.predict(r)) for r in reversed(test)]
@@ -333,27 +425,33 @@ def run_m3(database, rulesets) -> dict[str, Any]:
     gate = evaluate_calibration_gate(q, [r.red_win for r in test],
                                      symmetry_errors=[abs(a + b - 1.0) for a, b in zip(q, swapped)],
                                      order_independent=q == list(reversed(backward)), fit_isolated=fit_isolated)
-    calibrator.save(ROWS_CACHE_DIR / "px2_calibrator.json")
+    calibrator.save(ROWS_CACHE_DIR / track.calibrator_file)
     return {"milestone": "P6-M3", "decision": "P6-Q4", "slice_rows": len(slice_rows), "evaluated": len(test),
-            "gate": gate.to_dict(), "passed": gate.passed}
+            "gate": gate.to_dict(), "passed": gate.passed, **_track_info(track)}
 
 
-def run_m5(database, rulesets) -> dict[str, Any]:
+def run_m5(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, Any]:
     from ml.calibration.calibrator import SymmetricIsotonicCalibrator
     from ml.playoffs.data import event_bracket, read_event_playoffs
     from ml.playoffs.evaluation import paired_log_loss_gate
     from ml.playoffs.px1 import alliance_match_probability
     from ml.playoffs.selection import field_outcome
 
-    _require("p6_m3_px2.json", passed_key="passed")
-    m1 = _require("p6_m1_ruleset_check.json")
-    px1, seed_only = _models()
-    calibrator = SymmetricIsotonicCalibrator.load(ROWS_CACHE_DIR / "px2_calibrator.json")
-    _, _, features_by_event, events_by_key, _, population = assemble_rows_for(database, rulesets, m1, HELD_OUT)
+    track = track or PX1_TRACK
+    _require(track.px2_record, passed_key="passed")
+    if track.confirmation is not None:
+        _require_model(track)
+    m1 = _m1(track)
+    px1, seed_only = _models(track)
+    calibrator = SymmetricIsotonicCalibrator.load(ROWS_CACHE_DIR / track.calibrator_file)
+    snapshot, chain = _epa_source(track)
+    _, _, features_by_event, events_by_key, _, population = assemble_rows_for(
+        database, rulesets, m1, track.holdout, snapshot=snapshot, chain=chain,
+        exclude_playoffs_before_selection=track.exclude_playoffs_before_selection)
     units: dict[str, list] = defaultdict(list)
     for event_key, event in events_by_key.items():
         info = m1["events"][event_key]
-        bracket = event_bracket(event, rulesets[HELD_OUT])
+        bracket = event_bracket(event, rulesets[track.holdout])
         members = population["members"][event_key]
         alliances = tuple(members[s] for s in sorted(members))
         features = features_by_event[event_key]
@@ -374,14 +472,33 @@ def run_m5(database, rulesets) -> dict[str, Any]:
                                [r[3] for r in rows], events, seed=BOOTSTRAP_SEED)
     finals = paired_log_loss_gate([r[1].p_reach_finals for r in rows], [r[2].p_reach_finals for r in rows],
                                   [r[4] for r in rows], events, seed=BOOTSTRAP_SEED)
+    reported = {}
+    if track.specs is not None:  # PX-4b spec §4: Brier and reliability bins, reported, not gated
+        from ml.backtest.metrics import brier_score
+        for name, k in (("p_win_event", 3), ("p_reach_finals", 4)):
+            ours, base, labels = ([getattr(r[1], name) for r in rows], [getattr(r[2], name) for r in rows],
+                                  [r[k] for r in rows])
+            reported[name] = {"brier": brier_score(ours, labels), "brier_seed_only": brier_score(base, labels),
+                              "reliability_bins": reliability_bins(ours, labels)}
     return {"milestone": "P6-M5", "decision": "P6-Q5", "composition_decisions_blob": git_blob(COMPOSITION_DECISIONS),
             "population": {k: v for k, v in population.items() if k != "members"},
             "alliances": len(rows), "events": len(set(events)),
             "insufficient_data_events": len(set(units["insufficient_data"])), "p_win_event": win,
-            "p_reach_finals": finals, "passed": win["passed"] and finals["passed"]}
+            "p_reach_finals": finals, "passed": win["passed"] and finals["passed"],
+            **({"reported_not_gated": reported} if reported else {}), **_track_info(track)}
 
 
-def representable_events(rulesets, m1, events) -> dict[str, Any]:
+def reliability_bins(predictions: list[float], labels: list[bool], n_bins: int = 10) -> list[dict[str, Any]]:
+    """Equal-width bins over [0, 1]: count, mean predicted and observed rate (empty bins listed with count 0)."""
+    bins: list[list[tuple[float, bool]]] = [[] for _ in range(n_bins)]
+    for p, y in zip(predictions, labels):
+        bins[min(int(p * n_bins), n_bins - 1)].append((p, y))
+    return [{"low": i / n_bins, "high": (i + 1) / n_bins, "count": len(b),
+             "mean_predicted": sum(p for p, _ in b) / len(b) if b else None,
+             "observed": sum(1 for _, y in b if y) / len(b) if b else None} for i, b in enumerate(bins)]
+
+
+def representable_events(rulesets, m1, events, *, exclude_playoffs_before_selection: bool = False) -> dict[str, Any]:
     """The intended population (reproduced events) and the validated one (C1/C2, Kanav 2026-10-06).
 
     An event whose selection-time alliances are not all three members is outside PX-1's frozen representation:
@@ -394,6 +511,9 @@ def representable_events(rulesets, m1, events) -> dict[str, Any]:
     intended = [e for e in events if m1["events"].get(e.event_key, {}).get("status") == "reproduced"]
     validated, excluded, members_by_event = [], {}, {}
     for event in intended:
+        if exclude_playoffs_before_selection and event.playoffs_precede_selection():  # PX-4b/M8b leakage rule
+            excluded[event.event_key] = {"reason": PLAYOFF_BEFORE_SELECTION, "alliances": len(event.alliances)}
+            continue
         event_rules = rulesets[event.season].for_event(event.event_key)
         try:
             members = event_members(event, event_rules)
@@ -411,14 +531,16 @@ def representable_events(rulesets, m1, events) -> dict[str, Any]:
             "validated": validated, "members": members_by_event}
 
 
-def assemble_rows_for(database, rulesets, m1, season):
+def assemble_rows_for(database, rulesets, m1, season, *, snapshot=None, chain=None,
+                      exclude_playoffs_before_selection: bool = False):
     from ml.features.scale import ScaleLookup
     from ml.playoffs.data import read_event_playoffs, selection_features
     from ml.ratings.d18_source import load_d18_provider
 
-    provider, integrity = load_d18_provider(database, SNAPSHOT, CHAIN)
+    provider, integrity = load_d18_provider(database, snapshot or SNAPSHOT, chain or CHAIN)
     scales = ScaleLookup(database)
-    population = representable_events(rulesets, m1, read_event_playoffs(database, season))
+    population = representable_events(rulesets, m1, read_event_playoffs(database, season),
+                                      exclude_playoffs_before_selection=exclude_playoffs_before_selection)
     features_by_event, events_by_key = {}, {}
     for event in population.pop("validated"):
         teams = {t for m in population["members"][event.event_key].values() for t in m}
@@ -432,16 +554,23 @@ M8_PRE_RUN_JSON = Path(".agent/phase6/decisions/p6_m8_pre_run.json")
 M8_REVIEW_JSON = Path(".agent/phase6/decisions/p6_m8_mentor_review.json")
 
 
-def _m8_config() -> dict[str, Any]:
+def _m8_config(track: PlayoffTrack | None = None) -> dict[str, Any]:
     """The dated, committed pre-run record (P6-Q1, P6-Q13): seed, strata, per-stratum count, reason categories and
-    the named mentor. It is written by people before the run; the run refuses without it."""
-    if not (M8_PRE_RUN.exists() and M8_PRE_RUN_JSON.exists()):
-        raise Blocked(f"{M8_PRE_RUN} and {M8_PRE_RUN_JSON} (the dated pre-run record: population seed, strata, "
-                      "per-stratum count, reason categories, named mentor) must be committed before P6-M8 runs")
-    config = json.loads(M8_PRE_RUN_JSON.read_text(encoding="utf-8"))
+    the named mentor. It is written by people before the run; the run refuses without it. M8b also needs the named
+    mentor's confirmed agreement in it (`P6_M8B_SPEC.md` §1.3), never presumed."""
+    track = track or PX1_TRACK
+    if not (track.m8_pre_run.exists() and track.m8_pre_run_json.exists()):
+        raise Blocked(f"{track.m8_pre_run} and {track.m8_pre_run_json} (the dated pre-run record: population seed, "
+                      "strata, per-stratum count, reason categories, named mentor) must be committed before P6-M8 runs")
+    config = json.loads(track.m8_pre_run_json.read_text(encoding="utf-8"))
     for key in ("seed", "per_stratum", "reason_categories", "mentor"):
         if not config.get(key):
             raise Blocked(f"the P6-M8 pre-run record lacks {key!r}")
+    if track.requires_mentor_agreement:
+        agreement = config.get("mentor_agreement") or {}
+        if not (agreement.get("confirmed") is True and agreement.get("date") and agreement.get("evidence")):
+            raise Blocked(f"the M8b pre-run record does not confirm {config['mentor']}'s agreement (confirmed, date, "
+                          "evidence): M8b does not execute without it")
     return config
 
 
@@ -470,7 +599,8 @@ M8_FAR_FUTURE = "2026-12-31T00:00:00+00:00"
 
 
 @contextmanager
-def future_playoff_sentinel(database, event_key: str, season: int, red: tuple[int, ...], blue: tuple[int, ...]):
+def future_playoff_sentinel(database, event_key: str, season: int, red: tuple[int, ...], blue: tuple[int, ...],
+                            when: str = M8_FAR_FUTURE):
     """P6-M8 leakage sentinel (docs/P6Milestones.md P6-M8 'Leakage'): a far-future playoff result, with scouting rows,
     inserted into the ISOLATED copy for the duration of the block, then always deleted. Every M8 input is assembled
     at the selection moment, so nothing computed inside the block may change."""
@@ -479,7 +609,7 @@ def future_playoff_sentinel(database, event_key: str, season: int, red: tuple[in
         cursor.execute("INSERT INTO matches (match_key, event_key, season, competition_level, set_number, match_number, "
                        "scheduled_time, score_red, score_blue, winning_alliance, last_updated) "
                        "VALUES (%s, %s, %s, 'final', 99, 1, %s, 999, 0, 'red', NOW())",
-                       (match_key, event_key, season, M8_FAR_FUTURE))
+                       (match_key, event_key, season, when))
         for colour, teams in (("red", red), ("blue", blue)):
             for team in teams:
                 cursor.execute("INSERT INTO match_teams (match_key, team_number, alliance_color, last_updated) "
@@ -487,7 +617,7 @@ def future_playoff_sentinel(database, event_key: str, season: int, red: tuple[in
                 cursor.execute("INSERT INTO scouting_observations (match_key, event_key, team_number, scout_identifier, "
                                "defense_rating, feeding_rating, source, submitted_at) "
                                "VALUES (%s, %s, %s, 'p6m8-sentinel', 5, 5, 'p6m8_sentinel', %s)",
-                               (match_key, event_key, team, M8_FAR_FUTURE))
+                               (match_key, event_key, team, when))
     try:
         yield match_key
     finally:
@@ -495,6 +625,30 @@ def future_playoff_sentinel(database, event_key: str, season: int, red: tuple[in
             cursor.execute("DELETE FROM scouting_observations WHERE source = 'p6m8_sentinel'")
             cursor.execute("DELETE FROM match_teams WHERE match_key = %s", (match_key,))
             cursor.execute("DELETE FROM matches WHERE match_key = %s", (match_key,))
+
+
+PX1_TRACK = PlayoffTrack(
+    name="PX-1", model_record="p6_m2_px1.json", confirmation=None, model_type="playoff_px1",
+    seed_only_type="playoff_seed_only", version_tag="px1-v1", calibration_season=2025, holdout=HELD_OUT,
+    m1_records=("p6_m1_ruleset_check.json",), px2_record="p6_m3_px2.json", px4_record="p6_m5_px4.json",
+    m8_run_record="p6_m8_dm1_run.json", m8_record="p6_m8_dm1.json", calibrator_file="px2_calibrator.json",
+    m8_pre_run=M8_PRE_RUN, m8_pre_run_json=M8_PRE_RUN_JSON, m8_review_json=M8_REVIEW_JSON, sentinel_time=M8_FAR_FUTURE,
+    epa_snapshot=SNAPSHOT, epa_chain=CHAIN, exclude_playoffs_before_selection=False)
+PX1B_TRACK = PlayoffTrack(
+    name="PX-1b", model_record="p6_px1b_gate_2027.json",
+    confirmation=Path(".agent/phase6/decisions/p6_px1b_final1_confirmation.json"), model_type="playoff_px1b",
+    seed_only_type="playoff_px1b_seed_only", version_tag="px1b-v1", calibration_season=2026, holdout=2027,
+    m1_records=("p6_m1_ruleset_check.json", "p6_m1_ruleset_check_2027.json"), px2_record="p6_px2b.json",
+    px4_record="p6_px4b.json", m8_run_record="p6_m8b_dm1_run.json", m8_record="p6_m8b_dm1.json",
+    calibrator_file="px2b_calibrator.json", m8_pre_run=Path(".agent/phase6/decisions/P6_M8B_PRE_RUN.md"),
+    m8_pre_run_json=Path(".agent/phase6/decisions/p6_m8b_pre_run.json"),
+    m8_review_json=Path(".agent/phase6/decisions/p6_m8b_mentor_review.json"),
+    sentinel_time="2027-12-31T00:00:00+00:00",
+    epa_snapshot=None, epa_chain=None,  # D9 v1 Part B 3(d): a D18 source covering 2027 must be configured first
+    exclude_playoffs_before_selection=True,
+    specs={"px2b": ".agent/phase6/P6_M3_PX2B_SPEC.md", "px4b": ".agent/phase6/P6_M5_PX4B_SPEC.md",
+           "m8b": ".agent/phase6/P6_M8B_SPEC.md"},
+    requires_mentor_agreement=True)
 
 
 WEEK_SQL = """
@@ -505,7 +659,7 @@ ORDER BY r.source_object_id, r.id DESC
 """
 
 
-def run_m8(database, rulesets) -> dict[str, Any]:
+def run_m8(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, Any]:
     """P6-M8 step 1: the engine's predicted field and contenders for each sampled event, the frozen P6-Q1
     identification of the actual winner and finalist, both baselines, and the data facts for every miss.
     P6-DM1 is decided only after the named mentor's review (`m8-review`), never here."""
@@ -522,19 +676,24 @@ def run_m8(database, rulesets) -> dict[str, Any]:
     from ml.registry import load_registered_model
     from ml.views.event_analysis import POLICY_M5V2, policy_model
 
-    config = _m8_config()
-    _require("p6_m5_px4.json", passed_key="passed")
-    m1 = _require("p6_m1_ruleset_check.json")
-    px1, _ = _models()
-    calibrator = SymmetricIsotonicCalibrator.load(ROWS_CACHE_DIR / "px2_calibrator.json")
-    provider, _ = load_d18_provider(database, SNAPSHOT, CHAIN)
+    track = track or PX1_TRACK
+    config = _m8_config(track)
+    _require(track.px4_record, passed_key="passed")
+    if track.confirmation is not None:
+        _require_model(track)
+    m1 = _m1(track)
+    px1, _ = _models(track)
+    calibrator = SymmetricIsotonicCalibrator.load(ROWS_CACHE_DIR / track.calibrator_file)
+    snapshot, chain = _epa_source(track)
+    provider, _ = load_d18_provider(database, snapshot, chain)
     scales = ScaleLookup(database)
     ranking, _ = load_registered_model(RankingXGBModelV2, registry_dir=REGISTRY_DIR, model_type="ranking_xgb_v2",
                                        version_tag="d18", current_feature_list=FEATURE_NAMES_V2)
     policy = policy_model(True)
-    ranks_by_event = read_final_ranks_for_season(database, HELD_OUT)
-    ruleset = rulesets[HELD_OUT]
-    population = representable_events(rulesets, m1, read_event_playoffs(database, HELD_OUT))  # C2
+    ranks_by_event = read_final_ranks_for_season(database, track.holdout)
+    ruleset = rulesets[track.holdout]
+    population = representable_events(rulesets, m1, read_event_playoffs(database, track.holdout),  # C2
+                                      exclude_playoffs_before_selection=track.exclude_playoffs_before_selection)
     eligible = population.pop("validated")
     members_by_event = population.pop("members")
     with database.cursor() as cursor:
@@ -623,30 +782,33 @@ def run_m8(database, rulesets) -> dict[str, Any]:
     # qualification teams (ties: event key), the cheapest re-run. A future playoff result must change nothing.
     target = min(sample, key=lambda e: (e.team_count, e.event_key))
     members = members_by_event[target.event_key]
-    with future_playoff_sentinel(database, target.event_key, target.season, members[1], members[2]) as sentinel_key:
+    with future_playoff_sentinel(database, target.event_key, target.season, members[1], members[2],
+                                 when=track.sentinel_time) as sentinel_key:
         unchanged = fingerprint(engine_outputs(target)) == fingerprints[target.event_key]
     if time.time() - started > BUDGET_SECONDS:
         raise SystemExit("P6-M8 exceeded its 45-minute budget: nothing recorded; redesign before re-running")
     sentinel = {"event": target.event_key, "inserted": sentinel_key, "unchanged": unchanged, "passed": unchanged}
     return {"milestone": "P6-M8", "step": "run (P6-DM1 is decided only after the named mentor's review)",
             "leakage_sentinel": sentinel,
-            "decision": "P6-Q1", "pre_run": str(M8_PRE_RUN_JSON), "pre_run_blob": git_blob(str(M8_PRE_RUN_JSON)),
+            "decision": "P6-Q1", "pre_run": str(track.m8_pre_run_json),
+            "pre_run_blob": git_blob(str(track.m8_pre_run_json)), **_track_info(track),
             "composition_decisions_blob": git_blob(COMPOSITION_DECISIONS), "population": population,
             "events": per_event, "identified_before_review": dm1_result(engine_hits, seed=BOOTSTRAP_SEED),
             "baselines": {k: dm1_result(v, seed=BOOTSTRAP_SEED) for k, v in baselines.items()},
             "misses_pending_review": sum(1 for hits in engine_hits.values() for h in hits if not h)}
 
 
-def run_m8_review(database, rulesets) -> dict[str, Any]:
+def run_m8_review(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, Any]:
     """P6-M8 step 2: P6-DM1 from the run and the named mentor's review. A miss counts toward P6-DM1 only if the
     mentor accepted one of the predefined reason categories for it; nothing is accepted by default."""
     from ml.playoffs.evaluation import dm1_result
 
-    config = _m8_config()
-    run = _require("p6_m8_dm1_run.json")
-    if not M8_REVIEW_JSON.exists():
-        raise Blocked(f"{M8_REVIEW_JSON} (the named mentor's review of every miss) is required")
-    review = json.loads(M8_REVIEW_JSON.read_text(encoding="utf-8"))
+    track = track or PX1_TRACK
+    config = _m8_config(track)
+    run = _require(track.m8_run_record)
+    if not track.m8_review_json.exists():
+        raise Blocked(f"{track.m8_review_json} (the named mentor's review of every miss) is required")
+    review = json.loads(track.m8_review_json.read_text(encoding="utf-8"))
     if review.get("mentor") != config["mentor"]:
         raise Blocked("the review is not by the mentor named in the pre-run record")
     categories = {c["code"] for c in config["reason_categories"]}
@@ -665,8 +827,10 @@ def run_m8_review(database, rulesets) -> dict[str, Any]:
                                             and decision.get("category") in categories))
     result = dm1_result(outcomes, seed=BOOTSTRAP_SEED)
     return {"milestone": "P6-M8", "done_means": "P6-DM1", "mentor": review["mentor"],
-            "run_blob": git_blob(str(RESULTS_DIR / "p6_m8_dm1_run.json")), "review_blob": git_blob(str(M8_REVIEW_JSON)),
-            "unreviewed_misses": unreviewed, **result, "met": bool(result["met"]) and unreviewed == 0}
+            "run_blob": git_blob(str(RESULTS_DIR / track.m8_run_record)),
+            "review_blob": git_blob(str(track.m8_review_json)),
+            "unreviewed_misses": unreviewed, **result, "met": bool(result["met"]) and unreviewed == 0,
+            **_track_info(track)}
 
 
 ROSTER_SQL = """
@@ -769,9 +933,14 @@ def run_m6b(database, rulesets) -> dict[str, Any]:
 RUNS = {"m1": ("p6_m1_ruleset_check.json", run_m1), "m2": ("p6_m2_px1_rerun1.json", run_m2),
         "m3": ("p6_m3_px2.json", run_m3), "m6b": ("p6_m6b_draft_accuracy_rerun1.json", run_m6b), "m5": ("p6_m5_px4.json", run_m5), "m8": ("p6_m8_dm1_run.json", run_m8),
         "m8-review": ("p6_m8_dm1.json", run_m8_review),
-        "m1-2027": ("p6_m1_ruleset_check_2027.json", run_m1_2027)}
+        "m1-2027": ("p6_m1_ruleset_check_2027.json", run_m1_2027),
+        # C4: the versioned PX-1b chain (each refuses until its prerequisites exist)
+        "px2b": (PX1B_TRACK.px2_record, lambda database, rulesets: run_m3(database, rulesets, PX1B_TRACK)),
+        "px4b": (PX1B_TRACK.px4_record, lambda database, rulesets: run_m5(database, rulesets, PX1B_TRACK)),
+        "m8b": (PX1B_TRACK.m8_run_record, lambda database, rulesets: run_m8(database, rulesets, PX1B_TRACK)),
+        "m8b-review": (PX1B_TRACK.m8_record, lambda database, rulesets: run_m8_review(database, rulesets, PX1B_TRACK))}
 # The seasons whose approved rulesets a run needs (default: 2024-2026).
-RUN_SEASONS = {"m1-2027": (2027,)}
+RUN_SEASONS = {"m1-2027": (2027,), "px2b": (2026, 2027), "px4b": (2027,), "m8b": (2027,), "m8b-review": (2027,)}
 
 
 def main(argv: list[str] | None = None) -> int:
