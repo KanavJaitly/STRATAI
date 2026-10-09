@@ -85,3 +85,222 @@ def test_c0_has_its_own_record_and_needs_the_2027_ruleset():
     assert RUNS["m1-2027"][0] == "p6_m1_ruleset_check_2027.json"
     assert RUNS["m1"][0] == "p6_m1_ruleset_check.json"  # the 2024-2026 record is untouched
     assert RUN_SEASONS["m1-2027"] == (2027,) and "m1" not in RUN_SEASONS
+
+
+# --- C4: the PX-1b pointers ----------------------------------------------------------------------------------
+
+
+def test_the_frozen_px1_chain_is_the_unchanged_default():
+    from scripts import phase6_playoff_track as track
+
+    t = track.PX1_TRACK
+    assert (t.model_record, t.version_tag, t.calibration_season, t.holdout) == ("p6_m2_px1.json", "px1-v1", 2025, 2026)
+    assert (t.px2_record, t.px4_record, t.m8_run_record, t.m8_record) == (
+        "p6_m3_px2.json", "p6_m5_px4.json", "p6_m8_dm1_run.json", "p6_m8_dm1.json")
+    assert t.calibrator_file == "px2_calibrator.json"
+    assert t.sentinel_time == track.M8_FAR_FUTURE == "2026-12-31T00:00:00+00:00"
+    assert t.confirmation is None and not t.exclude_playoffs_before_selection and not t.requires_mentor_agreement
+    assert (t.epa_snapshot, t.epa_chain) == (track.SNAPSHOT, track.CHAIN) and t.specs is None
+    assert track._track_info(t) == {}  # the PX-1 records keep their exact shape
+    assert [track.RUNS[k][0] for k in ("m3", "m5", "m8", "m8-review")] == [
+        "p6_m3_px2.json", "p6_m5_px4.json", "p6_m8_dm1_run.json", "p6_m8_dm1.json"]
+
+
+def test_the_px1b_chain_points_at_its_own_records_models_and_2027():
+    from scripts import phase6_playoff_track as track
+
+    t = track.PX1B_TRACK
+    assert (t.model_record, t.version_tag, t.calibration_season, t.holdout) == (
+        "p6_px1b_gate_2027.json", "px1b-v1", 2026, 2027)
+    assert [track.RUNS[k][0] for k in ("px2b", "px4b", "m8b", "m8b-review")] == [
+        "p6_px2b.json", "p6_px4b.json", "p6_m8b_dm1_run.json", "p6_m8b_dm1.json"]
+    assert t.calibrator_file == "px2b_calibrator.json" and t.sentinel_time > "2027-12-30"
+    assert t.exclude_playoffs_before_selection and t.requires_mentor_agreement
+    assert track.RUN_SEASONS["px2b"] == (2026, 2027) and track.RUN_SEASONS["m8b"] == (2027,)
+    assert set(t.specs) == {"px2b", "px4b", "m8b"}
+
+
+def test_models_load_from_the_tracks_registry_tag(monkeypatch):
+    from ml.playoffs import px1
+    from scripts import phase6_playoff_track as track
+
+    loaded = []
+    monkeypatch.setattr(px1.PlayoffLogisticModel, "load", classmethod(lambda cls, path: loaded.append(path) or path))
+    track._models()
+    track._models(track.PX1B_TRACK)
+    parts = [p.parts[-3:] for p in loaded]
+    assert parts == [("playoff_px1", "px1-v1", "model.json"), ("playoff_seed_only", "px1-v1", "model.json"),
+                     ("playoff_px1b", "px1b-v1", "model.json"), ("playoff_px1b_seed_only", "px1b-v1", "model.json")]
+
+
+@pytest.fixture
+def px1b_results(tmp_path, monkeypatch):
+    """A tmp results dir and confirmation path for PX-1b's acceptance (SYNTHETIC records, never real ones)."""
+    import json
+    from dataclasses import replace
+
+    import scripts.phase6_common as common
+    from scripts import phase6_playoff_track as track
+
+    results = tmp_path / "results"
+    results.mkdir()
+    monkeypatch.setattr(common, "RESULTS_DIR", results)
+    monkeypatch.setattr(track, "RESULTS_DIR", results)
+    t = replace(track.PX1B_TRACK, confirmation=tmp_path / "confirmation.json")
+
+    def write(name, value):
+        (results / name).write_text(json.dumps(value), encoding="utf-8")
+    return t, results, write
+
+
+def _confirm(t, results, **overrides):
+    import json
+
+    from scripts.phase6_common import file_sha256
+
+    value = {"confirmed": True, "confirmed_by": "SYNTHETIC", "date": "2099-01-01", "record": t.model_record,
+             "record_sha256": file_sha256(results / t.model_record)}
+    value.update(overrides)
+    t.confirmation.write_text(json.dumps(value), encoding="utf-8")
+
+
+def test_px1b_acceptance_needs_the_gate_pass_and_a_sha_matched_confirmation(px1b_results):
+    from scripts.phase6_playoff_track import Blocked, _require_model
+
+    t, results, write = px1b_results
+    with pytest.raises(Blocked):
+        _require_model(t)  # no FINAL-1 record
+    write(t.model_record, {"passed": False})
+    with pytest.raises(Blocked):
+        _require_model(t)  # FINAL-1 failed
+    write(t.model_record, {"passed": True})
+    with pytest.raises(Blocked):
+        _require_model(t)  # no confirmation
+    _confirm(t, results, record_sha256="0" * 64)
+    with pytest.raises(Blocked):
+        _require_model(t)  # confirms some other record
+    _confirm(t, results, confirmed=False)
+    with pytest.raises(Blocked):
+        _require_model(t)
+    _confirm(t, results)
+    assert _require_model(t) == {"passed": True}
+
+
+def test_px2b_and_px4b_each_refuse_until_their_prerequisites_pass(px1b_results):
+    from scripts import phase6_playoff_track as track
+    from scripts.phase6_playoff_track import Blocked
+
+    t, results, write = px1b_results
+    with pytest.raises(Blocked):
+        track.run_m3(None, None, t)  # PX-1b not accepted
+    with pytest.raises(Blocked):
+        track.run_m5(None, None, t)  # no p6_px2b.json
+    write(t.px2_record, {"passed": False})
+    with pytest.raises(Blocked):
+        track.run_m5(None, None, t)  # PX-2b failed
+    write(t.px2_record, {"passed": True})
+    with pytest.raises(Blocked):
+        track.run_m5(None, None, t)  # PX-2b passed, but PX-1b is still not accepted
+
+
+def test_m8b_needs_its_pre_run_record_and_the_mentors_confirmed_agreement(px1b_results, tmp_path):
+    import json
+    from dataclasses import replace
+
+    from scripts import phase6_playoff_track as track
+    from scripts.phase6_playoff_track import Blocked
+
+    t, results, write = px1b_results
+    t = replace(t, m8_pre_run=tmp_path / "PRE.md", m8_pre_run_json=tmp_path / "pre.json")
+    with pytest.raises(Blocked):
+        track.run_m8(None, None, t)  # no pre-run record
+    t.m8_pre_run.write_text("synthetic", encoding="utf-8")
+    base = {"seed": 1, "per_stratum": 1, "reason_categories": [{"code": "x"}], "mentor": "SYNTHETIC MENTOR"}
+    for agreement in (None, {"confirmed": False, "date": "d", "evidence": "e"}, {"confirmed": True, "date": "d"}):
+        t.m8_pre_run_json.write_text(json.dumps({**base, "mentor_agreement": agreement}), encoding="utf-8")
+        with pytest.raises(Blocked):
+            track._m8_config(t)  # agreement absent, unconfirmed, or without evidence
+    confirmed = {"confirmed": True, "date": "d", "evidence": "e"}
+    t.m8_pre_run_json.write_text(json.dumps({**base, "mentor_agreement": confirmed}), encoding="utf-8")
+    assert track._m8_config(t)["mentor"] == "SYNTHETIC MENTOR"
+    with pytest.raises(Blocked):
+        track.run_m8(None, None, t)  # agreement confirmed, but PX-4b has not passed
+
+
+def test_the_frozen_m8_config_does_not_require_the_new_agreement_field():
+    from scripts import phase6_playoff_track as track
+
+    assert track._m8_config()["mentor"] == "Mr. Biery"  # the committed P6-M8 pre-run record: unchanged behaviour
+
+
+def test_the_real_m8b_pre_run_record_does_not_exist_yet():
+    from scripts import phase6_playoff_track as track
+    from scripts.phase6_playoff_track import Blocked
+
+    assert not track.PX1B_TRACK.m8_pre_run_json.exists()  # written by people, never fabricated
+    with pytest.raises(Blocked):
+        track._m8_config(track.PX1B_TRACK)
+
+
+def test_px1b_epa_source_must_be_configured_for_2027():
+    from scripts import phase6_playoff_track as track
+    from scripts.phase6_playoff_track import Blocked
+
+    with pytest.raises(Blocked):
+        track._epa_source(track.PX1B_TRACK)
+    assert track._epa_source(track.PX1_TRACK) == (track.SNAPSHOT, track.CHAIN)
+
+
+def test_the_leakage_exclusion_applies_to_the_px1b_population_only():
+    from scripts.phase6_playoff_track import PLAYOFF_BEFORE_SELECTION, representable_events
+
+    leaky = synthetic_2027_event(last_qualification=T + timedelta(hours=5))  # playoffs before the selection moment
+    clean = synthetic_2027_event()
+    rules = {2027: SeasonRuleset.model_validate(ruleset(2027))}
+    m1 = {"events": {KEY: {"status": "reproduced"}}}
+    result = representable_events(rules, m1, [leaky], exclude_playoffs_before_selection=True)
+    assert result["validated_events"] == 0
+    assert result["excluded_events"][KEY] == {"reason": PLAYOFF_BEFORE_SELECTION, "alliances": 4}
+    assert representable_events(rules, m1, [leaky])["validated_events"] == 1  # PX-1's frozen population: unchanged
+    assert representable_events(rules, m1, [clean], exclude_playoffs_before_selection=True)["validated_events"] == 1
+
+
+def test_px2b_runs_end_to_end_on_synthetic_rows_through_the_pointers(px1b_results, tmp_path, monkeypatch):
+    from dataclasses import replace
+
+    from ml.playoffs.px1 import PlayoffLogisticModel
+    from scripts import phase6_playoff_track as track
+    from tests.test_phase6_px1 import synthetic_rows
+
+    t, results, write = px1b_results
+    write(t.model_record, {"passed": True})
+    _confirm(t, results)
+    base = synthetic_rows(500, 11)
+    rows = ([replace(r, season=2026, scheduled_time=T - timedelta(days=200) + timedelta(minutes=i))
+             for i, r in enumerate(base[:300])]
+            + [replace(r, season=2027, scheduled_time=T + timedelta(minutes=i)) for i, r in enumerate(base[300:])])
+    model = PlayoffLogisticModel.fit(rows[:300], normalized=True, model_type="playoff_px1b")
+    monkeypatch.setattr(track, "_models", lambda tr=None: (model, model))
+    monkeypatch.setattr(track, "_track_rows", lambda database, rulesets, tr: rows)
+    monkeypatch.setattr(track, "ROWS_CACHE_DIR", tmp_path)
+    result = track.run_m3(None, None, t)
+    assert result["slice_rows"] == 60 and result["evaluated"] == 200  # the last 20% of 2026; all of 2027
+    assert result["track"] == "PX-1b" and set(result["specs"]) == {"px2b", "px4b", "m8b"}
+    assert isinstance(result["passed"], bool)  # SYNTHETIC: the outcome is not evidence either way
+    assert (tmp_path / "px2b_calibrator.json").exists() and not (tmp_path / "px2_calibrator.json").exists()
+
+
+def test_the_frozen_px2_still_refuses_on_the_real_px1_record():
+    from scripts import phase6_playoff_track as track
+    from scripts.phase6_playoff_track import Blocked
+
+    with pytest.raises(Blocked):
+        track.run_m3(None, None)  # p6_m2_px1.json: passed false (D9)
+
+
+def test_reliability_bins_cover_the_unit_interval():
+    from scripts.phase6_playoff_track import reliability_bins
+
+    bins = reliability_bins([0.05, 0.05, 0.95, 1.0], [False, True, True, True])
+    assert len(bins) == 10 and sum(b["count"] for b in bins) == 4
+    assert bins[0]["observed"] == 0.5 and bins[9]["count"] == 2 and bins[5]["mean_predicted"] is None
