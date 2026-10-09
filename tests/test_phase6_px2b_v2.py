@@ -176,7 +176,22 @@ def _synthetic_track_world(t, results, registry, monkeypatch):
     monkeypatch.setattr(px2b, "frozen_slice_keys", lambda path=None: [r.match_key for r in slice_rows])
     monkeypatch.setattr(track, "_models", lambda tr=None: (candidate, candidate))
     monkeypatch.setattr(track, "_track_rows", lambda database, rulesets, tr: rows)
+    write_synthetic_pins(results / t.pins_record, registry, [("playoff_px1b_calbase", "px2b-v2")], slice_rows)
     return rows27, slice_rows, base_model, candidate
+
+
+def write_synthetic_pins(path, registry, models, slice_rows):
+    """A SYNTHETIC G1/G2 pin record: the given registry files' sha256 and the slice's content fingerprint."""
+    from ml.playoffs.pins import (PIN_VERSION, SERIALIZATION_NAME, model_key, serialization_signature,
+                                  slice_content_fingerprint)
+    from ml.registry import model_file_sha256
+
+    path.write_text(json.dumps({
+        "pin_version": PIN_VERSION,
+        "models": {model_key(m, t): model_file_sha256(registry, m, t) for m, t in models},
+        "slice_content": {"rows": len(slice_rows), "fingerprint": slice_content_fingerprint(slice_rows),
+                          "serialization": {"name": SERIALIZATION_NAME,
+                                            "signature_sha256": serialization_signature()}}}), encoding="utf-8")
 
 
 def test_px2b_v2_calibrates_out_of_sample_and_evaluates_the_candidate(accepted_px1b, monkeypatch):

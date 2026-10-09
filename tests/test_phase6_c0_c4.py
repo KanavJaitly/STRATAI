@@ -121,13 +121,16 @@ def test_the_px1b_chain_points_at_its_own_records_models_and_2027():
 
 
 def test_models_load_from_the_tracks_registry_tag(monkeypatch):
+    """The registry paths only. Pinning (G1) is switched off here and tested in tests/test_phase6_pins.py."""
+    from dataclasses import replace
+
     from ml.playoffs import px1
     from scripts import phase6_playoff_track as track
 
     loaded = []
     monkeypatch.setattr(px1.PlayoffLogisticModel, "load", classmethod(lambda cls, path: loaded.append(path) or path))
     track._models()
-    track._models(track.PX1B_TRACK)
+    track._models(replace(track.PX1B_TRACK, pins_record=None))
     parts = [p.parts[-3:] for p in loaded]
     assert parts == [("playoff_px1", "px1-v1", "model.json"), ("playoff_seed_only", "px1-v1", "model.json"),
                      ("playoff_px1b", "px1b-v1", "model.json"), ("playoff_px1b_seed_only", "px1b-v1", "model.json")]

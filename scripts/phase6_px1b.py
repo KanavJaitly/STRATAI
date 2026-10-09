@@ -4,6 +4,7 @@
     python -m scripts.phase6_px1b final      # §6 final fit on 2024-2026, only if DEV-1 proceeds and before any 2027 data
     python -m scripts.phase6_px1b gate2027   # §6 FINAL-1 on held-out 2027 -- refuses until its prerequisites exist
     python -m scripts.phase6_px1b calbase    # PX-2b v2 §2.2: the calibration-base model, once, before any 2027 data
+    python -m scripts.phase6_px1b pins       # G1/G2: pin the three model files and the slice content (write-once)
 
 - **Records:** write-once, in `.agent/phase6/results/`. Each carries the commit, the spec's blob and sha256, the
   dataset fingerprint, the seed and the runtime.
@@ -25,6 +26,7 @@ from scripts.phase6_playoff_track import BUDGET_SECONDS, Blocked, assemble_rows,
 
 DEV_RECORD, FINAL_RECORD, GATE_RECORD = "p6_px1b_dev.json", "p6_px1b_final_fit.json", "p6_px1b_gate_2027.json"
 CALBASE_RECORD = "p6_px2b_calbase.json"
+PINNED_MODELS = (("playoff_px1b", "px1b-v1"), ("playoff_px1b_seed_only", "px1b-v1"), ("playoff_px1b_calbase", "px2b-v2"))
 DEV_FIT, DEV_EVAL, FINAL_SEASONS, HOLDOUT = 2024, 2025, (2024, 2025, 2026), 2027
 
 
@@ -106,11 +108,25 @@ def run_final(database, rulesets) -> dict[str, Any]:
             **extra, "version_tag": VERSION_TAG, "columns": px1b.design.names(), "dropped": px1b.design.dropped}
 
 
+def pinned_px1b_models():
+    """px1b-v1 and its seed-only comparator, loaded only after each file hashes to its G1 pin (FINAL-1's models)."""
+    from scripts.phase6_playoff_track import PX1B_TRACK, _models
+
+    assert PX1B_TRACK.pins_record is not None
+    return _models(PX1B_TRACK)
+
+
 def run_gate2027(database, rulesets) -> dict[str, Any]:
-    """§6 FINAL-1. Refuses, naming every unmet prerequisite, until all of them exist."""
+    """§6 FINAL-1. Verifies the pinned models first (an altered file is refused at once), then refuses, naming every
+    unmet prerequisite, until all of them exist."""
     from data.rulesets import approved_seasons
+    from ml.playoffs.pins import PIN_RECORD
 
     missing = []
+    if read_record(PIN_RECORD) is None:
+        missing.append(f"{PIN_RECORD} (the G1/G2 integrity pins)")
+    else:
+        pinned_px1b_models()
     if read_record(FINAL_RECORD) is None:
         missing.append(f"{FINAL_RECORD} (the frozen final candidate)")
     if HOLDOUT not in approved_seasons(database):
@@ -170,8 +186,56 @@ def run_calbase(database, rulesets) -> dict[str, Any]:
             "columns": model.design.names(), "excluded": dict(excluded), **extra}
 
 
+def run_pins(database, rulesets) -> dict[str, Any]:
+    """G1/G2 (approved 2026-10-08): one additive, write-once pin record.
+    - The sha256 of each pinned model file, after checking that its registry training hash is the recorded population.
+    - The content fingerprint of the 526-row slice, rebuilt from px1b-v1's own population (proven by fingerprint),
+      with the exact serialization (name, method, code signature)."""
+    from ml.playoffs.pins import (PIN_VERSION, SERIALIZATION_NAME, model_key, serialization_signature,
+                                  slice_content_fingerprint)
+    from ml.playoffs.px1b import dataset_fingerprint
+    from ml.playoffs.px2b import SLICE_PROVENANCE, calibration_slice, frozen_slice_keys, require_frozen_slice
+    from ml.registry import model_file_sha256
+
+    final, calbase = read_record(FINAL_RECORD), read_record(CALBASE_RECORD)
+    if final is None or calbase is None:
+        raise Blocked(f"{FINAL_RECORD} and {CALBASE_RECORD} are required")
+    if _playoff_matches(database, HOLDOUT):
+        raise Blocked("2027 playoff matches exist: the pins are taken before any 2027 data")
+    expected_training = {"playoff_px1b": final["dataset_fingerprint"],
+                         "playoff_px1b_seed_only": final["dataset_fingerprint"],
+                         "playoff_px1b_calbase": calbase["base"]["fingerprint"]}
+    models = {}
+    for model_type, tag in PINNED_MODELS:
+        manifest = json.loads((REGISTRY_DIR / model_type / tag / "manifest.json").read_text(encoding="utf-8"))
+        if manifest["training_dataset_hash"] != expected_training[model_type]:
+            raise Blocked(f"{model_key(model_type, tag)}: its registry training hash is not the recorded population")
+        models[model_key(model_type, tag)] = model_file_sha256(REGISTRY_DIR, model_type, tag)
+    rows, _, _ = _rows(database, rulesets, FINAL_SEASONS)
+    if dataset_fingerprint(rows) != final["dataset_fingerprint"]:
+        raise Blocked("the 2024-2026 rows differ from px1b-v1's training population")
+    slice_rows = calibration_slice(rows)
+    require_frozen_slice(slice_rows, frozen_slice_keys())
+    return {"pin_version": PIN_VERSION, "approved": "Kanav 2026-10-08 (G1/G2)", "acceptance": False,
+            "models": models,
+            "slice_content": {
+                "rows": len(slice_rows), "fingerprint": slice_content_fingerprint(slice_rows),
+                "keys_from": str(SLICE_PROVENANCE), "keys_sha256": calbase["slice"]["keys_sha256"],
+                "serialization": {
+                    "name": SERIALIZATION_NAME, "function": "ml.playoffs.px1b.dataset_fingerprint",
+                    "signature_sha256": serialization_signature(),
+                    "method": "rows sorted by match_key; per row json.dumps(sort_keys=True) of {match_key, season, "
+                              "round, red_seed, blue_seed, red_win, red, blue, fields}; red/blue = per member "
+                              "{team, values (TEAM_FEATURE_NAMES order, NaN -> null), score_scale, epa_scale (null "
+                              "unless present)}; fields = TEAM_FEATURE_NAMES; lines joined with '\\n', UTF-8, sha256",
+                    "scope": "the 526 PX-2b v2 calibration-slice rows (PX-1b spec §1 rows of 2026, the last 20% by "
+                             "(scheduled_time, match_key)), as assembled from the isolated database at the selection "
+                             "moment"}},
+            "population_fingerprint": final["dataset_fingerprint"]}
+
+
 RUNS = {"dev": (DEV_RECORD, run_dev), "final": (FINAL_RECORD, run_final), "gate2027": (GATE_RECORD, run_gate2027),
-        "calbase": (CALBASE_RECORD, run_calbase)}
+        "calbase": (CALBASE_RECORD, run_calbase), "pins": ("p6_px1b_chain_pins.json", run_pins)}
 
 
 def main(argv: list[str] | None = None) -> int:
