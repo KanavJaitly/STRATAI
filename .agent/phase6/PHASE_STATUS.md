@@ -11,10 +11,11 @@ px1b: [spec v1 frozen (P6_M2_PX1B_SPEC.md, ca13e98); PX-1 amendment A1 (P6_M2_PX
 d9_px1b: [decisions/P6_D9_PX1B_REPLACEMENT_V1.md -- Kanav's policy: PX-1b is the candidate replacement, NOT accepted; PX-2/PX-4/M8 blocked; acceptance = FINAL-1 pass on 2027 + Kanav's dated confirmation; dependent specs PX-2b/PX-4b/M8b (on 2027) and C0/C4 are proposals awaiting explicit approval]
 c0_c4: [APPROVED by Kanav 2026-10-08 (decisions/P6_D9_PX1B_APPROVALS_C0_C4_2026-10-08.md); PREPARED, nothing run: C0 m1-2027 (98e53ff); C1 P6_M3_PX2B_SPEC.md, C2 P6_M5_PX4B_SPEC.md, C3 P6_M8B_SPEC.md frozen (021e6ea); C4 PlayoffTrack pointers px2b/px4b/m8b/m8b-review (b965210). Every run refuses: no 2027 ruleset, data, EPA source, PX-1b acceptance, M8b pre-run record or confirmed mentor]
 c1_audit: [DEFECT in C1 (PX-2b spec v1): calibration predictions are in-sample (all 526 slice rows are in px1b-v1's fit; fingerprint 52a4d7f0 verified), contrary to M7's out-of-sample procedure (decisions/P6_PX2B_C1_AUDIT_2026-10-08.md). Correction PROPOSED as P6_M3_PX2B_SPEC_V2.md (not adopted; needs Kanav's approval of its blob, and the base-model fit, before any 2027 data). PX-2b must not run under v1]
+px2b_v2: [APPROVED (Kanav 2026-10-08; blob b4397537; decisions/P6_PX2B_V2_APPROVAL_2026-10-08.md) and implemented (a31a46c); calibration base px2b-v2 fit before any 2027 data (p6_px2b_calbase.json: 5,454 rows, 0 match/event overlap with the frozen 526-row slice, 11 straddling events excluded). PX-2b NOT run, NOT validated; still needs PX-1b acceptance and every other prerequisite]
 blocked_by_human_input: [P6-M8 mentor (Mr. Biery) agreement and review -- outstanding, and moot unless PX-4 can run]
 prerequisites:
   - migration 0011 on the serving database: APPLIED 2026-10-06 (Kanav's approval)
-records: .agent/phase6/results/ (p6_m10_fit, p6_m10_outcome_model, p6_m12_strategy_validation(+_rerun1), p6_m13_parity_audit(+_rerun1), p6_m6a_profiles, p6_m1_ruleset_check, p6_m2_px1(+_rerun1), p6_px1b_dev, p6_px1b_final_fit, p6_m6b_draft_accuracy(+_rerun1))
+records: .agent/phase6/results/ (p6_m10_fit, p6_m10_outcome_model, p6_m12_strategy_validation(+_rerun1), p6_m13_parity_audit(+_rerun1), p6_m6a_profiles, p6_m1_ruleset_check, p6_m2_px1(+_rerun1), p6_px1b_dev, p6_px1b_final_fit, p6_px2b_calbase, p6_m6b_draft_accuracy(+_rerun1))
 human_inputs_never_fabricated: true
 known_risks:
   - PX-1 must beat M6/M7-on-playoffs and seed-only (P6-Q3); PX-2 must pass the M7 gate that M7 itself failed on qualifications
