@@ -2,7 +2,9 @@
 
     python -m scripts.phase6_px1b dev        # DEV-1 (§5): fit 2024, evaluate 2025 -- development, NOT acceptance
     python -m scripts.phase6_px1b final      # §6 final fit on 2024-2026, only if DEV-1 proceeds and before any 2027 data
-    python -m scripts.phase6_px1b gate2027   # §6 FINAL-1 on held-out 2027 -- refuses until its prerequisites exist
+    python -m scripts.phase6_px1b gate2027   # §6 FINAL-1 on held-out 2027 (scripts.phase6_px1b_final1): fail-closed
+                                             # prerequisites, then the frozen gate; run once
+    python -m scripts.phase6_px1b epa-pin-2027  # pin the 2027 D18 EPA source named in Kanav's config (write-once)
     python -m scripts.phase6_px1b calbase    # PX-2b v2 §2.2: the calibration-base model, once, before any 2027 data
     python -m scripts.phase6_px1b pins       # G1/G2: pin the three model files and the slice content (write-once; done)
     python -m scripts.phase6_px1b pins-v2    # G3: v1's pins re-verified and copied, plus ranking_xgb_v2/d18 (write-once)
@@ -119,24 +121,18 @@ def pinned_px1b_models():
 
 
 def run_gate2027(database, rulesets) -> dict[str, Any]:
-    """§6 FINAL-1. Verifies the pinned models first (an altered file is refused at once), then refuses, naming every
-    unmet prerequisite, until all of them exist."""
-    from data.rulesets import approved_seasons
-    from ml.playoffs.pins import PIN_RECORD
+    """§6 FINAL-1: the frozen 2027 acceptance evaluation (`scripts.phase6_px1b_final1`). Fail-closed prerequisites,
+    then the gate; run once."""
+    from scripts.phase6_px1b_final1 import run_gate2027 as final1
 
-    missing = []
-    if read_record(PIN_RECORD) is None:
-        missing.append(f"{PIN_RECORD} (the G1/G2/G3 integrity pins)")
-    else:
-        pinned_px1b_models()
-    if read_record(FINAL_RECORD) is None:
-        missing.append(f"{FINAL_RECORD} (the frozen final candidate)")
-    if HOLDOUT not in approved_seasons(database):
-        missing.append("an approved 2027 P6-M1 ruleset (human-entered; a qualified reviewer)")
-    if not _playoff_matches(database, HOLDOUT):
-        missing.append("2027 playoff data (the season complete and synced)")
-    missing.append("the P6-M1 reproduction check for 2027 events, and a D18 EPA source covering 2027")
-    raise Blocked("FINAL-1 cannot be evaluated yet; missing: " + "; ".join(missing))
+    return final1(database, rulesets)
+
+
+def run_epa_pin_2027(database, rulesets) -> dict[str, Any]:
+    """Pin the 2027 D18 EPA source named in Kanav's config (a FINAL-1 prerequisite)."""
+    from scripts.phase6_px1b_final1 import run_epa_pin_2027 as pin
+
+    return pin(database, rulesets)
 
 
 def run_calbase(database, rulesets) -> dict[str, Any]:
@@ -271,7 +267,10 @@ def run_pins_v2(database, rulesets) -> dict[str, Any]:
 
 RUNS = {"dev": (DEV_RECORD, run_dev), "final": (FINAL_RECORD, run_final), "gate2027": (GATE_RECORD, run_gate2027),
         "calbase": (CALBASE_RECORD, run_calbase), "pins": ("p6_px1b_chain_pins.json", run_pins),
-        "pins-v2": ("p6_px1b_chain_pins_v2.json", run_pins_v2)}
+        "pins-v2": ("p6_px1b_chain_pins_v2.json", run_pins_v2),
+        "epa-pin-2027": ("p6_px1b_epa_source_2027.json", run_epa_pin_2027)}
+# The seasons whose approved rulesets a run needs (default 2024-2026). FINAL-1 needs the approved 2027 ruleset.
+RUN_SEASONS = {"gate2027": (HOLDOUT,)}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -281,7 +280,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     started = time.time()
     database = isolated_database()
-    rulesets = require_rulesets(database)
+    rulesets = require_rulesets(database, RUN_SEASONS.get(args[0]))
     name, run = RUNS[args[0]]
     result = run(database, rulesets)
     result["minutes"] = round((time.time() - started) / 60, 1)

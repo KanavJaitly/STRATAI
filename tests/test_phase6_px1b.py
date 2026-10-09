@@ -233,9 +233,12 @@ def test_final_fit_refuses_once_2027_outcomes_exist(monkeypatch):
 def test_gate_2027_refuses_while_its_prerequisites_are_missing(monkeypatch, capsys):
     import data.rulesets
     import scripts.phase6_px1b as harness
+    import scripts.phase6_px1b_final1 as final1
     from scripts.phase6_playoff_track import Blocked
 
-    monkeypatch.setattr(harness, "read_record", lambda name: None)
+    # FINAL-1's prerequisites live in scripts.phase6_px1b_final1 (run_gate2027 delegates to it): no record exists
+    for module in (harness, final1):
+        monkeypatch.setattr(module, "read_record", lambda name: None)
     monkeypatch.setattr(harness, "_playoff_matches", lambda database, season: 0)
     monkeypatch.setattr(data.rulesets, "approved_seasons", lambda database: {2024, 2025, 2026})
     with pytest.raises(Blocked):
