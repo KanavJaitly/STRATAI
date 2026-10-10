@@ -510,12 +510,14 @@ def test_calibrate_and_pins_refuse_until_their_own_prerequisites(monkeypatch):
         runner.run_pins(None)
 
 
-def test_the_real_calibrate_and_final_runs_are_blocked_today():
+def test_the_real_pins_and_final_runs_are_blocked_today():
+    """DEV-M10b ran once (2026-10-10) and proceeded; the production calibrator is not fit (that needs Kanav's separate
+    authorization), so pins and final refuse. `calibrate` itself is never invoked here."""
     import scripts.phase6_m10b as runner
 
-    assert not (Path(".agent/phase6/results") / runner.DEV_RECORD).exists()
+    assert not (Path(".agent/phase6/results") / runner.CALIBRATOR_RECORD).exists()
     with pytest.raises(Blocked):
-        runner.run_calibrate(None)
+        runner.run_pins(None)
     with pytest.raises(Blocked):
         runner.final_prerequisites()
 

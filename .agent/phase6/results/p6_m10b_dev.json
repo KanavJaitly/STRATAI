@@ -1,0 +1,644 @@
+{
+ "acceptance": false,
+ "authorizes_serving": false,
+ "base": {
+  "beta": {
+   "auto": 0.7935396654641286,
+   "endgame": 0.9671745214090752,
+   "teleop": 1.145780548674671
+  },
+  "excluded": {
+   "epa_incomplete": 9170
+  },
+  "fit_rows": 4797,
+  "fit_set_fingerprint": "7986ef1c932305cbee8dba76e0341e53998b1e207f03fce404e08e9a737fc157",
+  "latest_fit_row": "2024-04-19T18:53:00-04:00",
+  "registered": false,
+  "sha256": "24b02b6549d62c5205be101d16ca85b11c37c1afc9f63d776ce34c799003bcfb",
+  "sigma": 0.9603246713539365,
+  "sigma_matrix": [
+   [
+    0.2016238862294504,
+    0.02556238752966074,
+    0.008547463293483434,
+    0.006540739684274945
+   ],
+   [
+    0.02556238752966074,
+    0.4281133491478178,
+    0.014335602578893799,
+    0.006289786526591312
+   ],
+   [
+    0.008547463293483434,
+    0.014335602578893799,
+    0.03729310003253833,
+    0.004882492614265317
+   ],
+   [
+    0.006540739684274945,
+    0.006289786526591312,
+    0.004882492614265317,
+    0.12287619454690074
+   ]
+  ]
+ },
+ "calibration_set": {
+  "excluded": {
+   "model_input_absent": 67,
+   "tie": 88
+  },
+  "fingerprint": "87875b2936aae91f6dede47af24916ed7ba1b00956b96dea09cba895f91be6bc",
+  "groups": {
+   "mixed": 3902,
+   "prior": 2120,
+   "same": 5049
+  },
+  "latest": "2025-04-18T19:00:00-04:00",
+  "rows": 11071,
+  "seasons": [
+   2025
+  ]
+ },
+ "calibrator": {
+  "base_sha256": "24b02b6549d62c5205be101d16ca85b11c37c1afc9f63d776ce34c799003bcfb",
+  "counts": {
+   "mixed": 3902,
+   "prior": 2120,
+   "same": 5049
+  },
+  "factors": {
+   "mixed": 1.088513921936348,
+   "prior": 0.8145421866174302,
+   "same": 1.3156349015149478
+  },
+  "fit_set_fingerprint": "87875b2936aae91f6dede47af24916ed7ba1b00956b96dea09cba895f91be6bc",
+  "fits": {
+   "global": {
+    "a": 1.1093450423594213,
+    "curvature": 0.17285191090631244,
+    "derivative": -2.5601394405817634e-09,
+    "loss": 0.49472946821693875,
+    "n": 11071,
+    "nit": 14
+   },
+   "mixed": {
+    "a": 1.088513921936348,
+    "curvature": 0.17777702470409146,
+    "derivative": -5.2918038901235395e-09,
+    "loss": 0.5056484689546419,
+    "n": 3902,
+    "nit": 17
+   },
+   "prior": {
+    "a": 0.8145421866174302,
+    "curvature": 0.2785350238840601,
+    "derivative": -3.403955407690424e-09,
+    "loss": 0.5465565747771941,
+    "n": 2120,
+    "nit": 13
+   },
+   "same": {
+    "a": 1.3156349015149478,
+    "curvature": 0.12869182346542737,
+    "derivative": 2.3179111885744093e-09,
+    "loss": 0.45709684464097894,
+    "n": 5049,
+    "nit": 12
+   }
+  },
+  "global_factor": 1.1093450423594213,
+  "model_type": "strategy_outcome_calibrator",
+  "refused": false,
+  "registered": false,
+  "sha256": "7ea970b0595b869f4e090e59a2778fad7274547d38670e9cdd15a6a47e4d27e2",
+  "sources": {
+   "mixed": "group",
+   "prior": "group",
+   "same": "group"
+  },
+  "spec": ".agent/phase6/P6_M10B_SPEC.md",
+  "spec_blob": "d699afafc01d42904c7afc7c7e209f8007a6a207",
+  "version_tag": "p6m10b-v1"
+ },
+ "decision": {
+  "consequence": "the production calibrator may be fit, on Kanav's separate authorization",
+  "diagnostics": {
+   "i_fit": {
+    "status": "pass"
+   },
+   "ii_g2_rejections": {
+    "calibrated_g2_status": "fail",
+    "calibrated_rejections": 2,
+    "raw_g2_status": "fail",
+    "raw_rejections": 3,
+    "status": "pass"
+   },
+   "iii_ece": {
+    "calibrated_ece": 0.015104459258076682,
+    "raw_ece": 0.01787772861068462,
+    "status": "pass"
+   }
+  },
+  "outcome": "proceed",
+  "proceed": true,
+  "statuses": {
+   "i_fit": "pass",
+   "ii_g2_rejections": "pass",
+   "iii_ece": "pass"
+  }
+ },
+ "diagnostic_only": true,
+ "evaluation": {
+  "calibrated": {
+   "gate": {
+    "ece": 0.015104459258076682,
+    "g1_pass": true,
+    "g2": {
+     "bins": [
+      {
+       "count": 1436,
+       "expected_wins": 57.963690010161464,
+       "holm_threshold": 0.005,
+       "interval_95": [
+        0.03064066852367688,
+        0.05083565459610028
+       ],
+       "lower": 0.0,
+       "mean_predicted": 0.04036468663660269,
+       "observed_rate": 0.07311977715877438,
+       "observed_wins": 105,
+       "p_value": 8.10345078836444e-09,
+       "rejected": true,
+       "tested": true,
+       "upper": 0.1
+      },
+      {
+       "count": 1133,
+       "expected_wins": 170.1476175247285,
+       "holm_threshold": 0.016666666666666666,
+       "interval_95": [
+        0.1297440423654016,
+        0.17122683142100617
+       ],
+       "lower": 0.1,
+       "mean_predicted": 0.15017441970408518,
+       "observed_rate": 0.15357458075904679,
+       "observed_wins": 174,
+       "p_value": 0.7386276606236242,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.2
+      },
+      {
+       "count": 1141,
+       "expected_wins": 285.73936649338805,
+       "holm_threshold": 0.00625,
+       "interval_95": [
+        0.2252410166520596,
+        0.27607361963190186
+       ],
+       "lower": 0.2,
+       "mean_predicted": 0.25042889263224194,
+       "observed_rate": 0.21735319894829097,
+       "observed_wins": 248,
+       "p_value": 0.009246931194235837,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.3
+      },
+      {
+       "count": 1193,
+       "expected_wins": 417.39185930046926,
+       "holm_threshold": 0.01,
+       "interval_95": [
+        0.32271584241408213,
+        0.37720033528918695
+       ],
+       "lower": 0.3,
+       "mean_predicted": 0.34986744283358695,
+       "observed_rate": 0.33864207879295893,
+       "observed_wins": 404,
+       "p_value": 0.42924694676643516,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.4
+      },
+      {
+       "count": 1245,
+       "expected_wins": 560.1045449239551,
+       "holm_threshold": 0.05,
+       "interval_95": [
+        0.42248995983935744,
+        0.4771084337349398
+       ],
+       "lower": 0.4,
+       "mean_predicted": 0.4498831686136186,
+       "observed_rate": 0.4506024096385542,
+       "observed_wins": 561,
+       "p_value": 0.9772391584389726,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.5
+      },
+      {
+       "count": 1175,
+       "expected_wins": 646.9061860378378,
+       "holm_threshold": 0.0125,
+       "interval_95": [
+        0.5225531914893617,
+        0.5787234042553191
+       ],
+       "lower": 0.5,
+       "mean_predicted": 0.5505584562024151,
+       "observed_rate": 0.5395744680851063,
+       "observed_wins": 634,
+       "p_value": 0.46277363928376636,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.6
+      },
+      {
+       "count": 1188,
+       "expected_wins": 773.0495433159429,
+       "holm_threshold": 0.0071428571428571435,
+       "interval_95": [
+        0.6237373737373737,
+        0.6776094276094277
+       ],
+       "lower": 0.6,
+       "mean_predicted": 0.6507151038012987,
+       "observed_rate": 0.6666666666666666,
+       "observed_wins": 792,
+       "p_value": 0.25933901003712795,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.7
+      },
+      {
+       "count": 1110,
+       "expected_wins": 833.4812043574328,
+       "holm_threshold": 0.025,
+       "interval_95": [
+        0.7252252252252253,
+        0.7756756756756756
+       ],
+       "lower": 0.7,
+       "mean_predicted": 0.7508839678895791,
+       "observed_rate": 0.7504504504504504,
+       "observed_wins": 833,
+       "p_value": 0.9722592023221086,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.8
+      },
+      {
+       "count": 1129,
+       "expected_wins": 959.2807552972135,
+       "holm_threshold": 0.008333333333333333,
+       "interval_95": [
+        0.829052258635961,
+        0.8697962798937112
+       ],
+       "lower": 0.8,
+       "mean_predicted": 0.849672945347399,
+       "observed_rate": 0.8396811337466785,
+       "observed_wins": 948,
+       "p_value": 0.3367786411999059,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.9
+      },
+      {
+       "count": 1465,
+       "expected_wins": 1406.966994125853,
+       "holm_threshold": 0.005555555555555556,
+       "interval_95": [
+        0.9501706484641638,
+        0.9699658703071672
+       ],
+       "lower": 0.9,
+       "mean_predicted": 0.9603870267070669,
+       "observed_rate": 0.9344709897610921,
+       "observed_wins": 1369,
+       "p_value": 1.7985095550046685e-06,
+       "rejected": true,
+       "tested": true,
+       "upper": 1.0
+      }
+     ],
+     "eligible_bins": 10,
+     "rejected_bins": 2,
+     "status": "fail"
+    },
+    "g3_max_symmetry_error": 2.220446049250313e-16,
+    "g3_order_independent": true,
+    "g3_pass": true,
+    "g4_fit_isolated": true,
+    "passed": false
+   },
+   "metrics": {
+    "brier": 0.16468026937895544,
+    "ece": 0.015104459258076682,
+    "log_loss": 0.5001180779566983
+   },
+   "status": {
+    "g1": "pass",
+    "g2": "fail",
+    "g3": "pass",
+    "g4": "pass",
+    "overall": "fail"
+   }
+  },
+  "fit_isolation": {
+   "base_fit_seasons": [
+    2024
+   ],
+   "calibration_seasons": [
+    2025
+   ],
+   "earliest_evaluated_row": "2026-03-06T10:40:00-05:00",
+   "fit_isolated": true,
+   "latest_base_fit_row": "2024-04-19T18:53:00-04:00",
+   "latest_calibration_row": "2025-04-18T19:00:00-04:00"
+  },
+  "per_group_calibration": {
+   "mixed": {
+    "calibration": {
+     "intercept": 0.007883841537592822,
+     "slope": 0.8255119715406702
+    },
+    "n": 4132
+   },
+   "prior": {
+    "calibration": {
+     "intercept": -0.018182774504165118,
+     "slope": 1.0637977688946572
+    },
+    "n": 2644
+   },
+   "same": {
+    "calibration": {
+     "intercept": -0.04918728424312075,
+     "slope": 0.9114876467698703
+    },
+    "n": 5439
+   }
+  },
+  "population": {
+   "comp_level": "qualification",
+   "epa_complete": true,
+   "evaluated": 12215,
+   "excluded": {
+    "model_input_absent": 30,
+    "tie": 33
+   },
+   "fingerprint": "cfdbd821bcef39d8ef2eeb0a0466daf8aa3e49b374b9334be9a259bbcdfd4f64",
+   "groups": {
+    "mixed": 4132,
+    "prior": 2644,
+    "same": 5439
+   },
+   "season": 2026
+  },
+  "raw": {
+   "gate": {
+    "ece": 0.01787772861068462,
+    "g1_pass": true,
+    "g2": {
+     "bins": [
+      {
+       "count": 1219,
+       "expected_wins": 54.47906786650519,
+       "holm_threshold": 0.005555555555555556,
+       "interval_95": [
+        0.033634126333059886,
+        0.05660377358490566
+       ],
+       "lower": 0.0,
+       "mean_predicted": 0.0446916061251068,
+       "observed_rate": 0.062346185397867106,
+       "observed_wins": 76,
+       "p_value": 0.003948965663457209,
+       "rejected": true,
+       "tested": true,
+       "upper": 0.1
+      },
+      {
+       "count": 1096,
+       "expected_wins": 165.45494810416187,
+       "holm_threshold": 0.016666666666666666,
+       "interval_95": [
+        0.13047445255474452,
+        0.17244525547445255
+       ],
+       "lower": 0.1,
+       "mean_predicted": 0.15096254389065863,
+       "observed_rate": 0.1468978102189781,
+       "observed_wins": 161,
+       "p_value": 0.7349774026645267,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.2
+      },
+      {
+       "count": 1202,
+       "expected_wins": 302.45512854416774,
+       "holm_threshold": 0.00625,
+       "interval_95": [
+        0.2271214642262895,
+        0.2762063227953411
+       ],
+       "lower": 0.2,
+       "mean_predicted": 0.25162656284872525,
+       "observed_rate": 0.21630615640599002,
+       "observed_wins": 260,
+       "p_value": 0.004610704938846201,
+       "rejected": true,
+       "tested": true,
+       "upper": 0.3
+      },
+      {
+       "count": 1285,
+       "expected_wins": 450.20739066055893,
+       "holm_threshold": 0.005,
+       "interval_95": [
+        0.3245136186770428,
+        0.37665369649805447
+       ],
+       "lower": 0.3,
+       "mean_predicted": 0.35035594603934544,
+       "observed_rate": 0.309727626459144,
+       "observed_wins": 398,
+       "p_value": 0.002097851086636497,
+       "rejected": true,
+       "tested": true,
+       "upper": 0.4
+      },
+      {
+       "count": 1346,
+       "expected_wins": 606.4412112610476,
+       "holm_threshold": 0.0125,
+       "interval_95": [
+        0.42421991084695393,
+        0.4769687964338782
+       ],
+       "lower": 0.4,
+       "mean_predicted": 0.45055067701415125,
+       "observed_rate": 0.44353640416047546,
+       "observed_wins": 597,
+       "p_value": 0.6214318918077317,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.5
+      },
+      {
+       "count": 1302,
+       "expected_wins": 717.0973732413685,
+       "holm_threshold": 0.025,
+       "interval_95": [
+        0.5238095238095238,
+        0.5775729646697388
+       ],
+       "lower": 0.5,
+       "mean_predicted": 0.5507660316753982,
+       "observed_rate": 0.5460829493087558,
+       "observed_wins": 711,
+       "p_value": 0.7378026352927733,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.6
+      },
+      {
+       "count": 1248,
+       "expected_wins": 811.7490321514558,
+       "holm_threshold": 0.0071428571428571435,
+       "interval_95": [
+        0.624198717948718,
+        0.6770833333333334
+       ],
+       "lower": 0.6,
+       "mean_predicted": 0.6504399296085384,
+       "observed_rate": 0.6826923076923077,
+       "observed_wins": 852,
+       "p_value": 0.017337415497622435,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.7
+      },
+      {
+       "count": 1162,
+       "expected_wins": 871.4691006311157,
+       "holm_threshold": 0.01,
+       "interval_95": [
+        0.7246127366609294,
+        0.774526678141136
+       ],
+       "lower": 0.7,
+       "mean_predicted": 0.7499734084605126,
+       "observed_rate": 0.7710843373493976,
+       "observed_wins": 896,
+       "p_value": 0.09631260808851037,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.8
+      },
+      {
+       "count": 1122,
+       "expected_wins": 952.2497292373121,
+       "holm_threshold": 0.05,
+       "interval_95": [
+        0.8270944741532977,
+        0.8689839572192514
+       ],
+       "lower": 0.8,
+       "mean_predicted": 0.8487074235626667,
+       "observed_rate": 0.8502673796791443,
+       "observed_wins": 954,
+       "p_value": 0.933379027113268,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.9
+      },
+      {
+       "count": 1233,
+       "expected_wins": 1178.6673330545968,
+       "holm_threshold": 0.008333333333333333,
+       "interval_95": [
+        0.9440389294403893,
+        0.9667477696674777
+       ],
+       "lower": 0.9,
+       "mean_predicted": 0.9559345766866154,
+       "observed_rate": 0.943227899432279,
+       "observed_wins": 1163,
+       "p_value": 0.03501565264193347,
+       "rejected": false,
+       "tested": true,
+       "upper": 1.0
+      }
+     ],
+     "eligible_bins": 10,
+     "rejected_bins": 3,
+     "status": "fail"
+    },
+    "g3_max_symmetry_error": 2.220446049250313e-16,
+    "g3_order_independent": true,
+    "g3_pass": true,
+    "g4_fit_isolated": true,
+    "passed": false
+   },
+   "metrics": {
+    "brier": 0.1656431073306851,
+    "ece": 0.01787772861068462,
+    "log_loss": 0.5006204847891208
+   },
+   "status": {
+    "g1": "pass",
+    "g2": "fail",
+    "g3": "pass",
+    "g4": "pass",
+    "overall": "fail"
+   }
+  }
+ },
+ "evidence_class": "consistency evidence only, never independent acceptance evidence: 2026 motivated this design (\u00a74). It cannot switch serving: only the \u00a77 guard can.",
+ "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+ "milestone": "P6-M10b DEV-M10b (\u00a74), diagnostic only",
+ "minutes": 0.2,
+ "over_budget": false,
+ "provenance": {
+  "commit": "7069cbcba75d0d2cdcb645494e557af5f062814f",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-10T21:56:54.634190+00:00"
+ },
+ "provenance_inputs": {
+  "authorization": {
+   "path": ".agent\\phase6\\decisions\\p6_m10b_dev_authorization.json",
+   "sha256": "fbf56b519387acea5c31d0c36888a3acbd0b7bde8834eea397e84aab8ef16fd8"
+  },
+  "spec": {
+   "blob": "d699afafc01d42904c7afc7c7e209f8007a6a207",
+   "path": ".agent/phase6/P6_M10B_SPEC.md"
+  },
+  "v1_procedure": {
+   "spec": ".agent/phase6/P6_M10_MODEL_SPEC.md",
+   "spec_blob": "5f838613531e623b7a8a38e2cc0634ca1aafe3b4",
+   "spec_sha256": "7b93609205c17956c26ac85c2cee8fac6b7d11b1ee01e3b404360a091e1fee23"
+  }
+ },
+ "seasons": {
+  "base_fit": 2024,
+  "calibration": 2025,
+  "evaluation": 2026
+ },
+ "spec": {
+  "blob": "d699afafc01d42904c7afc7c7e209f8007a6a207",
+  "path": ".agent/phase6/P6_M10B_SPEC.md"
+ },
+ "v1_procedure": {
+  "spec": ".agent/phase6/P6_M10_MODEL_SPEC.md",
+  "spec_blob": "5f838613531e623b7a8a38e2cc0634ca1aafe3b4",
+  "spec_sha256": "7b93609205c17956c26ac85c2cee8fac6b7d11b1ee01e3b404360a091e1fee23"
+ }
+}
