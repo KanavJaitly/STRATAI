@@ -154,10 +154,12 @@ def test_absent_dev_prerequisites_are_listed_together(dev_world, capsys):
     assert "cannot be run yet" in err and "p6_m10_fit.json" in err and "authorization to run DEV-M10b" in err
 
 
-def test_dev_is_blocked_today_in_the_real_repository():
-    assert not runner.DEV_AUTHORIZATION.exists() and not (Path(".agent/phase6/results") / runner.DEV_RECORD).exists()
+def test_dev_never_runs_again_in_the_real_repository(capsys):
+    """DEV-M10b ran once on 2026-10-10; its record is write-once and the runner refuses a second run."""
+    assert (Path(".agent/phase6/results") / runner.DEV_RECORD).exists()
     with pytest.raises(Blocked):
         runner.dev_prerequisites()
+    assert "runs once" in capsys.readouterr().err
 
 
 # --- only a genuine DEV record of this spec unlocks the next stage -----------------------------------------------
