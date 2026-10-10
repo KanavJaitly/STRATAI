@@ -26,24 +26,17 @@ SUPERSEDES = {"record": "p6_m13_parity_audit.json", "failure_record": ".agent/ph
               "reason": "two objectively demonstrated defects fixed (order-free alliance sum; planted missing-data fixture coverage); same plan, contexts, seed and checks"}
 
 
-def main() -> int:
-    from ml.strategy.engine import StrategyEngine
-    from ml.strategy.outcome import MatchContext, load_registered_strategy_model, missing_inputs
-    from ml.strategy.parity_audit import PLANTED_DEFECTS, AuditContexts, run_audit
+def select_contexts(rows, model, context):
+    """The plan's contexts from the 2026 frame rows: `context(row)` builds a row's MatchContext, `model` picks the
+    low-odds context. Shared by the v1 audit and the P6-M10b rerun, so the selection procedure is one code path."""
+    from ml.strategy.outcome import missing_inputs
+    from ml.strategy.parity_audit import AuditContexts
     from ml.strategy.representation import Strategy
 
-    started = time.time()
-    fit = read_record("p6_m10_fit.json")
-    model = load_registered_strategy_model(REGISTRY_DIR, expected_sha256=fit["registry"]["model_sha256"])
-    rows, frame_hash = load_frame()
     population = sorted((r for r in rows if r.season == 2026 and r.comp_level == "qualification"
                          and len(r.red_teams) == 3 and len(r.blue_teams) == 3
                          and all(t.epa_total_present for t in (*r.red_teams, *r.blue_teams))),
                         key=lambda r: r.match_key)
-
-    def context(row):
-        return MatchContext(tuple(row.red_teams), tuple(row.blue_teams))
-
     complete = [r for r in population if not missing_inputs(context(r))]
     ordinary_rows = random.Random(SEED).sample(complete, ORDINARY)
     missing_row = next(r for r in population if missing_inputs(context(r)))
@@ -51,17 +44,25 @@ def main() -> int:
     for row in complete:
         e = model.evaluate(context(row), Strategy.baseline([t.team_number for t in row.red_teams]),
                            Strategy.baseline([t.team_number for t in row.blue_teams]))
-        if e.p_red < 0.05 or e.p_blue < 0.05:
+        if e.p_red is not None and (e.p_red < 0.05 or e.p_blue < 0.05):
             low = (context(row), "red" if e.p_red < 0.05 else "blue", row.match_key)
             break
     contexts = AuditContexts([context(r) for r in ordinary_rows], context(missing_row), (low[0], low[1]),
                              full_search=[context(r) for r in ordinary_rows[:FULL_SEARCH]])
+    selected = {"seed": SEED, "ordinary": [r.match_key for r in ordinary_rows],
+                "full_search": [r.match_key for r in ordinary_rows[:FULL_SEARCH]],
+                "missing_input": missing_row.match_key, "low_odds": {"match_key": low[2], "side": low[1]}}
+    return contexts, selected
 
-    real = run_audit(StrategyEngine(model), contexts)
+
+def run_planted(model, contexts, defects, started: float) -> tuple[dict, bool]:
+    """Every planted defect on the plan's planted contexts; each must fail at least its target check."""
+    from ml.strategy.parity_audit import AuditContexts, run_audit
+
     planted_contexts = AuditContexts(contexts.ordinary[:PLANTED_CONTEXTS], contexts.missing_input, contexts.low_odds,
                                      full_search=contexts.full_search[:1])
     planted, over_budget = {}, False
-    for name, (factory, target) in PLANTED_DEFECTS.items():
+    for name, (factory, target) in defects.items():
         if time.time() - started > BUDGET_SECONDS:
             over_budget = True
             planted[name] = {"run": False, "caught": False, "target_check": target}
@@ -70,6 +71,22 @@ def main() -> int:
         failed = [r.name for r in results if not r.passed]
         planted[name] = {"run": True, "caught": bool(failed), "target_check": target, "target_caught": target in failed,
                          "failed_checks": failed}
+    return planted, over_budget
+
+
+def main() -> int:
+    from ml.strategy.engine import StrategyEngine
+    from ml.strategy.outcome import MatchContext, load_registered_strategy_model
+    from ml.strategy.parity_audit import PLANTED_DEFECTS, run_audit
+
+    started = time.time()
+    fit = read_record("p6_m10_fit.json")
+    model = load_registered_strategy_model(REGISTRY_DIR, expected_sha256=fit["registry"]["model_sha256"])
+    rows, frame_hash = load_frame()
+    contexts, selected = select_contexts(rows, model, lambda row: MatchContext(tuple(row.red_teams),
+                                                                                 tuple(row.blue_teams)))
+    real = run_audit(StrategyEngine(model), contexts)
+    planted, over_budget = run_planted(model, contexts, PLANTED_DEFECTS, started)
 
     real_passed = all(r.passed for r in real)
     all_caught = all(p.get("target_caught") for p in planted.values())
@@ -78,9 +95,7 @@ def main() -> int:
         "frame_content_hash": frame_hash,
         "model": {"version_tag": model.version_tag, "model_sha256": model.artifact_sha256,
                   "served_baseline_status": list(model.baseline_status)},
-        "contexts": {"seed": SEED, "ordinary": [r.match_key for r in ordinary_rows],
-                     "full_search": [r.match_key for r in ordinary_rows[:FULL_SEARCH]],
-                     "missing_input": missing_row.match_key, "low_odds": {"match_key": low[2], "side": low[1]}},
+        "contexts": selected,
         "real_engine": [{"check": r.name, "passed": r.passed, "detail": r.detail, "cases": r.cases} for r in real],
         "real_engine_passed": real_passed,
         "planted_defects": planted, "every_planted_defect_caught": all_caught,

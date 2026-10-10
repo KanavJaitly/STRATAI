@@ -351,6 +351,13 @@ def test_the_gate_runs_on_calibrated_2027_odds_with_v1_and_m6m7_only_reported():
 # --- acceptance prerequisites, run-once (§6, C10) -----------------------------------------------------------------
 
 
+def _dev_record(proceed=True, **over):
+    """A SYNTHETIC DEV-M10b record of the frozen spec."""
+    import scripts.phase6_m10b as runner
+
+    return {"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB}, "decision": {"proceed": proceed}, **over}
+
+
 def _git(repo, *args, date=None):
     env = dict(os.environ, GIT_AUTHOR_DATE=date, GIT_COMMITTER_DATE=date) if date else None
     return subprocess.run(["git", "-C", str(repo), "-c", "user.name=SYNTHETIC", "-c", "user.email=s@example.invalid",
@@ -379,7 +386,7 @@ def final_world(tmp_path, monkeypatch):
 
     def write(name, value):
         (results / name).write_text(json.dumps(value), encoding="utf-8")
-    write(runner.DEV_RECORD, {"decision": {"proceed": True}})
+    write(runner.DEV_RECORD, _dev_record())
     write("p6_m10_fit.json", {"registry": {"model_sha256": identity["base_sha256"]}})
     monkeypatch.setattr(runner, "OFFICIAL_EVENTS_RULE", "SYNTHETIC")
     write(runner.PINS_RECORD, {"model_identity": identity})
@@ -487,7 +494,7 @@ def test_calibrate_and_pins_refuse_until_their_own_prerequisites(monkeypatch):
         runner.run_calibrate(None)  # no DEV-M10b record: the production calibrator is never fit
     with pytest.raises(Blocked):
         runner.run_pins(None)
-    monkeypatch.setattr(runner, "read_record", lambda name: {"decision": {"proceed": True}, "base_sha256": "b"})
+    monkeypatch.setattr(runner, "read_record", lambda name: {**_dev_record(), "base_sha256": "b"})
     monkeypatch.setattr(runner, "_any_2027", lambda database: 3)
     with pytest.raises(Blocked):
         runner.run_calibrate(None)  # 2027 data exists: too late to fit
@@ -526,9 +533,10 @@ def serving(tmp_path):
                  "record": "p6_m10b_outcome_model.json", "record_sha256": sha, **over}
         (decisions / "p6_m10b_confirmation.json").write_text(json.dumps(value), encoding="utf-8")
 
-    def parity(met=True, ident=None):
-        (results / "p6_m13_parity_audit_m10b.json").write_text(
-            json.dumps({"p6_dm2_met": met, "model_identity": ident or identity}), encoding="utf-8")
+    def parity(met=True, ident=None, **over):
+        value = {"milestone": "P6-M13 parity rerun for P6-M10b", "spec": {"blob": SPEC_BLOB}, "p6_dm2_met": met,
+                 "model_identity": ident or identity, **over}
+        (results / "p6_m13_parity_audit_m10b.json").write_text(json.dumps(value), encoding="utf-8")
     return results, decisions, outcome, confirm, parity
 
 
@@ -549,7 +557,8 @@ def test_the_guard_serves_v2_only_with_all_three(serving):
 
 
 @pytest.mark.parametrize("case", ["not_passed", "no_confirmation", "wrong_sha", "unconfirmed", "no_parity",
-                                  "parity_failed", "parity_other_identity", "no_outcome"])
+                                  "parity_failed", "parity_other_identity", "no_outcome", "parity_v1_milestone",
+                                  "parity_other_spec"])
 def test_the_guard_refuses_each_missing_or_mismatched_condition(serving, case):
     results, decisions, outcome, confirm, parity = serving
     outcome(passed=case != "not_passed")
@@ -557,8 +566,11 @@ def test_the_guard_refuses_each_missing_or_mismatched_condition(serving, case):
         confirm(**({"record_sha256": "0" * 64} if case == "wrong_sha" else {"confirmed": False} if case == "unconfirmed"
                    else {}))
     if case != "no_parity":
+        over = ({"milestone": "P6-M13"} if case == "parity_v1_milestone"
+                else {"spec": {"blob": "0" * 40}} if case == "parity_other_spec" else {})
         parity(met=case != "parity_failed",
-               ident={"base_sha256": "b" * 64, "calibrator_sha256": "x" * 64} if case == "parity_other_identity" else None)
+               ident={"base_sha256": "b" * 64, "calibrator_sha256": "x" * 64} if case == "parity_other_identity" else None,
+               **over)
     if case == "no_outcome":
         (results / "p6_m10b_outcome_model.json").unlink()
     decision = _decision(results, decisions)
@@ -634,7 +646,7 @@ def test_a_refused_production_fit_is_recorded_registers_nothing_and_stops_the_pi
     import scripts.phase6_m10b as runner
 
     monkeypatch.setattr(common, "REGISTRY_DIR", tmp_path / "registry")
-    monkeypatch.setattr(runner, "read_record", lambda name: {"decision": {"proceed": True}})
+    monkeypatch.setattr(runner, "read_record", lambda name: _dev_record())
     monkeypatch.setattr(runner, "_any_2027", lambda database: 0)
     monkeypatch.setattr(runner, "_spec", lambda: {"blob": SPEC_BLOB})
     monkeypatch.setattr(runner, "_base", lambda: (_base(artifact_sha256="b" * 64), {"frame_content_hash": "h"}))
