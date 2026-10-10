@@ -223,6 +223,10 @@ class _ScaledModel:
                                            baseline_status=model.baseline_status)
         self.mean_bonus = mean_bonus
 
+    @property
+    def artifact_sha256(self):
+        return self.inner.artifact_sha256
+
     def evaluate(self, context, strategy_red, strategy_blue):
         result = self.inner.evaluate(context, strategy_red, strategy_blue)
         if self.mean_bonus and result.p_red is not None:
@@ -301,6 +305,9 @@ def planted_probability_inflation(model):
 class _ImputingEngine(StrategyEngine):
     """Missing-data defect: the recommender imputes absent capability as zero, the coach path does not."""
 
+    def _imputed_source_key(self, context) -> str:
+        return "imputed"
+
     def recommend(self, context, side, opponent_strategy=None, max_alternatives=5):
         def fill(team):
             """Impute every absent model input: EPA components, the EPA scale and the score scale."""
@@ -313,8 +320,9 @@ class _ImputingEngine(StrategyEngine):
             if team.score_scale is None:
                 update.update({"score_scale": 1.0, "score_scale_present": True})
             if update and team.epa_source_event_key is None:
-                update.update({"epa_source_event_key": "imputed", "epa_withheld_reason": None})
+                update.update({"epa_source_event_key": imputed_source, "epa_withheld_reason": None})
             return team.model_copy(update=update) if update else team
+        imputed_source = self._imputed_source_key(context)
         filled = MatchContext(tuple(fill(t) for t in context.red_teams), tuple(fill(t) for t in context.blue_teams),
                               context.comp_level, context.observations, context.prediction_season)
         if any(t.score_scale != filled.red_teams[0].score_scale for t in (*filled.red_teams, *filled.blue_teams)):
@@ -336,5 +344,74 @@ PLANTED_DEFECTS: dict[str, tuple[Callable[[ComponentOutcomeModel], Any], str]] =
     "different_rounding": (planted_different_rounding, "M5_display_parity"),
     "different_calibration": (planted_different_calibration, "M1_identical_strategy_identical_odds"),
     "different_missing_data_handling": (planted_different_missing_data_handling, "M6_missing_data_parity"),
+    "ai_probability_inflation": (planted_probability_inflation, "M7_low_odds_honesty"),
+}
+
+
+# --- planted defects for the P6-M10b (v2) parity rerun ---------------------------------------------------------
+#
+# The same seven defects, names and target checks as PLANTED_DEFECTS, built on a CalibratedOutcomeModel. The v1
+# factories cannot be reused unchanged: `_ScaledModel` reads v1's beta and Σ, and the v1 imputing engine imputes the
+# source key "imputed", which v2 refuses as unresolvable (§2). That refusal would make the AI path return nothing too,
+# so M6 would pass and the defect would go uncaught. The v2 imputing engine borrows a teammate's resolvable key.
+
+
+def _calibrated_like(model, *, base=None, calibrator=None):
+    """A copy of a P6-M10b model with a different base or calibrator, for planted defects only."""
+    from ml.strategy.calibration import CalibratedOutcomeModel
+
+    copy = object.__new__(CalibratedOutcomeModel)
+    copy.base, copy.calibrator = base or model.base, calibrator or model.calibrator
+    copy.season_of, copy.baseline_status = model.season_of, model.baseline_status
+    return copy
+
+
+def _rescaled_calibrator(calibrator, factor: float):
+    from ml.strategy.calibration import Calibrator
+
+    return Calibrator({g: a * factor for g, a in calibrator.factors.items()}, calibrator.global_factor * factor,
+                      calibrator.counts, calibrator.sources, calibrator.fits, base_sha256=calibrator.base_sha256,
+                      fit_set_fingerprint=calibrator.fit_set_fingerprint, spec_blob=calibrator.spec_blob,
+                      artifact_sha256=calibrator.artifact_sha256)
+
+
+def _ai_only(model, ai_model):
+    e = _AiOnlyModelEngine(model)
+    e.ai_model = ai_model
+    return e
+
+
+def planted_v2_source_dependent_weighting(model):
+    return _ai_only(model, _calibrated_like(model, base=_ScaledModel(model.base, beta_factor=1.05)))
+
+
+def planted_v2_hidden_ai_only_feature(model):
+    return _ai_only(model, _calibrated_like(model, base=_ScaledModel(model.base, mean_bonus=0.05)))
+
+
+def planted_v2_different_calibration(model):
+    """v2's calibration is the per-group factor, so the AI path gets factors scaled by 1.25."""
+    return _ai_only(model, _calibrated_like(model, calibrator=_rescaled_calibrator(model.calibrator, 1.25)))
+
+
+class _ImputingEngineV2(_ImputingEngine):
+    """The v1 missing-data defect, imputing a source key v2 can resolve: a teammate's or opponent's."""
+
+    def _imputed_source_key(self, context) -> str:
+        keys = [t.epa_source_event_key for t in (*context.red_teams, *context.blue_teams) if t.epa_source_event_key]
+        return keys[0] if keys else "imputed"
+
+
+def planted_v2_different_missing_data_handling(model):
+    return _ImputingEngineV2(model)
+
+
+PLANTED_DEFECTS_V2: dict[str, tuple[Callable[[Any], Any], str]] = {
+    "source_dependent_weighting": (planted_v2_source_dependent_weighting, "M1_identical_strategy_identical_odds"),
+    "hidden_ai_only_feature": (planted_v2_hidden_ai_only_feature, "M1_identical_strategy_identical_odds"),
+    "ai_only_adjustment": (planted_ai_only_adjustment, "M1_identical_strategy_identical_odds"),
+    "different_rounding": (planted_different_rounding, "M5_display_parity"),
+    "different_calibration": (planted_v2_different_calibration, "M1_identical_strategy_identical_odds"),
+    "different_missing_data_handling": (planted_v2_different_missing_data_handling, "M6_missing_data_parity"),
     "ai_probability_inflation": (planted_probability_inflation, "M7_low_odds_honesty"),
 }
