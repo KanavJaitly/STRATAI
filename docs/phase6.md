@@ -316,6 +316,7 @@ decision (D9).
 | `p6_m10_fit.json` | P6-M10 fit and registration |
 | `p6_m10_outcome_model.json` | P6-M10 evaluation (gate FAILED) |
 | `p6_m10b_dev.json` | P6-M10b DEV-M10b (§4), diagnostic only, never acceptance: 2024 base, 2025 calibrator, 2026; proceed rule met (G2 rejections 3 → 2, ECE 0.0179 → 0.0151), both gates still fail G2 |
+| `p6_m10b_calibrator.json` | P6-M10b production calibrator (§3), fit on the 2026 v1 population (12,215 rows); registered `strategy_outcome_calibrator` / `p6m10b-v1` (sha256 `26661227…`); not acceptance |
 | `p6_m12_strategy_validation.json` | P6-M12 run 1 (FAILED on a harness defect; kept) |
 | `p6_m12_strategy_validation_rerun1.json` | P6-M12 labelled rerun |
 | `p6_m13_parity_audit.json` | P6-M13 run 1 (FAILED; kept) |
