@@ -494,16 +494,27 @@ def test_inconsistent_prerequisites_are_refused_at_once(final_world, capsys, cas
     assert message in err and "cannot be evaluated yet" not in err
 
 
-def test_the_real_pins_and_final_runs_are_blocked_today():
-    """DEV-M10b ran once (2026-10-10) and proceeded; the production calibrator is not fit (that needs Kanav's separate
-    authorization), so pins and final refuse. `calibrate` itself is never invoked here."""
+def test_the_real_final_run_is_blocked_today():
+    """The 2027 run refuses until 2027 exists (EPA source, frame, authorization). `calibrate` and `pins` are never
+    invoked here: they ran once under Kanav's authorization (2026-10-10) and their records are write-once."""
     import scripts.phase6_m10b as runner
 
-    assert not (Path(".agent/phase6/results") / runner.CALIBRATOR_RECORD).exists()
-    with pytest.raises(Blocked):
-        runner.run_pins(None)
     with pytest.raises(Blocked):
         runner.final_prerequisites()
+
+
+def test_the_committed_calibrator_record_names_the_registered_artifact():
+    import scripts.phase6_common as common
+    import scripts.phase6_m10b as runner
+    from ml.registry import model_file_sha256
+
+    record = common.read_record(runner.CALIBRATOR_RECORD)
+    if record is None or not (common.REGISTRY_DIR / "strategy_outcome_calibrator").exists():
+        pytest.skip("no production calibrator in this checkout")
+    assert record["refused"] is False and record["spec"]["blob"] == SPEC_BLOB
+    assert record["amendment_a1"]["blob"] == runner.A1_BLOB and record["rows"] == 12215
+    assert record["registry"]["artifact_sha256"] == model_file_sha256(common.REGISTRY_DIR,
+                                                                      "strategy_outcome_calibrator", "p6m10b-v1")
 
 
 # --- the serving guard (§7, C11) --------------------------------------------------------------------------------
