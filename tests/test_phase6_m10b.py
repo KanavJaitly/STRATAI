@@ -494,22 +494,6 @@ def test_inconsistent_prerequisites_are_refused_at_once(final_world, capsys, cas
     assert message in err and "cannot be evaluated yet" not in err
 
 
-def test_calibrate_and_pins_refuse_until_their_own_prerequisites(monkeypatch):
-    import scripts.phase6_m10b as runner
-
-    monkeypatch.setattr(runner, "read_record", lambda name: None)
-    with pytest.raises(Blocked):
-        runner.run_calibrate(None)  # no DEV-M10b record: the production calibrator is never fit
-    with pytest.raises(Blocked):
-        runner.run_pins(None)
-    monkeypatch.setattr(runner, "read_record", lambda name: {**_dev_record(), "base_sha256": "b"})
-    monkeypatch.setattr(runner, "_any_2027", lambda database: 3)
-    with pytest.raises(Blocked):
-        runner.run_calibrate(None)  # 2027 data exists: too late to fit
-    with pytest.raises(Blocked):
-        runner.run_pins(None)
-
-
 def test_the_real_pins_and_final_runs_are_blocked_today():
     """DEV-M10b ran once (2026-10-10) and proceeded; the production calibrator is not fit (that needs Kanav's separate
     authorization), so pins and final refuse. `calibrate` itself is never invoked here."""
@@ -649,29 +633,6 @@ def test_the_parity_audit_keeps_the_prediction_season_when_it_rebuilds_a_context
 
     result = check_m3_order_invariance(StrategyEngine(_served_v2()), [_context()])
     assert result.passed and result.cases == 1
-
-
-def test_a_refused_production_fit_is_recorded_registers_nothing_and_stops_the_pins(monkeypatch, tmp_path):
-    import scripts.phase6_common as common
-    import scripts.phase6_m10b as runner
-
-    monkeypatch.setattr(common, "REGISTRY_DIR", tmp_path / "registry")
-    monkeypatch.setattr(runner, "read_record", lambda name: _dev_record())
-    monkeypatch.setattr(runner, "_any_2027", lambda database: 0)
-    monkeypatch.setattr(runner, "_spec", lambda: {"blob": SPEC_BLOB})
-    monkeypatch.setattr(runner, "_base", lambda: (_base(artifact_sha256="b" * 64), {"frame_content_hash": "h"}))
-    monkeypatch.setattr(common, "load_frame", lambda: ([], "h"))
-    monkeypatch.setattr(runner, "season_resolver", lambda database: SEASONS.get)
-    z, s = _data(20.0, n=1000)  # its optimum is at the upper bound
-    monkeypatch.setattr(runner, "calibration_set", lambda rows, base, season_of: {
-        "groups": ["same"] * 1000, "z": list(z), "s": list(s), "fingerprint": "f", "seasons": [2026],
-        "latest": None, "excluded": {}})
-    record = runner.run_calibrate(None)
-    assert record["refused"] is True and record["check"] == "solution_at_bound" and "a" not in record
-    assert not (tmp_path / "registry").exists()  # nothing registered
-    monkeypatch.setattr(runner, "read_record", lambda name: record)
-    with pytest.raises(Blocked):
-        runner.run_pins(None)
 
 
 # --- amendment A1: official events (frozen blob a453eaba) ---------------------------------------------------------

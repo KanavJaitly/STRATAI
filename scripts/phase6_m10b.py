@@ -117,10 +117,52 @@ def season_resolver(database):
     return ScaleLookup(database).event_season
 
 
-def _any_2027(database) -> int:
+DATA_2027_SQL = {
+    "matches_season_2027": "SELECT count(*) FROM matches WHERE season = 2027",
+    "events_2027": "SELECT count(*) FROM events WHERE season = 2027 OR event_key LIKE '2027%'",
+    "tba_payloads_2027": "SELECT count(*) FROM raw_source_payloads WHERE source = 'tba' AND source_object_id LIKE '2027%'",
+    # Statbotics team_event ids are <team>_<event>: team 2027's 2024-2026 rows (2027_2024nyli2, ...) are not 2027 data
+    "statbotics_payloads_2027": "SELECT count(*) FROM raw_source_payloads WHERE source = 'statbotics' "
+                                "AND (source_object_id LIKE '%\\_2027%' OR (source_object_id LIKE '2027%' "
+                                "AND source_object_type <> 'team_event'))",
+    "team_event_stats_2027": "SELECT count(*) FROM team_event_stats WHERE event_key LIKE '2027%'",
+}
+
+
+def data_2027(database) -> dict[str, int]:
+    """Read-only counts of every kind of 2027 data; all must be 0 before the calibrator and the pins (§3)."""
+    counts = {}
     with database.cursor() as cursor:
-        cursor.execute("SELECT count(*) FROM matches WHERE season = %s", (HOLDOUT,))
-        return cursor.fetchone()[0]
+        for name, sql in DATA_2027_SQL.items():
+            cursor.execute(sql)
+            counts[name] = int(cursor.fetchone()[0])
+    return counts
+
+
+def _any_2027(database) -> int:
+    return sum(data_2027(database).values())
+
+
+def _no_2027(database) -> dict[str, int]:
+    counts = data_2027(database)
+    if any(counts.values()):
+        raise Blocked(f"2027 data exists ({counts}): the calibrator and pins are taken before any 2027 data (§3)")
+    return counts
+
+
+def _epa_source_identity() -> dict[str, Any]:
+    """The D18 EPA source the frame (and so the calibration set) was built from, from the frame manifest."""
+    from scripts.run_phase4_stratai import frame_info
+
+    manifest = frame_info(common.FRAME_DIR)["manifest"]
+    provenance = manifest["epa_provenance"]
+    return {"epa_source": manifest["epa_source"], "frame_content_hash": manifest["content_hash"],
+            "snapshot": provenance.get("snapshot"), "snapshot_producing_commit": provenance.get("snapshot_producing_commit"),
+            "team_event_stats_sha256": provenance.get("team_event_stats_sha256"),
+            "freeze_commit": provenance.get("freeze_commit"),
+            "fallback_chain": [{k: s[k] for k in ("season", "input_fingerprint", "results_fingerprint")}
+                               for s in (provenance.get("fallback") or {}).get("seasons", [])],
+            "epa_provenance_sha256": hashlib.sha256(json.dumps(provenance, sort_keys=True).encode("utf-8")).hexdigest()}
 
 
 def eligible(rows, season: int) -> tuple[list, Counter]:
@@ -193,58 +235,125 @@ def calibration_set(rows, base, season_of, season: int = CALIBRATION_SEASON) -> 
 # --- calibrate / pins -------------------------------------------------------------------------------------------
 
 
+SPEC_GROUP_COUNTS_2026 = {"same": 5439, "mixed": 4132, "prior": 2644}  # §3, as frozen
+
+
+def _dev_context() -> dict[str, Any]:
+    """Requirement of Kanav's 2026-10-10 authorization: the DEV result, stated as it is."""
+    dev = read_record(DEV_RECORD)
+    evaluation = dev["evaluation"]
+    return {"record": DEV_RECORD, "sha256": file_sha256(common.RESULTS_DIR / DEV_RECORD),
+            "proceed": dev["decision"]["proceed"], "statuses": dev["decision"]["statuses"],
+            "raw_g2_rejections": evaluation["raw"]["gate"]["g2"]["rejected_bins"],
+            "calibrated_g2_rejections": evaluation["calibrated"]["gate"]["g2"]["rejected_bins"],
+            "raw_overall": evaluation["raw"]["status"]["overall"],
+            "calibrated_overall": evaluation["calibrated"]["status"]["overall"],
+            "dev_base_sha256": dev["base"]["sha256"], "dev_calibrator_sha256": dev["calibrator"]["sha256"],
+            "statement": "DEV improved relative to raw (G2 rejections and ECE), but both raw and calibrated DEV "
+                         "predictions failed the overall G2 gate. DEV is consistency evidence only, never acceptance."}
+
+
 def run_calibrate(database, *_args) -> dict[str, Any]:
-    """§3, once: requires DEV-M10b to have proceeded (otherwise v2 stops, §4) and no 2027 data."""
-    from ml.registry import register_model
+    """§3, once: requires DEV-M10b to have proceeded (otherwise v2 stops, §4) and no 2027 data. The population must be
+    exactly the 12,215 rows v1 evaluated, with the §3 group counts; the base is v1 (never the DEV base)."""
+    from ml.registry import model_file_sha256, register_model
     from ml.strategy.calibration import (CALIBRATOR_MODEL_TYPE, CALIBRATOR_VERSION_TAG, GROUPS,
                                          CalibrationFitRefused, fit_calibrator)
 
-    spec = _spec()
+    import scripts.phase5_records as records
+
+    spec, amendment = _spec(), _amendment()
+    if read_record(CALIBRATOR_RECORD) is not None:
+        raise Blocked(f"{CALIBRATOR_RECORD} already exists: the calibrator is fit once and never overwritten")
+    try:  # the record's provenance check, before anything is registered: never an artifact without its record
+        records.provenance()
+    except records.RecordError as exc:
+        raise Blocked(str(exc)) from exc
     if not dev_proceeded(read_record(DEV_RECORD)):
         raise Blocked(f"{DEV_RECORD} is missing or did not proceed: the production calibrator is not fit (§4)")
-    if _any_2027(database):
-        raise Blocked("2027 matches exist: the calibrator must be fit and pinned before any 2027 data (§3)")
+    no_2027 = _no_2027(database)
     base, fit = _base()
+    dev = _dev_context()
+    if base.artifact_sha256 in (dev["dev_base_sha256"], None):
+        raise Blocked("the base must be the registered v1 artifact, never the DEV base")
     rows, frame_hash = common.load_frame()
     if frame_hash != fit["frame_content_hash"]:
         raise Blocked("the D18 frame is not the one the base was fit and evaluated on")
+    v1_population = (read_record("p6_m10_outcome_model.json") or {}).get("population") or {}
     cal = calibration_set(rows, base, season_resolver(database))
-    provenance = {"calibration_set": {k: cal[k] for k in ("fingerprint", "seasons", "latest", "excluded")},
-                  "rows": len(cal["z"]), "frame_content_hash": frame_hash}
+    groups = dict(Counter(cal["groups"]))
+    if len(cal["z"]) != v1_population.get("evaluated") or cal["excluded"] != v1_population.get("excluded") \
+            or groups != SPEC_GROUP_COUNTS_2026:
+        raise Blocked(f"the calibration set is not §3's population: {len(cal['z'])} rows, excluded {cal['excluded']}, "
+                      f"groups {groups}; expected v1's {v1_population.get('evaluated')} rows, excluded "
+                      f"{v1_population.get('excluded')}, groups {SPEC_GROUP_COUNTS_2026}")
+    provenance = {"spec": spec, "amendment_a1": amendment, "acceptance": False,
+                  "base": {"version_tag": P6_M10_VERSION_TAG, "sha256": base.artifact_sha256,
+                           "fit_record_sha256": file_sha256(common.RESULTS_DIR / "p6_m10_fit.json")},
+                  "calibration_set": {k: cal[k] for k in ("fingerprint", "seasons", "latest", "excluded")},
+                  "rows": len(cal["z"]), "groups": groups, "frame_content_hash": frame_hash,
+                  "epa_source": _epa_source_identity(), "no_2027_data": no_2027, "dev_context": dev}
     try:
         calibrator = fit_calibrator(cal["groups"], cal["z"], cal["s"], base_sha256=base.artifact_sha256,
                                     fit_set_fingerprint=cal["fingerprint"])
     except CalibrationFitRefused as exc:  # §3: nothing registered, no retry; the write-once record names the check
-        return {"milestone": "P6-M10b calibrator (§3)", "acceptance": False, "spec": spec, "refused": True,
-                "check": exc.check, "details": exc.details, "base_sha256": base.artifact_sha256, **provenance}
-    register_model(calibrator, registry_dir=common.REGISTRY_DIR, model_type=CALIBRATOR_MODEL_TYPE, model_version="1.0.0",
-                   version_tag=CALIBRATOR_VERSION_TAG, training_dataset_hash=cal["fingerprint"],
-                   feature_list=list(GROUPS), created_at=datetime.now(timezone.utc))
-    return {"milestone": "P6-M10b calibrator (§3)", "acceptance": False, "spec": spec, "refused": False,
-            **calibrator.to_dict(), **provenance}
+        return {"milestone": "P6-M10b calibrator (§3)", "refused": True, "check": exc.check, "details": exc.details,
+                "base_sha256": base.artifact_sha256, **provenance}
+    created = datetime.now(timezone.utc)
+    target = register_model(calibrator, registry_dir=common.REGISTRY_DIR, model_type=CALIBRATOR_MODEL_TYPE,
+                            model_version="1.0.0", version_tag=CALIBRATOR_VERSION_TAG,
+                            training_dataset_hash=cal["fingerprint"], feature_list=list(GROUPS), created_at=created)
+    artifact = model_file_sha256(common.REGISTRY_DIR, CALIBRATOR_MODEL_TYPE, CALIBRATOR_VERSION_TAG)
+    if artifact == dev["dev_calibrator_sha256"]:
+        raise Blocked("the registered calibrator is the DEV calibrator")
+    return {"milestone": "P6-M10b calibrator (§3)", "refused": False, **calibrator.to_dict(),
+            "registry": {"model_type": CALIBRATOR_MODEL_TYPE, "version_tag": CALIBRATOR_VERSION_TAG,
+                         "path": str(target), "artifact_sha256": artifact, "registered_at": created.isoformat()},
+            **provenance}
 
 
 def run_pins(database, *_args) -> dict[str, Any]:
-    """§3: the additive pin record, before any 2027 data."""
+    """§3: the additive pin record, before any 2027 data. Every identity is re-verified against its source."""
+    import scripts.phase6_px1b_final1 as final1
     from ml.registry import model_file_sha256
     from ml.strategy.calibration import CALIBRATOR_MODEL_TYPE, CALIBRATOR_VERSION_TAG
     from ml.strategy.outcome import MODEL_TYPE
 
-    spec = _spec()
+    spec, amendment = _spec(), _amendment()
+    if read_record(PINS_RECORD) is not None:
+        raise Blocked(f"{PINS_RECORD} already exists: the pins are taken once and never overwritten")
     calibrator = read_record(CALIBRATOR_RECORD)
     if calibrator is None:
         raise Blocked(f"{CALIBRATOR_RECORD} is required")
     if calibrator.get("refused") is not False:
         raise Blocked(f"{CALIBRATOR_RECORD} records a refused fit ({calibrator.get('check')}): v2 stops (§3)")
-    if _any_2027(database):
-        raise Blocked("2027 matches exist: the pins are taken before any 2027 data")
+    no_2027 = _no_2027(database)
+    if (calibrator.get("spec") or {}).get("blob") != spec["blob"] or \
+            (calibrator.get("amendment_a1") or {}).get("blob") != amendment["blob"]:
+        raise Blocked(f"{CALIBRATOR_RECORD} was not fit under the frozen spec and amendment A1")
     base_sha = model_file_sha256(common.REGISTRY_DIR, MODEL_TYPE, P6_M10_VERSION_TAG)
-    if base_sha != calibrator["base_sha256"]:
-        raise Blocked("the registered base is not the one the calibrator was fit on")
-    return {"milestone": "P6-M10b pins", "acceptance": False, "spec": spec,
-            "model_identity": {"base_sha256": base_sha,
-                               "calibrator_sha256": model_file_sha256(common.REGISTRY_DIR, CALIBRATOR_MODEL_TYPE,
-                                                                      CALIBRATOR_VERSION_TAG)}}
+    v1_sha = ((read_record("p6_m10_fit.json") or {}).get("registry") or {}).get("model_sha256")
+    if base_sha != calibrator["base_sha256"] or base_sha != v1_sha:
+        raise Blocked("the registered base is not v1, or not the one the calibrator was fit on")
+    calibrator_sha = model_file_sha256(common.REGISTRY_DIR, CALIBRATOR_MODEL_TYPE, CALIBRATOR_VERSION_TAG)
+    if calibrator_sha != (calibrator.get("registry") or {}).get("artifact_sha256"):
+        raise Blocked("the registered calibrator is not the artifact its fit record names")
+    if _epa_source_identity() != calibrator.get("epa_source"):
+        raise Blocked("the frame's EPA source is not the one the calibrator was fit on")
+    calibrator_commit = final1.adding_commit(f".agent/phase6/results/{CALIBRATOR_RECORD}")
+    if calibrator_commit is None:
+        raise Blocked(f"{CALIBRATOR_RECORD} must be committed before the pins")
+    return {"milestone": "P6-M10b pins", "acceptance": False, "spec": spec, "amendment_a1": amendment,
+            "model_identity": {"base_sha256": base_sha, "calibrator_sha256": calibrator_sha},
+            "registry": {"base": {"model_type": MODEL_TYPE, "version_tag": P6_M10_VERSION_TAG},
+                         "calibrator": {"model_type": CALIBRATOR_MODEL_TYPE, "version_tag": CALIBRATOR_VERSION_TAG}},
+            "calibrator_record": {"name": CALIBRATOR_RECORD,
+                                  "sha256": file_sha256(common.RESULTS_DIR / CALIBRATOR_RECORD),
+                                  "commit": calibrator_commit},
+            "calibration_set": calibrator["calibration_set"], "rows": calibrator["rows"],
+            "groups": calibrator["groups"], "epa_source": calibrator["epa_source"],
+            "dev_context": calibrator["dev_context"], "no_2027_data": no_2027,
+            "note": "Pins only. Not acceptance: the 2027 run, Kanav's confirmation and the parity rerun remain (§6-§7)."}
 
 
 # --- final (§6) --------------------------------------------------------------------------------------------------
