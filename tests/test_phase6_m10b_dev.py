@@ -38,27 +38,56 @@ def _gate(status, rejected, ece):
     return SimpleNamespace(g2=SimpleNamespace(status=status, rejected_bins=rejected), ece=ece)
 
 
-@pytest.mark.parametrize("raw, calibrated, proceed", [
-    ((G2_FAIL, 4, 0.04), (G2_FAIL, 2, 0.03), True),  # fewer rejections, lower ECE
-    ((G2_FAIL, 4, 0.04), (G2_PASS, 0, 0.04), True),  # ECE equal is allowed
-    ((G2_PASS, 0, 0.02), (G2_PASS, 0, 0.02), True),  # raw has 0: equal is enough
-    ((G2_FAIL, 3, 0.04), (G2_FAIL, 3, 0.02), False),  # not strictly fewer while raw > 0
-    ((G2_FAIL, 2, 0.04), (G2_FAIL, 3, 0.02), False),  # more rejections
-    ((G2_FAIL, 4, 0.03), (G2_FAIL, 1, 0.031), False),  # ECE worse
-    ((G2_UNEVALUABLE, 0, 0.04), (G2_PASS, 0, 0.03), False),  # an unmeasured G2 never satisfies (ii)
-    ((G2_FAIL, 4, 0.04), (G2_UNEVALUABLE, 0, 0.03), False),
-    ((G2_FAIL, 4, None), (G2_FAIL, 1, 0.03), False),  # an absent ECE never satisfies (iii)
+@pytest.mark.parametrize("raw, calibrated, statuses, outcome", [
+    ((G2_FAIL, 4, 0.04), (G2_FAIL, 2, 0.03), ("pass", "pass", "pass"), "proceed"),  # the valid passing case
+    ((G2_FAIL, 4, 0.04), (G2_PASS, 0, 0.04), ("pass", "pass", "pass"), "proceed"),  # ECE equal is allowed
+    ((G2_PASS, 0, 0.02), (G2_PASS, 0, 0.02), ("pass", "pass", "pass"), "proceed"),  # raw has 0: equal is enough
+    ((G2_FAIL, 3, 0.04), (G2_FAIL, 3, 0.02), ("pass", "fail", "pass"), "rule_not_met"),  # not strictly fewer
+    ((G2_FAIL, 2, 0.04), (G2_FAIL, 3, 0.02), ("pass", "fail", "pass"), "rule_not_met"),  # more rejections
+    ((G2_FAIL, 4, 0.03), (G2_FAIL, 1, 0.031), ("pass", "pass", "fail"), "rule_not_met"),  # ECE worse
+    ((G2_UNEVALUABLE, 0, 0.04), (G2_PASS, 0, 0.03), ("pass", "unevaluable", "pass"), "unevaluable"),
+    ((G2_FAIL, 4, 0.04), (G2_UNEVALUABLE, 0, 0.03), ("pass", "unevaluable", "pass"), "unevaluable"),
+    ((G2_FAIL, 4, None), (G2_FAIL, 1, 0.03), ("pass", "pass", "unevaluable"), "unevaluable"),  # missing raw ECE
+    ((G2_FAIL, 4, 0.04), (G2_FAIL, 1, float("nan")), ("pass", "pass", "unevaluable"), "unevaluable"),
+    ((G2_FAIL, 4, 0.04), (G2_FAIL, 6, None), ("pass", "fail", "unevaluable"), "rule_not_met"),
 ])
-def test_the_proceed_rule(raw, calibrated, proceed):
+def test_the_proceed_rule_with_explicit_statuses(raw, calibrated, statuses, outcome):
     decision = runner.dev_decision(None, _gate(*raw), _gate(*calibrated))
-    assert decision["proceed"] is proceed and decision["rule"]["i_fit_succeeded"]
-    assert ("v2 stops" in decision["consequence"]) is not proceed
+    assert tuple(decision["statuses"].values()) == statuses and decision["outcome"] == outcome
+    assert decision["proceed"] is (outcome == "proceed")
+    assert all(d["status"] in ("pass", "fail", "unevaluable") for d in decision["diagnostics"].values())
+
+
+def test_zero_rejections_from_an_unevaluable_gate_are_never_a_pass():
+    """Both report rejected_bins = 0, but the raw G2 was never measured: (ii) is unevaluable, DEV does not proceed."""
+    decision = runner.dev_decision(None, _gate(G2_UNEVALUABLE, 0, 0.03), _gate(G2_UNEVALUABLE, 0, 0.02))
+    assert decision["statuses"]["ii_g2_rejections"] == "unevaluable" and "raw_rejections" not in \
+        decision["diagnostics"]["ii_g2_rejections"]
+    assert decision["proceed"] is False and decision["outcome"] == "unevaluable"
+    assert "blocked at DEV" in decision["consequence"]
+
+
+def test_missing_ece_is_unevaluable_not_a_pass():
+    decision = runner.dev_decision(None, _gate(G2_FAIL, 4, None), _gate(G2_FAIL, 1, None))
+    assert decision["statuses"]["iii_ece"] == "unevaluable" and decision["proceed"] is False
 
 
 def test_a_refused_fit_never_proceeds():
     decision = runner.dev_decision({"refused": True, "check": "solution_at_bound"}, None, None)
-    assert decision["proceed"] is False and decision["rule"] == {
-        "i_fit_succeeded": False, "ii_g2_rejections_reduced": False, "iii_ece_not_worse": False}
+    assert decision["statuses"] == {"i_fit": "fail", "ii_g2_rejections": "unevaluable", "iii_ece": "unevaluable"}
+    assert decision["proceed"] is False and decision["outcome"] == "rule_not_met"
+
+
+def test_gate_status_is_explicit():
+    rng = random.Random(2)
+    p = [rng.random() for _ in range(2000)]
+    gate = evaluate_calibration_gate(p, [rng.random() < v for v in p], symmetry_errors=[0.0],
+                                     order_independent=True, fit_isolated=True)
+    status = runner.gate_status(gate)
+    assert set(status) == {"g1", "g2", "g3", "g4", "overall"}
+    assert set(status.values()) <= {"pass", "fail", "unevaluable"}
+    tiny = evaluate_calibration_gate([0.5], [True], symmetry_errors=[0.0], order_independent=True, fit_isolated=True)
+    assert runner.gate_status(tiny)["g2"] == "unevaluable"
 
 
 def test_the_rule_reads_the_real_gate_result():
@@ -66,7 +95,8 @@ def test_the_rule_reads_the_real_gate_result():
     p = [rng.random() for _ in range(2000)]
     y = [rng.random() < v for v in p]
     gate = evaluate_calibration_gate(p, y, symmetry_errors=[0.0], order_independent=True, fit_isolated=True)
-    assert runner.dev_decision(None, gate, gate)["proceed"] is (gate.g2.status != G2_UNEVALUABLE)
+    assert runner.dev_decision(None, gate, gate)["proceed"] is (gate.g2.status != G2_UNEVALUABLE
+                                                               and gate.ece is not None)
 
 
 # --- prerequisites (run-once, ordering, frozen procedure, authorization) -----------------------------------------
@@ -133,12 +163,18 @@ def test_dev_is_blocked_today_in_the_real_repository():
 # --- only a genuine DEV record of this spec unlocks the next stage -----------------------------------------------
 
 
+_PASSING = {"proceed": True, "statuses": {"i_fit": "pass", "ii_g2_rejections": "pass", "iii_ece": "pass"}}
+
+
 @pytest.mark.parametrize("record, ok", [
-    ({"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB}, "decision": {"proceed": True}}, True),
-    ({"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB}, "decision": {"proceed": False}}, False),
-    ({"milestone": runner.DEV_MILESTONE, "spec": {"blob": "0" * 40}, "decision": {"proceed": True}}, False),
-    ({"milestone": "P6-M10b (P6-M10 v2) 2027 acceptance", "spec": {"blob": SPEC_BLOB}, "decision": {"proceed": True}},
+    ({"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB}, "decision": _PASSING}, True),
+    ({"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB}, "decision": {**_PASSING, "proceed": False}},
      False),
+    ({"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB},
+      "decision": {"proceed": True, "statuses": {**_PASSING["statuses"], "iii_ece": "unevaluable"}}}, False),
+    ({"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB}, "decision": {"proceed": True}}, False),
+    ({"milestone": runner.DEV_MILESTONE, "spec": {"blob": "0" * 40}, "decision": _PASSING}, False),
+    ({"milestone": "P6-M10b (P6-M10 v2) 2027 acceptance", "spec": {"blob": SPEC_BLOB}, "decision": _PASSING}, False),
     ({"decision": {"proceed": "yes"}}, False), (None, False)])
 def test_dev_proceeded(record, ok):
     assert runner.dev_proceeded(record) is ok
@@ -151,7 +187,7 @@ def test_a_dev_record_can_never_switch_serving(tmp_path):
     results.mkdir()
     decisions.mkdir()
     (results / runner.DEV_RECORD).write_text(json.dumps(
-        {"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB}, "decision": {"proceed": True},
+        {"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB}, "decision": _PASSING,
          "passed": True}), encoding="utf-8")
     assert m10b_serving_decision(results, decisions)["serve_v2"] is False
 
@@ -251,8 +287,10 @@ def test_the_dev_record_is_provenance_complete_and_never_acceptance(dev_run):
     assert calibrator["refused"] is False and calibrator["registered"] is False
     assert calibrator["base_sha256"] == base["sha256"] and len(calibrator["sha256"]) == 64
     assert set(record["evaluation"]) >= {"raw", "calibrated", "per_group_calibration", "fit_isolation"}
-    assert set(record["decision"]["rule"]) == {"i_fit_succeeded", "ii_g2_rejections_reduced", "iii_ece_not_worse"}
-    assert record["decision"]["proceed"] is all(record["decision"]["rule"].values())  # SYNTHETIC: logic only
+    assert set(record["decision"]["statuses"]) == {"i_fit", "ii_g2_rejections", "iii_ece"}
+    assert record["decision"]["proceed"] is all(s == "pass" for s in record["decision"]["statuses"].values())
+    for side in ("raw", "calibrated"):  # SYNTHETIC: logic only
+        assert set(record["evaluation"][side]["status"]) == {"g1", "g2", "g3", "g4", "overall"}
     json.dumps(record, default=str)
 
 

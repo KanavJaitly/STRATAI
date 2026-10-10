@@ -337,8 +337,13 @@ def test_the_gate_runs_on_calibrated_2027_odds_with_v1_and_m6m7_only_reported():
 
     model = _model()
     cal = {"calibration_set": {"seasons": [2026], "latest": "2026-07-08T07:30:00-04:00"}}
-    result = runner.evaluate_gate(_rows(2027, n=600) + _rows(2026, seed=2), model, lambda r: 0.5,
-                                  {"latest_fit_row": "2025-04-18T19:00:00-04:00"}, cal)
+    rows = _rows(2027, n=600) + _rows(2026, seed=2)
+    types = {r.event_key: (99 if r.event_key == "2027e0" else 1) for r in rows}
+    result = runner.evaluate_gate(rows, model, lambda r: 0.5, {"latest_fit_row": "2025-04-18T19:00:00-04:00"}, cal,
+                                  types)
+    # A1: counted, not evaluated; 19 because the event's first row is a tie, excluded earlier (as v1)
+    assert result["population"]["excluded"]["non_official_event_type:99"] == 19
+    assert set(result["population"]["event_types"]) == {"1"}
     assert result["population"]["season"] == 2027
     assert result["population"]["evaluated"] > 0 and result["fit_isolation"]["fit_isolated"]
     assert result["gate"]["g3_max_symmetry_error"] <= 1e-12 and result["gate"]["g3_order_independent"]
@@ -355,7 +360,10 @@ def _dev_record(proceed=True, **over):
     """A SYNTHETIC DEV-M10b record of the frozen spec."""
     import scripts.phase6_m10b as runner
 
-    return {"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB}, "decision": {"proceed": proceed}, **over}
+    status = "pass" if proceed else "fail"
+    return {"milestone": runner.DEV_MILESTONE, "spec": {"blob": SPEC_BLOB},
+            "decision": {"proceed": proceed, "statuses": {"i_fit": "pass", "ii_g2_rejections": status,
+                                                          "iii_ece": "pass"}}, **over}
 
 
 def _git(repo, *args, date=None):
@@ -388,7 +396,6 @@ def final_world(tmp_path, monkeypatch):
         (results / name).write_text(json.dumps(value), encoding="utf-8")
     write(runner.DEV_RECORD, _dev_record())
     write("p6_m10_fit.json", {"registry": {"model_sha256": identity["base_sha256"]}})
-    monkeypatch.setattr(runner, "OFFICIAL_EVENTS_RULE", "SYNTHETIC")
     write(runner.PINS_RECORD, {"model_identity": identity})
     write(final1.EPA_RECORD, {"snapshot": "s", "chain": "c"})
     write(runner.FRAME_RECORD, {"frame_dir": str(tmp_path / "frame"), "content_hash": "h" * 64, "seasons": [2027]})
@@ -398,7 +405,7 @@ def final_world(tmp_path, monkeypatch):
     auth = tmp_path / "auth.json"
     auth.write_text(json.dumps({"authorized": True, "authorized_by": "SYNTHETIC", "date": "2099-01-01",
                                 "scope": "P6-M10b", "season": 2027, "season_complete_and_synced": True,
-                                "spec_blob": SPEC_BLOB}), encoding="utf-8")
+                                "spec_blob": SPEC_BLOB, "amendment_a1_blob": runner.A1_BLOB}), encoding="utf-8")
     monkeypatch.setattr(runner, "AUTHORIZATION", auth)
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -421,15 +428,12 @@ def test_all_prerequisites_satisfied(final_world):
 
 @pytest.mark.parametrize("knockout, named", [("dev", "DEV-M10b proceeded"), ("pins", "calibrator and base pins"),
                                              ("epa", "pinned 2027 EPA source"), ("frame", "2027 D18 frame record"),
-                                             ("auth", "authorization to run P6-M10b"),
-                                             ("official", "'official events'")])
+                                             ("auth", "authorization to run P6-M10b")])
 def test_each_missing_prerequisite_is_refused_and_named(final_world, capsys, knockout, named):
     runner, results = final_world["runner"], final_world["results"]
     import scripts.phase6_px1b_final1 as final1
     if knockout == "auth":
         final_world["auth"].unlink()
-    elif knockout == "official":
-        final_world["mp"].setattr(runner, "OFFICIAL_EVENTS_RULE", None)
     else:
         (results / {"dev": runner.DEV_RECORD, "pins": runner.PINS_RECORD, "epa": final1.EPA_RECORD,
                     "frame": runner.FRAME_RECORD}[knockout]).unlink()
@@ -443,7 +447,8 @@ def test_each_missing_prerequisite_is_refused_and_named(final_world, capsys, kno
     ("outcome_exists", "once only"), ("spec_changed", "not the frozen P6-M10b blob"),
     ("pin_mismatch", "does not match its pin"), ("auth_spec_blob", "does not authorize"),
     ("auth_season", "does not authorize"), ("frame_hash", "does not match its recorded content hash"),
-    ("m6m7", "M6/M7 d18 baseline"), ("order", "not a strict ancestor"), ("base_not_v1", "does not match its pin")])
+    ("m6m7", "M6/M7 d18 baseline"), ("order", "not a strict ancestor"), ("base_not_v1", "does not match its pin"),
+    ("a1_changed", "not the frozen amendment A1"), ("auth_a1_blob", "does not authorize")])
 def test_inconsistent_prerequisites_are_refused_at_once(final_world, capsys, case, message):
     runner, mp = final_world["runner"], final_world["mp"]
     if case == "outcome_exists":
@@ -452,9 +457,12 @@ def test_inconsistent_prerequisites_are_refused_at_once(final_world, capsys, cas
         mp.setattr(runner, "git_blob", lambda p: "0" * 40)
     elif case == "pin_mismatch":
         (final_world["registry"] / "strategy_outcome_calibrator/p6m10b-v1/model.json").write_text("x", "utf-8")
-    elif case in ("auth_spec_blob", "auth_season"):
+    elif case == "a1_changed":
+        mp.setattr(runner, "A1_BLOB", "0" * 40)
+    elif case in ("auth_spec_blob", "auth_season", "auth_a1_blob"):
         value = json.loads(final_world["auth"].read_text(encoding="utf-8"))
-        value.update(spec_blob="0" * 40) if case == "auth_spec_blob" else value.update(season=2026)
+        value.update({"auth_spec_blob": {"spec_blob": "0" * 40}, "auth_season": {"season": 2026},
+                      "auth_a1_blob": {"amendment_a1_blob": "0" * 40}}[case])
         final_world["auth"].write_text(json.dumps(value), encoding="utf-8")
     elif case == "frame_hash":
         import scripts.run_phase4_stratai as p4
@@ -662,3 +670,71 @@ def test_a_refused_production_fit_is_recorded_registers_nothing_and_stops_the_pi
     monkeypatch.setattr(runner, "read_record", lambda name: record)
     with pytest.raises(Blocked):
         runner.run_pins(None)
+
+
+# --- amendment A1: official events (frozen blob a453eaba) ---------------------------------------------------------
+
+
+class _Cursor:
+    def __init__(self, found):
+        self.found, self.query = found, None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def execute(self, sql, params):
+        self.query = (sql, params)
+
+    def fetchall(self):
+        return list(self.found.items())
+
+
+class _Database:
+    def __init__(self, found):
+        self.cursor_ = _Cursor(found)
+
+    def cursor(self):
+        return self.cursor_
+
+
+def test_a1_reads_the_raw_tba_payload_type_and_never_the_canonical_column():
+    import scripts.phase6_m10b as runner
+
+    database = _Database({"2027a": 1, "2027b": 3})
+    assert runner.official_event_types(database, ["2027b", "2027a", "2027a"]) == {"2027a": 1, "2027b": 3}
+    sql, params = database.cursor_.query
+    assert "raw_source_payloads" in sql and "'tba'" in sql and "is_current" in sql and "events." not in sql
+    assert params == (["2027a", "2027b"],)
+
+
+@pytest.mark.parametrize("found", [{"2027a": 1}, {"2027a": 1, "2027b": None}, {"2027a": 1, "2027b": "1"},
+                                   {"2027a": 1, "2027b": True}, {"2027a": 1, "2027b": 2.0}])
+def test_a1_fails_closed_when_a_type_is_unavailable_or_invalid(found):
+    import scripts.phase6_m10b as runner
+
+    with pytest.raises(Blocked):
+        runner.official_event_types(_Database(found), ["2027a", "2027b"])
+
+
+def test_a1_keeps_types_0_to_5_and_counts_the_rest_by_type():
+    from collections import Counter
+
+    import scripts.phase6_m10b as runner
+
+    rows = [_Row(f"m{t}", f"e{t}", 2027, "qualification", [], [], "red_win", datetime(2027, 3, 1, tzinfo=timezone.utc))
+            for t in (0, 1, 2, 3, 4, 5, 6, 7, 99, 100, -1)]
+    excluded = Counter()
+    kept = runner.official_rows(rows, {r.event_key: int(r.match_key[1:]) for r in rows}, excluded)
+    assert [r.match_key for r in kept] == ["m0", "m1", "m2", "m3", "m4", "m5"]
+    assert excluded == {f"non_official_event_type:{t}": 1 for t in (6, 7, 99, 100, -1)}
+
+
+def test_a1_is_pinned_by_its_frozen_blob():
+    import scripts.phase6_m10b as runner
+    from scripts.phase6_common import git_blob
+
+    assert runner.A1_BLOB == "a453eaba397d8108a8cf967c27da554021921e5f" == git_blob(runner.A1_PATH)
+    assert runner._amendment() == {"path": runner.A1_PATH, "blob": runner.A1_BLOB}

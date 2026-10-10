@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import sys
 import time
 from collections import Counter, defaultdict
@@ -33,10 +34,17 @@ from scripts.phase6_playoff_track import BUDGET_SECONDS, Blocked
 CALIBRATION_SEASON, HOLDOUT = 2026, 2027
 DEV_RECORD, CALIBRATOR_RECORD, PINS_RECORD = "p6_m10b_dev.json", "p6_m10b_calibrator.json", "p6_m10b_pins.json"
 FRAME_RECORD, OUTCOME_RECORD = "p6_m10b_frame_2027.json", "p6_m10b_outcome_model.json"
-# §5 restricts the 2027 population to "official events" but defines no rule, and the canonical events table carries
-# no event_type (NULL for every event in the 2026 frame). Until Kanav fixes a definition in a dated record, the
-# 2027 run is refused (fail-closed); no definition is guessed here.
-OFFICIAL_EVENTS_RULE: str | None = None
+# Amendment A1 (frozen 2026-10-10 at 54a7ee5): §5's "official events" = TBA event_type in OFFICIAL_EVENT_TYPES (0-5),
+# read from each evaluated event's current raw TBA payload; fail-closed when it is unavailable or invalid. The
+# canonical events.event_type (NULL) is never read.
+A1_PATH = ".agent/phase6/P6_M10B_SPEC_AMENDMENT_A1.md"
+A1_BLOB = "a453eaba397d8108a8cf967c27da554021921e5f"
+EVENT_TYPE_SQL = """
+SELECT DISTINCT ON (source_object_id) source_object_id, payload_json->'event_type'
+FROM raw_source_payloads
+WHERE source = 'tba' AND source_object_type = 'event' AND is_current AND source_object_id = ANY(%s)
+ORDER BY source_object_id, id DESC
+"""
 AUTHORIZATION = Path(".agent/phase6/decisions/p6_m10b_authorization.json")
 BOOTSTRAP_SEED = 20261005  # P6-Q9 / v1 §5, unchanged
 BASE_FIT_SEASONS = {2024, 2025}
@@ -54,6 +62,41 @@ def _spec() -> dict[str, str]:
     if git_blob(SPEC_PATH) != SPEC_BLOB:
         raise Blocked(f"{SPEC_PATH} is not the frozen P6-M10b blob {SPEC_BLOB}")
     return {"path": SPEC_PATH, "blob": SPEC_BLOB}
+
+
+def _amendment() -> dict[str, str]:
+    if git_blob(A1_PATH) != A1_BLOB:
+        raise Blocked(f"{A1_PATH} is not the frozen amendment A1 blob {A1_BLOB}")
+    return {"path": A1_PATH, "blob": A1_BLOB}
+
+
+def official_event_types(database, event_keys) -> dict[str, int]:
+    """A1: each event's TBA event_type from its current raw TBA payload. Refuses (fail-closed) when any payload is
+    unavailable or its event_type is absent or not an integer; canonical events.event_type is never read."""
+    keys = sorted(set(event_keys))
+    with database.cursor() as cursor:
+        cursor.execute(EVENT_TYPE_SQL, (keys,))
+        found = dict(cursor.fetchall())
+    missing = [k for k in keys if k not in found]
+    invalid = [k for k in keys if k in found and (isinstance(found[k], bool) or not isinstance(found[k], int))]
+    if missing or invalid:
+        raise Blocked(f"A1: the event type cannot be established (no current raw TBA payload: {missing}; "
+                      f"absent or non-integer event_type: {invalid})")
+    return {k: found[k] for k in keys}
+
+
+def official_rows(kept, event_types: dict[str, int], excluded: Counter) -> list:
+    """A1: keep rows of official events (OFFICIAL_EVENT_TYPES); count the rest as non_official_event_type:<type>."""
+    from data.orchestrator import OFFICIAL_EVENT_TYPES
+
+    out = []
+    for row in kept:
+        event_type = event_types[row.event_key]
+        if event_type in OFFICIAL_EVENT_TYPES:
+            out.append(row)
+        else:
+            excluded[f"non_official_event_type:{event_type}"] += 1
+    return out
 
 
 def _base():
@@ -114,8 +157,10 @@ def dev_proceeded(dev: dict[str, Any] | None) -> bool:
     """§4: only a DEV-M10b record of this frozen spec whose proceed rule held lets v2 continue."""
     from ml.strategy.calibration import SPEC_BLOB
 
+    decision = (dev or {}).get("decision") or {}
     return (dev is not None and dev.get("milestone") == DEV_MILESTONE and (dev.get("spec") or {}).get("blob") == SPEC_BLOB
-            and (dev.get("decision") or {}).get("proceed") is True)
+            and decision.get("proceed") is True and bool(decision.get("statuses"))
+            and all(s == PASS for s in decision["statuses"].values()))
 
 
 def calibration_set(rows, base, season_of, season: int = CALIBRATION_SEASON) -> dict[str, Any]:
@@ -210,9 +255,10 @@ def check_authorization(value: dict[str, Any]) -> None:
 
     if not (value.get("authorized") is True and value.get("authorized_by") and value.get("date")
             and value.get("scope") == "P6-M10b" and value.get("season") == HOLDOUT
-            and value.get("season_complete_and_synced") is True and value.get("spec_blob") == SPEC_BLOB):
+            and value.get("season_complete_and_synced") is True and value.get("spec_blob") == SPEC_BLOB
+            and value.get("amendment_a1_blob") == A1_BLOB):
         raise Blocked(f"{AUTHORIZATION} does not authorize the P6-M10b 2027 run (authorized, authorized_by, date, "
-                      "scope=P6-M10b, season=2027, season_complete_and_synced, spec_blob)")
+                      "scope=P6-M10b, season=2027, season_complete_and_synced, spec_blob, amendment_a1_blob)")
 
 
 def final_prerequisites() -> dict[str, Any]:
@@ -224,7 +270,7 @@ def final_prerequisites() -> dict[str, Any]:
 
     if read_record(OUTCOME_RECORD) is not None:
         raise Blocked(f"{OUTCOME_RECORD} already exists: the P6-M10b run is once only and never overwritten")
-    provenance: dict[str, Any] = {"spec": _spec()}
+    provenance: dict[str, Any] = {"spec": _spec(), "amendment_a1": _amendment()}
     missing: list[str] = []
     if not dev_proceeded(read_record(DEV_RECORD)):
         missing.append(f"{DEV_RECORD} with DEV-M10b proceeded")
@@ -274,8 +320,6 @@ def final_prerequisites() -> dict[str, Any]:
     else:
         check_authorization(authorization)
         provenance["authorization"] = {"path": str(AUTHORIZATION), "sha256": file_sha256(AUTHORIZATION)}
-    if OFFICIAL_EVENTS_RULE is None:
-        missing.append("a dated definition of §5's 'official events' (the canonical events carry no event_type)")
     if missing:
         raise Blocked("P6-M10b cannot be evaluated yet; missing: " + "; ".join(missing))
     return provenance
@@ -353,16 +397,16 @@ def _fingerprint(match_keys) -> str:
     return hashlib.sha256("\n".join(sorted(match_keys)).encode("utf-8")).hexdigest()
 
 
-def evaluate_gate(rows, model, m6m7_predict, base_fit: dict[str, Any], calibrator_record: dict[str, Any]
-                  ) -> dict[str, Any]:
-    """§5 on 2027: `evaluate_calibration_gate`, unchanged, on the calibrated q of the eligible rows; v1 raw and M6/M7
-    are reported on the same rows, not gated."""
+def evaluate_gate(rows, model, m6m7_predict, base_fit: dict[str, Any], calibrator_record: dict[str, Any],
+                  event_types: dict[str, int]) -> dict[str, Any]:
+    """§5 on 2027: `evaluate_calibration_gate`, unchanged, on the calibrated q of the eligible rows of official events
+    (A1); v1 raw and M6/M7 are reported on the same rows, not gated."""
     from ml.backtest.bootstrap import ci_excludes_zero, event_bootstrap_mean_ci
     from ml.backtest.metrics import log_loss
     from ml.calibration.gate import evaluate_calibration_gate
 
     kept, excluded = eligible(rows, HOLDOUT)
-    scored = _predictions(kept, model, excluded)
+    scored = _predictions(official_rows(kept, event_types, excluded), model, excluded)
     q, labels, used = scored["q"], scored["labels"], scored["used"]
     m6 = [m6m7_predict(r) for r in used]
     isolation = fit_isolation(model.base.fit_info["seasons"], base_fit, calibrator_record,
@@ -376,6 +420,8 @@ def evaluate_gate(rows, model, m6m7_predict, base_fit: dict[str, Any], calibrato
     comparison = event_bootstrap_mean_ci(paired, seed=BOOTSTRAP_SEED)
     return {"population": {"season": HOLDOUT, "comp_level": "qualification", "epa_complete": True,
                            "evaluated": len(q), "excluded": dict(excluded), "groups": scored["groups"],
+                           "event_types": {str(k): v for k, v in sorted(Counter(
+                               event_types[r.event_key] for r in used).items())},
                            "fingerprint": _fingerprint(r.match_key for r in used)},
             "fit_isolation": isolation, "gate": gate.to_dict(), "passed": gate.passed,
             "metrics": _metrics(q, labels), "raw_v1_same_rows": _metrics(scored["raw"], labels),
@@ -418,8 +464,9 @@ def run_final(database, *_args) -> dict[str, Any]:
     model = CalibratedOutcomeModel(base, calibrator, season_resolver(database))
     m6m7 = common.load_m6m7()
     rows = load_frame_rows(Path(provenance["frame"]["frame_dir"]))
+    event_types = official_event_types(database, (r.event_key for r in eligible(rows, HOLDOUT)[0]))
     result = evaluate_gate(rows, model, lambda r: m6m7.predict_win_prob(_match_features(r)), fit,
-                           read_record(CALIBRATOR_RECORD))
+                           read_record(CALIBRATOR_RECORD), event_types)
     return {"milestone": "P6-M10b (P6-M10 v2) 2027 acceptance", "decision": "P6-Q9 (v2)",
             "acceptance_note": "a pass does not switch serving: Kanav's sha-matched confirmation and a passing P6-M13 "
                                "parity rerun on this identity are also required (§7)",
@@ -480,28 +527,66 @@ def _identified(artifact, cls):
         return cls.load(path)
 
 
-def dev_decision(refusal: dict[str, Any] | None, raw_gate, calibrated_gate) -> dict[str, Any]:
-    """§4's proceed rule (C5), all three: (i) the §3 fit succeeds; (ii) calibrated G2 rejections ≤ raw, strictly
-    fewer unless raw has 0; (iii) calibrated ECE ≤ raw ECE. A G2 the gate calls unevaluable has no measured rejection
-    count (the gate reports 0), and an absent ECE has no value, so neither can satisfy (ii) or (iii): fail-closed."""
+PASS, FAIL, UNEVALUABLE = "pass", "fail", "unevaluable"
+
+
+def _finite(value) -> float | None:
+    return float(value) if value is not None and math.isfinite(value) else None
+
+
+def gate_status(gate) -> dict[str, str]:
+    """Each gate component's explicit status. G1 with no ECE and a G2 the gate calls unevaluable are `unevaluable`."""
     from ml.calibration.gate import G2_UNEVALUABLE
 
-    rule = {"i_fit_succeeded": refusal is None, "ii_g2_rejections_reduced": False, "iii_ece_not_worse": False}
-    detail: dict[str, Any] = {}
-    if refusal is None and raw_gate is not None and calibrated_gate is not None:
-        measured = G2_UNEVALUABLE not in (raw_gate.g2.status, calibrated_gate.g2.status)
-        raw_rejections, calibrated_rejections = raw_gate.g2.rejected_bins, calibrated_gate.g2.rejected_bins
-        rule["ii_g2_rejections_reduced"] = measured and calibrated_rejections <= raw_rejections and (
-            calibrated_rejections < raw_rejections or raw_rejections == 0)
-        rule["iii_ece_not_worse"] = (raw_gate.ece is not None and calibrated_gate.ece is not None
-                                     and calibrated_gate.ece <= raw_gate.ece)
-        detail = {"g2_measured": measured, "raw_g2_rejections": raw_rejections,
-                  "calibrated_g2_rejections": calibrated_rejections, "raw_ece": raw_gate.ece,
-                  "calibrated_ece": calibrated_gate.ece}
-    proceed = all(rule.values())
-    return {"proceed": proceed, "rule": rule, **detail,
+    ece = _finite(gate.ece)
+    return {"g1": UNEVALUABLE if ece is None else PASS if gate.g1_pass else FAIL,
+            "g2": UNEVALUABLE if gate.g2.status == G2_UNEVALUABLE else gate.g2.status,
+            "g3": PASS if gate.g3_pass else FAIL, "g4": PASS if gate.g4_fit_isolated else FAIL,
+            "overall": PASS if gate.passed else FAIL}
+
+
+def dev_decision(refusal: dict[str, Any] | None, raw_gate, calibrated_gate) -> dict[str, Any]:
+    """§4's proceed rule (C5), with an explicit status for each required diagnostic:
+    - (i) the §3 fit: `pass`, or `fail` on a refusal;
+    - (ii) calibrated G2 rejections ≤ raw, strictly fewer unless raw has 0: `unevaluable` when either G2 is
+      unevaluable (the gate then reports 0 rejections, which is not a measurement) or there is no calibrator;
+    - (iii) calibrated ECE ≤ raw ECE: `unevaluable` when either ECE is absent or not finite, or there is no calibrator.
+    DEV proceeds only if all three are `pass`. Thresholds and the rule are the frozen ones."""
+    from ml.calibration.gate import G2_FAIL, G2_PASS
+
+    fit = {"status": FAIL if refusal is not None else PASS}
+    if refusal is not None:
+        fit["refusal"] = refusal
+    g2: dict[str, Any] = {"status": UNEVALUABLE,
+                          "raw_g2_status": None if raw_gate is None else raw_gate.g2.status,
+                          "calibrated_g2_status": None if calibrated_gate is None else calibrated_gate.g2.status}
+    ece: dict[str, Any] = {"status": UNEVALUABLE,
+                           "raw_ece": None if raw_gate is None else raw_gate.ece,
+                           "calibrated_ece": None if calibrated_gate is None else calibrated_gate.ece}
+    if raw_gate is None or calibrated_gate is None:
+        g2["reason"] = ece["reason"] = "no calibrated predictions: the fit was refused" if refusal else "no gate result"
+    else:
+        if {g2["raw_g2_status"], g2["calibrated_g2_status"]} <= {G2_PASS, G2_FAIL}:
+            raw_rejections, calibrated_rejections = raw_gate.g2.rejected_bins, calibrated_gate.g2.rejected_bins
+            g2.update(raw_rejections=raw_rejections, calibrated_rejections=calibrated_rejections,
+                      status=PASS if calibrated_rejections <= raw_rejections and (
+                          calibrated_rejections < raw_rejections or raw_rejections == 0) else FAIL)
+        else:
+            g2["reason"] = "a G2 result is unevaluable; its zero rejection count is not a measurement"
+        raw_ece, calibrated_ece = _finite(raw_gate.ece), _finite(calibrated_gate.ece)
+        if raw_ece is not None and calibrated_ece is not None:
+            ece["status"] = PASS if calibrated_ece <= raw_ece else FAIL
+        else:
+            ece["reason"] = "an ECE is absent or not finite"
+    diagnostics = {"i_fit": fit, "ii_g2_rejections": g2, "iii_ece": ece}
+    statuses = {name: d["status"] for name, d in diagnostics.items()}
+    proceed = all(s == PASS for s in statuses.values())
+    outcome = "proceed" if proceed else "rule_not_met" if FAIL in statuses.values() else "unevaluable"
+    return {"proceed": proceed, "outcome": outcome, "statuses": statuses, "diagnostics": diagnostics,
             "consequence": "the production calibrator may be fit, on Kanav's separate authorization" if proceed
-            else "v2 stops: no production calibrator and no FINAL run; a further version would be needed (§4)"}
+            else "v2 stops at DEV: no production calibrator and no FINAL run; a further version would be needed (§4)"
+            if outcome == "rule_not_met"
+            else "blocked at DEV: a required diagnostic is unevaluable; no production calibrator is authorized"}
 
 
 def dev_evaluate(rows, model, calibration: dict[str, Any]) -> tuple[dict[str, Any], Any, Any]:
@@ -524,8 +609,10 @@ def dev_evaluate(rows, model, calibration: dict[str, Any]) -> tuple[dict[str, An
                              "evaluated": len(used), "excluded": dict(excluded), "groups": scored["groups"],
                              "fingerprint": _fingerprint(r.match_key for r in used)},
               "fit_isolation": isolation,
-              "raw": {"gate": raw_gate.to_dict(), "metrics": _metrics(scored["raw"], labels)},
-              "calibrated": {"gate": calibrated_gate.to_dict(), "metrics": _metrics(scored["q"], labels)},
+              "raw": {"gate": raw_gate.to_dict(), "status": gate_status(raw_gate),
+                      "metrics": _metrics(scored["raw"], labels)},
+              "calibrated": {"gate": calibrated_gate.to_dict(), "status": gate_status(calibrated_gate),
+                             "metrics": _metrics(scored["q"], labels)},
               "per_group_calibration": _per_group(scored["by_group"])}
     return result, raw_gate, calibrated_gate
 
