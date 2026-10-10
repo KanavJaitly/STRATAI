@@ -21,6 +21,7 @@ whose sha256 matches the record.
 from __future__ import annotations
 
 import json
+import subprocess
 from collections import Counter
 from collections.abc import Callable, Sequence
 from datetime import datetime
@@ -43,6 +44,12 @@ EPA_CONFIG = DECISIONS / "p6_px1b_epa_source_2027_config.json"  # which 2027 EPA
 GATE_RECORD, FINAL_RECORD, DEV_RECORD = "p6_px1b_gate_2027.json", "p6_px1b_final_fit.json", "p6_px1b_dev.json"
 M1_2027_RECORD, EPA_RECORD = "p6_m1_ruleset_check_2027.json", "p6_px1b_epa_source_2027.json"
 TRAINING_SEASONS = {"2024", "2025", "2026"}
+# Registration evidence (2026-10-10): px1b-v1 is shown to predate 2027 by git, never by the registry's own timestamp.
+REGISTRATION_RECORD = "p6_px1b_registration_evidence.json"
+CANDIDATE_MODELS = (("playoff_px1b", "px1b-v1"), ("playoff_px1b_seed_only", "px1b-v1"))
+EVIDENCE_PATH = ".agent/phase6/results/p6_px1b_chain_pins.json"  # the first record holding the exact model sha256s
+M1_2027_PATH = f".agent/phase6/results/{M1_2027_RECORD}"
+REPO = Path(".")
 
 
 # --- human-written decision files -----------------------------------------------------------------------------
@@ -115,6 +122,126 @@ def run_epa_pin_2027(database, rulesets) -> dict[str, Any]:
             "config": {"path": str(EPA_CONFIG), "sha256": file_sha256(EPA_CONFIG)}}
 
 
+# --- registration evidence (tamper-evident; independent of the registry's own timestamp) ---------------------------
+
+
+def _git(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-C", str(REPO), *args], capture_output=True, text=True)
+
+
+def commit_time(commit: str) -> datetime | None:
+    """The commit's committer time, read from git (never from a record)."""
+    out = _git("show", "-s", "--format=%cI", commit)
+    return datetime.fromisoformat(out.stdout.strip()) if out.returncode == 0 and out.stdout.strip() else None
+
+
+def is_strict_ancestor(ancestor: str, descendant: str) -> bool:
+    if _git("rev-parse", "--verify", f"{ancestor}^{{commit}}").returncode != 0:
+        return False
+    same = _git("rev-parse", ancestor).stdout.strip() == _git("rev-parse", descendant).stdout.strip()
+    return not same and _git("merge-base", "--is-ancestor", ancestor, descendant).returncode == 0
+
+
+def file_at(commit: str, path: str) -> str | None:
+    out = _git("show", f"{commit}:{path}")
+    return out.stdout if out.returncode == 0 else None
+
+
+def adding_commit(path: str) -> str | None:
+    """The commit that first added `path` on HEAD's history (None if it was never committed)."""
+    out = _git("log", "--diff-filter=A", "--format=%H", "--", path)
+    lines = [line for line in out.stdout.split() if line]
+    return lines[-1] if out.returncode == 0 and lines else None
+
+
+def _manifest_path(model_type: str, tag: str) -> Path:
+    return track.REGISTRY_DIR / model_type / tag / "manifest.json"
+
+
+def _models_in_commit(commit: str) -> dict[str, str]:
+    text = file_at(commit, EVIDENCE_PATH)
+    if text is None:
+        raise Blocked(f"registration evidence: {EVIDENCE_PATH} does not exist at commit {commit}")
+    return json.loads(text).get("models", {})
+
+
+def run_registration_evidence(database, rulesets) -> dict[str, Any]:
+    """Write-once `p6_px1b_registration_evidence.json`: per candidate model, its file sha256, its registry manifest's
+    sha256 (making `created_at` tamper-evident) and training hash; and the git commit that first recorded the exact
+    model hashes, with that commit's committer time. Taken before any 2027 data; nothing is evaluated."""
+    from ml.registry import model_file_sha256
+    from scripts.phase6_px1b import _playoff_matches
+
+    if _playoff_matches(database, HOLDOUT):
+        raise Blocked("2027 playoff matches exist: the registration evidence is taken before any 2027 data")
+    evidence = adding_commit(EVIDENCE_PATH)
+    if evidence is None:
+        raise Blocked(f"{EVIDENCE_PATH} has never been committed: there is no registration evidence")
+    committed = commit_time(evidence)
+    recorded = _models_in_commit(evidence)
+    models = {}
+    for model_type, tag in CANDIDATE_MODELS:
+        key = f"{model_type}/{tag}"
+        sha = model_file_sha256(track.REGISTRY_DIR, model_type, tag)
+        if recorded.get(key) != sha:
+            raise Blocked(f"registration evidence: {key}'s file is not the one recorded at commit {evidence}")
+        manifest = json.loads(_manifest_path(model_type, tag).read_text(encoding="utf-8"))
+        created = datetime.fromisoformat(manifest["created_at"].replace("Z", "+00:00"))
+        if not created <= committed:
+            raise Blocked(f"registration evidence: {key}'s manifest time is after its evidence commit")
+        models[key] = {"model_sha256": sha, "manifest_sha256": file_sha256(_manifest_path(model_type, tag)),
+                       "manifest_created_at": manifest["created_at"],
+                       "training_dataset_hash": manifest["training_dataset_hash"]}
+    return {"milestone": "PX-1b registration evidence", "acceptance": False, "models": models,
+            "evidence_commit": evidence, "evidence_path": EVIDENCE_PATH,
+            "evidence_committed_at": committed.isoformat(),
+            "method": "the commit that first added the pin record holding each candidate's exact file sha256; "
+                      "FINAL-1 re-derives the commit's existence, ancestry, content and committer time from git"}
+
+
+def verify_registration(record: dict[str, Any], pins: dict[str, Any]) -> dict[str, Any]:
+    """FINAL-1's frozen-first evidence, re-derived from git and the files, never from the record alone:
+    - each candidate's pinned sha256 = the record's = the sha256 in EVIDENCE_PATH at the evidence commit;
+    - each registry manifest still hashes to the record's sha256 (so its `created_at` is unaltered), and that
+      `created_at` is no later than the evidence commit;
+    - the evidence commit exists, is in HEAD's history, and its committer time (from git) equals the record's;
+    - the C0 2027 record is committed, and the evidence commit is its strict ancestor: a date-independent proof
+      that the candidate's exact bytes were recorded before any 2027 result was."""
+    evidence = record.get("evidence_commit")
+    if not evidence or record.get("evidence_path") != EVIDENCE_PATH:
+        raise Blocked(f"{REGISTRATION_RECORD} names no evidence commit for {EVIDENCE_PATH}")
+    committed = commit_time(evidence)
+    if committed is None or _git("merge-base", "--is-ancestor", evidence, "HEAD").returncode != 0:
+        raise Blocked(f"registration evidence: commit {evidence} is not in this repository's history")
+    if committed.isoformat() != record.get("evidence_committed_at"):
+        raise Blocked("registration evidence: the recorded commit time disagrees with git")
+    recorded = _models_in_commit(evidence)
+    for model_type, tag in CANDIDATE_MODELS:
+        key = f"{model_type}/{tag}"
+        entry = (record.get("models") or {}).get(key)
+        if not entry:
+            raise Blocked(f"registration evidence: no entry for {key}")
+        if not (entry["model_sha256"] == pins["models"].get(key) == recorded.get(key)):
+            raise Blocked(f"registration evidence: {key}'s sha256 differs between the record, the pins and commit "
+                          f"{evidence}")
+        path = _manifest_path(model_type, tag)
+        if not path.exists() or file_sha256(path) != entry["manifest_sha256"]:
+            raise Blocked(f"registration evidence: {key}'s registry manifest was altered or is missing")
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        created = datetime.fromisoformat(manifest["created_at"].replace("Z", "+00:00"))
+        if manifest["created_at"] != entry["manifest_created_at"] or not created <= committed:
+            raise Blocked(f"registration evidence: {key}'s manifest time is inconsistent with its evidence commit")
+    c0 = adding_commit(M1_2027_PATH)
+    if c0 is None:
+        raise Blocked(f"{M1_2027_RECORD} must be committed before FINAL-1, so its order after the evidence is provable")
+    if not is_strict_ancestor(evidence, c0):
+        raise Blocked(f"registration evidence: commit {evidence} is not a strict ancestor of the commit that "
+                      f"recorded the 2027 P6-M1 check ({c0})")
+    return {"evidence_commit": evidence, "committed_at": committed.isoformat(), "c0_commit": c0,
+            "evidence_precedes_2027_record": True,
+            "manifests": {k: v["manifest_sha256"] for k, v in record["models"].items()}}
+
+
 # --- prerequisites ------------------------------------------------------------------------------------------------
 
 
@@ -159,8 +286,7 @@ def prerequisites(database, rulesets) -> dict[str, Any]:
             manifest = json.loads((track.REGISTRY_DIR / "playoff_px1b/px1b-v1/manifest.json").read_text(encoding="utf-8"))
             if not (manifest["training_dataset_hash"] == final["dataset_fingerprint"] == pins["population_fingerprint"]):
                 raise Blocked("px1b-v1's registry training hash, final-fit fingerprint and pinned population disagree")
-            provenance["candidate"] = {"registered_at": manifest["created_at"],
-                                       "training_fingerprint": final["dataset_fingerprint"]}
+            provenance["candidate"] = {"training_fingerprint": final["dataset_fingerprint"]}
         provenance["pins"] = {"record": PIN_RECORD, "sha256": file_sha256(common.RESULTS_DIR / PIN_RECORD),
                               "models": {k: v for k, v in pins["models"].items() if k.endswith("/px1b-v1")}}
     try:
@@ -195,8 +321,14 @@ def prerequisites(database, rulesets) -> dict[str, Any]:
         provenance["epa_source"] = {"record": EPA_RECORD, "sha256": file_sha256(common.RESULTS_DIR / EPA_RECORD),
                                     "snapshot": str(snapshot), "chain": str(chain),
                                     "manifest_sha256": epa["manifest_sha256"], "chain_sha256": epa["chain_sha256"]}
+    registration = read_record(REGISTRATION_RECORD)
+    if registration is None:
+        missing.append(f"{REGISTRATION_RECORD} (the candidate's tamper-evident registration evidence)")
     if missing:
         raise Blocked("FINAL-1 cannot be evaluated yet; missing: " + "; ".join(missing))
+    provenance["registration"] = {"record": REGISTRATION_RECORD,
+                                  "sha256": file_sha256(common.RESULTS_DIR / REGISTRATION_RECORD),
+                                  **verify_registration(registration, read_record(PIN_RECORD))}
     provenance["m1_2027_events"] = m1
     return provenance
 
@@ -245,14 +377,15 @@ def assemble_2027(database, rulesets, provenance) -> tuple[list, Counter, dict]:
 
 
 def require_candidate_frozen_first(provenance: dict[str, Any], selection_moments: dict[str, str]) -> dict[str, Any]:
-    """§6: px1b-v1 must have been registered before any 2027 prediction time (no 2027 outcome could reach it)."""
-    registered = datetime.fromisoformat(provenance["candidate"]["registered_at"].replace("Z", "+00:00"))
+    """§6: px1b-v1's exact bytes must be on record before any 2027 prediction time. The time is the git committer
+    time of the verified evidence commit (`verify_registration`), never the registry manifest's own timestamp."""
+    recorded = datetime.fromisoformat(provenance["registration"]["committed_at"])
     first = min(datetime.fromisoformat(t) for t in selection_moments.values())
-    if not registered < first:
-        raise Blocked(f"px1b-v1 was registered at {registered.isoformat()}, not before the first 2027 selection "
-                      f"moment {first.isoformat()}")
-    return {"candidate_registered": registered.isoformat(), "first_2027_selection": first.isoformat(),
-            "frozen_first": True}
+    if not recorded < first:
+        raise Blocked(f"px1b-v1's evidence commit is from {recorded.isoformat()}, not before the first 2027 "
+                      f"selection moment {first.isoformat()}")
+    return {"candidate_recorded_at": recorded.isoformat(), "evidence_commit": provenance["registration"]["evidence_commit"],
+            "first_2027_selection": first.isoformat(), "frozen_first": True}
 
 
 def run_gate2027(database, rulesets) -> dict[str, Any]:

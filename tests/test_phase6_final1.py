@@ -7,6 +7,8 @@ written anywhere, no model is registered, and no database is touched.
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -21,6 +23,39 @@ from tests.test_phase6_px1 import synthetic_rows
 FP = "f" * 64
 T2027 = datetime(2027, 3, 6, 12, tzinfo=timezone.utc)
 REAL_RESULTS = Path(".agent/phase6/results")
+EVIDENCE_DATE = "2026-10-08T22:17:47-04:00"
+C0_DATE = "2027-04-12T09:00:00-04:00"
+CREATED_AT = "2026-10-09T01:08:51.645865Z"
+
+
+def git(repo: Path, *args: str, date: str | None = None) -> str:
+    """A SYNTHETIC tmp repository, committed with a controlled committer date."""
+    env = dict(os.environ, GIT_AUTHOR_DATE=date, GIT_COMMITTER_DATE=date) if date else None
+    out = subprocess.run(["git", "-C", str(repo), "-c", "user.name=SYNTHETIC", "-c", "user.email=s@example.invalid",
+                          "-c", "commit.gpgsign=false", *args], capture_output=True, text=True, env=env, check=True)
+    return out.stdout.strip()
+
+
+def commit_file(repo: Path, path: str, content: str, date: str) -> str:
+    target = repo / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content, encoding="utf-8")
+    git(repo, "add", path)
+    git(repo, "commit", "-q", "-m", f"synthetic {path}", date=date)
+    return git(repo, "rev-parse", "HEAD")
+
+
+def evidence_repo(tmp_path: Path, model_shas: dict[str, str], *, c0: bool = True) -> tuple[Path, str]:
+    """A tmp git repo: the evidence commit (the pin record with the exact model hashes), then the C0 2027 record."""
+    import scripts.phase6_px1b_final1 as final1
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q")
+    evidence = commit_file(repo, final1.EVIDENCE_PATH, json.dumps({"models": model_shas}), EVIDENCE_DATE)
+    if c0:
+        commit_file(repo, final1.M1_2027_PATH, "{}", C0_DATE)
+    return repo, evidence
 
 
 @pytest.fixture
@@ -51,8 +86,7 @@ def world(tmp_path, monkeypatch):
         d.mkdir(parents=True)
         PlayoffLogisticModel.fit(rows, seed_only=seed_only, normalized=not seed_only,
                                  model_type=model_type).save(d / "model.json")
-        (d / "manifest.json").write_text(json.dumps({"training_dataset_hash": FP,
-                                                     "created_at": "2026-10-09T01:08:51.645865Z"}), "utf-8")
+        (d / "manifest.json").write_text(json.dumps({"training_dataset_hash": FP, "created_at": CREATED_AT}), "utf-8")
     write_synthetic_pins(results / PIN_RECORD, registry,
                          [("playoff_px1b", "px1b-v1"), ("playoff_px1b_seed_only", "px1b-v1")], calibration_slice(rows))
     pins = json.loads((results / PIN_RECORD).read_text(encoding="utf-8"))
@@ -79,12 +113,23 @@ def world(tmp_path, monkeypatch):
     final1.AUTHORIZATION.write_text(json.dumps({"authorized": True, "authorized_by": "SYNTHETIC", "date": "2099-01-01",
                                                 "scope": "FINAL-1", "season": 2027,
                                                 "season_complete_and_synced": True}), encoding="utf-8")
+    from ml.registry import model_file_sha256
+    shas = {f"{m}/px1b-v1": model_file_sha256(registry, m, "px1b-v1")
+            for m in ("playoff_px1b", "playoff_px1b_seed_only")}
+    repo, evidence = evidence_repo(tmp_path, shas)
+    monkeypatch.setattr(final1, "REPO", repo)
+    write(final1.REGISTRATION_RECORD, {
+        "evidence_commit": evidence, "evidence_path": final1.EVIDENCE_PATH,
+        "evidence_committed_at": final1.commit_time(evidence).isoformat(),
+        "models": {k: {"model_sha256": v, "manifest_sha256": file_sha256(registry / k / "manifest.json"),
+                       "manifest_created_at": CREATED_AT, "training_dataset_hash": FP} for k, v in shas.items()}})
     monkeypatch.setattr(data.rulesets, "approved_seasons", lambda database: [2024, 2025, 2026, 2027])
     monkeypatch.setattr(data.rulesets, "approved_ruleset", lambda database, season: rules)
     monkeypatch.setattr(harness, "_playoff_matches", lambda database, season: 12)
     monkeypatch.setattr(common, "load_m6m7", lambda: "M6M7")
     return {"final1": final1, "results": results, "registry": registry, "snapshot": snapshot, "chain": chain,
-            "write": write, "rows": rows, "monkeypatch": monkeypatch}
+            "write": write, "rows": rows, "monkeypatch": monkeypatch, "repo": repo, "evidence": evidence,
+            "shas": shas, "tmp": tmp_path}
 
 
 def _refused(final1, capsys) -> str:
@@ -96,7 +141,8 @@ def _refused(final1, capsys) -> str:
 def test_all_prerequisites_satisfied_yields_the_verified_provenance(world):
     provenance = world["final1"].prerequisites(None, None)
     assert {"spec", "d9_record", "p6_d9_v1_confirmation", "p6_px1b_final1_authorization", "candidate", "pins",
-            "m6m7_sha256", "ruleset_2027_sha256", "m1_2027", "epa_source"} <= set(provenance)
+            "m6m7_sha256", "ruleset_2027_sha256", "m1_2027", "epa_source", "registration"} <= set(provenance)
+    assert provenance["registration"]["evidence_precedes_2027_record"] is True
     assert set(provenance["pins"]["models"]) == {"playoff_px1b/px1b-v1", "playoff_px1b_seed_only/px1b-v1"}
 
 
@@ -107,7 +153,7 @@ def test_all_prerequisites_satisfied_yields_the_verified_provenance(world):
     ("d9", "D9 decision v1"), ("authorization", "authorization to run FINAL-1"),
     ("final", "p6_px1b_final_fit.json"), ("dev", "DV1 and DV2"), ("pins", "integrity pins"),
     ("ruleset", "2027 P6-M1 ruleset"), ("m1", "reproduction check for 2027"), ("data", "2027 playoff data"),
-    ("epa", "pinned D18 EPA source covering 2027")])
+    ("epa", "pinned D18 EPA source covering 2027"), ("registration", "registration evidence")])
 def test_each_missing_prerequisite_is_refused(world, capsys, knockout, named):
     import data.rulesets
     import scripts.phase6_px1b as harness
@@ -124,7 +170,8 @@ def test_each_missing_prerequisite_is_refused(world, capsys, knockout, named):
         mp.setattr(harness, "_playoff_matches", lambda database, season: 0)
     else:
         name = {"final": final1.FINAL_RECORD, "dev": final1.DEV_RECORD, "pins": PIN_RECORD,
-                "m1": final1.M1_2027_RECORD, "epa": final1.EPA_RECORD}[knockout]
+                "m1": final1.M1_2027_RECORD, "epa": final1.EPA_RECORD,
+                "registration": final1.REGISTRATION_RECORD}[knockout]
         (results / name).unlink()
     err = _refused(final1, capsys)
     assert "cannot be evaluated yet" in err and named in err
@@ -289,14 +336,133 @@ def test_insufficient_rows_are_counted_and_excluded_from_every_model(world):
     assert result["insufficient_data"] == 1 and rows[0].match_key not in seen and len(seen) == 159
 
 
-def test_the_candidate_must_be_registered_before_the_first_2027_selection_moment(world):
+def test_the_candidate_must_be_on_record_before_the_first_2027_selection_moment(world):
     final1 = world["final1"]
-    provenance = {"candidate": {"registered_at": "2026-10-09T01:08:51Z"}}
+    provenance = {"registration": {"committed_at": "2026-10-08T22:17:47-04:00", "evidence_commit": "e"}}
     report = final1.require_candidate_frozen_first(provenance, {"e": "2027-03-06T10:00:00+00:00"})
     assert report["frozen_first"]
+    late = {"registration": {"committed_at": "2027-03-07T00:00:00+00:00", "evidence_commit": "e"}}
     with pytest.raises(Blocked):
-        final1.require_candidate_frozen_first({"candidate": {"registered_at": "2027-03-07T00:00:00Z"}},
-                                              {"e": "2027-03-06T10:00:00+00:00"})
+        final1.require_candidate_frozen_first(late, {"e": "2027-03-06T10:00:00+00:00"})
+
+
+def test_the_registry_timestamp_alone_is_never_trusted(world):
+    """Only git-verified evidence decides frozen-first: a manifest edited to an earlier time is refused, because its
+    sha256 no longer matches the registration record."""
+    final1 = world["final1"]
+    manifest = world["registry"] / "playoff_px1b" / "px1b-v1" / "manifest.json"
+    _edit(manifest, created_at="2020-01-01T00:00:00Z")
+    with pytest.raises(Blocked):
+        final1.prerequisites(None, None)
+
+
+# --- registration evidence: altered or inconsistent is refused; valid passes ------------------------------------
+
+
+def _registration(world) -> Path:
+    return world["results"] / world["final1"].REGISTRATION_RECORD
+
+
+@pytest.mark.parametrize("case, expected", [
+    ("record_sha", "differs between"), ("fake_commit", "not in this repository"),
+    ("committed_at", "disagrees with git"), ("no_entry", "no entry"), ("other_path", "names no evidence commit"),
+    ("manifest_sha", "altered or is missing")])
+def test_an_altered_registration_record_is_refused(world, capsys, case, expected):
+    path = _registration(world)
+    record = json.loads(path.read_text(encoding="utf-8"))
+    key = "playoff_px1b/px1b-v1"
+    if case == "record_sha":
+        record["models"][key]["model_sha256"] = "0" * 64
+    elif case == "fake_commit":
+        record["evidence_commit"] = "0123456789abcdef0123456789abcdef01234567"
+    elif case == "committed_at":
+        record["evidence_committed_at"] = "2026-01-01T00:00:00-05:00"
+    elif case == "no_entry":
+        del record["models"][key]
+    elif case == "other_path":
+        record["evidence_path"] = "elsewhere.json"
+    elif case == "manifest_sha":
+        record["models"][key]["manifest_sha256"] = "0" * 64
+    path.write_text(json.dumps(record), encoding="utf-8")
+    assert expected in _refused(world["final1"], capsys)
+
+
+def test_an_evidence_commit_off_heads_history_is_refused(world, capsys):
+    repo, final1 = world["repo"], world["final1"]
+    git(repo, "checkout", "-q", "-b", "side")
+    side = commit_file(repo, "other.txt", "x", "2026-10-08T23:00:00-04:00")
+    git(repo, "checkout", "-q", "-")
+    record = json.loads(_registration(world).read_text(encoding="utf-8"))
+    record.update(evidence_commit=side, evidence_committed_at=final1.commit_time(side).isoformat())
+    _registration(world).write_text(json.dumps(record), encoding="utf-8")
+    assert "not in this repository" in _refused(final1, capsys)
+
+
+def test_evidence_that_does_not_hold_the_exact_model_hashes_is_refused(world, capsys, tmp_path):
+    final1 = world["final1"]
+    wrong = {k: "0" * 64 for k in world["shas"]}
+    (tmp_path / "other").mkdir()
+    repo, evidence = evidence_repo(tmp_path / "other", wrong)
+    world["monkeypatch"].setattr(final1, "REPO", repo)
+    record = json.loads(_registration(world).read_text(encoding="utf-8"))
+    record.update(evidence_commit=evidence, evidence_committed_at=final1.commit_time(evidence).isoformat())
+    _registration(world).write_text(json.dumps(record), encoding="utf-8")
+    assert "differs between" in _refused(final1, capsys)
+
+
+def test_a_manifest_newer_than_its_evidence_is_refused(world, capsys):
+    from scripts.phase6_common import file_sha256
+
+    manifest = world["registry"] / "playoff_px1b" / "px1b-v1" / "manifest.json"
+    _edit(manifest, created_at="2026-10-11T00:00:00Z")  # after the evidence commit
+    record = json.loads(_registration(world).read_text(encoding="utf-8"))
+    record["models"]["playoff_px1b/px1b-v1"].update(manifest_sha256=file_sha256(manifest),
+                                                    manifest_created_at="2026-10-11T00:00:00Z")
+    _registration(world).write_text(json.dumps(record), encoding="utf-8")
+    assert "inconsistent with its evidence commit" in _refused(world["final1"], capsys)
+
+
+def test_an_uncommitted_2027_check_is_refused(world, capsys, tmp_path):
+    final1 = world["final1"]
+    (tmp_path / "bare").mkdir()
+    repo, evidence = evidence_repo(tmp_path / "bare", world["shas"], c0=False)
+    world["monkeypatch"].setattr(final1, "REPO", repo)
+    record = json.loads(_registration(world).read_text(encoding="utf-8"))
+    record.update(evidence_commit=evidence, evidence_committed_at=final1.commit_time(evidence).isoformat())
+    _registration(world).write_text(json.dumps(record), encoding="utf-8")
+    assert "must be committed before FINAL-1" in _refused(final1, capsys)
+
+
+def test_evidence_recorded_after_the_2027_check_is_refused(world, capsys, tmp_path):
+    """Date-independent ordering: the evidence must be a strict ancestor of the commit that recorded the 2027 check."""
+    final1 = world["final1"]
+    repo = tmp_path / "late"
+    repo.mkdir()
+    git(repo, "init", "-q")
+    commit_file(repo, final1.M1_2027_PATH, "{}", "2026-10-01T00:00:00-04:00")
+    evidence = commit_file(repo, final1.EVIDENCE_PATH, json.dumps({"models": world["shas"]}), EVIDENCE_DATE)
+    world["monkeypatch"].setattr(final1, "REPO", repo)
+    record = json.loads(_registration(world).read_text(encoding="utf-8"))
+    record.update(evidence_commit=evidence, evidence_committed_at=final1.commit_time(evidence).isoformat())
+    _registration(world).write_text(json.dumps(record), encoding="utf-8")
+    assert "strict ancestor" in _refused(final1, capsys)
+
+
+def test_the_evidence_builder_round_trips_and_refuses_bad_input(world, monkeypatch):
+    import scripts.phase6_px1b as harness
+
+    final1 = world["final1"]
+    monkeypatch.setattr(harness, "_playoff_matches", lambda database, season: 0)  # before any 2027 data
+    built = final1.run_registration_evidence(None, None)
+    assert built["evidence_commit"] == world["evidence"] and set(built["models"]) == set(world["shas"])
+    assert final1.verify_registration(built, {"models": world["shas"]})["evidence_precedes_2027_record"]
+    path = world["registry"] / "playoff_px1b" / "px1b-v1" / "model.json"
+    path.write_text(path.read_text(encoding="utf-8") + " ", encoding="utf-8")
+    with pytest.raises(Blocked):
+        final1.run_registration_evidence(None, None)  # the file is not the one the evidence commit recorded
+    monkeypatch.setattr(harness, "_playoff_matches", lambda database, season: 3)
+    with pytest.raises(Blocked):
+        final1.run_registration_evidence(None, None)  # 2027 data exists: too late
 
 
 def test_the_full_run_on_synthetic_data_returns_but_writes_nothing(world, monkeypatch):
