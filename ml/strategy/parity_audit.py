@@ -137,7 +137,7 @@ def check_m3_order_invariance(engine: Any, contexts: Sequence[MatchContext]) -> 
             continue
         reordered_strategy = Strategy(robots=tuple(reversed(ai.strategy.robots)))  # type: ignore[arg-type]
         reordered_context = MatchContext(tuple(reversed(context.red_teams)), tuple(reversed(context.blue_teams)),
-                                         context.comp_level, context.observations)
+                                         context.comp_level, context.observations, context.prediction_season)
         p = StrategyEngine.assess(engine, reordered_context, "red", reordered_strategy).p_ours
         cases += 1
         if p != ai.p_ours:
@@ -316,12 +316,12 @@ class _ImputingEngine(StrategyEngine):
                 update.update({"epa_source_event_key": "imputed", "epa_withheld_reason": None})
             return team.model_copy(update=update) if update else team
         filled = MatchContext(tuple(fill(t) for t in context.red_teams), tuple(fill(t) for t in context.blue_teams),
-                              context.comp_level, context.observations)
+                              context.comp_level, context.observations, context.prediction_season)
         if any(t.score_scale != filled.red_teams[0].score_scale for t in (*filled.red_teams, *filled.blue_teams)):
             scale = next(t.score_scale for t in (*context.red_teams, *context.blue_teams) if t.score_scale) or 1.0
             filled = MatchContext(tuple(t.model_copy(update={"score_scale": scale}) for t in filled.red_teams),
                                   tuple(t.model_copy(update={"score_scale": scale}) for t in filled.blue_teams),
-                                  context.comp_level, context.observations)
+                                  context.comp_level, context.observations, context.prediction_season)
         return StrategyEngine.recommend(self, filled, side, opponent_strategy, max_alternatives)
 
 
