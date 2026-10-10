@@ -5,6 +5,7 @@
     python -m scripts.phase6_px1b gate2027   # §6 FINAL-1 on held-out 2027 (scripts.phase6_px1b_final1): fail-closed
                                              # prerequisites, then the frozen gate; run once
     python -m scripts.phase6_px1b epa-pin-2027  # pin the 2027 D18 EPA source named in Kanav's config (write-once)
+    python -m scripts.phase6_px1b registration-evidence  # px1b-v1's git-backed registration evidence (write-once)
     python -m scripts.phase6_px1b calbase    # PX-2b v2 §2.2: the calibration-base model, once, before any 2027 data
     python -m scripts.phase6_px1b pins       # G1/G2: pin the three model files and the slice content (write-once; done)
     python -m scripts.phase6_px1b pins-v2    # G3: v1's pins re-verified and copied, plus ranking_xgb_v2/d18 (write-once)
@@ -126,6 +127,13 @@ def run_gate2027(database, rulesets) -> dict[str, Any]:
     from scripts.phase6_px1b_final1 import run_gate2027 as final1
 
     return final1(database, rulesets)
+
+
+def run_registration_evidence(database, rulesets) -> dict[str, Any]:
+    """px1b-v1's tamper-evident registration evidence for FINAL-1 (git-backed; write-once; before any 2027 data)."""
+    from scripts.phase6_px1b_final1 import run_registration_evidence as evidence
+
+    return evidence(database, rulesets)
 
 
 def run_epa_pin_2027(database, rulesets) -> dict[str, Any]:
@@ -268,7 +276,8 @@ def run_pins_v2(database, rulesets) -> dict[str, Any]:
 RUNS = {"dev": (DEV_RECORD, run_dev), "final": (FINAL_RECORD, run_final), "gate2027": (GATE_RECORD, run_gate2027),
         "calbase": (CALBASE_RECORD, run_calbase), "pins": ("p6_px1b_chain_pins.json", run_pins),
         "pins-v2": ("p6_px1b_chain_pins_v2.json", run_pins_v2),
-        "epa-pin-2027": ("p6_px1b_epa_source_2027.json", run_epa_pin_2027)}
+        "epa-pin-2027": ("p6_px1b_epa_source_2027.json", run_epa_pin_2027),
+        "registration-evidence": ("p6_px1b_registration_evidence.json", run_registration_evidence)}
 # The seasons whose approved rulesets a run needs (default 2024-2026). FINAL-1 needs the approved 2027 ruleset.
 RUN_SEASONS = {"gate2027": (HOLDOUT,)}
 
