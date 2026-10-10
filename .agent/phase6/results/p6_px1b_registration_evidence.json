@@ -1,0 +1,29 @@
+{
+ "acceptance": false,
+ "evidence_commit": "a52641e8cdbb99583919ecd28454fe49c7aa1ad9",
+ "evidence_committed_at": "2026-10-08T22:17:47-04:00",
+ "evidence_path": ".agent/phase6/results/p6_px1b_chain_pins.json",
+ "method": "the commit that first added the pin record holding each candidate's exact file sha256; FINAL-1 re-derives the commit's existence, ancestry, content and committer time from git",
+ "milestone": "PX-1b registration evidence",
+ "minutes": 0.0,
+ "models": {
+  "playoff_px1b/px1b-v1": {
+   "manifest_created_at": "2026-10-09T01:08:51.645865Z",
+   "manifest_sha256": "46af8ace0b2225fd1ca6cb44535d9b142f1b29ec4e216a877de4b6103ba8d52b",
+   "model_sha256": "70d448e20a0cc1f67e6e0cc8779f18996253f39dc6cb83c26be7f8ef6dfd7f1c",
+   "training_dataset_hash": "52a4d7f0ac464886b0ea020b401b71f7f1d668c49a783bab4eb2ecf7b3f12c30"
+  },
+  "playoff_px1b_seed_only/px1b-v1": {
+   "manifest_created_at": "2026-10-09T01:08:51.645865Z",
+   "manifest_sha256": "34f45973b69cbe557ce51ff570bbc648907bdfba4653c7e09c2a99362c58303e",
+   "model_sha256": "99478f02d5b1baca500df087e3879935234da776b24f0fb40bddfedbc85e063b",
+   "training_dataset_hash": "52a4d7f0ac464886b0ea020b401b71f7f1d668c49a783bab4eb2ecf7b3f12c30"
+  }
+ },
+ "over_budget": false,
+ "provenance": {
+  "commit": "277f938ed7cc6941aced381cf7739ec34000af6b",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-10T18:14:27.649425+00:00"
+ }
+}
