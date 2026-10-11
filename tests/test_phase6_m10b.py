@@ -398,7 +398,9 @@ def final_world(tmp_path, monkeypatch):
     write("p6_m10_fit.json", {"registry": {"model_sha256": identity["base_sha256"]}})
     write(runner.PINS_RECORD, {"model_identity": identity})
     write(final1.EPA_RECORD, {"snapshot": "s", "chain": "c"})
-    write(runner.FRAME_RECORD, {"frame_dir": str(tmp_path / "frame"), "content_hash": "h" * 64, "seasons": [2027]})
+    from scripts.phase6_common import file_sha256
+    write(runner.FRAME_RECORD, {"frame_dir": str(tmp_path / "frame"), "content_hash": "h" * 64, "seasons": [2027],
+                                "epa_source": {"sha256": file_sha256(results / final1.EPA_RECORD)}})
     monkeypatch.setattr(final1, "verified_epa_source", lambda record: (Path("s"), Path("c")))
     monkeypatch.setattr(p4, "frame_info", lambda d: {"manifest": {"content_hash": "h" * 64}})
     monkeypatch.setattr(common, "load_m6m7", lambda: "M6M7")
@@ -448,7 +450,8 @@ def test_each_missing_prerequisite_is_refused_and_named(final_world, capsys, kno
     ("pin_mismatch", "does not match its pin"), ("auth_spec_blob", "does not authorize"),
     ("auth_season", "does not authorize"), ("frame_hash", "does not match its recorded content hash"),
     ("m6m7", "M6/M7 d18 baseline"), ("order", "not a strict ancestor"), ("base_not_v1", "does not match its pin"),
-    ("a1_changed", "not the frozen amendment A1"), ("auth_a1_blob", "does not authorize")])
+    ("a1_changed", "not the frozen amendment A1"), ("auth_a1_blob", "does not authorize"),
+    ("frame_other_epa", "not built from the pinned 2027 EPA source")])
 def test_inconsistent_prerequisites_are_refused_at_once(final_world, capsys, case, message):
     runner, mp = final_world["runner"], final_world["mp"]
     if case == "outcome_exists":
@@ -459,6 +462,9 @@ def test_inconsistent_prerequisites_are_refused_at_once(final_world, capsys, cas
         (final_world["registry"] / "strategy_outcome_calibrator/p6m10b-v1/model.json").write_text("x", "utf-8")
     elif case == "a1_changed":
         mp.setattr(runner, "A1_BLOB", "0" * 40)
+    elif case == "frame_other_epa":
+        final_world["write"](runner.FRAME_RECORD, {"frame_dir": "f", "content_hash": "h" * 64, "seasons": [2027],
+                                                   "epa_source": {"sha256": "0" * 64}})
     elif case in ("auth_spec_blob", "auth_season", "auth_a1_blob"):
         value = json.loads(final_world["auth"].read_text(encoding="utf-8"))
         value.update({"auth_spec_blob": {"spec_blob": "0" * 40}, "auth_season": {"season": 2026},
