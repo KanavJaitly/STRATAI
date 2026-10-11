@@ -207,6 +207,8 @@ def fit_calibrator(groups: Sequence[str], z: Sequence[float], s: Sequence[int], 
 class CalibratedOutcomeModel:
     """P6-M10b: v1's evaluation, then the C-R calibration, inside the one function both strategy paths use."""
 
+    version_tag_out = V2_VERSION_TAG
+
     def __init__(self, base: ComponentOutcomeModel, calibrator: Calibrator, season_of: Callable[[str], int | None],
                  *, baseline_status: tuple[str, str | None] = (NOT_VALIDATED, REASON_NOT_ACCEPTED)) -> None:
         if base.artifact_sha256 is not None and base.artifact_sha256 != calibrator.base_sha256:
@@ -217,19 +219,23 @@ class CalibratedOutcomeModel:
 
     def evaluate(self, context: MatchContext, strategy_red: Strategy, strategy_blue: Strategy) -> OutcomeEvaluation:
         base = self.base.evaluate(context, strategy_red, strategy_blue)
-        identity = {"model_version_tag": V2_VERSION_TAG, "model_sha256": self.base.artifact_sha256}
+        identity = {"model_version_tag": self.version_tag_out, "model_sha256": self.base.artifact_sha256}
         if base.p_red is None:
             return replace(base, **identity)
         try:
             group = source_group((*context.red_teams, *context.blue_teams), context.prediction_season,
                                  self.season_of)
             x = base.mean_difference / base.sigma
-            factor = self.calibrator.factor(group)
-            q_red, q_blue = calibrated(factor, x)
+            q_red, q_blue, calibration = self._link(group, x)
         except CalibrationInputError as exc:
             return OutcomeEvaluation(None, None, None, None, INSUFFICIENT_DATA, (f"missing_input:{exc.reason}",),
                                      **identity)
         return replace(base, p_red=q_red, p_blue=q_blue, display_red=display_odds(q_red),
-                       display_blue=display_odds(q_blue), **identity,
-                       calibration={"group": group, "factor": factor, "probit_index": x,
-                                    "calibrator_sha256": self.calibrator.artifact_sha256})
+                       display_blue=display_odds(q_blue), **identity, calibration=calibration)
+
+    def _link(self, group: str, x: float) -> tuple[float, float, dict[str, Any]]:
+        """M10b's link (§1). P6-M10c's model overrides only this; everything else in `evaluate` is shared."""
+        factor = self.calibrator.factor(group)
+        q_red, q_blue = calibrated(factor, x)
+        return q_red, q_blue, {"group": group, "factor": factor, "probit_index": x,
+                               "calibrator_sha256": self.calibrator.artifact_sha256}
