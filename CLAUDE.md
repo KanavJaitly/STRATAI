@@ -587,6 +587,12 @@ complete.**
   Under D9, PX-2, PX-4 and P6-M8 do not run, and Phase 6 / M14
   stay incomplete. A redesign would be a separate, pre-registered effort that 2026 cannot validate.
 - **P6-M10 FAILED** its gate (D9). Strategy odds are served `not_validated`.
+  - **P6-M10b** (spec blob `d699afaf`, amendment A1 `a453eaba`) is prepared.
+    - DEV-M10b met its proceed rule, but both its gates failed G2.
+    - The production calibrator (`26661227…`, `cc6fa93`) and the pins (`713a13c`) were recorded before any 2027 data.
+      The integrity audit passed (`.agent/phase6/decisions/P6_M10B_PREPARATION_CLOSEOUT_2026-10-11.md`).
+  - Acceptance needs 2027 and Kanav's authorizations (`.agent/phase6/P6_M10B_2027_CHECKLIST.md`).
+  - `p6m10-v1` stays served. The serving guard refuses v2.
 - **Records:** `docs/phase6.md`, `.agent/phase6/PHASE_STATUS.md`, `.agent/phase6/PHASE_ACCEPTANCE.md`.
 - **Spec:** frozen at P6-M0, in `docs/P6Milestones.md` and `.agent/phase6/P6_M0_DECISIONS.md`.
 

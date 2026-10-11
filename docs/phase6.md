@@ -6,9 +6,11 @@ The specification is `docs/P6Milestones.md`, **frozen at P6-M0** (`9964001`). It
 
 **Phase 6 is NOT complete.**
 - **P6-DM2** (verifiably zero AI-odds inflation) is **met**.
-- **P6-DM1** (alliance selection on real past events) is **not met**. It is blocked by **required human input**: the
-  P6-M1 season rulesets, entered from the game manuals and approved by a named reviewer. The whole playoff track
-  and P6-M8 need them.
+- **P6-DM1** (alliance selection on real past events) is **not met**.
+  - The 2024–2026 P6-M1 rulesets were approved on 2026-10-08.
+  - PX-1 then **failed** its frozen gate, so under D9 PX-2, PX-4 and P6-M8 do not run.
+  - The candidate replacement chain (PX-1b → PX-2b → PX-4b → M8b) needs 2027 data and human inputs: D9 v1's
+    confirmation, a 2027 ruleset, and a confirmed mentor. See `.agent/phase6/PHASE_STATUS.md`.
 
 `python -m scripts.phase6_done_means` reports this from the records alone.
 
@@ -38,7 +40,7 @@ The specification is `docs/P6Milestones.md`, **frozen at P6-M0** (`9964001`). It
 | P6-M7 Alliance selection engine | built: P(win event) objective, exact nested search, alternatives | **optimization correctness passed** (brute force, synthetic); probabilities `not_validated` until PX-2/PX-4 | tests |
 | P6-M8 P6-DM1 validation | built: run plus named-mentor review; frozen leakage sentinel added | **blocked** by the PX-1 failure (needs PX-4). Pre-run record committed (`36b52c7`); mentor Mr. Biery proposed, not yet confirmed | — |
 | P6-M9 Strategy representation, coach inputs | built | **passed** (schema, leakage, raw-first, point-in-time tests) | tests |
-| P6-M10 Strategy outcome model | built, fit and registered | **FAILED** its M7/D16 gate (G2), so it is served `not_validated` (D9) | `p6_m10_fit.json`, `p6_m10_outcome_model.json` |
+| P6-M10 Strategy outcome model | built, fit and registered | **FAILED** its M7/D16 gate (G2), so it is served `not_validated` (D9). **P6-M10b** (v2: the v1 base plus a per-source-group calibration; spec `.agent/phase6/P6_M10B_SPEC.md`, blob `d699afaf`, and amendment A1 `a453eaba`) is prepared. DEV-M10b (diagnostic) met its proceed rule, but both its raw and calibrated predictions failed G2. The production calibrator (`26661227…`) and the pins are recorded before any 2027 data, and a read-only integrity audit passed. **Acceptance needs 2027** (`.agent/phase6/P6_M10B_2027_CHECKLIST.md`). `p6m10-v1` stays served and `not_validated` | `p6_m10_fit.json`, `p6_m10_outcome_model.json`, `p6_m10b_dev.json`, `p6_m10b_calibrator.json`, `p6_m10b_pins.json` |
 | P6-M11 Strategy recommender | built | **optimization correctness passed** (exhaustive search, brute force, bit identity) | tests |
 | P6-M12 Strategy historical validation | built | run 1 **FAILED** on a harness defect (kept); rerun1 **PASSED** | `p6_m12_strategy_validation.json`, `p6_m12_strategy_validation_rerun1.json` |
 | P6-M13 Parity audit (P6-DM2) | built | run 1 **FAILED** (kept); rerun1 **PASSED**, so **P6-DM2 met** | `p6_m13_parity_audit.json`, `p6_m13_parity_audit_rerun1.json` |
