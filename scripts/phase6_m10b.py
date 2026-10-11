@@ -4,11 +4,13 @@ Isolated `stratai_test` only.
     python -m scripts.phase6_m10b dev         # §4: DEV-M10b, diagnostic only (2024 base, 2025 calibrator, 2026)
     python -m scripts.phase6_m10b calibrate   # §3: fit and register the C-R calibrator on 2026 (needs DEV-M10b to proceed)
     python -m scripts.phase6_m10b pins        # §3: the additive pin record (base + calibrator sha256), before 2027 data
+    python -m scripts.phase6_m10b frame-2027  # §5: build the 2027 D18 frame over the pinned 2027 EPA source, record it
     python -m scripts.phase6_m10b final       # §6: the one-time 2027 acceptance run (fail-closed prerequisites)
 
 Implemented 2026-10-10 (`dev` added the same day). **None of these has been run.**
 - Running them needs Kanav's separate authorization: DEV-M10b first, then the calibrator, then the 2027 run.
-- `dev` and `final` also refuse without their authorization files, written by Kanav.
+- `dev`, `frame-2027` and `final` also refuse without their authorization files, written by Kanav.
+- `calibrate` (2026-10-10, cc6fa93) and `pins` (713a13c) have run once; their records are write-once.
 - Every command refuses until its prerequisites exist.
 - Records are write-once.
 - P6-M10 stays `not_validated`.
@@ -46,6 +48,12 @@ WHERE source = 'tba' AND source_object_type = 'event' AND is_current AND source_
 ORDER BY source_object_id, id DESC
 """
 AUTHORIZATION = Path(".agent/phase6/decisions/p6_m10b_authorization.json")
+# §5: the 2027 frame, "built by the same procedure (build_training_frame with the D18 provider over the pinned 2027 EPA
+# source), its content hash recorded". The frame holds 2027 only: §5 evaluates 2027 rows alone, and a 2027-only frame
+# never re-derives the frozen 2024-2026 rows under a different snapshot. Kanav's frame authorization must state it.
+FRAME_SEASONS = [HOLDOUT]
+FRAME_AUTHORIZATION = Path(".agent/phase6/decisions/p6_m10b_frame_2027_authorization.json")
+FRAME_OUT = Path("C:/Dev/StratAI-artifacts/phase6/m10b_frames")
 BOOTSTRAP_SEED = 20261005  # P6-Q9 / v1 §5, unchanged
 BASE_FIT_SEASONS = {2024, 2025}
 # §4 DEV-M10b: diagnostic only. Its base and calibrator are never registered, pinned or served.
@@ -413,6 +421,9 @@ def final_prerequisites() -> dict[str, Any]:
         if HOLDOUT not in frame.get("seasons", []) or \
                 frame_info(Path(frame["frame_dir"]))["manifest"]["content_hash"] != frame.get("content_hash"):
             raise Blocked(f"{FRAME_RECORD}: the 2027 frame does not match its recorded content hash")
+        if epa is not None and (frame.get("epa_source") or {}).get("sha256") != file_sha256(
+                common.RESULTS_DIR / final1.EPA_RECORD):
+            raise Blocked(f"{FRAME_RECORD}: the frame was not built from the pinned 2027 EPA source")
         provenance["frame"] = {k: frame[k] for k in ("frame_dir", "content_hash")}
     if pins is not None and frame is not None:
         pins_commit = final1.adding_commit(f".agent/phase6/results/{PINS_RECORD}")
@@ -782,8 +793,86 @@ def run_dev(database, *_args) -> dict[str, Any]:
     return record
 
 
+# --- frame-2027 (§5): the 2027 D18 frame and its committed record ---------------------------------------------------
+
+
+def check_frame_authorization(value: dict[str, Any]) -> None:
+    from ml.strategy.calibration import SPEC_BLOB
+
+    if not (value.get("authorized") is True and value.get("authorized_by") and value.get("date")
+            and value.get("scope") == "P6-M10b-frame-2027" and value.get("season_complete_and_synced") is True
+            and value.get("seasons") == FRAME_SEASONS and value.get("spec_blob") == SPEC_BLOB
+            and value.get("amendment_a1_blob") == A1_BLOB):
+        raise Blocked(f"{FRAME_AUTHORIZATION} does not authorize building the 2027 frame (authorized, authorized_by, "
+                      f"date, scope=P6-M10b-frame-2027, season_complete_and_synced, seasons={FRAME_SEASONS}, "
+                      "spec_blob, amendment_a1_blob)")
+
+
+def frame_prerequisites(database) -> dict[str, Any]:
+    """Before anything is built: once only; the frozen spec and A1; the pins committed first (so the frame record's
+    commit can follow them, §6 ordering); the pinned 2027 EPA source verified; the authorization; 2027 data present."""
+    import scripts.phase6_px1b_final1 as final1
+
+    if read_record(FRAME_RECORD) is not None:
+        raise Blocked(f"{FRAME_RECORD} already exists: the 2027 frame is recorded once and never overwritten")
+    provenance: dict[str, Any] = {"spec": _spec(), "amendment_a1": _amendment()}
+    missing: list[str] = []
+    pins = read_record(PINS_RECORD)
+    if pins is None:
+        missing.append(f"{PINS_RECORD} (the calibrator and base pins)")
+    else:
+        pins_commit = final1.adding_commit(f".agent/phase6/results/{PINS_RECORD}")
+        if pins_commit is None:
+            raise Blocked(f"{PINS_RECORD} must be committed before the 2027 frame is built")
+        provenance["pins"] = {"sha256": file_sha256(common.RESULTS_DIR / PINS_RECORD), "commit": pins_commit,
+                              "model_identity": pins["model_identity"]}
+    epa = read_record(final1.EPA_RECORD)
+    if epa is None:
+        missing.append(f"{final1.EPA_RECORD} (the pinned 2027 EPA source)")
+    else:
+        snapshot, chain = final1.verified_epa_source(epa)
+        provenance["epa_source"] = {"record": final1.EPA_RECORD,
+                                    "sha256": file_sha256(common.RESULTS_DIR / final1.EPA_RECORD),
+                                    "snapshot": str(snapshot), "chain": str(chain)}
+    authorization = (json.loads(FRAME_AUTHORIZATION.read_text(encoding="utf-8")) if FRAME_AUTHORIZATION.exists()
+                     else None)
+    if authorization is None:
+        missing.append(f"{FRAME_AUTHORIZATION} (Kanav's authorization to build the 2027 frame)")
+    else:
+        check_frame_authorization(authorization)
+        provenance["authorization"] = {"path": str(FRAME_AUTHORIZATION), "sha256": file_sha256(FRAME_AUTHORIZATION)}
+    if missing:
+        raise Blocked("the 2027 frame cannot be built yet; missing: " + "; ".join(missing))
+    counts = data_2027(database)
+    if not counts["matches_season_2027"]:
+        raise Blocked("no 2027 matches are synced: there is nothing to build")
+    provenance["data_2027"] = counts
+    return provenance
+
+
+def run_frame_2027(database, *_args) -> dict[str, Any]:
+    """§5: the 2027 D18 frame by the frozen procedure over the pinned 2027 EPA source, persisted write-once; the
+    record pins its content hash. Nothing is evaluated."""
+    from ml.ratings.d18_source import load_d18_provider
+    from scripts.run_phase4_stratai import frame_info, persist_frame
+
+    provenance = frame_prerequisites(database)
+    provider, integrity = load_d18_provider(database, Path(provenance["epa_source"]["snapshot"]),
+                                            Path(provenance["epa_source"]["chain"]))
+    directory = persist_frame(database, provider, FRAME_OUT, seasons=FRAME_SEASONS)
+    manifest = frame_info(directory)["manifest"]
+    if manifest["season_keys"] != FRAME_SEASONS:
+        raise Blocked(f"the built frame's seasons {manifest['season_keys']} are not {FRAME_SEASONS}")
+    return {"milestone": "P6-M10b 2027 D18 frame (§5)", "acceptance": False, "frame_dir": str(directory),
+            "content_hash": manifest["content_hash"], "seasons": manifest["season_keys"],
+            "row_count": manifest["row_count"], "excluded_by_reason": manifest["excluded_by_reason"],
+            "epa_integrity": integrity, **provenance,
+            "note": "Built, not evaluated. Commit this record before the 2027 run (§6 ordering: the pins commit must "
+                    "be a strict ancestor of the commit that adds it)."}
+
+
 RUNS = {"dev": (DEV_RECORD, run_dev), "calibrate": (CALIBRATOR_RECORD, run_calibrate), "pins": (PINS_RECORD, run_pins),
-        "final": (OUTCOME_RECORD, run_final)}
+        "frame-2027": (FRAME_RECORD, run_frame_2027), "final": (OUTCOME_RECORD, run_final)}
 
 
 def main(argv: list[str] | None = None) -> int:
