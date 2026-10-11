@@ -96,3 +96,32 @@ def test_the_pinned_source_is_absent_today_so_the_track_refuses():
     assert not (Path(".agent/phase6/results") / PX1B_TRACK.epa_record).exists()
     with pytest.raises(Blocked):
         _epa_source(PX1B_TRACK)
+
+
+def test_px2b_rows_are_assembled_only_from_the_verified_2027_source(pinned, monkeypatch):
+    """Audit (2026-10-11): the PX-1b consumers pass _epa_source's verified paths, so the shared assembler's 2026
+    defaults (snapshot or SNAPSHOT) are never reached on the PX-1b track."""
+    import ml.playoffs.px1b as px1b
+    import scripts.phase6_playoff_track as track
+
+    seen = {}
+
+    def capture(database, rulesets, m1, **kw):
+        seen.update(kw)
+        return [], None, None, None, None, None
+    monkeypatch.setattr(track, "assemble_rows", capture)
+    monkeypatch.setattr(track, "_m1", lambda t: {"events": {}})
+    monkeypatch.setattr(px1b, "drop_scale_absent", lambda rows: (rows, {}))
+    track._track_rows(None, None, PX1B_TRACK)
+    assert seen["snapshot"] == pinned["snapshot"] and seen["chain"] == pinned["chain"]
+    assert seen["snapshot"] != SNAPSHOT and seen["seasons"] == (2026, 2027)
+
+
+def test_every_px1b_consumer_takes_its_source_from_the_verified_path():
+    import inspect
+
+    import scripts.phase6_playoff_track as track
+
+    for function in (track._track_rows, track.run_m5, track.run_m8):
+        source = inspect.getsource(function)
+        assert "_epa_source(track)" in source and "SNAPSHOT" not in source.replace("_epa_source", "")
