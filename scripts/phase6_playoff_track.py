@@ -92,6 +92,9 @@ class PlayoffTrack:
     requires_mentor_agreement: bool = False
     calibration_base_record: str | None = None  # PX-2b v2: out-of-sample calibration from this base model's record
     pins_record: str | None = None  # G1/G2: models and the calibration slice load only if they match these pins
+    # The pinned D18 EPA source record (PX-1b: `p6_px1b_epa_source_2027.json`, written by `phase6_px1b epa-pin-2027`).
+    # Used only when epa_snapshot/epa_chain are unset; verified exactly as FINAL-1 verifies it; never a fallback.
+    epa_record: str | None = None
 
 
 class Blocked(SystemExit):
@@ -446,9 +449,23 @@ def _m1(track: PlayoffTrack) -> dict[str, Any]:
 
 
 def _epa_source(track: PlayoffTrack) -> tuple[Path, Path]:
-    if track.epa_snapshot is None or track.epa_chain is None:
+    """The track's D18 EPA source. PX-1's is configured directly. PX-1b's comes only from the pinned 2027 record
+    (Kanav, 2026-10-11): committed, written by `epa-pin-2027`, covering the holdout, and passing FINAL-1's own
+    integrity check (`verified_epa_source`: manifest and chain sha256). Anything else is refused; nothing falls back."""
+    if track.epa_snapshot is not None and track.epa_chain is not None:
+        return track.epa_snapshot, track.epa_chain
+    if track.epa_record is None:
         raise Blocked(f"{track.name}: no D18 EPA source is configured for {track.holdout} (D9 v1 Part B, 3(d))")
-    return track.epa_snapshot, track.epa_chain
+    import scripts.phase6_px1b_final1 as final1
+
+    record = read_record(track.epa_record)
+    if record is None:
+        raise Blocked(f"{track.name}: {track.epa_record} (the pinned {track.holdout} EPA source) has not been recorded")
+    if final1.adding_commit(f".agent/phase6/results/{track.epa_record}") is None:
+        raise Blocked(f"{track.name}: {track.epa_record} must be committed before it is used")
+    if record.get("milestone") != "PX-1b 2027 EPA source pin" or track.holdout not in record.get("seasons", []):
+        raise Blocked(f"{track.name}: {track.epa_record} is not the pinned {track.holdout} EPA source record")
+    return final1.verified_epa_source(record)
 
 
 def _track_rows(database, rulesets, track: PlayoffTrack) -> list:
@@ -761,7 +778,8 @@ PX1B_TRACK = PlayoffTrack(
     specs={"px2b": ".agent/phase6/P6_M3_PX2B_SPEC_V2.md", "px4b": ".agent/phase6/P6_M5_PX4B_SPEC.md",
            "m8b": ".agent/phase6/P6_M8B_SPEC.md"},  # PX-2b v2 governs (approved 2026-10-08); v1 is kept as history
     requires_mentor_agreement=True, calibration_base_record="p6_px2b_calbase.json",
-    pins_record="p6_px1b_chain_pins_v2.json")  # G3: v2 = v1's pins + ranking_xgb_v2/d18
+    pins_record="p6_px1b_chain_pins_v2.json",  # G3: v2 = v1's pins + ranking_xgb_v2/d18
+    epa_record="p6_px1b_epa_source_2027.json")  # Kanav 2026-10-11: the pinned 2027 source, verified, never a fallback
 
 
 WEEK_SQL = """
