@@ -1,7 +1,7 @@
 {
  "milestone": "P6-M8b",
  "status": "DRAFT -- not adoptable yet; the harness reads only P6_M8B_PRE_RUN.md / p6_m8b_pre_run.json, which do not exist",
- "prepared": "2026-10-11",
+ "prepared": "2026-10-11 (mentor evidence added 2026-10-11)",
  "prepared_by": "Claude Code, from Kanav Jaitly's statement of 2026-10-11; to be completed and adopted by people",
  "frozen_basis": [
   "P6_M8B_SPEC.md §1.3 (pre-run record), §2 (population and sample), §3 (P6-DM1)",
@@ -53,16 +53,19 @@
  "mentor": "Mr. Biery",
  "mentor_agreement": {
   "confirmed": true,
+  "date": "2026-10-08",
+  "evidence": {
+   "record": ".agent/phase6/decisions/P6_M8B_MENTOR_AGREEMENT_2026-10-08.md",
+   "reply_verbatim": "Yes I'll do that",
+   "request": "Kanav Jaitly's attestation (2026-10-11): his request that Mr. Biery review every required miss for M8b; the original request text is not in the repository and was not recovered",
+   "time_and_channel": "not recorded"
+  },
   "scope": "review every miss of the M8b run",
-  "confirmed_by_statement_of": "Kanav Jaitly",
-  "statement_recorded": "2026-10-11",
-  "date": null,
-  "evidence": null
+  "limitation": "scope established by Kanav's attestation of the request, not by the request's own text"
  },
  "missing_before_adoption": [
-  "mentor_agreement.date: the date Mr. Biery agreed (not supplied; not invented)",
-  "mentor_agreement.evidence: Mr. Biery's written agreement to review every miss, P6_M8B_SPEC.md §1.3 (for example a committed copy or a reference to his email or signed note); not supplied, not invented",
-  "Kanav's confirmation of the proposed seed and per_stratum, after a 2027 runtime projection",
-  "adoption: renamed to P6_M8B_PRE_RUN.md / p6_m8b_pre_run.json and committed, dated, before the M8b run"
+  "Kanav's confirmation of the proposed seed (20271012) and per_stratum (1): P6-Q13 sampling decisions are made by people in the dated pre-run record",
+  "adoption: renamed to P6_M8B_PRE_RUN.md / p6_m8b_pre_run.json and committed, dated, before the M8b run",
+  "recommended, not required by the harness: a copy of Kanav's original request to Mr. Biery"
  ]
 }

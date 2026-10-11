@@ -10,7 +10,7 @@
 
 | Field | Value | Status |
 |---|---|---|
-| Mentor | Mr. Biery | **Confirmed** by Kanav Jaitly (statement of 2026-10-11): he has agreed to review every miss |
+| Mentor | Mr. Biery | **Confirmed**: his written reply of 2026-10-08, "Yes I'll do that" (`P6_M8B_MENTOR_AGREEMENT_2026-10-08.md`) |
 | Population | 2027 events reproduced by the 2027 P6-M1 check (C0), minus C2 and the playoff-before-selection leakage exclusion, each counted | as `P6_M8B_SPEC.md` §2 |
 | Strata | TBA week × qualification-roster-size tercile | as P6-M8 |
 | Seed | 20271012 | **proposed**; Kanav to confirm |
@@ -21,12 +21,15 @@
 
 ## Required evidence still missing
 
-These are not supplied and are not invented.
+**Mentor evidence: now recorded** (2026-10-11), in `P6_M8B_MENTOR_AGREEMENT_2026-10-08.md`.
+- Mr. Biery's written reply of **2026-10-08**, verbatim: **"Yes I'll do that"**, to Kanav's request that he review every required miss.
+- It fills `mentor_agreement` (`confirmed`, `date`, `evidence`).
+- **Limitation:** the original request text was not recovered, so the scope rests on Kanav's attestation.
 
-1. **The date of Mr. Biery's agreement** (`mentor_agreement.date`).
-2. **Evidence of his written agreement** to review every miss (`mentor_agreement.evidence`, `P6_M8B_SPEC.md` §1.3). For example, a committed copy of, or a reference to, his email or signed note.
-3. **Kanav's confirmation of the seed and per-stratum count**, after a runtime projection on the 2027 population.
-4. **Adoption:** the draft renamed to `P6_M8B_PRE_RUN.md` / `p6_m8b_pre_run.json` and committed, dated, before the M8b run.
+**Still needed before adoption:**
+1. **Kanav's confirmation of the seed and per-stratum count.** P6-Q13 sampling decisions are made by people, in the dated pre-run record, before the run. The values 20271012 and 1 are proposals.
+2. **Adoption:** the draft renamed to `P6_M8B_PRE_RUN.md` / `p6_m8b_pre_run.json` and committed, dated, before the M8b run.
+3. *Recommended, not required by the harness:* a copy of Kanav's original request to Mr. Biery.
 
 **M8b also still requires:**
 - a PX-4b pass (and so a PX-2b pass and PX-1b's acceptance);
