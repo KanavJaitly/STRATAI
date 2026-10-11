@@ -580,7 +580,7 @@ complete.**
   (`.agent/phase6/decisions/P6_PX1_AUDIT_DEFECTS_2026-10-08.md`). PX-1b (normalized composition) has a frozen spec
   (`.agent/phase6/P6_M2_PX1B_SPEC.md`). Its DEV-1 (2024 → 2025, development only) met DV1/DV2, and the final candidate `px1b-v1` is frozen. Its acceptance gate
   needs an untouched 2027 holdout and cannot be evaluated yet. D9 record v1
-  (`.agent/phase6/decisions/P6_D9_PX1B_REPLACEMENT_V1.md`; Kanav's confirmation of it is outstanding) makes PX-1b the
+  (`.agent/phase6/decisions/P6_D9_PX1B_REPLACEMENT_V1.md`; confirmed by Kanav Jaitly on 2026-10-11, `decisions/p6_d9_v1_confirmation.json`; this does not validate PX-1) makes PX-1b the
   candidate replacement, NOT accepted. Kanav approved its C0-C4 preparation: a 2027 P6-M1 check, versioned
   PX-2b/PX-4b/M8b specs on 2027, and harness pointers. All of it is prepared; nothing has run. PX-2b spec v1
   calibrated in-sample and is superseded by v2 (out-of-sample calibration base, fit before any 2027 data).
