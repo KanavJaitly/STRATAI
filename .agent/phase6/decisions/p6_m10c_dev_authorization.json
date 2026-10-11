@@ -1,0 +1,10 @@
+{
+ "authorized": true,
+ "authorized_by": "Kanav Jaitly",
+ "date": "2026-10-11",
+ "scope": "DEV-c",
+ "spec_blob": "f24a8d1c129bde4f43d51e43ceeca7a20c7c716a",
+ "runs": "once",
+ "source": "Kanav's instruction of 2026-10-11: 'I approve preparing and running the proposed DEV-c diagnostic only after the M10c spec and DEV-c procedure are frozen.' The spec was frozen at e0f6490 (blob f24a8d1c). Transcribed into this file by Claude Code; Kanav did not write the file himself.",
+ "not_authorized": ["a production M10c fit or registration", "M10c pins", "the 2027 acceptance run", "any serving change", "any change to the acceptance gate"]
+}
