@@ -62,3 +62,16 @@ def test_the_floor_bounds_tail_probabilities_where_the_scalar_form_does_not():
     scalar = expit(1.32 * z_tail)[0]
     floored = _q(1.32, 0.06, z_tail)[0][0]
     assert scalar < 0.002 < 0.03 < floored
+
+
+@pytest.mark.parametrize("eps", [0.0, 0.02, 0.06, EPS_MAX])
+def test_the_unchanged_display_rule_stays_consistent_with_the_floor(eps):
+    """P6-A5, unchanged: '<5%' below 0.05 and '>95%' above 0.95. With the floor, q never falls below eps/2, so the
+    '<5%' bucket covers [eps/2, 0.05); it stays reachable for every eps <= 0.08. Reachable, not calibrated."""
+    from ml.strategy.display import ABOVE_HIGH, BELOW_LOW, display_odds
+
+    q_red, q_blue = _q(1.3, eps, Z)
+    low = q_red[q_red < 0.05]
+    assert low.size > 0 and {display_odds(float(q)) for q in low} == {BELOW_LOW}
+    assert {display_odds(float(q)) for q in q_blue[q_blue > 0.95]} == {ABOVE_HIGH}
+    assert float(q_red.min()) >= eps / 2 - 1e-15
