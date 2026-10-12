@@ -236,13 +236,15 @@ def test_the_frozen_m8_config_does_not_require_the_new_agreement_field():
     assert track._m8_config()["mentor"] == "Mr. Biery"  # the committed P6-M8 pre-run record: unchanged behaviour
 
 
-def test_the_real_m8b_pre_run_record_does_not_exist_yet():
+def test_the_real_m8b_pre_run_record_rests_on_human_evidence():
+    """Adopted 2026-10-11: the sampling plan approved by Kanav Jaitly; the mentor's written agreement on record (never
+    fabricated). It authorizes no run."""
     from scripts import phase6_playoff_track as track
-    from scripts.phase6_playoff_track import Blocked
 
-    assert not track.PX1B_TRACK.m8_pre_run_json.exists()  # written by people, never fabricated
-    with pytest.raises(Blocked):
-        track._m8_config(track.PX1B_TRACK)
+    config = track._m8_config(track.PX1B_TRACK)
+    assert config["sampling_approval"]["approved_by"] == "Kanav Jaitly"
+    assert config["mentor_agreement"]["evidence"]["reply_verbatim"] == "Yes I'll do that"
+    assert config["mentor_agreement"]["date"] == "2026-10-08"
 
 
 def test_px1b_epa_source_must_be_configured_for_2027():

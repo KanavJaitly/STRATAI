@@ -723,6 +723,39 @@ def _m8_sample(events: list, weeks: dict[str, int | None], config: dict[str, Any
     return sample
 
 
+def m8_population_fingerprint(events: list, weeks: dict[str, int | None]) -> str:
+    """sha256 of the eligible population as the sampler sees it: sorted (event key, team count, TBA week)."""
+    import hashlib
+
+    lines = [json.dumps([e.event_key, e.team_count, weeks.get(e.event_key)]) for e in
+             sorted(events, key=lambda e: e.event_key)]
+    return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
+
+
+def project_m8_runtime(sample: list, config: dict[str, Any]) -> dict[str, Any]:
+    """M8b's pre-execution runtime projection (Kanav, 2026-10-11; P6-Q13): the pre-run record's timing model applied
+    to the actual sampled events' team counts. Seconds per event are interpolated piecewise-linearly between the
+    recorded points and extrapolated linearly from the nearest segment (at least 1 s); the worst case multiplies the
+    total by the recorded factor. Within budget only if the worst case is <= 45 minutes."""
+    model = config["runtime_projection"]
+    points = sorted((float(n), float(s)) for n, s in model["seconds_by_team_count"])
+
+    def seconds(teams: int) -> float:
+        x = float(teams)
+        (x0, y0), (x1, y1) = (points[0], points[1]) if x <= points[1][0] else (points[-2], points[-1])
+        for (a, ya), (b, yb) in zip(points, points[1:]):
+            if a <= x <= b:
+                (x0, y0), (x1, y1) = (a, ya), (b, yb)
+                break
+        return max(1.0, y0 + (y1 - y0) * (x - x0) / (x1 - x0))
+    expected = sum(seconds(e.team_count) for e in sample)
+    worst = expected * float(model["worst_case_factor"])
+    return {"events": len(sample), "expected_seconds": round(expected, 1), "expected_minutes": round(expected / 60, 1),
+            "worst_case_minutes": round(worst / 60, 1),
+            "budget_minutes": BUDGET_SECONDS / 60, "within_budget": worst <= BUDGET_SECONDS,
+            "model": model}
+
+
 M8_SENTINEL_PREFIX = "t_p6m8_sentinel"
 M8_FAR_FUTURE = "2026-12-31T00:00:00+00:00"
 
@@ -827,6 +860,19 @@ def run_m8(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, A
         cursor.execute(WEEK_SQL, (sorted(e.event_key for e in eligible),))
         weeks = dict(cursor.fetchall())
     sample = _m8_sample(eligible, weeks, config)
+    m8b: dict[str, Any] = {}
+    if track is not PX1_TRACK:  # M8b only (Kanav, 2026-10-11): the frozen P6-M8 path is unchanged
+        projection = project_m8_runtime(sample, config)
+        if not projection["within_budget"]:
+            raise Blocked(f"{track.name} M8b: projected worst case {projection['worst_case_minutes']} min for "
+                          f"{projection['events']} events exceeds the 45-minute budget. Nothing was run or recorded: "
+                          "stop and propose a compliant redesign (P6-Q13); the seed, strata, count and criteria are "
+                          "never changed silently")
+        m8b = {"runtime_projection": projection,
+               "population_fingerprint": m8_population_fingerprint(eligible, weeks),
+               "eligible_events": len(eligible),
+               "sample": {"seed": config["seed"], "per_stratum": config["per_stratum"],
+                          "event_keys": sorted(e.event_key for e in sample)}}
     started = time.time()
     per_event: dict[str, Any] = {}
     engine_hits: dict[str, list[bool]] = defaultdict(list)
@@ -922,7 +968,7 @@ def run_m8(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, A
             "composition_decisions_blob": git_blob(COMPOSITION_DECISIONS), "population": population,
             "events": per_event, "identified_before_review": dm1_result(engine_hits, seed=BOOTSTRAP_SEED),
             "baselines": {k: dm1_result(v, seed=BOOTSTRAP_SEED) for k, v in baselines.items()},
-            "misses_pending_review": sum(1 for hits in engine_hits.values() for h in hits if not h)}
+            "misses_pending_review": sum(1 for hits in engine_hits.values() for h in hits if not h), **m8b}
 
 
 def run_m8_review(database, rulesets, track: PlayoffTrack | None = None) -> dict[str, Any]:
