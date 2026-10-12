@@ -97,3 +97,16 @@ Nothing exceeded its budget (`over_budget` false on every record).
 **After the 2027 season:**
 - R2 and R3 (EPA pin, C0), R4 → R5 (FINAL-1), R6 (confirmation), R7 (PX-2b, PX-4b), R9 → R10 (M8b and Mr. Biery's review): **P6-DM1**.
 - In parallel, for P6-M10: M1 → M2 (frame, run), then M3 and M4 (confirmation, parity rerun), before any serving change.
+
+## Addendum (2026-10-11, later the same day): the M8b pre-run record is adopted
+
+Kanav Jaitly approved the sampling plan: seed 20271012, one event per stratum.
+
+**Adopted** as `P6_M8B_PRE_RUN.md` + `p6_m8b_pre_run.json`, committed before any M8b run and any 2027 data:
+- **Pass criterion:** the point estimate > 0.5, with no miss unreviewed. The CI is reported only.
+- **Runtime gate:** the M8b harness now projects the actual 2027 sample's runtime before anything runs. If the worst case exceeds 45 minutes it stops for a compliant redesign, never a silent change. The frozen P6-M8 path is unchanged.
+- **Run record:** the sampled event keys, the population fingerprint, the eligible count and the projection are added to M8b's write-once run record.
+
+**What the adoption does not do:**
+- It authorizes **no** run.
+- **P6-DM1 is still not met:** 0 runs, 0 misses, 0 reviews. It needs the 2027 ruleset and C0, the pinned 2027 EPA source, PX-1b's acceptance, and the PX-2b and PX-4b passes.
