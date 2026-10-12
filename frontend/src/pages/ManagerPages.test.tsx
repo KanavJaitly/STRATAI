@@ -149,6 +149,20 @@ describe('ManualsPage', () => {
     expect(screen.getByText(/wrong_season: the title pages name \[2098\]/)).toBeInTheDocument()
   })
 
+  it('shows why processing failed without expanding the attempt history (D3, checklist 5.5)', async () => {
+    mockApi({ ...WRITE_OK, 'GET /human-inputs/game-manuals': [MANUAL],
+      'GET /human-inputs/game-manuals/7/processing': state('failed', { attempts: [
+        { attempt: 1, status: 'failed', error: { code: 'hash_mismatch', message: 'an earlier failure' } },
+        { attempt: 2, status: 'failed', error: { code: 'unreadable_text', message: 'only 0 of 3 pages have extractable text' } },
+      ] }),
+      'GET /human-inputs/seasons/2099/readiness': READINESS(2099) })
+    setWriteToken('t')
+    renderPage(<ManualsPage />)
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Attempt #2 failed: unreadable_text: only 0 of 3 pages have extractable text')
+    expect(alert).not.toHaveTextContent('hash_mismatch')
+  })
+
   it('asks a named person to resolve an unidentifiable season', async () => {
     const api = mockApi({ ...WRITE_OK, 'GET /human-inputs/game-manuals': [MANUAL],
       'GET /human-inputs/game-manuals/7/processing': state('needs_resolution'),

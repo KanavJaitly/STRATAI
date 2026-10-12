@@ -84,6 +84,7 @@ function ProcessingPanel({ manual, state, onChange }: { manual: Manual; state: P
   const action = useAction()
   const [note, setNote] = useState('')
   const report = state.report
+  const lastFailure = [...state.attempts].reverse().find((a) => a.error)
   return (
     <div>
       <dl className="facts">
@@ -97,6 +98,11 @@ function ProcessingPanel({ manual, state, onChange }: { manual: Manual; state: P
           <span className="muted small"> · {state.processor_version}</span></dd>
       </dl>
       <Progress state={state} />
+      {state.status === 'failed' && lastFailure && (  // why it failed, without expanding the history (D3, 2026-10-12)
+        <div className="notice notice-error" role="alert">
+          Attempt #{lastFailure.attempt} failed: <strong>{lastFailure.error?.code}</strong>: {lastFailure.error?.message}
+        </div>
+      )}
       <div className="actions">
         <a href={api.manualFileUrl(manual.id)} target="_blank" rel="noreferrer">Open the original PDF</a>
         {state.retry_allowed && (
