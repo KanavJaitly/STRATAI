@@ -104,6 +104,21 @@ def _attempts(directory: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def _attempt_entries(lines: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One entry per attempt, in order: its start line merged with its outcome line.
+
+    The ledger itself stays append-only, with two lines per attempt. It is read, never rewritten (2026-10-12, D1)."""
+    merged: dict[Any, dict[str, Any]] = {}
+    for line in lines:
+        merged.setdefault(line.get("attempt"), {}).update({k: v for k, v in line.items() if v is not None})
+    return list(merged.values())
+
+
+def _next_attempt(lines: list[dict[str, Any]]) -> int:
+    """The next attempt number: after the highest recorded one, never the count of ledger lines (D1)."""
+    return max((line.get("attempt") or 0 for line in lines), default=0) + 1
+
+
 def _append_attempt(directory: Path, entry: dict[str, Any]) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     with (directory / "attempts.jsonl").open("a", encoding="utf-8") as handle:
@@ -302,7 +317,7 @@ def _manual_row(database, manual_id: int) -> tuple[dict[str, Any], bytes]:
 def status(store_dir: Path, manual: dict[str, Any]) -> dict[str, Any]:
     """The processing state of a stored manual, from its ledger only (reads nothing else)."""
     directory = ledger_dir(store_dir, manual["content_sha256"])
-    attempts = _attempts(directory)
+    attempts = _attempt_entries(_attempts(directory))
     report = _read_json(directory / "report.json")
     lock = _read_json(directory / "lock")
     if report is not None:
@@ -365,7 +380,7 @@ def run(database, store_dir: Path, manual_id: int, *, requested_by: str) -> dict
     """Process a claimed manual. Every outcome is recorded; the lock is always released."""
     manual = manual_meta(database, manual_id)
     directory = ledger_dir(store_dir, manual["content_sha256"])
-    attempt = len(_attempts(directory)) + 1
+    attempt = _next_attempt(_attempts(directory))
     started = _now()
     _append_attempt(directory, {"attempt": attempt, "status": "running", "started_at": started.isoformat(),
                                 "requested_by": requested_by})

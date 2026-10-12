@@ -102,7 +102,7 @@ def test_a_manual_is_processed_into_deterministic_write_once_artifacts(database,
     assert [s["number"] for s in data["sections"]][:2] == ["5", "5.1"]
     again = mp.start(database, store, manual["id"], requested_by=ACTOR)  # idempotent: never redone
     assert again["claimed"] is False and again["status"] == "succeeded"
-    assert (directory / "extraction.json").read_bytes() == extraction and len(again["attempts"]) == 2
+    assert (directory / "extraction.json").read_bytes() == extraction and [x["attempt"] for x in again["attempts"]] == [1]
 
 
 def test_the_extraction_is_reproducible_byte_for_byte(database, store, tmp_path):
@@ -151,6 +151,39 @@ def test_unreadable_or_malformed_pdfs_fail_closed(database, store, content, code
     state = _process(database, store, row["id"])
     assert state["status"] == "failed" and state["attempts"][-1]["error"]["code"] == code
     assert state["retry_allowed"] is True
+
+
+def test_each_attempt_is_listed_once_and_numbered_in_sequence(database, store):
+    """D1 (2026-10-12, browser checklist step 1.9): attempts were numbered and listed by ledger line, two per attempt."""
+    manual = _upload(database, store, manual_pages(SEASON - 1))  # names another season: fails on every attempt
+    _process(database, store, manual["id"])
+    state = _process(database, store, manual["id"])  # the retry
+    assert state["status"] == "failed"
+    assert [a["attempt"] for a in state["attempts"]] == [1, 2]
+    for attempt in state["attempts"]:
+        assert attempt["status"] == "failed" and attempt["error"]["code"] == "wrong_season"
+        assert attempt["started_at"] and attempt["finished_at"] and attempt["requested_by"] == ACTOR
+    ledger = (mp.ledger_dir(store, manual["content_sha256"]) / "attempts.jsonl").read_text(encoding="utf-8").splitlines()
+    assert [json.loads(line)["status"] for line in ledger] == ["running", "failed", "running", "failed"]  # append-only
+
+
+def test_an_existing_ledger_keeps_its_history_and_numbers_the_next_attempt_after_the_highest(database, store):
+    """A ledger written before the D1 fix (manual #123's shape: attempts #1 and #3) is never rewritten."""
+    manual = _upload(database, store, manual_pages(SEASON - 1))
+    directory = mp.ledger_dir(store, manual["content_sha256"])
+    directory.mkdir(parents=True)
+    old = [{"attempt": 1, "status": "running", "started_at": "2026-10-12T21:46:44+00:00", "requested_by": ACTOR},
+           {"attempt": 1, "status": "failed", "finished_at": "2026-10-12T21:46:45+00:00",
+            "error": {"code": "wrong_season", "message": "m"}},
+           {"attempt": 3, "status": "running", "started_at": "2026-10-12T21:49:27+00:00", "requested_by": ACTOR},
+           {"attempt": 3, "status": "failed", "finished_at": "2026-10-12T21:49:28+00:00",
+            "error": {"code": "wrong_season", "message": "m"}}]
+    history = "".join(json.dumps(line, sort_keys=True) + "\n" for line in old)
+    (directory / "attempts.jsonl").write_text(history, encoding="utf-8")
+    assert [a["attempt"] for a in mp.status(store, manual)["attempts"]] == [1, 3]
+    state = _process(database, store, manual["id"])
+    assert [a["attempt"] for a in state["attempts"]] == [1, 3, 4]
+    assert (directory / "attempts.jsonl").read_text(encoding="utf-8").startswith(history)
 
 
 def test_a_tampered_stored_file_fails_on_hash_and_a_restored_one_succeeds_on_retry(database, store):
@@ -207,7 +240,7 @@ def test_processing_over_http_is_gated_and_reports_progress(client, database, st
     assert too_many.status_code == 422
     duplicate = client.post(f"/human-inputs/game-manuals/{manual['id']}/processing", json={"requested_by": ACTOR},
                             headers=_w())
-    assert duplicate.json()["claimed"] is False and len(duplicate.json()["attempts"]) == 2
+    assert duplicate.json()["claimed"] is False and [x["attempt"] for x in duplicate.json()["attempts"]] == [1]
 
 
 def test_extraction_of_an_unprocessed_manual_is_not_found(client, database, store):
