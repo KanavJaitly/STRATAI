@@ -311,6 +311,19 @@ decision (D9).
 4. **P6-M10:** any redesign after its gate failure needs Kanav's dated decision (D9).
 5. **Optional:** a genuine named mentor review of sampled strategy recommendations (P6-M12 (d)).
 
+**Where these inputs are entered (2026-10-12).** The 2027 inputs are entered through the web app, and
+`docs/game_manual_manager.md` documents it:
+- the Game Manual Manager (`/manuals`);
+- the ruleset worksheet and R1-R14 review (`/rulesets`);
+- the readiness page (`/readiness`), which lists tasks R1-R10 and M1-M4 from `P6_2027_AUTHORIZATION_REQUESTS.md`
+  with each task's status, derived from the records.
+
+`python -m scripts.phase6_resume [--run]` resumes from the blockers once 2027 data arrives. It runs only the C0 check
+(R3), and only when it is ready.
+
+None of this authorizes a run, a confirmation, a review or a serving change, and none of it changes this page's
+status: P6-DM1 is not met.
+
 ## Records
 
 | Record | What |

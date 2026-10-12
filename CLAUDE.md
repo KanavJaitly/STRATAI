@@ -597,6 +597,17 @@ complete.**
   - `p6m10-v1` stays served. The serving guard refuses v2.
 - **Records:** `docs/phase6.md`, `.agent/phase6/PHASE_STATUS.md`, `.agent/phase6/PHASE_ACCEPTANCE.md`.
 - **Spec:** frozen at P6-M0, in `docs/P6Milestones.md` and `.agent/phase6/P6_M0_DECISIONS.md`.
+- **Usability and 2027 manual readiness (2026-10-12):** `docs/game_manual_manager.md`. Pages:
+  - `/manuals`: upload and automatic, unverified extraction;
+  - `/rulesets`: worksheet, draft and R1-R14 review;
+  - `/readiness`: the 2027 tasks R1-R10 and M1-M4;
+  - `/explorer`: 2023-2026, real data.
+
+  `scripts/phase6_resume.py` runs only R3, and only when it is ready. None of it authorizes a Phase 6 run or a serving
+  change.
+
+  2023 lives in `stratai_test_2023`, not `stratai_test`: D13 prior-event facts are not season-bounded, so 2023 rows
+  change the frozen 2024+ D18 lookups (`.agent/stratai_test/2023_reversal_2026-10-12.json`).
 
 ---
 
