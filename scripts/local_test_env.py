@@ -5,6 +5,7 @@
     python -m scripts.local_test_env --serve --database stratai_test_2023 --port 8766   # 2023, kept in its own copy
     python -m scripts.local_test_env --checklist-files DIR   # the SYNTHETIC PDFs docs/browser_acceptance_checklist.md uses
     python -m scripts.local_test_env --cleanup-checklist     # remove what that checklist created in stratai_test
+    python -m scripts.local_test_env --cleanup-checklist --actor "Checklist Automation"   # the Playwright run's rows
 
 **What it is:**
 - an API instance pointed at the isolated `stratai_test` copy (the test-database guard's rule), with the evaluated
@@ -118,12 +119,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--database", choices=ALLOWED_DATABASES, default="stratai_test")
     parser.add_argument("--checklist-files", type=Path, metavar="DIR")
     parser.add_argument("--cleanup-checklist", action="store_true")
+    parser.add_argument("--actor", default=CHECKLIST_ACTOR, choices=(CHECKLIST_ACTOR, "Checklist Automation"),
+                        help="whose checklist rows --cleanup-checklist removes")
     args = parser.parse_args(argv)
     if args.checklist_files:
         for path in write_checklist_files(args.checklist_files):
             print(path)
     if args.cleanup_checklist:
-        print(cleanup_checklist())
+        print(cleanup_checklist(args.actor))
     env = environment(args.database)
     if args.show:
         print(f"DATABASE_NAME={args.database}")
