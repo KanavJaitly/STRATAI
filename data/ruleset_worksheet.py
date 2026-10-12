@@ -47,16 +47,22 @@ def ruleset_worksheet(database: Database, store_dir: Path, season: int) -> dict[
     source = template["season"]
     proposal = _mark(copy.deepcopy(template["ruleset_json"]), source)
     manuals = list_manuals(database, season)
-    extraction = None
-    manual = manuals[-1] if manuals else None
-    if manual is not None:
-        extraction = mp.extraction(store_dir, manual)
+    # The most recent successfully processed manual, so a later failed upload (a scan, another season's manual) cannot
+    # hide its suggestions; with none processed, the latest upload is reported as unprocessed and lends no identity
+    # (2026-10-12, D2).
+    manual, extraction = None, None
+    for candidate in reversed(manuals):
+        extraction = mp.extraction(store_dir, candidate)
+        if extraction is not None:
+            manual = candidate
+            break
+    if manual is None and manuals:
+        manual = manuals[-1]
     identity = (extraction or {}).get("identity") or {}
     proposal.update({
         "season": season,
         "game_name": manual["game_name"] if manual else f"{MARKER} {source}): {proposal['game_name']}",
-        "manual": {"title": identity.get("title_line") or (manual["filename"] if manual else
-                                                            f"{MARKER} {source}): enter the {season} manual title"),
+        "manual": {"title": identity.get("title_line") or f"{MARKER} {source}): enter the {season} manual title",
                    "version": identity.get("revision") or f"{MARKER} {source}): enter the manual revision"},
         "selection_variants": [], "event_exclusions": [],
     })
