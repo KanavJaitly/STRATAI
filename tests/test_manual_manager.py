@@ -38,7 +38,7 @@ ACTOR = "Test Person"
 
 def _cleanup(db: Database) -> None:
     with db.cursor() as c:
-        c.execute("DELETE FROM game_manuals WHERE season IN (%s, %s)", (SEASON, SEASON - 1))
+        c.execute("DELETE FROM game_manuals WHERE season IN (%s, %s, %s)", (SEASON, SEASON - 1, RULESET_SEASON))
         c.execute("DELETE FROM season_rulesets WHERE season = %s", (RULESET_SEASON,))
 
 
@@ -271,6 +271,35 @@ def test_the_worksheet_is_a_marked_reviewable_proposal_never_saved(client, datab
     assert proposal["season"] == RULESET_SEASON and proposal["selection_variants"] == [] and proposal["event_exclusions"] == []
     assert "UNVERIFIED (carried from" in proposal["tie_rule"]
     assert len(client.get("/human-inputs/rulesets", params={"season": RULESET_SEASON}).json()) == before
+
+
+def _processed_ruleset_season_manual(database, store) -> dict:
+    """A processed manual for RULESET_SEASON, whose year no title page can name, so a named person resolves it."""
+    manual = _upload(database, store, manual_pages(RULESET_SEASON), season=RULESET_SEASON)
+    assert _process(database, store, manual["id"])["status"] == "needs_resolution"
+    mp.resolve_identity(database, store, manual["id"], season=RULESET_SEASON, resolved_by=ACTOR, note="SYNTHETIC")
+    assert _process(database, store, manual["id"])["status"] == "succeeded"
+    return manual
+
+
+def test_the_worksheet_uses_the_latest_processed_manual_not_a_later_failed_upload(client, database, store):
+    """D2 (2026-10-12, browser checklist step 2.2): the worksheet took the most recent upload even when it had failed."""
+    good = _processed_ruleset_season_manual(database, store)
+    failed = _upload(database, store, manual_pages(2026), season=RULESET_SEASON)  # later, and names another season
+    assert _process(database, store, failed["id"])["status"] == "failed"
+    sheet = client.get(f"/human-inputs/seasons/{RULESET_SEASON}/ruleset-worksheet").json()
+    assert sheet["manual"] == {"id": good["id"], "sha256": good["content_sha256"], "processed": True}
+    assert sheet["proposal"]["manual"] == {"title": "Game Manual", "version": "1.0"}
+    assert any(item["suggestions"] for item in sheet["verify"])
+
+
+def test_with_no_processed_manual_the_worksheet_takes_no_identity_from_an_upload(client, database, store):
+    failed = _upload(database, store, manual_pages(2026), season=RULESET_SEASON)
+    assert _process(database, store, failed["id"])["status"] == "failed"
+    sheet = client.get(f"/human-inputs/seasons/{RULESET_SEASON}/ruleset-worksheet").json()
+    assert sheet["manual"] == {"id": failed["id"], "sha256": failed["content_sha256"], "processed": False}
+    assert "UNVERIFIED (carried from" in sheet["proposal"]["manual"]["title"]  # never the failed upload's filename
+    assert not any(item["suggestions"] for item in sheet["verify"])
 
 
 def test_a_worksheet_draft_with_markers_can_never_be_approved(client, tmp_path):
