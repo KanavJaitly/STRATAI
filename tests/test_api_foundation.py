@@ -261,7 +261,12 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     same way: a deliberate, reviewed addition, not a silent one. Phase 5
     adds its endpoints the same way (P5-M3: the strength view; P5-M4: event
     analysis; P5-M5: qualification forecasts; the human-input workflows under
-    /human-inputs). It still
+    /human-inputs). The game manual manager, season readiness and the read-only
+    historical explorer (2026-10-11: /human-inputs/game-manuals/{id}/processing,
+    extraction, pages and identity-resolution; /human-inputs/rulesets*; the
+    ruleset worksheet and checklist; /human-inputs/seasons/{season}/readiness;
+    /seasons*, /events/{event_key}/teams|matches, /teams/{n}/seasons/{season})
+    join the same way. It still
     guards the other direction, which has not changed: a test-only
     forced-error route (/_test_boom and friends, registered on locally built
     apps in this module) must never reach the shipped application.
@@ -269,7 +274,9 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     app = create_app(settings)
     assert sorted(app.openapi()["paths"]) == [
         "/events/{event_key}/analysis",
+        "/events/{event_key}/matches",
         "/events/{event_key}/qualification-forecast",
+        "/events/{event_key}/teams",
         "/health",
         "/human-inputs/artifacts/{artifact_id}/establish",
         "/human-inputs/capability-profiles",
@@ -279,11 +286,22 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
         "/human-inputs/capability-profiles/{profile_key}/history",
         "/human-inputs/capability-profiles/{profile_key}/recommendation",
         "/human-inputs/game-manuals",
+        "/human-inputs/game-manuals/{manual_id}/extraction",
         "/human-inputs/game-manuals/{manual_id}/file",
+        "/human-inputs/game-manuals/{manual_id}/identity-resolution",
+        "/human-inputs/game-manuals/{manual_id}/pages",
+        "/human-inputs/game-manuals/{manual_id}/processing",
         "/human-inputs/reference/design-examples",
+        "/human-inputs/ruleset-review-checklist",
+        "/human-inputs/rulesets",
+        "/human-inputs/rulesets/{ruleset_id}",
+        "/human-inputs/rulesets/{ruleset_id}/review",
+        "/human-inputs/rulesets/{ruleset_id}/submit",
         "/human-inputs/seasons/{season}/artifacts",
         "/human-inputs/seasons/{season}/dm1-status",
         "/human-inputs/seasons/{season}/kappa",
+        "/human-inputs/seasons/{season}/readiness",
+        "/human-inputs/seasons/{season}/ruleset-worksheet",
         "/human-inputs/seasons/{season}/specs",
         "/human-inputs/seasons/{season}/workflow",
         "/human-inputs/specs/{spec_id}/review",
@@ -294,8 +312,11 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
         "/predictions/matches/{match_key}/win-probability",
         "/predictions/win-probability",
         "/ready",
+        "/seasons",
+        "/seasons/{season}/events",
         "/teams/{team_number}/events/{event_key}/metrics",
         "/teams/{team_number}/events/{event_key}/strength",
+        "/teams/{team_number}/seasons/{season}",
     ]
 
 

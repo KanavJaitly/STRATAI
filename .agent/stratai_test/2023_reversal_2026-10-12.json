@@ -1,0 +1,312 @@
+{
+ "record": "stratai_test 2023 sync reversal",
+ "date": "2026-10-12",
+ "database": "stratai_test",
+ "preserved_copy": "stratai_test_2023",
+ "reason": "ml.ratings.provider.read_team_event_facts is not season-bounded: 2023 team-events became D13 prior-event candidates for 3,076 2024, 38 2025 and 5 2026 team-events, changing frozen D18 lookups from withheld (no prior event) to epa_source_incomplete",
+ "pipeline_runs": [
+  7663,
+  7847
+ ],
+ "transaction_report": {
+  "apply": true,
+  "copy": "created stratai_test_2023 from stratai_test (with 2023)",
+  "checks": {
+   "database": {
+    "ok": true
+   },
+   "runs_are_2023_event_syncs": {
+    "ok": true,
+    "detail": [
+     185,
+     185
+    ]
+   },
+   "no_later_runs": {
+    "ok": true
+   },
+   "no_other_runs_nearby": {
+    "ok": true
+   },
+   "landed_matches_sync_log": {
+    "ok": true,
+    "detail": {
+     "tba.event": 185,
+     "tba.match": 16342,
+     "tba.team": 1373
+    }
+   },
+   "no_other_raw_nearby": {
+    "ok": true
+   },
+   "event_match_payloads_all_2023": {
+    "ok": true
+   },
+   "team_objects": {
+    "ok": true,
+    "detail": [
+     1198,
+     175
+    ]
+   },
+   "watermarks_all_2023": {
+    "ok": true,
+    "detail": []
+   },
+   "no_2023_team_event_stats": {
+    "ok": true
+   },
+   "no_2023_team_metrics": {
+    "ok": true
+   },
+   "no_2023_scouting_observations": {
+    "ok": true
+   },
+   "no_2023_scouting_access_codes": {
+    "ok": true
+   },
+   "superseded_all_not_current": {
+    "ok": true
+   },
+   "restored_current": {
+    "ok": true,
+    "detail": 1198
+   },
+   "new_teams_unreferenced": {
+    "ok": true
+   },
+   "new_teams_deleted": {
+    "ok": true,
+    "detail": 175
+   },
+   "is_current_invariant": {
+    "ok": true,
+    "detail": [
+     0,
+     0
+    ]
+   },
+   "counts_2023": {
+    "ok": true,
+    "detail": [
+     {
+      "events": 0,
+      "matches": 0,
+      "match_teams": 0,
+      "team_event_stats": 0,
+      "team_metrics": 0,
+      "raw_payloads": 0
+     },
+     {
+      "events": 0,
+      "matches": 0,
+      "match_teams": 0,
+      "team_event_stats": 0,
+      "team_metrics": 0,
+      "raw_payloads": 0
+     }
+    ]
+   },
+   "counts_2024": {
+    "ok": true,
+    "detail": [
+     {
+      "events": 190,
+      "matches": 16981,
+      "match_teams": 101874,
+      "team_event_stats": 7664,
+      "team_metrics": 42,
+      "raw_payloads": 17551
+     },
+     {
+      "events": 190,
+      "matches": 16981,
+      "match_teams": 101874,
+      "team_event_stats": 7664,
+      "team_metrics": 42,
+      "raw_payloads": 17551
+     }
+    ]
+   },
+   "counts_2025": {
+    "ok": true,
+    "detail": [
+     {
+      "events": 203,
+      "matches": 17867,
+      "match_teams": 107202,
+      "team_event_stats": 8072,
+      "team_metrics": 0,
+      "raw_payloads": 18476
+     },
+     {
+      "events": 203,
+      "matches": 17867,
+      "match_teams": 107202,
+      "team_event_stats": 8072,
+      "team_metrics": 0,
+      "raw_payloads": 18476
+     }
+    ]
+   },
+   "counts_2026": {
+    "ok": true,
+    "detail": [
+     {
+      "events": 215,
+      "matches": 18372,
+      "match_teams": 110232,
+      "team_event_stats": 8286,
+      "team_metrics": 0,
+      "raw_payloads": 19017
+     },
+     {
+      "events": 215,
+      "matches": 18372,
+      "match_teams": 110232,
+      "team_event_stats": 8286,
+      "team_metrics": 0,
+      "raw_payloads": 19017
+     }
+    ]
+   },
+   "matches_fp": {
+    "ok": true
+   },
+   "teams_fp": {
+    "ok": true,
+    "detail": [
+     "a3b9b10ec1c6ef7786a70aea7b330284",
+     4240
+    ]
+   },
+   "no_raw_after_window_start": {
+    "ok": true
+   }
+  },
+  "window": [
+   "2026-10-11 23:41:47.330831-04:00",
+   "2026-10-11 23:50:01.386448-04:00"
+  ],
+  "landed": {
+   "tba.event": 185,
+   "tba.match": 16342,
+   "tba.team": 1373
+  },
+  "team_objects": {
+   "superseded": 1198,
+   "new": 175
+  },
+  "is_current_anomalies_before": 0,
+  "watermarks": 555,
+  "deleted": {
+   "canonical_lineage": 17900,
+   "data_quality_issues": 0,
+   "match_teams": 98052,
+   "matches": 16342,
+   "events": 185,
+   "raw_source_payloads": 17900,
+   "source_watermarks": 555,
+   "pipeline_runs": 185,
+   "teams": 175
+  },
+  "restored_current": 1198,
+  "teams_canonical_restored": 99,
+  "result": "committed"
+ },
+ "post_commit": {
+  "baseline_before_sync": {
+   "team_event_stats_fp_2024_2026": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5",
+   "2023": {
+    "events": 0,
+    "matches": 0,
+    "match_teams": 0,
+    "team_event_stats": 0,
+    "team_metrics": 0,
+    "raw_payloads": 0
+   },
+   "2024": {
+    "events": 190,
+    "matches": 16981,
+    "match_teams": 101874,
+    "team_event_stats": 7664,
+    "team_metrics": 42,
+    "raw_payloads": 17551
+   },
+   "2025": {
+    "events": 203,
+    "matches": 17867,
+    "match_teams": 107202,
+    "team_event_stats": 8072,
+    "team_metrics": 0,
+    "raw_payloads": 18476
+   },
+   "2026": {
+    "events": 215,
+    "matches": 18372,
+    "match_teams": 110232,
+    "team_event_stats": 8286,
+    "team_metrics": 0,
+    "raw_payloads": 19017
+   },
+   "matches_fp_2024_2026": "a04d209c26993f080ded7757361172f2",
+   "teams_fp": "a3b9b10ec1c6ef7786a70aea7b330284",
+   "teams": 4240
+  },
+  "baseline_after_reversal": {
+   "team_event_stats_fp_2024_2026": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5",
+   "2023": {
+    "events": 0,
+    "matches": 0,
+    "match_teams": 0,
+    "team_event_stats": 0,
+    "team_metrics": 0,
+    "raw_payloads": 0
+   },
+   "2024": {
+    "events": 190,
+    "matches": 16981,
+    "match_teams": 101874,
+    "team_event_stats": 7664,
+    "team_metrics": 42,
+    "raw_payloads": 17551
+   },
+   "2025": {
+    "events": 203,
+    "matches": 17867,
+    "match_teams": 107202,
+    "team_event_stats": 8072,
+    "team_metrics": 0,
+    "raw_payloads": 18476
+   },
+   "2026": {
+    "events": 215,
+    "matches": 18372,
+    "match_teams": 110232,
+    "team_event_stats": 8286,
+    "team_metrics": 0,
+    "raw_payloads": 19017
+   },
+   "matches_fp_2024_2026": "a04d209c26993f080ded7757361172f2",
+   "teams_fp": "a3b9b10ec1c6ef7786a70aea7b330284",
+   "teams": 4240
+  },
+  "identical": true,
+  "nearest_prior_is_2023_after": {
+   "2024": 0,
+   "2025": 0,
+   "2026": 0
+  }
+ },
+ "not_restored": [
+  "teams.last_updated of the 1,198 superseded teams",
+  "consumed id sequence values"
+ ],
+ "serving_database": "not accessed",
+ "executed_script": {
+  "path": ".agent/stratai_test/2023_reversal_2026-10-12.py",
+  "sha256": "a6a7be1b9ac7a8d29eb8dedb279075affbc8c3a53976ab5d991688a387a46a18",
+  "invocation": "python <script> --apply (DATABASE_URL from scripts.local_test_env, stratai_test)",
+  "sha256_of": "the file as executed, with LF line endings (the git blob content; a CRLF checkout differs)"
+ }
+}

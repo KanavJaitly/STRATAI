@@ -5,6 +5,13 @@ import { OverviewPage } from './pages/OverviewPage'
 import { GameSpecPage } from './pages/GameSpecPage'
 import { ProfilesPage } from './pages/ProfilesPage'
 import { ReviewPage } from './pages/ReviewPage'
+import { ManualsPage } from './pages/ManualsPage'
+import { RulesetsPage } from './pages/RulesetsPage'
+import { ReadinessPage } from './pages/ReadinessPage'
+import { ExplorerPage } from './pages/ExplorerPage'
+import { EventPage } from './pages/EventPage'
+import { TeamPage } from './pages/TeamPage'
+import { SUPPORTED_SEASONS } from './lib/format'
 
 function SessionBar() {
   const { actor, setActor, token, setToken, access, season, setSeason } = useSession()
@@ -17,8 +24,11 @@ function SessionBar() {
     <div className="session-bar">
       <label>
         Season
-        <input type="number" min={1992} value={season} aria-label="Season"
-          onChange={(e) => { const v = Number(e.target.value); if (v >= 1992) setSeason(v) }} />
+        <select value={season} aria-label="Season" onChange={(e) => setSeason(Number(e.target.value))}>
+          {[...new Set<number>([...SUPPORTED_SEASONS, season])].sort((a, b) => b - a).map((s) => (
+            <option key={s} value={s}>{s}{s === 2027 ? ' (preparing)' : ''}</option>
+          ))}
+        </select>
       </label>
       <label>
         Your name
@@ -38,27 +48,38 @@ function SessionBar() {
 }
 
 export function Shell() {
+  const { season } = useSession()
   return (
     <div className="app">
       <header className="top">
         <div className="brand">
           <strong>STRATAI</strong>
-          <span>Human inputs · P5-M8 / P5-M9 / DM1</span>
+          <span>Game manuals, season rulesets, readiness, historical seasons and human inputs</span>
         </div>
         <nav>
           <NavLink to="/" end>Overview</NavLink>
-          <NavLink to="/game">Game manual &amp; spec</NavLink>
+          <NavLink to="/readiness">Readiness &amp; tasks</NavLink>
+          <NavLink to="/explorer">Historical seasons</NavLink>
+          <NavLink to="/manuals">Game manual</NavLink>
+          <NavLink to="/rulesets">Season ruleset</NavLink>
+          <NavLink to="/game">Game spec</NavLink>
           <NavLink to="/profiles">Team profiles</NavLink>
           <NavLink to="/review">Human review</NavLink>
         </nav>
         <SessionBar />
       </header>
-      <main>
+      <main key={season /* a season change remounts every page: no state from another season survives */}>
         <Routes>
           <Route path="/" element={<OverviewPage />} />
           <Route path="/game" element={<GameSpecPage />} />
           <Route path="/profiles" element={<ProfilesPage />} />
           <Route path="/review" element={<ReviewPage />} />
+          <Route path="/readiness" element={<ReadinessPage />} />
+          <Route path="/manuals" element={<ManualsPage />} />
+          <Route path="/rulesets" element={<RulesetsPage />} />
+          <Route path="/explorer" element={<ExplorerPage />} />
+          <Route path="/explorer/events/:eventKey" element={<EventPage />} />
+          <Route path="/explorer/teams/:teamNumber" element={<TeamPage />} />
         </Routes>
       </main>
     </div>
