@@ -1,14 +1,14 @@
 # Browser Acceptance Results
 
-**Template. No step has been executed.** Every row starts as NOT TESTED. A row changes only when a person has observed
+**Manual results.** Steps 0.1-1.9 were run by the tester on 2026-10-12 against build `48d12ec`; the rest are not yet tested. Every other row starts as NOT TESTED. A row changes only when a person has observed
 the result in a real browser: not from code inspection, unit or live jsdom tests, or the headless-Chrome smoke check.
 
 | | |
 |---|---|
 | Checklist | `docs/browser_acceptance_checklist.md` (49 numbered steps; this file has 75 rows: steps 4.1-4.9 are recorded per season, plus cleanup 6.1) |
-| Build under test | commit `8da41de` (on `105d62c`) |
-| Tester | |
-| Date | |
+| Build under test | commit `48d12ec` (`8da41de` + this template) for steps 0.1-1.9 |
+| Tester | Checklist Tester (Kanav) |
+| Date | 2026-10-12 (paused after 1.9) |
 | Browser and version | |
 | OS, and the phone-width method (DevTools device toolbar or a real device) | |
 | UI A → API | http://localhost:5173 → :8765, `stratai_test` (confirmed by 0.1-0.2: yes/no) |
@@ -30,7 +30,9 @@ The ruleset steps never include clicking **Approve**.
 |  |  |  |  | 75 |
 
 Defects (ID, step, short description):
--
+- **D1** (step 1.9, build 48d12ec): processing attempts are counted and numbered from ledger lines (two per attempt). A retry is numbered #3, not #2, and the panel lists 2 entries per attempt.
+  - Root cause: `data/manual_processing.py` `run()` (`len(lines) + 1`) and `status()` (raw lines).
+  - Scope: display and numbering only. The failure reasons, retry, locking, duplicates and extraction are unaffected.
 
 This is a product browser checklist only. It is not Phase 6 model validation or sign-off. P6-DM1 stays not met, and
 M10 stays `not_validated`, whatever this checklist shows.
@@ -39,25 +41,25 @@ M10 stays `not_validated`, whatever this checklist shows.
 
 | ID | Step | Expected | Actual result | Status | Notes / evidence |
 |---|---|---|---|---|---|
-| 0.1 | T1 and T2 print their first line | T1: `STRATAI local test API: database stratai_test (isolated copy), http://127.0.0.1:8765`. T2: the same with `stratai_test_2023` and `:8766` |  | NOT TESTED |  |
-| 0.2 | Open http://localhost:5173/api/seasons | 2023 has `"events":0`; 2024, 2025 and 2026 have 190, 203 and 215 events; 2027 has 0 |  | NOT TESTED |  |
-| 0.3 | Open http://localhost:5174/api/seasons | 2023 has `"events":185`; the other seasons as in 0.2 |  | NOT TESTED |  |
-| 0.4 | Generate the synthetic PDFs:<br>`.venv\Scripts\python.exe -m scripts.local_test_env --checklist-files "$env:TEMP\stratai_checklist"` | Six files listed: `valid_2027`, `partial_2027`, `wrong_season_2026`, `no_year_2027`, `scanned`, `not_a_pdf` (all `.pdf`) |  | NOT TESTED |  |
-| 0.5 | In UI A's header:<br>• Your name: `Checklist Tester` (exactly; cleanup relies on it)<br>• Write token: `local-test-token` | The access badge changes from "read-only (no valid token)" to a writable state |  | NOT TESTED |  |
+| 0.1 | T1 and T2 print their first line | T1: `STRATAI local test API: database stratai_test (isolated copy), http://127.0.0.1:8765`. T2: the same with `stratai_test_2023` and `:8766` | Not recorded at the time. The servers' terminal output is not available. | NOT TESTED | Needs verification. |
+| 0.2 | Open http://localhost:5173/api/seasons | 2023 has `"events":0`; 2024, 2025 and 2026 have 190, 203 and 215 events; 2027 has 0 | Not recorded at the time. | NOT TESTED | Needs verification. |
+| 0.3 | Open http://localhost:5174/api/seasons | 2023 has `"events":185`; the other seasons as in 0.2 | Not recorded at the time. | NOT TESTED | Needs verification. |
+| 0.4 | Generate the synthetic PDFs:<br>`.venv\Scripts\python.exe -m scripts.local_test_env --checklist-files "$env:TEMP\stratai_checklist"` | Six files listed: `valid_2027`, `partial_2027`, `wrong_season_2026`, `no_year_2027`, `scanned`, `not_a_pdf` (all `.pdf`) | Not recorded at the time. | NOT TESTED | Recovered system evidence (after the fact; not a contemporaneous observation): the six files exist in %TEMP%\stratai_checklist, all timestamped 2026-10-12 17:33. Needs verification. |
+| 0.5 | In UI A's header:<br>• Your name: `Checklist Tester` (exactly; cleanup relies on it)<br>• Write token: `local-test-token` | The access badge changes from "read-only (no valid token)" to a writable state | Not recorded at the time. | NOT TESTED | Recovered system evidence (after the fact; not a contemporaneous observation): the uploads in 1.2, 1.7 and 1.8 were stored with uploaded_by = 'Checklist Tester', and writes succeeded (the token was accepted). The badge itself was not recorded. Needs verification. |
 
 ## 1. `/manuals` (UI A, season 2027)
 
 | ID | Step | Expected | Actual result | Status | Notes / evidence |
 |---|---|---|---|---|---|
-| 1.1 | Choose `not_a_pdf.pdf` with the **real file picker** | A red notice says it is not a PDF (missing `%PDF-` header). "Upload and process" stays disabled, and nothing is sent |  | NOT TESTED |  |
-| 1.2 | Choose `valid_2027.pdf`, enter Game name `SYNTHETICA`, then Upload and process | The file's sha256 shows before upload. Then: "Stored as manual #N; processing started." The status moves to **succeeded**, with a moving progress bar while running |  | NOT TESTED |  |
-| 1.3 | Read the report | Identity `identified — the title pages name 2027`, revision 1.0; pages 6 (6 with text); suggestions 9; **no** warnings; the note says extraction is a review aid that approves nothing |  | NOT TESTED |  |
-| 1.4 | Extraction tabs: Suggestions, Sections, Topics, Page text | Every suggestion has a page number and the source text, and is labelled **Machine-extracted and unverified** |  | NOT TESTED |  |
-| 1.5 | Click a suggestion's **PDF** link, then "Open the original PDF" | Both open **in the browser's PDF viewer in a new tab, not as a download**. The PDF link opens at the cited page (compare with the page number) |  | NOT TESTED |  |
-| 1.6 | **Duplicate:** choose `valid_2027.pdf` again and upload | "This exact file is already manual #N. Nothing was replaced or duplicated." The versions list does not grow, and no new attempt appears |  | NOT TESTED |  |
-| 1.7 | Upload `partial_2027.pdf` (game `SYNTHETICA`) | It succeeds with **4 warnings**: page 5 has no extractable text; no page mentions ranking points, alliance selection or playoffs |  | NOT TESTED |  |
-| 1.8 | Upload `wrong_season_2026.pdf` | Status **failed**, `wrong_season`: the title pages name [2026], not the declared season 2027. The extraction is not shown |  | NOT TESTED |  |
-| 1.9 | **Retry:** on that manual, click "Retry processing" | Attempt #2 also fails with `wrong_season`. "Processing attempts (2)" lists both. Nothing else changes |  | NOT TESTED |  |
+| 1.1 | Choose `not_a_pdf.pdf` with the **real file picker** | A red notice says it is not a PDF (missing `%PDF-` header). "Upload and process" stays disabled, and nothing is sent | Not recorded: the tester's observation for this step has not been provided. Needs the tester's record. | NOT TESTED |  |
+| 1.2 | Choose `valid_2027.pdf`, enter Game name `SYNTHETICA`, then Upload and process | The file's sha256 shows before upload. Then: "Stored as manual #N; processing started." The status moves to **succeeded**, with a moving progress bar while running | Not recorded: the tester's observation for this step has not been provided. Needs the tester's record. | NOT TESTED | Recovered system evidence (after the fact; not a contemporaneous observation): manual #121 (valid_2027.pdf, sha256 c05d4d6e…) uploaded 17:37:18; attempt #1 succeeded. |
+| 1.3 | Read the report | Identity `identified — the title pages name 2027`, revision 1.0; pages 6 (6 with text); suggestions 9; **no** warnings; the note says extraction is a review aid that approves nothing | Not recorded: the tester's observation for this step has not been provided. Needs the tester's record. | NOT TESTED |  |
+| 1.4 | Extraction tabs: Suggestions, Sections, Topics, Page text | Every suggestion has a page number and the source text, and is labelled **Machine-extracted and unverified** | Not recorded: the tester's observation for this step has not been provided. Needs the tester's record. | NOT TESTED |  |
+| 1.5 | Click a suggestion's **PDF** link, then "Open the original PDF" | Both open **in the browser's PDF viewer in a new tab, not as a download**. The PDF link opens at the cited page (compare with the page number) | Not recorded: the tester's observation for this step has not been provided. Needs the tester's record. | NOT TESTED |  |
+| 1.6 | **Duplicate:** choose `valid_2027.pdf` again and upload | "This exact file is already manual #N. Nothing was replaced or duplicated." The versions list does not grow, and no new attempt appears | Not recorded: the tester's observation for this step has not been provided. Needs the tester's record. | NOT TESTED | Recovered system evidence (after the fact; not a contemporaneous observation): manual #121's ledger has one attempt only. |
+| 1.7 | Upload `partial_2027.pdf` (game `SYNTHETICA`) | It succeeds with **4 warnings**: page 5 has no extractable text; no page mentions ranking points, alliance selection or playoffs | Not recorded: the tester's observation for this step has not been provided. Needs the tester's record. | NOT TESTED | Recovered system evidence (after the fact; not a contemporaneous observation): manual #122 (partial_2027.pdf, sha256 15b8e8c6…) uploaded 17:45:33; attempt #1 succeeded. |
+| 1.8 | Upload `wrong_season_2026.pdf` | Status **failed**, `wrong_season`: the title pages name [2026], not the declared season 2027. The extraction is not shown | Tester (2026-10-12): an apparent processing-attempt count inconsistency was observed during this step. The step's other expected details (failed status, the wrong_season message, the extraction not shown) were not reported. | NOT TESTED | Performed, but its expected result was not reported, so it is not passed. The count inconsistency is recorded as a failure under 1.9, whose expected result defines the attempt count. Recovered system evidence (after the fact; not a contemporaneous observation): manual #123 (wrong_season_2026.pdf, sha256 0703f011…) uploaded 17:46:44; attempt #1 failed, wrong_season. |
+| 1.9 | **Retry:** on that manual, click "Retry processing" | Attempt #2 also fails with `wrong_season`. "Processing attempts (2)" lists both. Nothing else changes | Tester (2026-10-12): both failed attempts remained visible; the checksum and the original PDF were unchanged; no successful extraction was shown. The attempt count and numbering did not match the expected 'Attempt #2' and 'Processing attempts (2)'. | FAIL | Defect D1 (see Summary). Build 48d12ec. Recovered system evidence (after the fact; not a contemporaneous observation): the ledger numbers the retry as attempt #3 (21:49:27), not #2. The panel lists raw ledger lines (two per attempt), so it shows 4 entries for 2 attempts. |
 | 1.10 | Upload `no_year_2027.pdf` | Status **needs resolution**: the season could not be read. "Confirm this is the 2027 manual" is disabled until a note is typed |  | NOT TESTED |  |
 | 1.11 | Type a note, then Confirm | Processing restarts and succeeds. Identity shows `resolved` |  | NOT TESTED |  |
 | 1.12 | Upload `scanned.pdf` | Status **failed**, `unreadable_text`: only 0 of 3 pages have extractable text |  | NOT TESTED |  |
