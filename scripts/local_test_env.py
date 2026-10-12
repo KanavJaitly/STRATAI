@@ -3,6 +3,8 @@
     python -m scripts.local_test_env --print          # show the environment (no secrets)
     python -m scripts.local_test_env --serve           # run the API on http://127.0.0.1:8765 against stratai_test
     python -m scripts.local_test_env --serve --database stratai_test_2023 --port 8766   # 2023, kept in its own copy
+    python -m scripts.local_test_env --checklist-files DIR   # the SYNTHETIC PDFs docs/browser_acceptance_checklist.md uses
+    python -m scripts.local_test_env --cleanup-checklist     # remove what that checklist created in stratai_test
 
 **What it is:**
 - an API instance pointed at the isolated `stratai_test` copy (the test-database guard's rule), with the evaluated
@@ -60,15 +62,71 @@ def environment(database: str = "stratai_test") -> dict[str, str]:
     return {**PINS, "DATABASE_URL": url}
 
 
+CHECKLIST_ACTOR = "Checklist Tester"
+
+
+def write_checklist_files(directory: Path) -> list[Path]:
+    """The SYNTHETIC PDFs the browser checklist uploads (2026-10-12). They are not game manuals and never evidence."""
+    from tests.pdf_fixtures import make_pdf, manual_pages
+
+    files = {
+        "valid_2027.pdf": make_pdf(manual_pages(2027)),
+        "partial_2027.pdf": make_pdf([*manual_pages(2027)[:4], ""]),  # 3 topics missing, page 5 blank: 4 warnings
+        "wrong_season_2026.pdf": make_pdf(manual_pages(2026)),
+        "no_year_2027.pdf": make_pdf(["FIRST Robotics Competition SYNTHETICA\nGame Manual (no year printed)",
+                                      *manual_pages(2027)[1:]]),
+        "scanned.pdf": make_pdf(["", "", ""]),
+        "not_a_pdf.pdf": b"This is a text file with a .pdf name.\n",
+    }
+    directory.mkdir(parents=True, exist_ok=True)
+    written = []
+    for name, content in files.items():
+        (directory / name).write_bytes(content)
+        written.append(directory / name)
+    return written
+
+
+def cleanup_checklist(actor: str = CHECKLIST_ACTOR) -> dict[str, int]:
+    """Delete, in stratai_test only, the rows the checklist created under `actor` (any status), and the scratch
+    approval records that name `actor`. Nothing else is touched."""
+    import psycopg
+
+    url = environment("stratai_test")["DATABASE_URL"]
+    deleted: dict[str, int] = {}
+    with psycopg.connect(url) as conn, conn.cursor() as cursor:
+        cursor.execute("SELECT current_database()")
+        if cursor.fetchone()[0] != "stratai_test":
+            raise SystemExit("refusing: cleanup runs only on stratai_test")
+        for table, column in (("season_rulesets", "created_by"), ("game_spec_versions", "created_by"),
+                              ("game_manuals", "uploaded_by")):
+            cursor.execute(f"DELETE FROM {table} WHERE {column} = %s", (actor,))
+            deleted[table] = cursor.rowcount
+    records = SCRATCH / "approval_records"
+    deleted["scratch_approval_records"] = 0
+    for path in records.glob("*.json") if records.exists() else ():
+        if actor in path.read_text(encoding="utf-8"):
+            path.unlink()
+            deleted["scratch_approval_records"] += 1
+    return deleted
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--print", action="store_true", dest="show")
     parser.add_argument("--serve", action="store_true")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--database", choices=ALLOWED_DATABASES, default="stratai_test")
+    parser.add_argument("--checklist-files", type=Path, metavar="DIR")
+    parser.add_argument("--cleanup-checklist", action="store_true")
     args = parser.parse_args(argv)
+    if args.checklist_files:
+        for path in write_checklist_files(args.checklist_files):
+            print(path)
+    if args.cleanup_checklist:
+        print(cleanup_checklist())
     env = environment(args.database)
     if args.show:
+        print(f"DATABASE_NAME={args.database}")
         for key, value in env.items():
             print(f"{key}={'***' if key in ('DATABASE_URL', 'HUMAN_INPUTS_WRITE_TOKEN') else value}")
     if args.serve:
@@ -79,6 +137,8 @@ def main(argv: list[str] | None = None) -> int:
 
         from api import create_app
 
+        print(f"STRATAI local test API: database {args.database} (isolated copy), http://127.0.0.1:{args.port}",
+              flush=True)
         uvicorn.run(create_app(), host="127.0.0.1", port=args.port, log_level="warning")
     return 0
 

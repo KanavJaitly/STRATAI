@@ -223,9 +223,11 @@ which is tested.
 ### The local test environment
 
 ```
-python -m scripts.local_test_env --serve                                          # 2024-2026 + 2027 (stratai_test), :8765
-python -m scripts.local_test_env --serve --database stratai_test_2023 --port 8766 # 2023, its own copy
-cd frontend && VITE_API_BASE=http://127.0.0.1:8765 npm run dev
+# PowerShell, from the repository root; four terminals
+.venv\Scripts\python.exe -m scripts.local_test_env --serve                                           # API :8765 on stratai_test (2024-2026, 2027)
+.venv\Scripts\python.exe -m scripts.local_test_env --serve --database stratai_test_2023 --port 8766  # API :8766 on stratai_test_2023 (2023)
+cd frontend; $env:STRATAI_API_URL = 'http://127.0.0.1:8765'; npx vite --port 5173 --strictPort    # UI http://localhost:5173
+cd frontend; $env:STRATAI_API_URL = 'http://127.0.0.1:8766'; npx vite --port 5174 --strictPort    # UI http://localhost:5174 (2023)
 ```
 
 It pins:
@@ -234,6 +236,9 @@ It pins:
 - a scratch upload store, approval-record directory and write token.
 
 It refuses any database but the two isolated copies.
+
+The UI must reach the API through Vite's `/api` proxy (`STRATAI_API_URL`), not cross-origin with `VITE_API_BASE`. The
+API's CORS list deliberately does not admit the write-token header, so cross-origin writes (uploads, approvals) fail.
 
 **Why 2023 has its own copy.** `ml.ratings.provider.read_team_event_facts` reads every event in the database. With
 2023 in `stratai_test`, 2023 team-events became D13 prior-event candidates for:
@@ -290,6 +295,24 @@ browser automation (Playwright or similar) is installed in this project. A perso
 - opening a page reference in the browser's PDF viewer (`#page=N`);
 - the progress display during a long real manual;
 - keyboard navigation.
+
+The step-by-step list is `docs/browser_acceptance_checklist.md`. Browser acceptance is not claimed until a person has
+completed it.
+
+**Pre-acceptance pass (2026-10-12).** A headless-Chrome layout smoke check over the DevTools protocol covered 12 views
+at 1280 px and 390 px. It found no page-level horizontal scroll and no error alerts. It is a smoke check, not
+acceptance.
+
+Two real defects were fixed:
+- the manual's file endpoint sent `Content-Disposition: attachment`, so the browser downloaded the PDF and page links
+  (`#page=N`) could not open at the cited page;
+- a filename with a non-Latin-1 character (an en dash) made the download a 500.
+
+It is now `inline`, with an RFC 6266 ASCII fallback plus a UTF-8 `filename*` and `nosniff`
+(`tests/test_human_inputs.py`).
+
+The qualification forecast takes about 80-90 s for a 79-match event on the test machine (the frozen P5-M5 endpoint;
+not changed).
 
 **Run the live check:**
 ```
