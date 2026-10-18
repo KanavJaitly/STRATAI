@@ -1,8 +1,8 @@
 phase: 6
 branch: phase6/build (from main aab8fe1, the P6-Q0 baseline)
-status: IMPLEMENTATION COMPLETE TO THE LIMIT OF AVAILABLE INPUTS; Phase 6 NOT complete
+status: COMPLETE -- accepted by Kanav 2026-10-17 with P6-DM1 deferred (decisions/P6_PHASE_ACCEPTANCE_2026-10-17.md); merged to main in PR #30
 spec: docs/P6Milestones.md (P6-M0 FROZEN at 9964001; unchanged)
-done_means: {P6-DM1: NOT MET (blocked by required human input: P6-M1 rulesets), P6-DM2: MET (p6_m13_parity_audit_rerun1.json)}
+done_means: {P6-DM1: NOT MET, DEFERRED by the 2026-10-17 acceptance (blocked by required human input: P6-M1 rulesets), P6-DM2: MET (p6_m13_parity_audit_rerun1.json)}
 accepted: [P6-M0 frozen, P6-M4 implementation correctness, P6-M6 (a), P6-M7 optimization correctness, P6-M9, P6-M11, P6-M12 (rerun1), P6-M13 (rerun1), P6-M14]
 failed_d9: [P6-M10 gate (G2) -> baseline strategy odds not_validated; no redesign without Kanav's dated decision]
 failed_and_superseded: [P6-M12 run 1 (harness defect), P6-M13 run 1 (two demonstrated defects)] -- both kept

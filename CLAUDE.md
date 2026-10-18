@@ -176,6 +176,9 @@ observations gets no rating, never one synthesized from its scoring.
 
 ## Current Development Phase
 
+**Phase 7 (API Layer) is next.** Phase 6 was accepted as complete by Kanav on 2026-10-17, with P6-DM1 deferred
+(see the Phase 6 section below). Phase 7 starts by defining its milestones in `docs/P7Milestones.md`.
+
 **Phase 5 (2026-10-04): implementation checkpoint accepted by Kanav. Phase 5 is NOT complete.**
 - **Status:** P5-D3 adopted (live EPA in production); DM2 met; DM1 not met.
 - **Why it is incomplete:** DM1 awaits genuine human M8/M9 inputs, entered through the `frontend/` web app.
@@ -570,10 +573,10 @@ have been rated by two scouts, so defense_agreement measures match-to-match
 variance confounded with scout calibration, not inter-scout agreement. See
 docs/metrics_pipeline.md section 9.1.
 
-Phase 6 – Strategy & Alliance Selection Engines (implementation on branch `phase6/build`, 2026-10-05): **NOT
-complete.**
+Phase 6 – Strategy & Alliance Selection Engines (merged to main in PR #30): **COMPLETE, accepted by Kanav
+2026-10-17 with P6-DM1 deferred** (`.agent/phase6/decisions/P6_PHASE_ACCEPTANCE_2026-10-17.md`).
 - **P6-DM2 MET:** the parity audit (`.agent/phase6/results/p6_m13_parity_audit_rerun1.json`).
-- **P6-DM1 NOT MET:** it is blocked by required human input. The 2024–2026 season rulesets must be entered from
+- **P6-DM1 NOT MET (deferred):** it is blocked by required human input. The 2024–2026 season rulesets must be entered from
   the manuals and approved by a named, qualified human FRC-domain reviewer (`scripts/phase6_rulesets.py`; review
   control of 2026-10-07). Migration 0011 is applied to serving (2026-10-06, Kanav's approval); the three rulesets
   are stored `awaiting_review` and need that review
