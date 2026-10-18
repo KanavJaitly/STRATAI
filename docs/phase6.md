@@ -4,9 +4,9 @@ The specification is `docs/P6Milestones.md`, **frozen at P6-M0** (`9964001`). It
 `.agent/phase6/P6_M0_DECISIONS.md` (P6-A1 … A12 approved; P6-Q0 … Q13 decided). The implementation branch is
 `phase6/build`.
 
-**Phase 6 is NOT complete.**
+**Phase 6 is complete: accepted by Kanav on 2026-10-17 with P6-DM1 deferred** (`.agent/phase6/decisions/P6_PHASE_ACCEPTANCE_2026-10-17.md`).
 - **P6-DM2** (verifiably zero AI-odds inflation) is **met**.
-- **P6-DM1** (alliance selection on real past events) is **not met**. It is blocked by **required human input**: the
+- **P6-DM1** (alliance selection on real past events) is **not met, and deferred**. It is blocked by **required human input**: the
   P6-M1 season rulesets, entered from the game manuals and approved by a named reviewer. The whole playoff track
   and P6-M8 need them.
 
