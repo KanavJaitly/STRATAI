@@ -30,32 +30,55 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from starlette.requests import Request
 
+from api.contract import error_responses
 from api.dependencies import get_database, get_settings
-from api.errors import ApiError, ErrorResponse
+from api.errors import ApiError
+# The write-token mechanism moved to api.routes.common by P7-M5 (the coach-input writes use it too); these names
+# stay importable from here.
+from api.routes.common import (
+    CODE_WRITE_NOT_AUTHORIZED,
+    CODE_WRITES_DISABLED,
+    WRITE_TOKEN_HEADER,
+    problems_suffix,
+    require_writer,
+)
 from data import human_inputs as hi
 from data.config import Settings
 from database.connection import Database
 
-router = APIRouter(prefix="/human-inputs", tags=["human inputs (P5-M8/M9, DM1)"])
+# Every route can return 500 (P7-M1 (f)). A route whose input can fail validation also declares 422
+# validation_error, through _errors / _READ_ERRORS on the route itself.
+router = APIRouter(prefix="/human-inputs", tags=["human inputs (P5-M8/M9, DM1)"],
+                   responses=error_responses({}, validates_input=False))
 
-WRITE_TOKEN_HEADER = "X-StratAI-Write-Token"
-CODE_WRITES_DISABLED, CODE_WRITE_NOT_AUTHORIZED = "writes_disabled", "write_not_authorized"
 CODE_UNSUPPORTED_MEDIA_TYPE = "unsupported_media_type"
 _STATUS = {"invalid_input": HTTPStatus.UNPROCESSABLE_ENTITY, "not_found": HTTPStatus.NOT_FOUND,
            "invalid_state": HTTPStatus.CONFLICT, "conflict": HTTPStatus.CONFLICT,
            "prerequisite_missing": HTTPStatus.CONFLICT, "spec_incomplete": HTTPStatus.CONFLICT,
            "storage_integrity": HTTPStatus.CONFLICT}
-_ERRORS = {HTTPStatus.NOT_FOUND: {"model": ErrorResponse}, HTTPStatus.CONFLICT: {"model": ErrorResponse},
-           HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse}, HTTPStatus.FORBIDDEN: {"model": ErrorResponse}}
+
+
+def _errors(*codes: str, write: bool = True, extra: dict[int, list[str]] | None = None) -> dict[int | str, Any]:
+    """Declared error responses (P7-M1 (f)): the data.human_inputs codes the route's function can raise, mapped
+    through _STATUS exactly as _error maps them, plus the write-token refusals on a write route."""
+    declared: dict[int, list[str]] = {}
+    for code in codes:
+        declared.setdefault(int(_STATUS.get(code, HTTPStatus.UNPROCESSABLE_ENTITY)), []).append(code)
+    if write:
+        declared.setdefault(int(HTTPStatus.FORBIDDEN), []).extend([CODE_WRITES_DISABLED, CODE_WRITE_NOT_AUTHORIZED])
+    for status, more in (extra or {}).items():
+        declared.setdefault(int(status), []).extend(more)
+    return error_responses(declared)
+
+
+# A read route whose only possible error is a malformed parameter (e.g. a non-integer season).
+_READ_ERRORS = error_responses({})
 
 
 def _error(exc: hi.HumanInputError) -> ApiError:
     """The envelope's message carries the field-level problems: api/errors.py allow-lists `details` to request
     validation only, and that is not widened here."""
-    message = str(exc)
-    if isinstance(exc.details, list) and exc.details:
-        message += " -- " + "; ".join(f"{d.get('field')}: {d.get('message')}" for d in exc.details[:12]
-                                      if isinstance(d, dict))
+    message = str(exc) + problems_suffix(exc.details)
     return ApiError(status_code=_STATUS.get(exc.code, HTTPStatus.UNPROCESSABLE_ENTITY), code=exc.code,
                     message=message)
 
@@ -65,18 +88,6 @@ def _call(function, *args, **kwargs):
         return function(*args, **kwargs)
     except hi.HumanInputError as exc:
         raise _error(exc) from exc
-
-
-def require_writer(request: Request, settings: Settings = Depends(get_settings)) -> None:
-    """Fail closed: no configured token means no writes."""
-    expected = settings.human_inputs_write_token
-    if not expected:
-        raise ApiError(status_code=HTTPStatus.FORBIDDEN, code=CODE_WRITES_DISABLED,
-                       message="Writes are disabled: no human_inputs_write_token is configured.")
-    supplied = request.headers.get(WRITE_TOKEN_HEADER, "")
-    if not hmac.compare_digest(supplied.encode("utf-8"), expected.encode("utf-8")):
-        raise ApiError(status_code=HTTPStatus.FORBIDDEN, code=CODE_WRITE_NOT_AUTHORIZED,
-                       message=f"A valid {WRITE_TOKEN_HEADER} header is required for this write.")
 
 
 # --- request bodies ------------------------------------------------------------------------------
@@ -129,7 +140,11 @@ class EstablishBody(BaseModel):
 # --- game manuals and specs ------------------------------------------------------------------------
 
 
-@router.post("/game-manuals", status_code=HTTPStatus.CREATED, responses=_ERRORS,
+@router.post("/game-manuals", status_code=HTTPStatus.CREATED,
+             responses={HTTPStatus.OK: {"description": "The same bytes were already stored for this season: the "
+                                                      "existing manual, never a duplicate."},
+                        **_errors("invalid_input", "storage_integrity",
+                                  extra={HTTPStatus.UNSUPPORTED_MEDIA_TYPE: [CODE_UNSUPPORTED_MEDIA_TYPE]})},
              summary="Upload an official game manual (PDF, raw request body)",
              description="Stored write-once under its sha256 with provenance. The same bytes for the same season "
                          "return the existing manual (200), never a duplicate. Uploading validates nothing.")
@@ -155,12 +170,13 @@ def _json(value: Any) -> str:
     return json.dumps(jsonable_encoder(value))
 
 
-@router.get("/game-manuals", summary="Uploaded game manuals (metadata and checksums)")
+@router.get("/game-manuals", responses=_READ_ERRORS, summary="Uploaded game manuals (metadata and checksums)")
 def get_manuals(season: int | None = Query(default=None), database: Database = Depends(get_database)) -> Any:
     return [{k: v for k, v in row.items() if k != "storage_path"} for row in hi.list_manuals(database, season)]
 
 
-@router.get("/game-manuals/{manual_id}/file", responses=_ERRORS, summary="Download an uploaded manual's original PDF",
+@router.get("/game-manuals/{manual_id}/file", responses=_errors("not_found", "storage_integrity", write=False),
+            summary="Download an uploaded manual's original PDF",
             response_class=Response)
 def download_manual(manual_id: int = Path(ge=1), database: Database = Depends(get_database)) -> Response:
     row, data = _call(hi.manual_file, database, manual_id)
@@ -169,17 +185,17 @@ def download_manual(manual_id: int = Path(ge=1), database: Database = Depends(ge
                              "X-Content-SHA256": row["content_sha256"]})
 
 
-@router.get("/seasons/{season}/workflow", summary="The season's game-manual and spec workflow state")
+@router.get("/seasons/{season}/workflow", responses=_READ_ERRORS, summary="The season's game-manual and spec workflow state")
 def get_workflow(season: int = Path(ge=1992), database: Database = Depends(get_database)) -> Any:
     return hi.season_workflow(database, season)
 
 
-@router.get("/seasons/{season}/specs", summary="Every structured-spec version for a season (immutable)")
+@router.get("/seasons/{season}/specs", responses=_READ_ERRORS, summary="Every structured-spec version for a season (immutable)")
 def get_specs(season: int = Path(ge=1992), database: Database = Depends(get_database)) -> Any:
     return hi.list_specs(database, season)
 
 
-@router.post("/seasons/{season}/specs", status_code=HTTPStatus.CREATED, responses=_ERRORS,
+@router.post("/seasons/{season}/specs", status_code=HTTPStatus.CREATED, responses=_errors("invalid_input"),
              summary="Save a structured-spec draft as a new version",
              description="Never overwrites: every save is a new version. Incomplete drafts are kept with their "
                          "validation errors.")
@@ -189,13 +205,15 @@ def post_spec(body: SpecDraftBody, season: int = Path(ge=1992), database: Databa
                  manual_id=body.manual_id, based_on_id=body.based_on_id)
 
 
-@router.post("/specs/{spec_id}/submit", responses=_ERRORS, summary="Send a complete draft for human review")
+@router.post("/specs/{spec_id}/submit", responses=_errors("not_found", "invalid_state", "spec_incomplete"),
+             summary="Send a complete draft for human review")
 def post_submit(spec_id: int = Path(ge=1), database: Database = Depends(get_database),
                 _: None = Depends(require_writer)) -> Any:
     return _call(hi.submit_spec, database, spec_id)
 
 
-@router.post("/specs/{spec_id}/review", responses=_ERRORS, summary="Approve, or return for changes (named reviewer)")
+@router.post("/specs/{spec_id}/review", responses=_errors("invalid_input", "not_found", "invalid_state"),
+             summary="Approve, or return for changes (named reviewer)")
 def post_review(body: ReviewBody, spec_id: int = Path(ge=1), database: Database = Depends(get_database),
                 _: None = Depends(require_writer)) -> Any:
     return _call(hi.review_spec, database, spec_id, reviewer=body.reviewer, approve=body.approve, note=body.note)
@@ -204,31 +222,34 @@ def post_review(body: ReviewBody, spec_id: int = Path(ge=1), database: Database 
 # --- capability profiles -------------------------------------------------------------------------
 
 
-@router.get("/capability-profiles", summary="Team capability profiles (latest version of each)")
+@router.get("/capability-profiles", responses=_READ_ERRORS, summary="Team capability profiles (latest version of each)")
 def get_profiles(include_archived: bool = Query(default=False), database: Database = Depends(get_database)) -> Any:
     return hi.list_profiles(database, include_archived)
 
 
-@router.get("/capability-profiles/{profile_key}/history", summary="Every version of one profile")
+@router.get("/capability-profiles/{profile_key}/history", responses=_READ_ERRORS, summary="Every version of one profile")
 def get_profile_history(profile_key: str = Path(min_length=1), database: Database = Depends(get_database)) -> Any:
     return hi.profile_history(database, profile_key)
 
 
-@router.post("/capability-profiles", status_code=HTTPStatus.CREATED, responses=_ERRORS,
+@router.post("/capability-profiles", status_code=HTTPStatus.CREATED,
+             responses=_errors("invalid_input", "not_found", "invalid_state", "conflict"),
              summary="Create a profile (landed raw-first, then validated)")
 def post_profile(body: ProfileBody, database: Database = Depends(get_database), _: None = Depends(require_writer)) -> Any:
     return _call(hi.save_profile, database, profile_key=body.profile_key, payload=body.payload,
                  created_by=body.created_by, new=True)
 
 
-@router.put("/capability-profiles/{profile_key}", responses=_ERRORS, summary="Edit a profile (a new version)")
+@router.put("/capability-profiles/{profile_key}",
+            responses=_errors("invalid_input", "not_found", "invalid_state", "conflict"), summary="Edit a profile (a new version)")
 def put_profile(body: ProfileEditBody, profile_key: str = Path(min_length=1), database: Database = Depends(get_database),
                 _: None = Depends(require_writer)) -> Any:
     return _call(hi.save_profile, database, profile_key=profile_key, payload=body.payload,
                  created_by=body.created_by, new=False)
 
 
-@router.post("/capability-profiles/{profile_key}/duplicate", status_code=HTTPStatus.CREATED, responses=_ERRORS,
+@router.post("/capability-profiles/{profile_key}/duplicate", status_code=HTTPStatus.CREATED,
+             responses=_errors("invalid_input", "not_found", "invalid_state", "conflict"),
              summary="Copy a profile under a new key")
 def post_duplicate(body: DuplicateBody, profile_key: str = Path(min_length=1),
                    database: Database = Depends(get_database), _: None = Depends(require_writer)) -> Any:
@@ -236,13 +257,15 @@ def post_duplicate(body: DuplicateBody, profile_key: str = Path(min_length=1),
                  created_by=body.created_by)
 
 
-@router.post("/capability-profiles/{profile_key}/archive", responses=_ERRORS, summary="Archive a profile")
+@router.post("/capability-profiles/{profile_key}/archive",
+             responses=_errors("invalid_input", "not_found", "invalid_state"), summary="Archive a profile")
 def post_archive(body: ArchiveBody, profile_key: str = Path(min_length=1), database: Database = Depends(get_database),
                  _: None = Depends(require_writer)) -> Any:
     return _call(hi.archive_profile, database, profile_key=profile_key, archived_by=body.archived_by)
 
 
-@router.get("/capability-profiles/{profile_key}/recommendation", responses=_ERRORS,
+@router.get("/capability-profiles/{profile_key}/recommendation",
+            responses=_errors("not_found", "prerequisite_missing", write=False),
             summary="The deterministic P5-M9 recommendation (heuristic_not_validated_against_outcomes)")
 def get_recommendation(profile_key: str = Path(min_length=1), season: int = Query(ge=1992),
                        database: Database = Depends(get_database)) -> Any:
@@ -259,32 +282,33 @@ def get_design_examples() -> Any:
     return [example.__dict__ for example in load_reference()]
 
 
-@router.get("/seasons/{season}/artifacts", summary="DM1 review artifacts for a season (every version)")
+@router.get("/seasons/{season}/artifacts", responses=_READ_ERRORS, summary="DM1 review artifacts for a season (every version)")
 def get_artifacts(season: int = Path(ge=1992), kind: str | None = Query(default=None),
                   database: Database = Depends(get_database)) -> Any:
     return hi.list_artifacts(database, season, kind)
 
 
-@router.post("/seasons/{season}/artifacts", status_code=HTTPStatus.CREATED, responses=_ERRORS,
+@router.post("/seasons/{season}/artifacts", status_code=HTTPStatus.CREATED,
+             responses=_errors("invalid_input", "prerequisite_missing"),
              summary="Submit a codebook, coding, consensus coding, action map, rubric or mentor review")
 def post_artifact(body: ArtifactBody, season: int = Path(ge=1992), database: Database = Depends(get_database),
                   _: None = Depends(require_writer)) -> Any:
     return _call(hi.submit_artifact, database, kind=body.kind, season=season, author=body.author, payload=body.payload)
 
 
-@router.post("/artifacts/{artifact_id}/establish", responses=_ERRORS,
+@router.post("/artifacts/{artifact_id}/establish", responses=_errors("invalid_input", "not_found", "invalid_state"),
              summary="A named person establishes a submitted codebook, consensus coding, action map or rubric")
 def post_establish(body: EstablishBody, artifact_id: int = Path(ge=1), database: Database = Depends(get_database),
                    _: None = Depends(require_writer)) -> Any:
     return _call(hi.establish_artifact, database, artifact_id, established_by=body.established_by, note=body.note)
 
 
-@router.get("/seasons/{season}/kappa", summary="Codebook agreement (Cohen's kappa) under P5-D13's gate")
+@router.get("/seasons/{season}/kappa", responses=_READ_ERRORS, summary="Codebook agreement (Cohen's kappa) under P5-D13's gate")
 def get_kappa(season: int = Path(ge=1992), database: Database = Depends(get_database)) -> Any:
     return hi.kappa_status(database, season)
 
 
-@router.get("/seasons/{season}/dm1-status", summary="What DM1 still needs (informational; never marks DM1 met)")
+@router.get("/seasons/{season}/dm1-status", responses=_READ_ERRORS, summary="What DM1 still needs (informational; never marks DM1 met)")
 def get_dm1_status(season: int = Path(ge=1992), database: Database = Depends(get_database)) -> Any:
     from scripts.phase5_done_means import dm1
 

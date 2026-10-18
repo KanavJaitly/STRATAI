@@ -62,7 +62,8 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000, ge=1, le=65535)
     # Empty by default so routes are mounted at exactly the paths the milestone
     # docs write them at (Milestone 13's is /teams/{team_number}/events/{event_key}/metrics).
-    # Set API_PREFIX when mounting behind a gateway that expects, say, /api/v1.
+    # Set API_PREFIX only to mount behind a gateway path. Phase 7 keeps paths unversioned (P7-Q6): the contract
+    # lock (docs/api_contract_lock.json), not a version prefix, is the stability guarantee.
     api_prefix: str = ""
     # NoDecode is required, not decorative: pydantic-settings treats a list[str]
     # field as complex and JSON-decodes the environment value *before* any
@@ -94,6 +95,20 @@ class Settings(BaseSettings):
     ml_win_prob_model_type: Literal["win_prob_xgb_calibrated"] = "win_prob_xgb_calibrated"
     ml_win_prob_model_version_tag: str | None = None
     ml_win_prob_model_sha256: str | None = None
+    # P7-M5: the P6-M10 strategy-conditional outcome model the strategy endpoints serve. Same pin pattern (type,
+    # version tag, artifact sha256); unpinned means model_not_loaded. It is always loaded through
+    # ml.strategy.outcome.load_registered_strategy_model, so its baseline status is the recorded p6_m10_gate_failed.
+    ml_strategy_model_type: Literal["strategy_outcome_component"] = "strategy_outcome_component"
+    ml_strategy_model_version_tag: str | None = None
+    ml_strategy_model_sha256: str | None = None
+    # P7-M6: the playoff models the alliance-selection pick list needs once its PX gates have passed (P6-M2 PX-1,
+    # P6-M3 PX-2): the PX-1 model in the registry (playoff_px1/<tag>/model.json) and the PX-2 calibrator file, each
+    # pinned with its sha256. Unpinned (the state while PX-1/PX-2 have not run) means model_not_loaded; the pick
+    # list refuses earlier anyway until the gates pass.
+    ml_px1_version_tag: str | None = None
+    ml_px1_sha256: str | None = None
+    ml_px2_calibrator_path: str | None = None
+    ml_px2_calibrator_sha256: str | None = None
     # EPA source for Phase 4 features (ml.ratings.provider). The default is the evaluated
     # production configuration, D18: Statbotics primary from a verified snapshot
     # (STATBOTICS_SNAPSHOT_DIR), STRATAI fallback for 2026iscmp only (STRATAI_EPA_CHAIN).

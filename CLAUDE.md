@@ -176,8 +176,36 @@ observations gets no rating, never one synthesized from its scoring.
 
 ## Current Development Phase
 
-**Phase 7 (API Layer) is next.** Phase 6 was accepted as complete by Kanav on 2026-10-17, with P6-DM1 deferred
-(see the Phase 6 section below). Phase 7 starts by defining its milestones in `docs/P7Milestones.md`.
+**Phase 7 (API Layer): ACCEPTED CONDITIONALLY at phase level by Sven Morais, 2026-10-18**
+(`.agent/phase7/decisions/P7_PHASE_ACCEPTANCE_2026-10-18.md`). This is NOT full milestone completion: P7-M8 and the
+environment-of-record suite portion of P7-M9 are deferred, and P7-DM1 is not met. MASTER_BUILD's gate is not
+satisfied on its own terms; the phase is accepted by the human decision, with that item deferred, as Phase 6 was.
+- **Done:** M0 frozen; M1–M7 accepted. M8 (real examples) is BLOCKED (environment, P7-Q5): the tooling and runbook
+  are built, and no real example exists.
+- **M9:** docs and audits are done, as far as verified locally. The environment-of-record suite is DEFERRED
+  (BLOCKED). Phase acceptance is recorded (conditional).
+- **Done-means:** P7-DM1 is NOT met: there are no examples, and alliance selection is refusal-only, deferred with
+  P6-DM1. P7-DM2 is a checkable control: `docs/api_contract_lock.json` locks 24 operations and
+  `python -m scripts.phase7_contract_lock check` runs it. It is not yet a committed, routinely run check.
+- **Last full suite (isolated stratai_test, not the environment of record):** 2,483 passed, 5 failed, 5 skipped,
+  1 xfailed; pytest exit 1. The 5 failures are the known baseline tests, with 0 regressions. The xfail is the strict
+  P7-M8 completeness check. Type check and lint are not configured.
+- **Playoff label decided:** P7-D7, approved by Sven Morais on 2026-10-18
+  (`.agent/phase7/decisions/P7_D7_PLAYOFF_LABEL.md`). The pick list's event-level values are
+  `validated_playoff_success`, and `validated_playoff` is reserved for P6 single playoff-match probabilities after
+  PX-2. Applied and relocked; both frozen specs are unchanged.
+- **Still open:**
+  1. commit authorization: nothing is committed on branch `phase7/m0-spec`;
+  2. the environment of record (model registry folders, a serving DB through migration 0011, the production EPA
+     config), which unblocks P7-M8 and the deferred suite.
+- **Open Phase 6 dependencies:**
+  - approve the P6-M1 rulesets and run the PX gates (alliance-selection output);
+  - have the PX gate records name the evaluated artifacts.
+- **Tracked, not fixed in Phase 7:** the platform-hardening gaps (Phase 10: body-size limit, DB timeouts, readiness,
+  caches) and the Phase 5 game-manual filename 500. They are in the risk register.
+- **Do not start Phase 8 or freeze frontend types** until the work is committed with authorization, and Phase 8
+  is explicitly instructed.
+- **Records:** `.agent/phase7/PHASE_STATUS.md`, `PHASE_ACCEPTANCE.md` (risk register R1–R17), `docs/phase7.md`.
 
 **Phase 5 (2026-10-04): implementation checkpoint accepted by Kanav. Phase 5 is NOT complete.**
 - **Status:** P5-D3 adopted (live EPA in production); DM2 met; DM1 not met.

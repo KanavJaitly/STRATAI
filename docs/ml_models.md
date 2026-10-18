@@ -152,6 +152,15 @@ The four routes:
 - `GET /predictions/events/{event_key}/ranking`
 - `POST /predictions/alliance-synergy`
 
+Phase 7 (P7-M3, 2026-10-17; `docs/phase7.md`) changed these routes additively only:
+- Both POST routes take an optional `as_of` query parameter (ISO-8601 with an offset; default now; P7-Q7). It may
+  not be in the future (P7-D1, `invalid_as_of`): a future `as_of` would treat an in-progress event as a completed
+  prior event.
+- Win-probability responses also carry the shared `win_probability` object (P7-Q3), with the same value.
+- The ranking route is **deprecated** (P7-Q2): the canonical rankings surface is `GET /events/{event_key}/analysis`.
+  The ranking route keeps working unchanged.
+- The display rule now lives in `ml/calibration/display.py`, still importable from `api.routes.predictions`.
+
 ### Models served
 
 `api/ml_loading.py` serves only the D18 models of record.
@@ -204,6 +213,8 @@ Every response carries `epa` (source, `evaluated_configuration`, snapshot proven
 - `model_not_loaded`
 - `epa_source_not_loaded`
 - `epa_source_incomplete` — the D18 source lacks a valid row for a required prior event; it never silently uses an older one
+- `epa_source_pending` (422) — with the adopted live source (P5-D3), a required prior event ended less than 72 h ago and Statbotics has not processed it yet; no older event is substituted (`api/routes/common.py`). Documented 2026-10-17 by P7-M1, which declared every route's error codes
+- `invalid_as_of` (422) — the optional `as_of` on the POST routes is not ISO-8601 or has no timezone offset (P7-M3)
 - `event_not_found`
 - `match_not_found`
 - `team_not_found`

@@ -16,15 +16,25 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from api.errors import register_exception_handlers
+from api.examples import install_examples
 from api.middleware import RequestLoggingMiddleware
-from api.ml_loading import load_pinned_ranking_model, load_pinned_win_prob_model
+from api.ml_loading import (
+    load_pinned_ranking_model,
+    load_pinned_strategy_model,
+    load_pinned_win_prob_model,
+    load_playoff_models,
+)
 from api.request_id import REQUEST_ID_HEADER
+from api.routes.alliance_selection import router as alliance_selection_router
+from api.routes.discovery import router as discovery_router
 from api.routes.event_analysis import router as event_analysis_router
 from api.routes.health import router as health_router
 from api.routes.human_inputs import router as human_inputs_router
 from api.routes.metrics import router as metrics_router
 from api.routes.predictions import router as predictions_router
+from api.routes.pre_match_report import router as pre_match_report_router
 from api.routes.qualification_forecast import router as qualification_forecast_router
+from api.routes.strategy import router as strategy_router
 from api.routes.strength import router as strength_router
 from data.config import Settings
 from database.connection import Database, DatabaseConfig
@@ -33,7 +43,8 @@ from database.connection import Database, DatabaseConfig
 logger = logging.getLogger(__name__)
 
 API_TITLE = "StratAI API"
-API_DESCRIPTION = "FRC strategy platform API. Phase 3: team metrics. Phase 4: ML predictions."
+API_DESCRIPTION = ("FRC strategy platform API: team metrics, win probability, rankings, event analysis, discovery, match "
+                   "strategy and the Phase 5 human-input workflows. Contracts and their locks: docs/phase7.md.")
 API_VERSION = "0.1.0"
 
 # No authentication exists yet, so credentialed cross-origin requests are not
@@ -84,6 +95,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # fails its checks, which must not fail startup (see api.ml_loading).
     app.state.ranking_model = load_pinned_ranking_model(settings)
     app.state.win_prob_model = load_pinned_win_prob_model(settings)
+    app.state.strategy_model = load_pinned_strategy_model(settings)  # P7-M5: the P6-M10 model, or None
+    app.state.playoff_models = load_playoff_models(settings)  # P7-M6: PX-1 + PX-2, or None
     # The EPA source reads the database (and, for D18, verifies its snapshot), so it is
     # loaded lazily on first use by api.dependencies.get_epa_source, never at startup:
     # the API still boots with PostgreSQL down.
@@ -119,6 +132,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(event_analysis_router, prefix=settings.api_prefix)
     app.include_router(qualification_forecast_router, prefix=settings.api_prefix)
     app.include_router(human_inputs_router, prefix=settings.api_prefix)
+    app.include_router(discovery_router, prefix=settings.api_prefix)  # Phase 7 (P7-M4, P7-Q8)
+    app.include_router(strategy_router, prefix=settings.api_prefix)  # Phase 7 (P7-M5)
+    app.include_router(alliance_selection_router, prefix=settings.api_prefix)  # Phase 7 (P7-M6)
+    app.include_router(pre_match_report_router, prefix=settings.api_prefix)  # Phase 7 (P7-M7)
+
+    # Captured request/response examples (docs/api_examples/, P7-Q4) appear in the OpenAPI document. They are
+    # documentation only: the locked response shapes ignore them.
+    install_examples(app, prefix=settings.api_prefix)
 
     logger.info(
         "Application created: env=%s prefix=%r cors_origins=%s",

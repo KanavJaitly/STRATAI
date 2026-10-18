@@ -1,0 +1,3221 @@
+{
+ "analysis_after_switch": {
+  "body": {
+   "as_of": "2026-03-01T10:01:00Z",
+   "captain_candidates": {
+    "evidence": "Captain hit rate at the switch point: 0.4255 under the policy vs 0.4207 for raw EPA; paired 95% CI [-0.0126, 0.0198] includes 0, so no improvement over raw EPA is claimed (P5-M4 (c)).",
+    "team_numbers": [
+     998402,
+     998404,
+     998401,
+     998405,
+     998403,
+     998406
+    ],
+    "validation_status": "validated_as_measured"
+   },
+   "epa": {
+    "adoption": null,
+    "epa_source": "statbotics",
+    "evaluated_configuration": false,
+    "provenance": {
+     "selection": "D13 EPA_SOURCE_SQL",
+     "source": "statbotics",
+     "table": "team_event_stats"
+    },
+    "validation_flags": []
+   },
+   "event_key": "9984zzzevent",
+   "ordering": {
+    "evidence": "M5 v2 after the event switch point, measured once (P5-M4 (b), .agent/phase5/results/p5_m4_event_analysis.json): mean Spearman 0.6138 vs raw EPA 0.5955 at the same snapshot; paired difference +0.0183, event-bootstrap 95% CI [0.0082, 0.0288], 208 events.",
+    "model": "ranking_xgb_v2",
+    "switch_point_passed": true,
+    "switch_time": "2026-03-01T05:00:00-05:00",
+    "teams": [
+     {
+      "epa_source_event_key": "9984zzzprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "rank": 1,
+      "score": 49.001598,
+      "team_number": 998402
+     },
+     {
+      "epa_source_event_key": "9984zzzprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "rank": 2,
+      "score": 39.001596,
+      "team_number": 998404
+     },
+     {
+      "epa_source_event_key": "9984zzzprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "rank": 3,
+      "score": 29.001599,
+      "team_number": 998401
+     },
+     {
+      "epa_source_event_key": "9984zzzprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "rank": 4,
+      "score": 19.001595000000002,
+      "team_number": 998405
+     },
+     {
+      "epa_source_event_key": "9984zzzprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "rank": 5,
+      "score": 9.001597,
+      "team_number": 998403
+     },
+     {
+      "epa_source_event_key": null,
+      "epa_source_state": "withheld_no_prior_event",
+      "epa_value_source": null,
+      "rank": 6,
+      "score": -0.998406,
+      "team_number": 998406
+     }
+    ],
+    "validation_status": "validated_as_measured"
+   },
+   "ranking_model_sha256": "stub-ranking",
+   "strongest_teams": {
+    "evidence": "M5 v2 after the event switch point, measured once (P5-M4 (b), .agent/phase5/results/p5_m4_event_analysis.json): mean Spearman 0.6138 vs raw EPA 0.5955 at the same snapshot; paired difference +0.0183, event-bootstrap 95% CI [0.0082, 0.0288], 208 events. Ordering only: no playoff or alliance-success probability is served (unvalidated; Phase 6).",
+    "team_numbers": [
+     998402,
+     998404,
+     998401,
+     998405,
+     998403,
+     998406
+    ],
+    "validation_status": "validated_as_measured"
+   },
+   "team_comparison": {
+    "teams": [
+     {
+      "as_of": "2026-03-01T10:01:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzprior"
+        },
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzevent"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "endgame": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "epa_source_state": "current",
+       "epa_value_source": "statbotics",
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": "9984zzzprior",
+       "teleop": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "total": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 30.0
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": null
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 2.0
+       },
+       "average_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "sd",
+         "reason": null,
+         "value": 0.5
+        },
+        "value": 51.5
+       },
+       "bad_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "consistency_rating": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 99.02912621359224
+       },
+       "good_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "matches_considered": 2,
+       "reliability_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 100.0
+       },
+       "score_stddev": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.5
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998401
+     },
+     {
+      "as_of": "2026-03-01T10:01:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzprior"
+        },
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzevent"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "endgame": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "epa_source_state": "current",
+       "epa_value_source": "statbotics",
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": "9984zzzprior",
+       "teleop": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "total": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 50.0
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": null
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 2.0
+       },
+       "average_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "sd",
+         "reason": null,
+         "value": 0.5
+        },
+        "value": 51.5
+       },
+       "bad_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "consistency_rating": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 99.02912621359224
+       },
+       "good_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "matches_considered": 2,
+       "reliability_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 100.0
+       },
+       "score_stddev": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.5
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998402
+     },
+     {
+      "as_of": "2026-03-01T10:01:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzprior"
+        },
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzevent"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "endgame": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "epa_source_state": "current",
+       "epa_value_source": "statbotics",
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": "9984zzzprior",
+       "teleop": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "total": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 10.0
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": null
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 2.0
+       },
+       "average_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "sd",
+         "reason": null,
+         "value": 0.5
+        },
+        "value": 51.5
+       },
+       "bad_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "consistency_rating": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 99.02912621359224
+       },
+       "good_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "matches_considered": 2,
+       "reliability_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 100.0
+       },
+       "score_stddev": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.5
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998403
+     },
+     {
+      "as_of": "2026-03-01T10:01:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzprior"
+        },
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzevent"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "endgame": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "epa_source_state": "current",
+       "epa_value_source": "statbotics",
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": "9984zzzprior",
+       "teleop": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "total": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 40.0
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": null
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 2.0
+       },
+       "average_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "sd",
+         "reason": null,
+         "value": 0.0
+        },
+        "value": 40.0
+       },
+       "bad_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "consistency_rating": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 100.0
+       },
+       "good_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "matches_considered": 2,
+       "reliability_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 100.0
+       },
+       "score_stddev": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998404
+     },
+     {
+      "as_of": "2026-03-01T10:01:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzprior"
+        },
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzevent"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "endgame": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "epa_source_state": "current",
+       "epa_value_source": "statbotics",
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": "9984zzzprior",
+       "teleop": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "total": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 20.0
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": null
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 2.0
+       },
+       "average_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "sd",
+         "reason": null,
+         "value": 0.0
+        },
+        "value": 40.0
+       },
+       "bad_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "consistency_rating": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 100.0
+       },
+       "good_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "matches_considered": 2,
+       "reliability_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 100.0
+       },
+       "score_stddev": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998405
+     },
+     {
+      "as_of": "2026-03-01T10:01:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzevent"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": "no_prior_concluded_event_epa",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": null
+       },
+       "endgame": {
+        "absent_reason": "no_prior_concluded_event_epa",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": null
+       },
+       "epa_source_state": "withheld_no_prior_event",
+       "epa_value_source": null,
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": null,
+       "teleop": {
+        "absent_reason": "no_prior_concluded_event_epa",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": null
+       },
+       "total": {
+        "absent_reason": "no_prior_concluded_event_epa",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": "no_prior_concluded_event_epa"
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 2.0
+       },
+       "average_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "sd",
+         "reason": null,
+         "value": 0.0
+        },
+        "value": 40.0
+       },
+       "bad_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "consistency_rating": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 100.0
+       },
+       "good_day_count": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "matches_considered": 2,
+       "reliability_score": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 100.0
+       },
+       "score_stddev": {
+        "absent_reason": null,
+        "n": 2,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": 0.0
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998406
+     }
+    ],
+    "validation_status": "descriptive"
+   }
+  },
+  "status": 200
+ },
+ "analysis_pre_event": {
+  "body": {
+   "as_of": "2026-03-01T09:00:00Z",
+   "captain_candidates": {
+    "evidence": "Captain hit rate (top 8 vs actual alliance captains), pre-event: 0.4207 (95% CI 0.4056-0.4357), 208 events (P5-M4 (c)).",
+    "team_numbers": [
+     998402,
+     998404,
+     998401,
+     998405,
+     998403,
+     998406
+    ],
+    "validation_status": "validated_as_measured"
+   },
+   "epa": {
+    "adoption": null,
+    "epa_source": "statbotics",
+    "evaluated_configuration": false,
+    "provenance": {
+     "selection": "D13 EPA_SOURCE_SQL",
+     "source": "statbotics",
+     "table": "team_event_stats"
+    },
+    "validation_flags": []
+   },
+   "event_key": "9984zzzevent",
+   "ordering": {
+    "evidence": "Raw EPA (D18 M4 baseline): mean per-event Spearman 0.5955 against final qualification rank, held-out 2026, 208 events; pre-event orderings included.",
+    "model": "raw_epa",
+    "switch_point_passed": false,
+    "switch_time": "2026-03-01T05:00:00-05:00",
+    "teams": [
+     {
+      "epa_source_event_key": "9984zzzprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "rank": 1,
+      "score": 50.0,
+      "team_number": 998402
+     },
+     {
+      "epa_source_event_key": "9984zzzprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "rank": 2,
+      "score": 40.0,
+      "team_number": 998404
+     },
+     {
+      "epa_source_event_key": "9984zzzprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "rank": 3,
+      "score": 30.0,
+      "team_number": 998401
+     },
+     {
+      "epa_source_event_key": "9984zzzprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "rank": 4,
+      "score": 20.0,
+      "team_number": 998405
+     },
+     {
+      "epa_source_event_key": "9984zzzprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "rank": 5,
+      "score": 10.0,
+      "team_number": 998403
+     },
+     {
+      "epa_source_event_key": null,
+      "epa_source_state": "withheld_no_prior_event",
+      "epa_value_source": null,
+      "rank": 6,
+      "score": null,
+      "team_number": 998406
+     }
+    ],
+    "validation_status": "validated"
+   },
+   "ranking_model_sha256": null,
+   "strongest_teams": {
+    "evidence": "Raw EPA (D18 M4 baseline): mean per-event Spearman 0.5955 against final qualification rank, held-out 2026, 208 events; pre-event orderings included. Ordering only: no playoff or alliance-success probability is served (unvalidated; Phase 6).",
+    "team_numbers": [
+     998402,
+     998404,
+     998401,
+     998405,
+     998403,
+     998406
+    ],
+    "validation_status": "validated"
+   },
+   "team_comparison": {
+    "teams": [
+     {
+      "as_of": "2026-03-01T09:00:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzprior"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "endgame": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "epa_source_state": "current",
+       "epa_value_source": "statbotics",
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": "9984zzzprior",
+       "teleop": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "total": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 30.0
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": null
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "average_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "no_completed_matches_before_as_of",
+         "value": null
+        },
+        "value": null
+       },
+       "bad_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "consistency_rating": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "good_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "matches_considered": 0,
+       "reliability_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "score_stddev": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998401
+     },
+     {
+      "as_of": "2026-03-01T09:00:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzprior"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "endgame": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "epa_source_state": "current",
+       "epa_value_source": "statbotics",
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": "9984zzzprior",
+       "teleop": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "total": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 50.0
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": null
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "average_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "no_completed_matches_before_as_of",
+         "value": null
+        },
+        "value": null
+       },
+       "bad_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "consistency_rating": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "good_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "matches_considered": 0,
+       "reliability_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "score_stddev": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998402
+     },
+     {
+      "as_of": "2026-03-01T09:00:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzprior"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "endgame": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "epa_source_state": "current",
+       "epa_value_source": "statbotics",
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": "9984zzzprior",
+       "teleop": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "total": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 10.0
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": null
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "average_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "no_completed_matches_before_as_of",
+         "value": null
+        },
+        "value": null
+       },
+       "bad_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "consistency_rating": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "good_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "matches_considered": 0,
+       "reliability_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "score_stddev": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998403
+     },
+     {
+      "as_of": "2026-03-01T09:00:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzprior"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "endgame": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "epa_source_state": "current",
+       "epa_value_source": "statbotics",
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": "9984zzzprior",
+       "teleop": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "total": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 40.0
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": null
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "average_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "no_completed_matches_before_as_of",
+         "value": null
+        },
+        "value": null
+       },
+       "bad_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "consistency_rating": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "good_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "matches_considered": 0,
+       "reliability_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "score_stddev": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998404
+     },
+     {
+      "as_of": "2026-03-01T09:00:00Z",
+      "auto_points": {
+       "season_by_event": [
+        {
+         "average_auto_points": {
+          "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+          "n": 0,
+          "uncertainty": {
+           "kind": "none",
+           "reason": "Phase 3/4 report no uncertainty for this statistic",
+           "value": null
+          },
+          "value": null
+         },
+         "event_key": "9984zzzprior"
+        }
+       ],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "endgame": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "epa_source_state": "current",
+       "epa_value_source": "statbotics",
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": "9984zzzprior",
+       "teleop": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 1.0
+       },
+       "total": {
+        "absent_reason": null,
+        "n": 1,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": 20.0
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": null
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "average_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "no_completed_matches_before_as_of",
+         "value": null
+        },
+        "value": null
+       },
+       "bad_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "consistency_rating": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "good_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "matches_considered": 0,
+       "reliability_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "score_stddev": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998405
+     },
+     {
+      "as_of": "2026-03-01T09:00:00Z",
+      "auto_points": {
+       "season_by_event": [],
+       "this_event": {
+        "absent_reason": "no_matches_with_a_score_breakdown_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "defense": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive_definition_pending"
+      },
+      "epa": {
+       "auto": {
+        "absent_reason": "no_prior_concluded_event_epa",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": null
+       },
+       "endgame": {
+        "absent_reason": "no_prior_concluded_event_epa",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": null
+       },
+       "epa_source_state": "withheld_no_prior_event",
+       "epa_value_source": null,
+       "n_kind": "canonical_completed_matches_at_source_event",
+       "source_event_key": null,
+       "teleop": {
+        "absent_reason": "no_prior_concluded_event_epa",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": null
+       },
+       "total": {
+        "absent_reason": "no_prior_concluded_event_epa",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "the EPA source publishes a point estimate; no SD exists in canonical data",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive",
+       "withheld_reason": "no_prior_concluded_event_epa"
+      },
+      "event_key": "9984zzzevent",
+      "feeding": {
+       "agreement": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "contributing_sources": [],
+       "score": {
+        "absent_reason": "insufficient_data: fewer than 2 scouting observations",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3 reports agreement (shown separately), not an SD",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "not_validated"
+      },
+      "scoring": {
+       "average_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "average_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "no_completed_matches_before_as_of",
+         "value": null
+        },
+        "value": null
+       },
+       "bad_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "consistency_rating": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "good_day_count": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "matches_considered": 0,
+       "reliability_score": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "score_stddev": {
+        "absent_reason": "no_completed_matches_before_as_of",
+        "n": 0,
+        "uncertainty": {
+         "kind": "none",
+         "reason": "Phase 3/4 report no uncertainty for this statistic",
+         "value": null
+        },
+        "value": null
+       },
+       "validation_status": "descriptive"
+      },
+      "team_number": 998406
+     }
+    ],
+    "validation_status": "descriptive"
+   }
+  },
+  "status": 200
+ },
+ "forecast_after_all": {
+  "body": {
+   "as_of": "2026-03-01T13:00:00Z",
+   "epa": {
+    "adoption": null,
+    "epa_source": "statbotics",
+    "evaluated_configuration": false,
+    "provenance": {
+     "selection": "D13 EPA_SOURCE_SQL",
+     "source": "statbotics",
+     "table": "team_event_stats"
+    },
+    "validation_flags": []
+   },
+   "event_key": "9984zzzevent",
+   "low_confidence": null,
+   "matches": [
+    {
+     "blue_team_numbers": [
+      998404,
+      998405,
+      998406
+     ],
+     "features_as_of": "2026-03-01T04:00:00-05:00",
+     "match_key": "9984zzzevent_qm1",
+     "not_validated_reason": "epa_incomplete",
+     "red_team_numbers": [
+      998401,
+      998402,
+      998403
+     ],
+     "red_win_probability": null,
+     "scheduled_time": "2026-03-01T04:00:00-05:00",
+     "unvalidated_red_win_probability": 0.75,
+     "validation_status": "not_validated",
+     "win_probability": {
+      "calibration_status": "m7_gate_failed",
+      "model": {
+       "model_sha256": "stub-win",
+       "model_type": "win_prob_xgb_calibrated",
+       "model_version": "stub",
+       "model_version_tag": "stub",
+       "provenance": {},
+       "training_dataset_hash": "stub"
+      },
+      "rounding": 0.05,
+      "unvalidated_reason": "epa_incomplete",
+      "unvalidated_value": 0.75,
+      "validated_value": null,
+      "validation": {
+       "evidence": "docs/ml_models.md sections 7 and 10",
+       "reasons": [
+        "epa_incomplete",
+        "m7_gate_failed"
+       ],
+       "status": "not_validated"
+      }
+     }
+    },
+    {
+     "blue_team_numbers": [
+      998404,
+      998405,
+      998406
+     ],
+     "features_as_of": "2026-03-01T05:00:00-05:00",
+     "match_key": "9984zzzevent_qm2",
+     "not_validated_reason": "epa_incomplete",
+     "red_team_numbers": [
+      998401,
+      998402,
+      998403
+     ],
+     "red_win_probability": null,
+     "scheduled_time": "2026-03-01T05:00:00-05:00",
+     "unvalidated_red_win_probability": 0.95,
+     "validation_status": "not_validated",
+     "win_probability": {
+      "calibration_status": "m7_gate_failed",
+      "model": {
+       "model_sha256": "stub-win",
+       "model_type": "win_prob_xgb_calibrated",
+       "model_version": "stub",
+       "model_version_tag": "stub",
+       "provenance": {},
+       "training_dataset_hash": "stub"
+      },
+      "rounding": 0.05,
+      "unvalidated_reason": "epa_incomplete",
+      "unvalidated_value": 0.95,
+      "validated_value": null,
+      "validation": {
+       "evidence": "docs/ml_models.md sections 7 and 10",
+       "reasons": [
+        "epa_incomplete",
+        "m7_gate_failed"
+       ],
+       "status": "not_validated"
+      }
+     }
+    },
+    {
+     "blue_team_numbers": [
+      998404,
+      998405,
+      998406
+     ],
+     "features_as_of": "2026-03-01T06:00:00-05:00",
+     "match_key": "9984zzzevent_qm3",
+     "not_validated_reason": "epa_incomplete",
+     "red_team_numbers": [
+      998401,
+      998402,
+      998403
+     ],
+     "red_win_probability": null,
+     "scheduled_time": "2026-03-01T06:00:00-05:00",
+     "unvalidated_red_win_probability": 0.95,
+     "validation_status": "not_validated",
+     "win_probability": {
+      "calibration_status": "m7_gate_failed",
+      "model": {
+       "model_sha256": "stub-win",
+       "model_type": "win_prob_xgb_calibrated",
+       "model_version": "stub",
+       "model_version_tag": "stub",
+       "provenance": {},
+       "training_dataset_hash": "stub"
+      },
+      "rounding": 0.05,
+      "unvalidated_reason": "epa_incomplete",
+      "unvalidated_value": 0.95,
+      "validated_value": null,
+      "validation": {
+       "evidence": "docs/ml_models.md sections 7 and 10",
+       "reasons": [
+        "epa_incomplete",
+        "m7_gate_failed"
+       ],
+       "status": "not_validated"
+      }
+     }
+    },
+    {
+     "blue_team_numbers": [
+      998404,
+      998405,
+      998406
+     ],
+     "features_as_of": "2026-03-01T07:00:00-05:00",
+     "match_key": "9984zzzevent_qm4",
+     "not_validated_reason": "epa_incomplete",
+     "red_team_numbers": [
+      998401,
+      998402,
+      998403
+     ],
+     "red_win_probability": null,
+     "scheduled_time": "2026-03-01T07:00:00-05:00",
+     "unvalidated_red_win_probability": 0.95,
+     "validation_status": "not_validated",
+     "win_probability": {
+      "calibration_status": "m7_gate_failed",
+      "model": {
+       "model_sha256": "stub-win",
+       "model_type": "win_prob_xgb_calibrated",
+       "model_version": "stub",
+       "model_version_tag": "stub",
+       "provenance": {},
+       "training_dataset_hash": "stub"
+      },
+      "rounding": 0.05,
+      "unvalidated_reason": "epa_incomplete",
+      "unvalidated_value": 0.95,
+      "validated_value": null,
+      "validation": {
+       "evidence": "docs/ml_models.md sections 7 and 10",
+       "reasons": [
+        "epa_incomplete",
+        "m7_gate_failed"
+       ],
+       "status": "not_validated"
+      }
+     }
+    }
+   ],
+   "range_evidence": "Central 80% Poisson-binomial range. Coverage measured once on held-out 2026: 0.8532, outside the pre-registered [0.75, 0.85], so the range is not validated (P5-M5 (b)).",
+   "record_evidence": "Expected wins = sum of q (P5-M5). Held-out 2026, 7,845 EPA-complete team-events: mean actual minus expected 0.0000, mean |actual - expected| 1.1207 (0.96 is irreducible).",
+   "statbotics_week": null,
+   "teams": [
+    {
+     "expected_wins": 3.6,
+     "qualification_matches": 4,
+     "range80_high": 4,
+     "range80_low": 3,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998401
+    },
+    {
+     "expected_wins": 3.6,
+     "qualification_matches": 4,
+     "range80_high": 4,
+     "range80_low": 3,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998402
+    },
+    {
+     "expected_wins": 3.6,
+     "qualification_matches": 4,
+     "range80_high": 4,
+     "range80_low": 3,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998403
+    },
+    {
+     "expected_wins": 0.4,
+     "qualification_matches": 4,
+     "range80_high": 1,
+     "range80_low": 0,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998404
+    },
+    {
+     "expected_wins": 0.4,
+     "qualification_matches": 4,
+     "range80_high": 1,
+     "range80_low": 0,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998405
+    },
+    {
+     "expected_wins": 0.4,
+     "qualification_matches": 4,
+     "range80_high": 1,
+     "range80_low": 0,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998406
+    }
+   ],
+   "win_prob_model_sha256": "stub-win"
+  },
+  "status": 200
+ },
+ "forecast_pre_event": {
+  "body": {
+   "as_of": "2026-03-01T09:00:00Z",
+   "epa": {
+    "adoption": null,
+    "epa_source": "statbotics",
+    "evaluated_configuration": false,
+    "provenance": {
+     "selection": "D13 EPA_SOURCE_SQL",
+     "source": "statbotics",
+     "table": "team_event_stats"
+    },
+    "validation_flags": []
+   },
+   "event_key": "9984zzzevent",
+   "low_confidence": null,
+   "matches": [
+    {
+     "blue_team_numbers": [
+      998404,
+      998405,
+      998406
+     ],
+     "features_as_of": "2026-03-01T09:00:00Z",
+     "match_key": "9984zzzevent_qm1",
+     "not_validated_reason": "epa_incomplete",
+     "red_team_numbers": [
+      998401,
+      998402,
+      998403
+     ],
+     "red_win_probability": null,
+     "scheduled_time": "2026-03-01T04:00:00-05:00",
+     "unvalidated_red_win_probability": 0.75,
+     "validation_status": "not_validated",
+     "win_probability": {
+      "calibration_status": "m7_gate_failed",
+      "model": {
+       "model_sha256": "stub-win",
+       "model_type": "win_prob_xgb_calibrated",
+       "model_version": "stub",
+       "model_version_tag": "stub",
+       "provenance": {},
+       "training_dataset_hash": "stub"
+      },
+      "rounding": 0.05,
+      "unvalidated_reason": "epa_incomplete",
+      "unvalidated_value": 0.75,
+      "validated_value": null,
+      "validation": {
+       "evidence": "docs/ml_models.md sections 7 and 10",
+       "reasons": [
+        "epa_incomplete",
+        "m7_gate_failed"
+       ],
+       "status": "not_validated"
+      }
+     }
+    },
+    {
+     "blue_team_numbers": [
+      998404,
+      998405,
+      998406
+     ],
+     "features_as_of": "2026-03-01T09:00:00Z",
+     "match_key": "9984zzzevent_qm2",
+     "not_validated_reason": "epa_incomplete",
+     "red_team_numbers": [
+      998401,
+      998402,
+      998403
+     ],
+     "red_win_probability": null,
+     "scheduled_time": "2026-03-01T05:00:00-05:00",
+     "unvalidated_red_win_probability": 0.75,
+     "validation_status": "not_validated",
+     "win_probability": {
+      "calibration_status": "m7_gate_failed",
+      "model": {
+       "model_sha256": "stub-win",
+       "model_type": "win_prob_xgb_calibrated",
+       "model_version": "stub",
+       "model_version_tag": "stub",
+       "provenance": {},
+       "training_dataset_hash": "stub"
+      },
+      "rounding": 0.05,
+      "unvalidated_reason": "epa_incomplete",
+      "unvalidated_value": 0.75,
+      "validated_value": null,
+      "validation": {
+       "evidence": "docs/ml_models.md sections 7 and 10",
+       "reasons": [
+        "epa_incomplete",
+        "m7_gate_failed"
+       ],
+       "status": "not_validated"
+      }
+     }
+    },
+    {
+     "blue_team_numbers": [
+      998404,
+      998405,
+      998406
+     ],
+     "features_as_of": "2026-03-01T09:00:00Z",
+     "match_key": "9984zzzevent_qm3",
+     "not_validated_reason": "epa_incomplete",
+     "red_team_numbers": [
+      998401,
+      998402,
+      998403
+     ],
+     "red_win_probability": null,
+     "scheduled_time": "2026-03-01T06:00:00-05:00",
+     "unvalidated_red_win_probability": 0.75,
+     "validation_status": "not_validated",
+     "win_probability": {
+      "calibration_status": "m7_gate_failed",
+      "model": {
+       "model_sha256": "stub-win",
+       "model_type": "win_prob_xgb_calibrated",
+       "model_version": "stub",
+       "model_version_tag": "stub",
+       "provenance": {},
+       "training_dataset_hash": "stub"
+      },
+      "rounding": 0.05,
+      "unvalidated_reason": "epa_incomplete",
+      "unvalidated_value": 0.75,
+      "validated_value": null,
+      "validation": {
+       "evidence": "docs/ml_models.md sections 7 and 10",
+       "reasons": [
+        "epa_incomplete",
+        "m7_gate_failed"
+       ],
+       "status": "not_validated"
+      }
+     }
+    },
+    {
+     "blue_team_numbers": [
+      998404,
+      998405,
+      998406
+     ],
+     "features_as_of": "2026-03-01T09:00:00Z",
+     "match_key": "9984zzzevent_qm4",
+     "not_validated_reason": "epa_incomplete",
+     "red_team_numbers": [
+      998401,
+      998402,
+      998403
+     ],
+     "red_win_probability": null,
+     "scheduled_time": "2026-03-01T07:00:00-05:00",
+     "unvalidated_red_win_probability": 0.75,
+     "validation_status": "not_validated",
+     "win_probability": {
+      "calibration_status": "m7_gate_failed",
+      "model": {
+       "model_sha256": "stub-win",
+       "model_type": "win_prob_xgb_calibrated",
+       "model_version": "stub",
+       "model_version_tag": "stub",
+       "provenance": {},
+       "training_dataset_hash": "stub"
+      },
+      "rounding": 0.05,
+      "unvalidated_reason": "epa_incomplete",
+      "unvalidated_value": 0.75,
+      "validated_value": null,
+      "validation": {
+       "evidence": "docs/ml_models.md sections 7 and 10",
+       "reasons": [
+        "epa_incomplete",
+        "m7_gate_failed"
+       ],
+       "status": "not_validated"
+      }
+     }
+    }
+   ],
+   "range_evidence": "Central 80% Poisson-binomial range. Coverage measured once on held-out 2026: 0.8532, outside the pre-registered [0.75, 0.85], so the range is not validated (P5-M5 (b)).",
+   "record_evidence": "Expected wins = sum of q (P5-M5). Held-out 2026, 7,845 EPA-complete team-events: mean actual minus expected 0.0000, mean |actual - expected| 1.1207 (0.96 is irreducible).",
+   "statbotics_week": null,
+   "teams": [
+    {
+     "expected_wins": 3.1,
+     "qualification_matches": 4,
+     "range80_high": 4,
+     "range80_low": 2,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998401
+    },
+    {
+     "expected_wins": 3.1,
+     "qualification_matches": 4,
+     "range80_high": 4,
+     "range80_low": 2,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998402
+    },
+    {
+     "expected_wins": 3.1,
+     "qualification_matches": 4,
+     "range80_high": 4,
+     "range80_low": 2,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998403
+    },
+    {
+     "expected_wins": 0.9,
+     "qualification_matches": 4,
+     "range80_high": 2,
+     "range80_low": 0,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998404
+    },
+    {
+     "expected_wins": 0.9,
+     "qualification_matches": 4,
+     "range80_high": 2,
+     "range80_low": 0,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998405
+    },
+    {
+     "expected_wins": 0.9,
+     "qualification_matches": 4,
+     "range80_high": 2,
+     "range80_low": 0,
+     "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "range_validation_status": "not_validated",
+     "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+     "record_validation_status": "not_validated",
+     "team_number": 998406
+    }
+   ],
+   "win_prob_model_sha256": "stub-win"
+  },
+  "status": 200
+ }
+}

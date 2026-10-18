@@ -1,0 +1,966 @@
+{
+ "frozen_now": "2026-09-01T12:00:00+00:00",
+ "responses": {
+  "adhoc_epa_incomplete": {
+   "body": {
+    "as_of": "2026-09-01T12:00:00Z",
+    "blue_team_numbers": [
+     999707,
+     999708,
+     999709
+    ],
+    "calibration_status": "m7_gate_failed",
+    "competition_level": null,
+    "epa": {
+     "adoption": null,
+     "epa_source": "statbotics",
+     "evaluated_configuration": false,
+     "provenance": {
+      "selection": "D13 EPA_SOURCE_SQL",
+      "source": "statbotics",
+      "table": "team_event_stats"
+     },
+     "validation_flags": []
+    },
+    "event_key": "9997zzzpredapi",
+    "evidence": "D18 held-out 2026: qualification probabilities approximately calibrated (ECE 0.015, bins within +-3.2 pts); playoff probabilities not calibrated (higher seed underestimated ~15 pts); the M7 calibration gate FAILED overall. See docs/ml_models.md sections 7 and 10.",
+    "match_key": null,
+    "model": {
+     "model_type": "win_prob_xgb_calibrated",
+     "model_version": "1.0.0",
+     "model_version_tag": "test-v1",
+     "provenance": {
+      "evaluation_record": "none",
+      "source_version": "synthetic-test"
+     },
+     "training_dataset_hash": "testhash"
+    },
+    "model_type": "win_prob_xgb_calibrated",
+    "model_version": "1.0.0",
+    "model_version_tag": "test-v1",
+    "not_validated_reason": "epa_incomplete",
+    "probability_rounding": 0.05,
+    "probability_scope": "qualification",
+    "red_team_numbers": [
+     999701,
+     999702,
+     999703
+    ],
+    "red_win_probability": null,
+    "teams": [
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999701
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999702
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999703
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": null,
+      "epa_source_state": "withheld_no_prior_event",
+      "epa_value_source": null,
+      "epa_withheld_reason": "no_prior_concluded_event_epa",
+      "team_number": 999707
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": null,
+      "epa_source_state": "withheld_no_prior_event",
+      "epa_value_source": null,
+      "epa_withheld_reason": "no_prior_concluded_event_epa",
+      "team_number": 999708
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": null,
+      "epa_source_state": "withheld_no_prior_event",
+      "epa_value_source": null,
+      "epa_withheld_reason": "no_prior_concluded_event_epa",
+      "team_number": 999709
+     }
+    ],
+    "unvalidated_red_win_probability": 0.5,
+    "validation_status": "not_validated",
+    "warning": "Not a validated probability. Phase 4 validated qualification probabilities only for matches where every team has prior EPA; playoff, unspecified-context and EPA-incomplete probabilities were not validated. Do not present this value as a probability or use it for series, bracket or playoff-success estimates."
+   },
+   "status": 200
+  },
+  "adhoc_playoff": {
+   "body": {
+    "as_of": "2026-09-01T12:00:00Z",
+    "blue_team_numbers": [
+     999704,
+     999705,
+     999706
+    ],
+    "calibration_status": "m7_gate_failed",
+    "competition_level": null,
+    "epa": {
+     "adoption": null,
+     "epa_source": "statbotics",
+     "evaluated_configuration": false,
+     "provenance": {
+      "selection": "D13 EPA_SOURCE_SQL",
+      "source": "statbotics",
+      "table": "team_event_stats"
+     },
+     "validation_flags": []
+    },
+    "event_key": "9997zzzpredapi",
+    "evidence": "D18 held-out 2026: qualification probabilities approximately calibrated (ECE 0.015, bins within +-3.2 pts); playoff probabilities not calibrated (higher seed underestimated ~15 pts); the M7 calibration gate FAILED overall. See docs/ml_models.md sections 7 and 10.",
+    "match_key": null,
+    "model": {
+     "model_type": "win_prob_xgb_calibrated",
+     "model_version": "1.0.0",
+     "model_version_tag": "test-v1",
+     "provenance": {
+      "evaluation_record": "none",
+      "source_version": "synthetic-test"
+     },
+     "training_dataset_hash": "testhash"
+    },
+    "model_type": "win_prob_xgb_calibrated",
+    "model_version": "1.0.0",
+    "model_version_tag": "test-v1",
+    "not_validated_reason": "playoff_scope",
+    "probability_rounding": 0.05,
+    "probability_scope": "playoff",
+    "red_team_numbers": [
+     999701,
+     999702,
+     999703
+    ],
+    "red_win_probability": null,
+    "teams": [
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999701
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999702
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999703
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999704
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999705
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999706
+     }
+    ],
+    "unvalidated_red_win_probability": 0.5,
+    "validation_status": "not_validated",
+    "warning": "Not a validated probability. Phase 4 validated qualification probabilities only for matches where every team has prior EPA; playoff, unspecified-context and EPA-incomplete probabilities were not validated. Do not present this value as a probability or use it for series, bracket or playoff-success estimates."
+   },
+   "status": 200
+  },
+  "adhoc_qualification": {
+   "body": {
+    "as_of": "2026-09-01T12:00:00Z",
+    "blue_team_numbers": [
+     999704,
+     999705,
+     999706
+    ],
+    "calibration_status": "m7_gate_failed",
+    "competition_level": null,
+    "epa": {
+     "adoption": null,
+     "epa_source": "statbotics",
+     "evaluated_configuration": false,
+     "provenance": {
+      "selection": "D13 EPA_SOURCE_SQL",
+      "source": "statbotics",
+      "table": "team_event_stats"
+     },
+     "validation_flags": []
+    },
+    "event_key": "9997zzzpredapi",
+    "evidence": "D18 held-out 2026: qualification probabilities approximately calibrated (ECE 0.015, bins within +-3.2 pts); playoff probabilities not calibrated (higher seed underestimated ~15 pts); the M7 calibration gate FAILED overall. See docs/ml_models.md sections 7 and 10.",
+    "match_key": null,
+    "model": {
+     "model_type": "win_prob_xgb_calibrated",
+     "model_version": "1.0.0",
+     "model_version_tag": "test-v1",
+     "provenance": {
+      "evaluation_record": "none",
+      "source_version": "synthetic-test"
+     },
+     "training_dataset_hash": "testhash"
+    },
+    "model_type": "win_prob_xgb_calibrated",
+    "model_version": "1.0.0",
+    "model_version_tag": "test-v1",
+    "not_validated_reason": null,
+    "probability_rounding": 0.05,
+    "probability_scope": "qualification",
+    "red_team_numbers": [
+     999701,
+     999702,
+     999703
+    ],
+    "red_win_probability": 0.5,
+    "teams": [
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999701
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999702
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999703
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999704
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999705
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999706
+     }
+    ],
+    "unvalidated_red_win_probability": null,
+    "validation_status": "approximately_calibrated_qualification",
+    "warning": null
+   },
+   "status": 200
+  },
+  "adhoc_unspecified": {
+   "body": {
+    "as_of": "2026-09-01T12:00:00Z",
+    "blue_team_numbers": [
+     999704,
+     999705,
+     999706
+    ],
+    "calibration_status": "m7_gate_failed",
+    "competition_level": null,
+    "epa": {
+     "adoption": null,
+     "epa_source": "statbotics",
+     "evaluated_configuration": false,
+     "provenance": {
+      "selection": "D13 EPA_SOURCE_SQL",
+      "source": "statbotics",
+      "table": "team_event_stats"
+     },
+     "validation_flags": []
+    },
+    "event_key": "9997zzzpredapi",
+    "evidence": "D18 held-out 2026: qualification probabilities approximately calibrated (ECE 0.015, bins within +-3.2 pts); playoff probabilities not calibrated (higher seed underestimated ~15 pts); the M7 calibration gate FAILED overall. See docs/ml_models.md sections 7 and 10.",
+    "match_key": null,
+    "model": {
+     "model_type": "win_prob_xgb_calibrated",
+     "model_version": "1.0.0",
+     "model_version_tag": "test-v1",
+     "provenance": {
+      "evaluation_record": "none",
+      "source_version": "synthetic-test"
+     },
+     "training_dataset_hash": "testhash"
+    },
+    "model_type": "win_prob_xgb_calibrated",
+    "model_version": "1.0.0",
+    "model_version_tag": "test-v1",
+    "not_validated_reason": "unspecified_context",
+    "probability_rounding": 0.05,
+    "probability_scope": "unspecified",
+    "red_team_numbers": [
+     999701,
+     999702,
+     999703
+    ],
+    "red_win_probability": null,
+    "teams": [
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999701
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999702
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999703
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999704
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999705
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999706
+     }
+    ],
+    "unvalidated_red_win_probability": 0.5,
+    "validation_status": "not_validated",
+    "warning": "Not a validated probability. Phase 4 validated qualification probabilities only for matches where every team has prior EPA; playoff, unspecified-context and EPA-incomplete probabilities were not validated. Do not present this value as a probability or use it for series, bracket or playoff-success estimates."
+   },
+   "status": 200
+  },
+  "match_playoff": {
+   "body": {
+    "as_of": "2026-03-01T09:00:00-05:00",
+    "blue_team_numbers": [
+     999704,
+     999705,
+     999706
+    ],
+    "calibration_status": "m7_gate_failed",
+    "competition_level": "semifinal",
+    "epa": {
+     "adoption": null,
+     "epa_source": "statbotics",
+     "evaluated_configuration": false,
+     "provenance": {
+      "selection": "D13 EPA_SOURCE_SQL",
+      "source": "statbotics",
+      "table": "team_event_stats"
+     },
+     "validation_flags": []
+    },
+    "event_key": "9997zzzpredapi",
+    "evidence": "D18 held-out 2026: qualification probabilities approximately calibrated (ECE 0.015, bins within +-3.2 pts); playoff probabilities not calibrated (higher seed underestimated ~15 pts); the M7 calibration gate FAILED overall. See docs/ml_models.md sections 7 and 10.",
+    "match_key": "9997zzzpredapi_sf1m1",
+    "model": {
+     "model_type": "win_prob_xgb_calibrated",
+     "model_version": "1.0.0",
+     "model_version_tag": "test-v1",
+     "provenance": {
+      "evaluation_record": "none",
+      "source_version": "synthetic-test"
+     },
+     "training_dataset_hash": "testhash"
+    },
+    "model_type": "win_prob_xgb_calibrated",
+    "model_version": "1.0.0",
+    "model_version_tag": "test-v1",
+    "not_validated_reason": "playoff_scope",
+    "probability_rounding": 0.05,
+    "probability_scope": "playoff",
+    "red_team_numbers": [
+     999701,
+     999702,
+     999703
+    ],
+    "red_win_probability": null,
+    "teams": [
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999701
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999702
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999703
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999704
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999705
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999706
+     }
+    ],
+    "unvalidated_red_win_probability": 0.5,
+    "validation_status": "not_validated",
+    "warning": "Not a validated probability. Phase 4 validated qualification probabilities only for matches where every team has prior EPA; playoff, unspecified-context and EPA-incomplete probabilities were not validated. Do not present this value as a probability or use it for series, bracket or playoff-success estimates."
+   },
+   "status": 200
+  },
+  "match_qualification": {
+   "body": {
+    "as_of": "2026-03-01T05:00:00-05:00",
+    "blue_team_numbers": [
+     999704,
+     999705,
+     999706
+    ],
+    "calibration_status": "m7_gate_failed",
+    "competition_level": "qualification",
+    "epa": {
+     "adoption": null,
+     "epa_source": "statbotics",
+     "evaluated_configuration": false,
+     "provenance": {
+      "selection": "D13 EPA_SOURCE_SQL",
+      "source": "statbotics",
+      "table": "team_event_stats"
+     },
+     "validation_flags": []
+    },
+    "event_key": "9997zzzpredapi",
+    "evidence": "D18 held-out 2026: qualification probabilities approximately calibrated (ECE 0.015, bins within +-3.2 pts); playoff probabilities not calibrated (higher seed underestimated ~15 pts); the M7 calibration gate FAILED overall. See docs/ml_models.md sections 7 and 10.",
+    "match_key": "9997zzzpredapi_qm2",
+    "model": {
+     "model_type": "win_prob_xgb_calibrated",
+     "model_version": "1.0.0",
+     "model_version_tag": "test-v1",
+     "provenance": {
+      "evaluation_record": "none",
+      "source_version": "synthetic-test"
+     },
+     "training_dataset_hash": "testhash"
+    },
+    "model_type": "win_prob_xgb_calibrated",
+    "model_version": "1.0.0",
+    "model_version_tag": "test-v1",
+    "not_validated_reason": null,
+    "probability_rounding": 0.05,
+    "probability_scope": "qualification",
+    "red_team_numbers": [
+     999701,
+     999702,
+     999703
+    ],
+    "red_win_probability": 0.5,
+    "teams": [
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999701
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999702
+     },
+     {
+      "alliance": "red",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999703
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999704
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999705
+     },
+     {
+      "alliance": "blue",
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999706
+     }
+    ],
+    "unvalidated_red_win_probability": null,
+    "validation_status": "approximately_calibrated_qualification",
+    "warning": null
+   },
+   "status": 200
+  },
+  "qualification_forecast": {
+   "body": {
+    "as_of": "2026-09-01T12:00:00Z",
+    "epa": {
+     "adoption": null,
+     "epa_source": "statbotics",
+     "evaluated_configuration": false,
+     "provenance": {
+      "selection": "D13 EPA_SOURCE_SQL",
+      "source": "statbotics",
+      "table": "team_event_stats"
+     },
+     "validation_flags": []
+    },
+    "event_key": "9997zzzpredapi",
+    "low_confidence": null,
+    "matches": [
+     {
+      "blue_team_numbers": [
+       999704,
+       999705,
+       999706
+      ],
+      "features_as_of": "2026-03-01T03:00:00-05:00",
+      "match_key": "9997zzzpredapi_qm1",
+      "not_validated_reason": null,
+      "red_team_numbers": [
+       999701,
+       999702,
+       999703
+      ],
+      "red_win_probability": 0.5,
+      "scheduled_time": "2026-03-01T03:00:00-05:00",
+      "unvalidated_red_win_probability": null,
+      "validation_status": "approximately_calibrated_qualification"
+     },
+     {
+      "blue_team_numbers": [
+       999704,
+       999705,
+       999706
+      ],
+      "features_as_of": "2026-03-01T05:00:00-05:00",
+      "match_key": "9997zzzpredapi_qm2",
+      "not_validated_reason": null,
+      "red_team_numbers": [
+       999701,
+       999702,
+       999703
+      ],
+      "red_win_probability": 0.5,
+      "scheduled_time": "2026-03-01T05:00:00-05:00",
+      "unvalidated_red_win_probability": null,
+      "validation_status": "approximately_calibrated_qualification"
+     },
+     {
+      "blue_team_numbers": [],
+      "features_as_of": "2026-03-01T07:00:00-05:00",
+      "match_key": "9997zzzpredapi_qm3",
+      "not_validated_reason": "epa_incomplete",
+      "red_team_numbers": [
+       999707,
+       999708,
+       999709
+      ],
+      "red_win_probability": null,
+      "scheduled_time": "2026-03-01T07:00:00-05:00",
+      "unvalidated_red_win_probability": 0.5,
+      "validation_status": "not_validated"
+     }
+    ],
+    "range_evidence": "Central 80% Poisson-binomial range. Coverage measured once on held-out 2026: 0.8532, outside the pre-registered [0.75, 0.85], so the range is not validated (P5-M5 (b)).",
+    "record_evidence": "Expected wins = sum of q (P5-M5). Held-out 2026, 7,845 EPA-complete team-events: mean actual minus expected 0.0000, mean |actual - expected| 1.1207 (0.96 is irreducible).",
+    "statbotics_week": null,
+    "teams": [
+     {
+      "expected_wins": 1.0,
+      "qualification_matches": 2,
+      "range80_high": 2,
+      "range80_low": 0,
+      "range_not_validated_reason": "range_coverage_outside_0.75_0.85",
+      "range_validation_status": "not_validated",
+      "record_not_validated_reason": null,
+      "record_validation_status": "validated",
+      "team_number": 999701
+     },
+     {
+      "expected_wins": 1.0,
+      "qualification_matches": 2,
+      "range80_high": 2,
+      "range80_low": 0,
+      "range_not_validated_reason": "range_coverage_outside_0.75_0.85",
+      "range_validation_status": "not_validated",
+      "record_not_validated_reason": null,
+      "record_validation_status": "validated",
+      "team_number": 999702
+     },
+     {
+      "expected_wins": 1.0,
+      "qualification_matches": 2,
+      "range80_high": 2,
+      "range80_low": 0,
+      "range_not_validated_reason": "range_coverage_outside_0.75_0.85",
+      "range_validation_status": "not_validated",
+      "record_not_validated_reason": null,
+      "record_validation_status": "validated",
+      "team_number": 999703
+     },
+     {
+      "expected_wins": 1.0,
+      "qualification_matches": 2,
+      "range80_high": 2,
+      "range80_low": 0,
+      "range_not_validated_reason": "range_coverage_outside_0.75_0.85",
+      "range_validation_status": "not_validated",
+      "record_not_validated_reason": null,
+      "record_validation_status": "validated",
+      "team_number": 999704
+     },
+     {
+      "expected_wins": 1.0,
+      "qualification_matches": 2,
+      "range80_high": 2,
+      "range80_low": 0,
+      "range_not_validated_reason": "range_coverage_outside_0.75_0.85",
+      "range_validation_status": "not_validated",
+      "record_not_validated_reason": null,
+      "record_validation_status": "validated",
+      "team_number": 999705
+     },
+     {
+      "expected_wins": 1.0,
+      "qualification_matches": 2,
+      "range80_high": 2,
+      "range80_low": 0,
+      "range_not_validated_reason": "range_coverage_outside_0.75_0.85",
+      "range_validation_status": "not_validated",
+      "record_not_validated_reason": null,
+      "record_validation_status": "validated",
+      "team_number": 999706
+     },
+     {
+      "expected_wins": 0.5,
+      "qualification_matches": 1,
+      "range80_high": 1,
+      "range80_low": 0,
+      "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+      "range_validation_status": "not_validated",
+      "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+      "record_validation_status": "not_validated",
+      "team_number": 999707
+     },
+     {
+      "expected_wins": 0.5,
+      "qualification_matches": 1,
+      "range80_high": 1,
+      "range80_low": 0,
+      "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+      "range_validation_status": "not_validated",
+      "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+      "record_validation_status": "not_validated",
+      "team_number": 999708
+     },
+     {
+      "expected_wins": 0.5,
+      "qualification_matches": 1,
+      "range80_high": 1,
+      "range80_low": 0,
+      "range_not_validated_reason": "schedule_includes_epa_incomplete_match",
+      "range_validation_status": "not_validated",
+      "record_not_validated_reason": "schedule_includes_epa_incomplete_match",
+      "record_validation_status": "not_validated",
+      "team_number": 999709
+     }
+    ]
+   },
+   "status": 200
+  },
+  "ranking": {
+   "body": {
+    "as_of": "2026-09-01T12:00:00Z",
+    "epa": {
+     "adoption": null,
+     "epa_source": "statbotics",
+     "evaluated_configuration": false,
+     "provenance": {
+      "selection": "D13 EPA_SOURCE_SQL",
+      "source": "statbotics",
+      "table": "team_event_stats"
+     },
+     "validation_flags": []
+    },
+    "event_key": "9997zzzpredapi",
+    "evidence": "D18 held-out 2026: per-event Spearman vs final qualification rank median 0.61 (10th-90th pct 0.46-0.78), +0.016 over raw EPA, evaluated at each team's mid-qualification snapshot. Treat as an ordering with uncertainty; predicted_rating is a relative score. See docs/ml_models.md section 10.",
+    "model": {
+     "model_type": "ranking_xgb_v2",
+     "model_version": "2.0.0",
+     "model_version_tag": "test-v1",
+     "provenance": {
+      "evaluation_record": "none",
+      "source_version": "synthetic-test"
+     },
+     "training_dataset_hash": "testhash"
+    },
+    "model_type": "ranking_xgb_v2",
+    "model_version": "2.0.0",
+    "model_version_tag": "test-v1",
+    "rankings": [
+     {
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "predicted_rating": 0.19951248168945312,
+      "rank": 1,
+      "team_number": 999701
+     },
+     {
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "predicted_rating": 0.19951248168945312,
+      "rank": 2,
+      "team_number": 999702
+     },
+     {
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "predicted_rating": 0.19951248168945312,
+      "rank": 3,
+      "team_number": 999703
+     },
+     {
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "predicted_rating": 0.19951248168945312,
+      "rank": 4,
+      "team_number": 999704
+     },
+     {
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "predicted_rating": 0.19951248168945312,
+      "rank": 5,
+      "team_number": 999705
+     },
+     {
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "predicted_rating": 0.19951248168945312,
+      "rank": 6,
+      "team_number": 999706
+     },
+     {
+      "epa_source_event_key": null,
+      "epa_value_source": null,
+      "epa_withheld_reason": "no_prior_concluded_event_epa",
+      "predicted_rating": 0.19951248168945312,
+      "rank": 7,
+      "team_number": 999707
+     },
+     {
+      "epa_source_event_key": null,
+      "epa_value_source": null,
+      "epa_withheld_reason": "no_prior_concluded_event_epa",
+      "predicted_rating": 0.19951248168945312,
+      "rank": 8,
+      "team_number": 999708
+     },
+     {
+      "epa_source_event_key": null,
+      "epa_value_source": null,
+      "epa_withheld_reason": "no_prior_concluded_event_epa",
+      "predicted_rating": 0.19951248168945312,
+      "rank": 9,
+      "team_number": 999709
+     }
+    ],
+    "validation_status": "moderate_held_out"
+   },
+   "status": 200
+  },
+  "synergy": {
+   "body": {
+    "as_of": "2026-09-01T12:00:00Z",
+    "confidence": 0.4444444444444444,
+    "defense_feeding_coverage_present_count": 0,
+    "defense_feeding_coverage_term": null,
+    "epa": {
+     "adoption": null,
+     "epa_source": "statbotics",
+     "evaluated_configuration": false,
+     "provenance": {
+      "selection": "D13 EPA_SOURCE_SQL",
+      "source": "statbotics",
+      "table": "team_event_stats"
+     },
+     "validation_flags": []
+    },
+    "event_key": "9997zzzpredapi",
+    "overall_score": 0.002649438695391153,
+    "role_fit_axes_used": [
+     "average_score"
+    ],
+    "role_fit_term": 0.0,
+    "scoring_distribution_axes_used": [
+     "epa_auto",
+     "epa_teleop",
+     "epa_endgame"
+    ],
+    "scoring_distribution_term": 0.006182023622579358,
+    "team_numbers": [
+     999701,
+     999702,
+     999703
+    ],
+    "teams": [
+     {
+      "alliance": null,
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999701
+     },
+     {
+      "alliance": null,
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999702
+     },
+     {
+      "alliance": null,
+      "epa_source_event_key": "9997zzzpredprior",
+      "epa_source_state": "current",
+      "epa_value_source": "statbotics",
+      "epa_withheld_reason": null,
+      "team_number": 999703
+     }
+    ],
+    "validation_status": "not_validated_against_outcomes"
+   },
+   "status": 200
+  }
+ }
+}

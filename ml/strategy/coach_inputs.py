@@ -84,16 +84,23 @@ def submit_coach_observation(database: Database, payload: dict[str, Any]) -> Coa
         raise CoachInputError("the coach observation does not satisfy the schema", _problems(exc)) from exc
 
 
-def load_coach_observations(database: Database, event_key: str, as_of: datetime) -> tuple[
-        tuple[CoachObservation, ...], int]:
+def load_coach_observations(database: Database, event_key: str, as_of: datetime, *,
+                            landed_before: datetime | None = None) -> tuple[tuple[CoachObservation, ...], int]:
     """Valid observations for the event with observed_at strictly before as_of, in a deterministic order, plus
-    the number of landed submissions that failed validation (reported, never applied)."""
-    if as_of.tzinfo is None:
-        raise ValueError("as_of must carry a timezone")
+    the number of landed submissions that failed validation (reported, never applied).
+
+    `landed_before` (added by P7-M5, decision P7-D3; default None keeps the Phase 6 behaviour) also requires the
+    submission to have been stored (raw_source_payloads.ingested_at) strictly before that moment. observed_at is
+    caller-asserted, so without it an observation posted later, back-dated, would change a past evaluation. Both
+    the valid observations and the invalid count are restricted.
+    """
+    if as_of.tzinfo is None or (landed_before is not None and landed_before.tzinfo is None):
+        raise ValueError("as_of and landed_before must carry a timezone")
     with database.cursor() as cursor:
         cursor.execute("SELECT payload_json FROM raw_source_payloads WHERE source = %s AND source_object_type = %s "
-                       "AND payload_json->>'event_key' = %s ORDER BY id",
-                       (COACH_SOURCE, OBSERVATION_OBJECT_TYPE, event_key))
+                       "AND payload_json->>'event_key' = %s AND (%s::timestamptz IS NULL OR ingested_at < %s) "
+                       "ORDER BY id",
+                       (COACH_SOURCE, OBSERVATION_OBJECT_TYPE, event_key, landed_before, landed_before))
         payloads = [row[0] for row in cursor.fetchall()]
     valid, invalid = [], 0
     for payload in payloads:

@@ -580,9 +580,14 @@ probes deliberately sit *outside* the prefix, so they do not move when the API i
 `team_number` is constrained `gt=0`, matching `TeamMetrics`' own bound — a request for team
 `0` is a 422, because that is not a team number rather than a missing team.
 
+Since Phase 7 (P7-Q13, 2026-10-17) the body is `TeamMetrics` plus one additive `validation` block, which labels
+the scoring, defense and feeding parts with the strength view's existing labels. The response contract, including
+that block, is documented in `docs/phase7.md` and locked in `docs/api_contract_lock.json`. The example in 8.2
+shows the `TeamMetrics` fields.
+
 ### 8.2 A successful response
 
-`200`, body is the canonical `TeamMetrics`:
+`200`, body is the canonical `TeamMetrics` (plus the additive `validation` block described in 8.1, omitted here):
 
 ```json
 {

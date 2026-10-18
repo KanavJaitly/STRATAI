@@ -253,7 +253,9 @@ def test_the_response_carries_every_definition_of_done_field(client: TestClient)
     response is checked field by field, not just for validity."""
     body = client.get(metrics_url(_S_TEAM_FULL, _S_EVENT)).json()
 
-    assert set(body) == {"team_number", "event_key", "season", "computed_at", "scoring", "defense_feeding"}
+    # "validation" added 2026-10-17 by P7-Q13 (additive; docs/phase7.md "Contract-test changes").
+    assert set(body) == {"team_number", "event_key", "season", "computed_at", "scoring", "defense_feeding",
+                         "validation"}
     assert body["team_number"] == _S_TEAM_FULL
     assert body["event_key"] == _S_EVENT
     assert body["season"] == 9989
