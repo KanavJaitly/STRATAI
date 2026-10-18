@@ -1,0 +1,206 @@
+{
+ "contexts": {
+  "full_search": [
+   "2026lake_qm45",
+   "2026mimar_qm51"
+  ],
+  "low_odds": {
+   "match_key": "2026alhu_qm14",
+   "side": "blue"
+  },
+  "missing_input": "2026mndu2_qm1",
+  "ordinary": [
+   "2026lake_qm45",
+   "2026mimar_qm51",
+   "2026cascmp_qm24",
+   "2026micmp1_qm76",
+   "2026paca_qm63",
+   "2026qcmo_qm10",
+   "2026vache_qm22",
+   "2026oncmp1_qm96",
+   "2026wiply_qm43",
+   "2026chcmp_qm55"
+  ],
+  "seed": 20261007
+ },
+ "done_means": "P6-DM2",
+ "every_planted_defect_caught": true,
+ "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+ "milestone": "P6-M13",
+ "minutes": 5.8,
+ "model": {
+  "model_sha256": "aded2c829a1f2edbd1ddb50e099b0e88df8a5cc4033efe0fa7270dae235fbf5f",
+  "served_baseline_status": [
+   "not_validated",
+   "p6_m10_gate_failed"
+  ],
+  "version_tag": "p6m10-v1"
+ },
+ "over_budget": false,
+ "p6_dm2_met": true,
+ "plan": ".agent/phase6/decisions/P6_M13_AUDIT_PLAN.md",
+ "plan_blob": "301a7434aad9c0cc087b0e7346e929eae35a5f64",
+ "planted_defects": {
+  "ai_only_adjustment": {
+   "caught": true,
+   "failed_checks": [
+    "S3_engine_computes_no_probability",
+    "M1_identical_strategy_identical_odds",
+    "M2_recommended_is_true_maximum",
+    "M3_order_invariance",
+    "M4_colour_swap",
+    "M7_low_odds_honesty"
+   ],
+   "run": true,
+   "target_caught": true,
+   "target_check": "M1_identical_strategy_identical_odds"
+  },
+  "ai_probability_inflation": {
+   "caught": true,
+   "failed_checks": [
+    "S3_engine_computes_no_probability",
+    "M7_low_odds_honesty"
+   ],
+   "run": true,
+   "target_caught": true,
+   "target_check": "M7_low_odds_honesty"
+  },
+  "different_calibration": {
+   "caught": true,
+   "failed_checks": [
+    "S3_engine_computes_no_probability",
+    "M1_identical_strategy_identical_odds",
+    "M2_recommended_is_true_maximum",
+    "M3_order_invariance",
+    "M4_colour_swap",
+    "M7_low_odds_honesty"
+   ],
+   "run": true,
+   "target_caught": true,
+   "target_check": "M1_identical_strategy_identical_odds"
+  },
+  "different_missing_data_handling": {
+   "caught": true,
+   "failed_checks": [
+    "S3_engine_computes_no_probability",
+    "M6_missing_data_parity"
+   ],
+   "run": true,
+   "target_caught": true,
+   "target_check": "M6_missing_data_parity"
+  },
+  "different_rounding": {
+   "caught": true,
+   "failed_checks": [
+    "S3_engine_computes_no_probability",
+    "M1_identical_strategy_identical_odds",
+    "M5_display_parity",
+    "M7_low_odds_honesty"
+   ],
+   "run": true,
+   "target_caught": true,
+   "target_check": "M5_display_parity"
+  },
+  "hidden_ai_only_feature": {
+   "caught": true,
+   "failed_checks": [
+    "S3_engine_computes_no_probability",
+    "M1_identical_strategy_identical_odds",
+    "M2_recommended_is_true_maximum",
+    "M3_order_invariance",
+    "M4_colour_swap",
+    "M7_low_odds_honesty"
+   ],
+   "run": true,
+   "target_caught": true,
+   "target_check": "M1_identical_strategy_identical_odds"
+  },
+  "source_dependent_weighting": {
+   "caught": true,
+   "failed_checks": [
+    "S3_engine_computes_no_probability",
+    "M1_identical_strategy_identical_odds",
+    "M2_recommended_is_true_maximum",
+    "M3_order_invariance",
+    "M4_colour_swap",
+    "M7_low_odds_honesty"
+   ],
+   "run": true,
+   "target_caught": true,
+   "target_check": "M1_identical_strategy_identical_odds"
+  }
+ },
+ "provenance": {
+  "commit": "3d96c94e7043e28e2a947fa8b4565efc3fde6e42",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-05T23:09:25.644082+00:00"
+ },
+ "real_engine": [
+  {
+   "cases": 0,
+   "check": "S1_no_origin_fields",
+   "detail": "origin-like fields: []; extra=forbid: True",
+   "passed": true
+  },
+  {
+   "cases": 0,
+   "check": "S2_single_entry_point",
+   "detail": "evaluate parameters: ['context', 'strategy_red', 'strategy_blue']",
+   "passed": true
+  },
+  {
+   "cases": 0,
+   "check": "S3_engine_computes_no_probability",
+   "detail": "model internals referenced: []; model.evaluate call sites: 1",
+   "passed": true
+  },
+  {
+   "cases": 20,
+   "check": "M1_identical_strategy_identical_odds",
+   "detail": "bit-identical on every case",
+   "passed": true
+  },
+  {
+   "cases": 2,
+   "check": "M2_recommended_is_true_maximum",
+   "detail": "equal to the exhaustive maximum",
+   "passed": true
+  },
+  {
+   "cases": 10,
+   "check": "M3_order_invariance",
+   "detail": "invariant",
+   "passed": true
+  },
+  {
+   "cases": 10,
+   "check": "M4_colour_swap",
+   "detail": "identical; complements sum to 1",
+   "passed": true
+  },
+  {
+   "cases": 120,
+   "check": "M5_display_parity",
+   "detail": "one display rule",
+   "passed": true
+  },
+  {
+   "cases": 1,
+   "check": "M6_missing_data_parity",
+   "detail": "coach p=None; AI recommendation present: False",
+   "passed": true
+  },
+  {
+   "cases": 1,
+   "check": "M7_low_odds_honesty",
+   "detail": "AI p=0.03356853779489712 shown <5%",
+   "passed": true
+  }
+ ],
+ "real_engine_passed": true,
+ "supersedes": {
+  "failure_record": ".agent/phase6/P6_M13_RUN1_FAILURE.md",
+  "reason": "two objectively demonstrated defects fixed (order-free alliance sum; planted missing-data fixture coverage); same plan, contexts, seed and checks",
+  "record": "p6_m13_parity_audit.json"
+ }
+}

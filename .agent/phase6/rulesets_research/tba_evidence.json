@@ -1,0 +1,577 @@
+{
+ "generated_by": "scripts.phase6_m1_tba_evidence",
+ "read_only": true,
+ "seasons": {
+  "2024": {
+   "events_with_playoff_matches": 190,
+   "events_with_alliances": 190,
+   "alliance_counts": {
+    "8": 186,
+    "4": 1,
+    "2": 3
+   },
+   "tba_mapping": {
+    "seeded_8_alliance_events": 185,
+    "per_set": {
+     "1": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "2": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "3": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "4": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "5": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "6": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "7": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "8": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "9": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "10": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "11": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "12": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "13": {
+      "match": 185,
+      "max_match_number_1": 185
+     },
+     "final": {
+      "match": 185,
+      "max_match_number_2": 141,
+      "max_match_number_3": 41,
+      "max_match_number_4": 3
+     }
+    },
+    "matches_outside_sf1_13_f1": {},
+    "mismatch_examples": []
+   },
+   "fourth_team": {
+    "events_by_pattern": {
+     "no_alliance_lists_4": 81,
+     "every_alliance_lists_4": 8,
+     "some_alliances_list_4": 96
+    },
+    "event_type_by_pattern": {
+     "no_alliance_lists_4": {
+      "None": 81
+     },
+     "every_alliance_lists_4": {
+      "None": 8
+     },
+     "some_alliances_list_4": {
+      "None": 96
+     }
+    },
+    "examples": {
+     "no_alliance_lists_4": [
+      "2024alhu",
+      "2024arli",
+      "2024azgl",
+      "2024cabe",
+      "2024cala",
+      "2024camb",
+      "2024caoc",
+      "2024casd",
+      "2024casj",
+      "2024chcmp",
+      "2024code",
+      "2024cthar"
+     ],
+     "every_alliance_lists_4": [
+      "2024arc",
+      "2024cur",
+      "2024dal",
+      "2024gal",
+      "2024hop",
+      "2024joh",
+      "2024mil",
+      "2024new"
+     ],
+     "some_alliances_list_4": [
+      "2024ausc",
+      "2024azva",
+      "2024bcvi",
+      "2024brbr",
+      "2024caav",
+      "2024cada",
+      "2024cafr",
+      "2024caph",
+      "2024casf",
+      "2024cave",
+      "2024flor",
+      "2024flta"
+     ]
+    },
+    "partial_events_fourth_team_first_play": {
+     "first_plays_after_alliances_first_match": 148,
+     "plays_in_alliances_first_playoff_match": 1
+    },
+    "partial_events_fourth_team_vs_highest_ranked_unselected": {
+     "is_highest_ranked_unselected_team": 117,
+     "is_not": 32
+    },
+    "note": "highest-ranked check ignores BACKUP POOL declines/absences (not in TBA), so 'is_not' is an upper bound on non-conformance"
+   },
+   "selection": {
+    "counts": {
+     "events": 185,
+     "declines_recorded": 0,
+     "captain_is_best_ranked_not_yet_on_an_alliance": 1479,
+     "round_1_or_2_pick_ranked_in_top_n_alliances": 446,
+     "captain_is_not": 1
+    },
+    "declined_teams_who_captain_an_alliance": 0,
+    "declined_captain_ranks": {},
+    "declined_captain_examples": [],
+    "note": "'captain_is_not' uses the final qualification ranking and the captain plus round-1 pick of earlier alliances; declines (whose timing TBA does not record) are not excluded"
+   },
+   "small_event_placeholders": {
+    "events": [
+     {
+      "event": "2024vapor",
+      "ranked_teams": 23,
+      "qualification_team_count": 23,
+      "alliances": 8,
+      "placeholder_alliance_seeds": [
+       8
+      ],
+      "real_alliances": 7,
+      "manual_10_6_6_alliances": 7,
+      "unranked_alliance_teams": [
+       9990,
+       9991,
+       9992
+      ]
+     }
+    ],
+    "count": 1
+   }
+  },
+  "2025": {
+   "events_with_playoff_matches": 203,
+   "events_with_alliances": 203,
+   "alliance_counts": {
+    "8": 199,
+    "4": 1,
+    "2": 3
+   },
+   "tba_mapping": {
+    "seeded_8_alliance_events": 198,
+    "per_set": {
+     "1": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "2": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "3": {
+      "match": 198,
+      "max_match_number_1": 197,
+      "max_match_number_2": 1
+     },
+     "4": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "5": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "6": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "7": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "8": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "9": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "10": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "11": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "12": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "13": {
+      "match": 198,
+      "max_match_number_1": 198
+     },
+     "final": {
+      "match": 198,
+      "max_match_number_2": 160,
+      "max_match_number_3": 36,
+      "max_match_number_4": 2
+     }
+    },
+    "matches_outside_sf1_13_f1": {},
+    "mismatch_examples": []
+   },
+   "fourth_team": {
+    "events_by_pattern": {
+     "some_alliances_list_4": 92,
+     "every_alliance_lists_4": 8,
+     "no_alliance_lists_4": 98
+    },
+    "event_type_by_pattern": {
+     "some_alliances_list_4": {
+      "None": 92
+     },
+     "every_alliance_lists_4": {
+      "None": 8
+     },
+     "no_alliance_lists_4": {
+      "None": 98
+     }
+    },
+    "examples": {
+     "some_alliances_list_4": [
+      "2025alhu",
+      "2025ausc",
+      "2025bcvi",
+      "2025caav",
+      "2025cabe",
+      "2025camb",
+      "2025caoc",
+      "2025capt",
+      "2025casf",
+      "2025casj",
+      "2025flta",
+      "2025flwp"
+     ],
+     "every_alliance_lists_4": [
+      "2025arc",
+      "2025cur",
+      "2025dal",
+      "2025gal",
+      "2025hop",
+      "2025joh",
+      "2025mil",
+      "2025new"
+     ],
+     "no_alliance_lists_4": [
+      "2025arli",
+      "2025azfg",
+      "2025azgl",
+      "2025brba",
+      "2025brsp",
+      "2025cada",
+      "2025cafr",
+      "2025cala",
+      "2025caph",
+      "2025casd",
+      "2025cave",
+      "2025chcmp"
+     ]
+    },
+    "partial_events_fourth_team_first_play": {
+     "first_plays_after_alliances_first_match": 108
+    },
+    "partial_events_fourth_team_vs_highest_ranked_unselected": {
+     "is_not": 21,
+     "is_highest_ranked_unselected_team": 87
+    },
+    "note": "highest-ranked check ignores BACKUP POOL declines/absences (not in TBA), so 'is_not' is an upper bound on non-conformance"
+   },
+   "selection": {
+    "counts": {
+     "events": 198,
+     "declines_recorded": 0,
+     "captain_is_best_ranked_not_yet_on_an_alliance": 1583,
+     "round_1_or_2_pick_ranked_in_top_n_alliances": 480,
+     "captain_is_not": 1
+    },
+    "declined_teams_who_captain_an_alliance": 0,
+    "declined_captain_ranks": {},
+    "declined_captain_examples": [],
+    "note": "'captain_is_not' uses the final qualification ranking and the captain plus round-1 pick of earlier alliances; declines (whose timing TBA does not record) are not excluded"
+   },
+   "small_event_placeholders": {
+    "events": [
+     {
+      "event": "2025ncash",
+      "ranked_teams": 22,
+      "qualification_team_count": 22,
+      "alliances": 8,
+      "placeholder_alliance_seeds": [
+       8
+      ],
+      "real_alliances": 7,
+      "manual_10_6_6_alliances": 7,
+      "unranked_alliance_teams": [
+       9991,
+       9992,
+       9993
+      ]
+     }
+    ],
+    "count": 1
+   }
+  },
+  "2026": {
+   "events_with_playoff_matches": 213,
+   "events_with_alliances": 213,
+   "alliance_counts": {
+    "8": 209,
+    "4": 1,
+    "2": 3
+   },
+   "tba_mapping": {
+    "seeded_8_alliance_events": 208,
+    "per_set": {
+     "1": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "2": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "3": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "4": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "5": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "6": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "7": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "8": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "9": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "10": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "11": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "12": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "13": {
+      "match": 208,
+      "max_match_number_1": 208
+     },
+     "final": {
+      "match": 208,
+      "max_match_number_2": 163,
+      "max_match_number_3": 44,
+      "max_match_number_4": 1
+     }
+    },
+    "matches_outside_sf1_13_f1": {},
+    "mismatch_examples": []
+   },
+   "fourth_team": {
+    "events_by_pattern": {
+     "no_alliance_lists_4": 82,
+     "every_alliance_lists_4": 8,
+     "some_alliances_list_4": 118
+    },
+    "event_type_by_pattern": {
+     "no_alliance_lists_4": {
+      "None": 82
+     },
+     "every_alliance_lists_4": {
+      "None": 8
+     },
+     "some_alliances_list_4": {
+      "None": 118
+     }
+    },
+    "examples": {
+     "no_alliance_lists_4": [
+      "2026alhu",
+      "2026bcvi",
+      "2026caasv",
+      "2026cacac",
+      "2026caclv",
+      "2026cagle",
+      "2026calas",
+      "2026cancmp",
+      "2026caoec",
+      "2026casnf",
+      "2026caven",
+      "2026ctwat"
+     ],
+     "every_alliance_lists_4": [
+      "2026arc",
+      "2026cur",
+      "2026dal",
+      "2026gal",
+      "2026hop",
+      "2026joh",
+      "2026mil",
+      "2026new"
+     ],
+     "some_alliances_list_4": [
+      "2026arli",
+      "2026ausc",
+      "2026azfg",
+      "2026brba",
+      "2026brsp",
+      "2026caetb",
+      "2026cahal",
+      "2026capin",
+      "2026capoh",
+      "2026casac",
+      "2026cascmp",
+      "2026casgv"
+     ]
+    },
+    "partial_events_fourth_team_first_play": {
+     "first_plays_after_alliances_first_match": 187,
+     "plays_in_alliances_first_playoff_match": 1,
+     "never_plays": 1
+    },
+    "partial_events_fourth_team_vs_highest_ranked_unselected": {
+     "is_highest_ranked_unselected_team": 119,
+     "is_not": 70
+    },
+    "note": "highest-ranked check ignores BACKUP POOL declines/absences (not in TBA), so 'is_not' is an upper bound on non-conformance"
+   },
+   "selection": {
+    "counts": {
+     "events": 208,
+     "declines_recorded": 0,
+     "captain_is_best_ranked_not_yet_on_an_alliance": 1657,
+     "round_1_or_2_pick_ranked_in_top_n_alliances": 577,
+     "captain_is_not": 7
+    },
+    "declined_teams_who_captain_an_alliance": 0,
+    "declined_captain_ranks": {},
+    "declined_captain_examples": [],
+    "note": "'captain_is_not' uses the final qualification ranking and the captain plus round-1 pick of earlier alliances; declines (whose timing TBA does not record) are not excluded"
+   },
+   "small_event_placeholders": {
+    "events": [
+     {
+      "event": "2026mefal",
+      "ranked_teams": 20,
+      "qualification_team_count": 20,
+      "alliances": 8,
+      "placeholder_alliance_seeds": [
+       7,
+       8
+      ],
+      "real_alliances": 6,
+      "manual_10_6_6_alliances": 6,
+      "unranked_alliance_teams": [
+       9990,
+       9991,
+       9992,
+       9993,
+       9994,
+       9995
+      ]
+     },
+     {
+      "event": "2026txfor",
+      "ranked_teams": 24,
+      "qualification_team_count": 24,
+      "alliances": 8,
+      "placeholder_alliance_seeds": [
+       8
+      ],
+      "real_alliances": 7,
+      "manual_10_6_6_alliances": 7,
+      "unranked_alliance_teams": [
+       9990,
+       9991,
+       9992
+      ]
+     },
+     {
+      "event": "2026txmca",
+      "ranked_teams": 18,
+      "qualification_team_count": 18,
+      "alliances": 8,
+      "placeholder_alliance_seeds": [
+       6,
+       7,
+       8
+      ],
+      "real_alliances": 5,
+      "manual_10_6_6_alliances": 5,
+      "unranked_alliance_teams": [
+       9991,
+       9992,
+       9993,
+       9994,
+       9995,
+       9996,
+       9997,
+       9998,
+       9999
+      ]
+     }
+    ],
+    "count": 3
+   }
+  }
+ },
+ "elapsed_seconds": 1.1
+}

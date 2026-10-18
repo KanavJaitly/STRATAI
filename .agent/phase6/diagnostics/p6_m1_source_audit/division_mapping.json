@@ -1,0 +1,218 @@
+{
+ "2024arc": {
+  "first_page": "https://frc-events.firstinspires.org/2024/ARCHIMEDES",
+  "tba_name": "Archimedes Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2024cur": {
+  "first_page": "https://frc-events.firstinspires.org/2024/CURIE",
+  "tba_name": "Curie Division",
+  "first_teams": 74,
+  "tba_qual_teams": 74,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2024dal": {
+  "first_page": "https://frc-events.firstinspires.org/2024/DALY",
+  "tba_name": "Daly Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2024gal": {
+  "first_page": "https://frc-events.firstinspires.org/2024/GALILEO",
+  "tba_name": "Galileo Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2024hop": {
+  "first_page": "https://frc-events.firstinspires.org/2024/HOPPER",
+  "tba_name": "Hopper Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2024joh": {
+  "first_page": "https://frc-events.firstinspires.org/2024/JOHNSON",
+  "tba_name": "Johnson Division",
+  "first_teams": 74,
+  "tba_qual_teams": 74,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2024mil": {
+  "first_page": "https://frc-events.firstinspires.org/2024/MILSTEIN",
+  "tba_name": "Milstein Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2024new": {
+  "first_page": "https://frc-events.firstinspires.org/2024/NEWTON",
+  "tba_name": "Newton Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2025arc": {
+  "first_page": "https://frc-events.firstinspires.org/2025/ARCHIMEDES",
+  "tba_name": "Archimedes Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2025cur": {
+  "first_page": "https://frc-events.firstinspires.org/2025/CURIE",
+  "tba_name": "Curie Division",
+  "first_teams": 76,
+  "tba_qual_teams": 76,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2025dal": {
+  "first_page": "https://frc-events.firstinspires.org/2025/DALY",
+  "tba_name": "Daly Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2025gal": {
+  "first_page": "https://frc-events.firstinspires.org/2025/GALILEO",
+  "tba_name": "Galileo Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2025hop": {
+  "first_page": "https://frc-events.firstinspires.org/2025/HOPPER",
+  "tba_name": "Hopper Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2025joh": {
+  "first_page": "https://frc-events.firstinspires.org/2025/JOHNSON",
+  "tba_name": "Johnson Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2025mil": {
+  "first_page": "https://frc-events.firstinspires.org/2025/MILSTEIN",
+  "tba_name": "Milstein Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2025new": {
+  "first_page": "https://frc-events.firstinspires.org/2025/NEWTON",
+  "tba_name": "Newton Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2026arc": {
+  "first_page": "https://frc-events.firstinspires.org/2026/ARCHIMEDES",
+  "tba_name": "Archimedes Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2026cur": {
+  "first_page": "https://frc-events.firstinspires.org/2026/CURIE",
+  "tba_name": "Curie Division",
+  "first_teams": 74,
+  "tba_qual_teams": 74,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2026dal": {
+  "first_page": "https://frc-events.firstinspires.org/2026/DALY",
+  "tba_name": "Daly Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2026gal": {
+  "first_page": "https://frc-events.firstinspires.org/2026/GALILEO",
+  "tba_name": "Galileo Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2026hop": {
+  "first_page": "https://frc-events.firstinspires.org/2026/HOPPER",
+  "tba_name": "Hopper Division",
+  "first_teams": 74,
+  "tba_qual_teams": 74,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2026joh": {
+  "first_page": "https://frc-events.firstinspires.org/2026/JOHNSON",
+  "tba_name": "Johnson Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2026mil": {
+  "first_page": "https://frc-events.firstinspires.org/2026/MILSTEIN",
+  "tba_name": "Milstein Division",
+  "first_teams": 74,
+  "tba_qual_teams": 74,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ },
+ "2026new": {
+  "first_page": "https://frc-events.firstinspires.org/2026/NEWTON",
+  "tba_name": "Newton Division",
+  "first_teams": 75,
+  "tba_qual_teams": 75,
+  "identical": true,
+  "only_first": [],
+  "only_tba": []
+ }
+}

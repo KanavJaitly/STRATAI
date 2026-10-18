@@ -1,0 +1,38 @@
+{
+ "2024": [
+  {
+   "event_key": "2024vapor",
+   "reason": "small_event_byes_not_represented",
+   "finding": "23 qualification teams: §10.6.6 gives 7 ALLIANCES with byes; TBA records 8 alliances, alliance 8 made of placeholder teams 9990-9992 with recorded 'bye' results. Byes/placeholder alliances are not representable in the bracket schema (mismatch M3)."
+  }
+ ],
+ "2025": [
+  {
+   "event_key": "2025ncash",
+   "reason": "small_event_byes_not_represented",
+   "finding": "22 qualification teams: §10.6.6 gives 7 ALLIANCES with byes; TBA records 8 alliances, alliance 8 made of placeholder teams 9991-9993 with recorded 'bye' results (mismatch M3)."
+  }
+ ],
+ "2026": [
+  {
+   "event_key": "2026mefal",
+   "reason": "small_event_byes_not_represented",
+   "finding": "20 qualification teams: §10.6.6 gives 6 ALLIANCES; TBA records 8, alliances 7-8 placeholders 9990-9995 (mismatch M3)."
+  },
+  {
+   "event_key": "2026txfor",
+   "reason": "small_event_byes_not_represented",
+   "finding": "24 qualification teams: §10.6.6 gives 7 ALLIANCES; TBA records 8, alliance 8 placeholders 9990-9992 (mismatch M3)."
+  },
+  {
+   "event_key": "2026txmca",
+   "reason": "small_event_byes_not_represented",
+   "finding": "18 qualification teams: §10.6.6 gives 5 ALLIANCES; TBA records 8, alliances 6-8 placeholders 9991-9999 (mismatch M3)."
+  },
+  {
+   "event_key": "2026isde2",
+   "reason": "alliance_count_contrary_to_10_6_6",
+   "finding": "24 qualification teams but 8 real alliances (no placeholders), contrary to §10.6.6's 7; no FIRST document explains it (event held 2026-06-30 to 07-01, after TU22)."
+  }
+ ]
+}

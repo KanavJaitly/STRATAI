@@ -1,0 +1,83 @@
+{
+ "diagnostic_only": true,
+ "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+ "groups": {
+  "held_out_2026": {
+   "all": {
+    "win_calibration_slope": 1.114449724829516,
+    "win_rows": 12215
+   },
+   "all_prior_season": {
+    "n": 2657,
+    "predicted_mean_sd": 0.810544852709905,
+    "residual_sd_around_fitted_mean": 1.0109519853656503,
+    "slope_actual_on_predicted_mean": 1.0977250226304769,
+    "win_calibration_slope": 0.9633523331682378,
+    "win_rows": 2644
+   },
+   "all_same_season": {
+    "n": 5448,
+    "predicted_mean_sd": 0.9223957802801445,
+    "residual_sd_around_fitted_mean": 0.9856432183681629,
+    "slope_actual_on_predicted_mean": 1.3288381743100768,
+    "win_calibration_slope": 1.3160336652164455,
+    "win_rows": 5439
+   },
+   "mixed": {
+    "n": 4143,
+    "predicted_mean_sd": 0.8133596052282264,
+    "residual_sd_around_fitted_mean": 1.0863509780367262,
+    "slope_actual_on_predicted_mean": 1.268714044538623,
+    "win_calibration_slope": 1.0035031505177365,
+    "win_rows": 4132
+   }
+  },
+  "training_2024_2025": {
+   "all": {
+    "win_calibration_slope": 1.274126912786141,
+    "win_rows": 15797
+   },
+   "all_prior_season": {
+    "n": 2133,
+    "predicted_mean_sd": 0.8047970961352161,
+    "residual_sd_around_fitted_mean": 0.963060848142172,
+    "slope_actual_on_predicted_mean": 0.9009658584519493,
+    "win_calibration_slope": 0.9015226416731514,
+    "win_rows": 2120
+   },
+   "all_same_season": {
+    "n": 9890,
+    "predicted_mean_sd": 0.77236582843071,
+    "residual_sd_around_fitted_mean": 0.8779351990609464,
+    "slope_actual_on_predicted_mean": 1.2277877301717914,
+    "win_calibration_slope": 1.4326873024976086,
+    "win_rows": 9775
+   },
+   "mixed": {
+    "n": 3933,
+    "predicted_mean_sd": 0.7486569095825246,
+    "residual_sd_around_fitted_mean": 0.9143923584883827,
+    "slope_actual_on_predicted_mean": 1.1567449544554442,
+    "win_calibration_slope": 1.1946863659862428,
+    "win_rows": 3902
+   }
+  }
+ },
+ "joint_total_regression_diagnostic_only": {
+  "coefficients": {
+   "auto": 0.8250571940350598,
+   "endgame": 1.2880126880379175,
+   "teleop": 1.0853804074034694
+  },
+  "held_out_2026_win_calibration_slope": 0.9114955895520039,
+  "sigma": 0.8893726036178362,
+  "training_2024_2025_win_calibration_slope": 1.0664401996284216
+ },
+ "minutes": 0.2,
+ "model_sigma": 0.8987916813111286,
+ "provenance": {
+  "commit": "37ec1b50dbb4afa35fdc3855e24e58dba6663d7d",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-05T23:52:09.690911+00:00"
+ }
+}

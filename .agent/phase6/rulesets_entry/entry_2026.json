@@ -1,0 +1,360 @@
+{
+ "season": 2026,
+ "game_name": "REBUILT",
+ "manual": {
+  "title": "2026 FIRST Robotics Competition Game Manual",
+  "version": "2026 Game Manual, PDF marked 'Version: TU22' (every page), incorporating Team Updates through TU22 (2026-04-21, the final update). PDF sha256 5c67300fc412a1eed8ca9dc37fb6644aee05795a2befed1f69736643cbf95139"
+ },
+ "alliance_counts": [
+  {
+   "min_teams": 25,
+   "max_teams": null,
+   "alliances": 8,
+   "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.1 p.123-126 ('the top 8 ranked teams become the ALLIANCE Leads'); 2026 Game Manual, PDF 'Version: TU22' §10.6.6 p.131 (24 teams or fewer is the modified format, so 25+ uses 8); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+  }
+ ],
+ "selection": {
+  "order": "serpentine",
+  "picks_per_alliance": 2,
+  "captain_rule": "HUMAN_DECISION(2026_CAPTAIN_RULE): 'highest_ranked_available' (with no captain_rule unresolved entry) or null (with one); see entry_2026.md §3",
+  "captain_may_accept_higher_alliance": true,
+  "declined_team_may_be_picked_later": false,
+  "declined_team_may_become_captain": null,
+  "backup_robots": true,
+  "unresolved": [
+   {
+    "field": "declined_team_may_become_captain",
+    "note": "Not established by FIRST. The 2026 manual §10.6.1 covers a decliner who is already an ALLIANCE Lead (it keeps captaincy) and a team 'highlighted in orange (will become captain if not picked)' (T606 box), not other decliners. false contradicts the documented rule; true asserts an unestablished case. TBA records 0 declines in 2024-2026. Decision D-PX1-4 (Kanav, 2026-10-06).",
+    "sources_checked": "2026 Game Manual §10.6.1 T606 pp.125-126 (https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf); 2026 Team Updates (https://firstfrc.blob.core.windows.net/frc2026/Manual/TeamUpdates/REBUILT_TeamUpdate-Combined.pdf)"
+   }
+  ],
+  "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.1 p.123-126 (selection; T606 declines); 2026 Game Manual, PDF 'Version: TU22' §10.6.3 p.128 (BACKUP TEAMS); 2026 Game Manual, PDF 'Version: TU22' §13.2 p.147 (FIRST Championship 4-ROBOT ALLIANCES); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+ },
+ "selection_variants": [
+  {
+   "name": "first_championship_division",
+   "selection": {
+    "order": "serpentine",
+    "picks_per_alliance": 3,
+    "captain_rule": "HUMAN_DECISION(2026_CAPTAIN_RULE): 'highest_ranked_available' (with no captain_rule unresolved entry) or null (with one); see entry_2026.md §3",
+    "captain_may_accept_higher_alliance": true,
+    "declined_team_may_be_picked_later": false,
+    "declined_team_may_become_captain": null,
+    "backup_robots": false,
+    "unresolved": [
+     {
+      "field": "declined_team_may_become_captain",
+      "note": "Not established by FIRST. The 2026 manual §10.6.1 covers a decliner who is already an ALLIANCE Lead (it keeps captaincy) and a team 'highlighted in orange (will become captain if not picked)' (T606 box), not other decliners. false contradicts the documented rule; true asserts an unestablished case. TBA records 0 declines in 2024-2026. Decision D-PX1-4 (Kanav, 2026-10-06).",
+      "sources_checked": "2026 Game Manual §10.6.1 T606 pp.125-126 (https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf); 2026 Team Updates (https://firstfrc.blob.core.windows.net/frc2026/Manual/TeamUpdates/REBUILT_TeamUpdate-Combined.pdf)"
+     }
+    ],
+    "citation": "2026 FIRST Robotics Competition Game Manual, PDF 'Version: TU22' §13.2 p.147 '4-ROBOT ALLIANCES': 'There is no provision for BACKUP TEAMS at the FIRST Championship ... the process continues with a third round of selection ... Round 3 ... reversed again, with ALLIANCE 1 picking first'; otherwise §10.6.1 pp.123-126 (T606 pp.125-126); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+   },
+   "events": [
+    {
+     "event_key": "2026arc",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2026 FIRST Robotics Competition Game Manual, PDF 'Version: TU22' (https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf); division listed by FIRST as 'Archimedes Division' of the FIRST Championship (FRC Events)",
+     "version": "PDF 'Version: TU22'",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2026/ARCHIMEDES"
+    },
+    {
+     "event_key": "2026cur",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2026 FIRST Robotics Competition Game Manual, PDF 'Version: TU22' (https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf); division listed by FIRST as 'Curie Division' of the FIRST Championship (FRC Events)",
+     "version": "PDF 'Version: TU22'",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2026/CURIE"
+    },
+    {
+     "event_key": "2026dal",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2026 FIRST Robotics Competition Game Manual, PDF 'Version: TU22' (https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf); division listed by FIRST as 'Daly Division' of the FIRST Championship (FRC Events)",
+     "version": "PDF 'Version: TU22'",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2026/DALY"
+    },
+    {
+     "event_key": "2026gal",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2026 FIRST Robotics Competition Game Manual, PDF 'Version: TU22' (https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf); division listed by FIRST as 'Galileo Division' of the FIRST Championship (FRC Events)",
+     "version": "PDF 'Version: TU22'",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2026/GALILEO"
+    },
+    {
+     "event_key": "2026hop",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2026 FIRST Robotics Competition Game Manual, PDF 'Version: TU22' (https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf); division listed by FIRST as 'Hopper Division' of the FIRST Championship (FRC Events)",
+     "version": "PDF 'Version: TU22'",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2026/HOPPER"
+    },
+    {
+     "event_key": "2026joh",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2026 FIRST Robotics Competition Game Manual, PDF 'Version: TU22' (https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf); division listed by FIRST as 'Johnson Division' of the FIRST Championship (FRC Events)",
+     "version": "PDF 'Version: TU22'",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2026/JOHNSON"
+    },
+    {
+     "event_key": "2026mil",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2026 FIRST Robotics Competition Game Manual, PDF 'Version: TU22' (https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf); division listed by FIRST as 'Milstein Division' of the FIRST Championship (FRC Events)",
+     "version": "PDF 'Version: TU22'",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2026/MILSTEIN"
+    },
+    {
+     "event_key": "2026new",
+     "rule": "FIRST Championship division: 4-ROBOT ALLIANCES (third selection round; no BACKUP TEAMS), §13.2",
+     "document": "2026 FIRST Robotics Competition Game Manual, PDF 'Version: TU22' (https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf); division listed by FIRST as 'Newton Division' of the FIRST Championship (FRC Events)",
+     "version": "PDF 'Version: TU22'",
+     "team_update": null,
+     "section": "§13.2 p.147",
+     "url": "https://frc-events.firstinspires.org/2026/NEWTON"
+    }
+   ]
+  }
+ ],
+ "event_exclusions": [
+  {
+   "event_key": "2026tuak2",
+   "reason": "backup_before_first_match",
+   "finding": "Seed 8 lists 9583, 10940, 9247, 10998: 10998 (listed 4th) played sf1 and sf7 in place of 10940 (the round-1 pick). 2026 T608 forbids a BACKUP TEAM before the first playoff match. Unresolved (D-PX1-3)."
+  },
+  {
+   "event_key": "2026tuis4",
+   "reason": "backup_never_played",
+   "finding": "Seed 4 lists 9427, 9519, 8151, 8042: 8042 (listed 4th) played none of the alliance's 4 matches. 2026 T609 requires a recruited BACKUP TEAM in the next LINEUP. Unresolved (D-PX1-3)."
+  },
+  "HUMAN_DECISION(SMALL_EVENTS): replace this string with the small-event entries listed in entry_2026.md §4 (option O1, explicit exclusions) or delete it (option O2, counted as not_covered)"
+ ],
+ "brackets": [
+  {
+   "alliances": 8,
+   "slots": [
+    {
+     "slot": "M1",
+     "competition_level": "semifinal",
+     "set_number": 1,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 1",
+     "red": {
+      "kind": "seed",
+      "seed": 1
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 8
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 1 (Upper, Blue 8 / Red 1); TBA semifinal set 1 = MATCH 1 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M2",
+     "competition_level": "semifinal",
+     "set_number": 2,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 1",
+     "red": {
+      "kind": "seed",
+      "seed": 4
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 5
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 2 (Upper, Blue 5 / Red 4); TBA semifinal set 2 = MATCH 2 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M3",
+     "competition_level": "semifinal",
+     "set_number": 3,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 1",
+     "red": {
+      "kind": "seed",
+      "seed": 2
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 7
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 3 (Upper, Blue 7 / Red 2); TBA semifinal set 3 = MATCH 3 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M4",
+     "competition_level": "semifinal",
+     "set_number": 4,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 1",
+     "red": {
+      "kind": "seed",
+      "seed": 3
+     },
+     "blue": {
+      "kind": "seed",
+      "seed": 6
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 4 (Upper, Blue 6 / Red 3); TBA semifinal set 4 = MATCH 4 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M5",
+     "competition_level": "semifinal",
+     "set_number": 5,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 2",
+     "red": {
+      "kind": "loser",
+      "slot": "M1"
+     },
+     "blue": {
+      "kind": "loser",
+      "slot": "M2"
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 5 (Lower, Blue L2 / Red L1); TBA semifinal set 5 = MATCH 5 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M6",
+     "competition_level": "semifinal",
+     "set_number": 6,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 2",
+     "red": {
+      "kind": "loser",
+      "slot": "M3"
+     },
+     "blue": {
+      "kind": "loser",
+      "slot": "M4"
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 6 (Lower, Blue L4 / Red L3); TBA semifinal set 6 = MATCH 6 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M7",
+     "competition_level": "semifinal",
+     "set_number": 7,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 2",
+     "red": {
+      "kind": "winner",
+      "slot": "M1"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M2"
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 7 (Upper, Blue W2 / Red W1); TBA semifinal set 7 = MATCH 7 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M8",
+     "competition_level": "semifinal",
+     "set_number": 8,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 2",
+     "red": {
+      "kind": "winner",
+      "slot": "M3"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M4"
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 8 (Upper, Blue W4 / Red W3); TBA semifinal set 8 = MATCH 8 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M9",
+     "competition_level": "semifinal",
+     "set_number": 9,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 3",
+     "red": {
+      "kind": "loser",
+      "slot": "M7"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M6"
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 9 (Lower, Blue W6 / Red L7); TBA semifinal set 9 = MATCH 9 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M10",
+     "competition_level": "semifinal",
+     "set_number": 10,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 3",
+     "red": {
+      "kind": "loser",
+      "slot": "M8"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M5"
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 10 (Lower, Blue W5 / Red L8); TBA semifinal set 10 = MATCH 10 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M11",
+     "competition_level": "semifinal",
+     "set_number": 11,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 4",
+     "red": {
+      "kind": "winner",
+      "slot": "M7"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M8"
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 11 (Upper, Blue W8 / Red W7); TBA semifinal set 11 = MATCH 11 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M12",
+     "competition_level": "semifinal",
+     "set_number": 12,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 4",
+     "red": {
+      "kind": "winner",
+      "slot": "M10"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M9"
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 12 (Lower, Blue W9 / Red W10); TBA semifinal set 12 = MATCH 12 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    },
+    {
+     "slot": "M13",
+     "competition_level": "semifinal",
+     "set_number": 13,
+     "round": "HUMAN_DECISION(D3_ROUNDS): proposed 5",
+     "red": {
+      "kind": "loser",
+      "slot": "M11"
+     },
+     "blue": {
+      "kind": "winner",
+      "slot": "M12"
+     },
+     "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 row MATCH 13 (Lower, Blue W12 / Red L11); TBA semifinal set 13 = MATCH 13 at 208/208 seeded 8-alliance 2026 events (scripts/phase6_m1_tba_evidence.py); https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+    }
+   ],
+   "finals": {
+    "competition_level": "final",
+    "set_number": 1,
+    "round": "HUMAN_DECISION(D3_ROUNDS): proposed 6",
+    "wins_needed": 2,
+    "red": {
+     "kind": "winner",
+     "slot": "M11"
+    },
+    "blue": {
+     "kind": "winner",
+     "slot": "M13"
+    },
+    "citation": "2026 Game Manual, PDF 'Version: TU22' §10.6.2 Table 10-2 p.127 Finals 14-16 (Blue W13 / Red W11); 2026 Game Manual, PDF 'Version: TU22' §10.6.2.2 p.128 ('The first ALLIANCE to win 2 MATCHES in the Finals'); TBA final set 1 = Finals at 208/208 events; https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+   }
+  }
+ ],
+ "tie_rule": "Non-finals playoff MATCH tied: Table 10-3, in order: 1st cumulative MAJOR FOUL points due to opponent rule violations; 2nd ALLIANCE AUTO FUEL points; 3rd ALLIANCE TOWER points; 4th MATCH is replayed (§10.6.2.1, p.128). Finals: a tied Finals MATCH remains a tie; up to 3 Overtime MATCHES; a tied Overtime MATCH is decided by Table 10-3 (§10.6.2.2, p.128). Einstein Finals: a tied MATCH is replayed (§13.4, p.148). No 2026 Team Update changed Table 10-3."
+}

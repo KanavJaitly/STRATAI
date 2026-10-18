@@ -41,6 +41,7 @@ def verify_database() -> None:
         "game_spec_versions",
         "capability_profiles",
         "human_review_artifacts",
+        "season_rulesets",
     }
 
     missing = expected_tables - tables

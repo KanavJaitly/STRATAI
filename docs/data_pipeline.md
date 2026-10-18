@@ -615,6 +615,22 @@ DM1's human review artifacts:
   superseded}, `created_at`, `established_by`, `established_at`, `note`.
 - **CHECK:** `established` requires `established_by`. Establishing is always a named person's act.
 
+### 4.4 Phase 6 season rulesets
+
+Created by `0011_phase6_season_rulesets.sql` for P6-M1 (`data/rulesets.py`, `scripts/phase6_rulesets.py`).
+
+#### `season_rulesets`
+
+A season's alliance-selection and playoff ruleset, entered by a person from the official game manual (every
+rule cited to its section) and made authoritative only by a different, named reviewer's approval.
+
+- **PK** `id`; `UNIQUE (season, version)`.
+- **Columns:** `ruleset_json`, `ruleset_sha256`, `status` ∈ {draft, awaiting_review, approved, superseded},
+  `created_by`, `created_at`, `submitted_at`, `reviewed_by`, `reviewed_at`, `review_note`.
+- **Append-only in content.** An edit is a new version; only status and review metadata move forward.
+- **Constraints:** a partial unique index allows one `approved` version per season; a CHECK requires approved
+  and superseded versions to have a reviewer.
+
 ---
 
 ## 5. Incremental state
@@ -1074,10 +1090,11 @@ DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 | `0008_metrics_schema.sql` | Phase 3 M2: creates `scouting_observations` and `team_metrics` (schema only, nothing writes them yet) |
 | `0009_scouting_access_codes.sql` | Phase 3 M7: creates `scouting_access_codes`, the lightweight per-event anti-abuse gate for human scouting submissions |
 | `0010_phase5_human_inputs.sql` | Phase 5 (P5-M8/M9, DM1): creates `game_manuals`, `game_spec_versions`, `capability_profiles` and `human_review_artifacts` for the web app's human-input workflows |
+| `0011_phase6_season_rulesets.sql` | Phase 6 (P6-M1): creates `season_rulesets`, the human-entered, reviewed per-season alliance-selection and playoff rules |
 
 Migrations are plain SQL applied in filename order and recorded in `migrations_applied`.
 **There is no Alembic and none should be added.** To add one, create
-`database/migrations/0011_<name>.sql` and run `database/migrate.py`.
+`database/migrations/0012_<name>.sql` and run `database/migrate.py`.
 
 ### 8.7 Watching a live event
 
@@ -1507,7 +1524,7 @@ duplicates either is dead code. Metric checks are always warnings — see
 
 ### Adding a migration
 
-Create `database/migrations/0010_<name>.sql`, keeping it additive where possible, and run
+Create `database/migrations/0012_<name>.sql`, keeping it additive where possible, and run
 `database/migrate.py`. Then update [§8.6](#86-migrations) and the schema reference in
 [§4](#4-schema-reference) — `tests/test_docs_contract.py` fails if a table exists in the
 database but is not documented here, or vice versa.
