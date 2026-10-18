@@ -251,6 +251,61 @@ def test_module_entry_point_serves_the_configured_host_and_port(monkeypatch, set
     assert captured["port"] == settings.api_port
 
 
+# Every path the application served before Phase 7 (main 4290a3d). tests/test_phase7_contract.py uses it to keep
+# docs/phase7.md's "Endpoints owned by Phase 7" list from claiming an earlier phase's route.
+PRE_PHASE7_PATHS = frozenset({
+    "/events/{event_key}/analysis",
+    "/events/{event_key}/qualification-forecast",
+    "/health",
+    "/human-inputs/artifacts/{artifact_id}/establish",
+    "/human-inputs/capability-profiles",
+    "/human-inputs/capability-profiles/{profile_key}",
+    "/human-inputs/capability-profiles/{profile_key}/archive",
+    "/human-inputs/capability-profiles/{profile_key}/duplicate",
+    "/human-inputs/capability-profiles/{profile_key}/history",
+    "/human-inputs/capability-profiles/{profile_key}/recommendation",
+    "/human-inputs/game-manuals",
+    "/human-inputs/game-manuals/{manual_id}/file",
+    "/human-inputs/reference/design-examples",
+    "/human-inputs/seasons/{season}/artifacts",
+    "/human-inputs/seasons/{season}/dm1-status",
+    "/human-inputs/seasons/{season}/kappa",
+    "/human-inputs/seasons/{season}/specs",
+    "/human-inputs/seasons/{season}/workflow",
+    "/human-inputs/specs/{spec_id}/review",
+    "/human-inputs/specs/{spec_id}/submit",
+    "/human-inputs/write-access",
+    "/predictions/alliance-synergy",
+    "/predictions/events/{event_key}/ranking",
+    "/predictions/matches/{match_key}/win-probability",
+    "/predictions/win-probability",
+    "/ready",
+    "/teams/{team_number}/events/{event_key}/metrics",
+    "/teams/{team_number}/events/{event_key}/strength",
+})
+# Phase 7 adds its endpoints here as each family milestone builds them (a deliberate, reviewed addition).
+PHASE7_PATHS: frozenset[str] = frozenset({
+    # P7-M4 (P7-Q8): discovery reads.
+    "/events",
+    "/events/{event_key}/teams",
+    "/events/{event_key}/matches",
+    # P7-M5 (P7-Q9, P7-Q10): match strategy and the coach writes.
+    "/strategy/matches/{match_key}/assess",
+    "/strategy/matches/{match_key}/recommend",
+    "/strategy/matches/{match_key}/compare",
+    "/strategy/hypothetical/assess",
+    "/strategy/hypothetical/recommend",
+    "/strategy/hypothetical/compare",
+    "/strategy/coach-strategies",
+    "/strategy/coach-observations",
+    # P7-M6 (P7-Q1): alliance selection.
+    "/events/{event_key}/alliance-selection/candidates",
+    "/events/{event_key}/alliance-selection/pick-list",
+    # P7-M7 (P7-Q12): pre-match report data.
+    "/matches/{match_key}/pre-match-report",
+})
+
+
 def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     """The shipped application exposes these paths and nothing else.
 
@@ -261,42 +316,14 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     same way: a deliberate, reviewed addition, not a silent one. Phase 5
     adds its endpoints the same way (P5-M3: the strength view; P5-M4: event
     analysis; P5-M5: qualification forecasts; the human-input workflows under
-    /human-inputs). It still
+    /human-inputs). Phase 7 keeps the pre-Phase 7 list as PRE_PHASE7_PATHS and adds
+    its own endpoints to PHASE7_PATHS, family by family, the same way. It still
     guards the other direction, which has not changed: a test-only
     forced-error route (/_test_boom and friends, registered on locally built
     apps in this module) must never reach the shipped application.
     """
     app = create_app(settings)
-    assert sorted(app.openapi()["paths"]) == [
-        "/events/{event_key}/analysis",
-        "/events/{event_key}/qualification-forecast",
-        "/health",
-        "/human-inputs/artifacts/{artifact_id}/establish",
-        "/human-inputs/capability-profiles",
-        "/human-inputs/capability-profiles/{profile_key}",
-        "/human-inputs/capability-profiles/{profile_key}/archive",
-        "/human-inputs/capability-profiles/{profile_key}/duplicate",
-        "/human-inputs/capability-profiles/{profile_key}/history",
-        "/human-inputs/capability-profiles/{profile_key}/recommendation",
-        "/human-inputs/game-manuals",
-        "/human-inputs/game-manuals/{manual_id}/file",
-        "/human-inputs/reference/design-examples",
-        "/human-inputs/seasons/{season}/artifacts",
-        "/human-inputs/seasons/{season}/dm1-status",
-        "/human-inputs/seasons/{season}/kappa",
-        "/human-inputs/seasons/{season}/specs",
-        "/human-inputs/seasons/{season}/workflow",
-        "/human-inputs/specs/{spec_id}/review",
-        "/human-inputs/specs/{spec_id}/submit",
-        "/human-inputs/write-access",
-        "/predictions/alliance-synergy",
-        "/predictions/events/{event_key}/ranking",
-        "/predictions/matches/{match_key}/win-probability",
-        "/predictions/win-probability",
-        "/ready",
-        "/teams/{team_number}/events/{event_key}/metrics",
-        "/teams/{team_number}/events/{event_key}/strength",
-    ]
+    assert sorted(app.openapi()["paths"]) == sorted(PRE_PHASE7_PATHS | PHASE7_PATHS)
 
 
 # ===========================================================================

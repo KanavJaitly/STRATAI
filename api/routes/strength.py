@@ -10,20 +10,27 @@ epa_source_incomplete (api.routes.common), and invalid_as_of (422).
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, Path, Query
 from pydantic import BaseModel
 
+from api.contract import error_responses
 from api.dependencies import get_database, get_epa_source
-from api.errors import ApiError, ErrorResponse
 from api.ml_loading import ServedEpaSource
-from api.routes.common import (
+from api.routes.common import (  # CODE_INVALID_AS_OF and parse_as_of moved to common by P7-M3; still importable here
+    CODE_EPA_SOURCE_INCOMPLETE,
+    CODE_EPA_SOURCE_NOT_LOADED,
+    CODE_EPA_SOURCE_PENDING,
+    CODE_EVENT_NOT_FOUND,
+    AS_OF_DESCRIPTION,
+    CODE_INVALID_AS_OF,
+    CODE_TEAM_NOT_FOUND,
     EpaSourceInfo,
     epa_info,
     epa_source_incomplete_error,
     event_not_found_error,
+    parse_as_of,
     require_epa_source,
     require_teams_rostered,
 )
@@ -34,27 +41,9 @@ from ml.views.strength import TeamStrengthView, build_team_strength
 
 router = APIRouter(tags=["strength"])
 
-CODE_INVALID_AS_OF = "invalid_as_of"
-
-
 class TeamStrengthResponse(BaseModel):
     strength: TeamStrengthView
     epa: EpaSourceInfo
-
-
-def parse_as_of(value: str | None) -> datetime:
-    """The request's as_of: now when omitted; otherwise an ISO-8601 time with an offset."""
-    if value is None:
-        return datetime.now(timezone.utc)
-    try:
-        parsed = datetime.fromisoformat(value)
-    except ValueError as exc:
-        raise ApiError(status_code=HTTPStatus.UNPROCESSABLE_ENTITY, code=CODE_INVALID_AS_OF,
-                       message=f"as_of {value!r} is not an ISO-8601 timestamp") from exc
-    if parsed.tzinfo is None:
-        raise ApiError(status_code=HTTPStatus.UNPROCESSABLE_ENTITY, code=CODE_INVALID_AS_OF,
-                       message="as_of must include a timezone offset")
-    return parsed
 
 
 @router.get(
@@ -65,12 +54,15 @@ def parse_as_of(value: str | None) -> datetime:
                 "at one event as of a point in time. Every numeric field has n and an explicit uncertainty."
                 " reliability_score is an INTERIM placeholder (100 * matches_used / matches_scheduled, an attendance "
                 "ratio, not a robot-failure measure; docs/metrics_pipeline.md section 6.3).",
-    responses={HTTPStatus.NOT_FOUND: {"model": ErrorResponse}, HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse}},
+    responses=error_responses({
+        HTTPStatus.NOT_FOUND: [CODE_EPA_SOURCE_NOT_LOADED, CODE_EVENT_NOT_FOUND, CODE_TEAM_NOT_FOUND],
+        HTTPStatus.UNPROCESSABLE_ENTITY: [CODE_INVALID_AS_OF, CODE_EPA_SOURCE_INCOMPLETE, CODE_EPA_SOURCE_PENDING],
+    }),
 )
 def team_strength(
     team_number: int = Path(ge=1),
     event_key: str = Path(min_length=1),
-    as_of: str | None = Query(default=None, description="ISO-8601 with offset; default: now"),
+    as_of: str | None = Query(default=None, description=AS_OF_DESCRIPTION),
     database: Database = Depends(get_database),
     epa_source: ServedEpaSource | None = Depends(get_epa_source),
 ) -> TeamStrengthResponse:

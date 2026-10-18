@@ -50,10 +50,12 @@ import logging
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, Path
+from pydantic import BaseModel, Field
 from starlette.requests import Request
 
+from api.contract import Validation, error_responses
 from api.dependencies import get_database
-from api.errors import ApiError, ErrorResponse
+from api.errors import ApiError
 from api.request_id import get_request_id
 from data.metrics.read import (
     STATUS_EVENT_NOT_FOUND,
@@ -64,11 +66,37 @@ from data.metrics.read import (
 )
 from data.metrics.schemas import TeamMetrics
 from database.connection import Database
+from ml.views.strength import stored_metrics_labels
 
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["metrics"])
+
+
+class MetricsValidation(BaseModel):
+    """P7-Q13: how far each part of a stored metrics object may be trusted, using labels the strength view
+    already assigns (ml.views.strength), derived only from the object's own flags."""
+
+    scoring: Validation = Field(description="descriptive; carries the INTERIM reliability_score caveat.")
+    defense: Validation = Field(description="descriptive_definition_pending (Phase 3 M14 is open); "
+                                            "insufficient_data when fewer than 2 observations.")
+    feeding: Validation = Field(description="not_validated (no feeding data at collection time); "
+                                            "insufficient_data when fewer than 2 observations.")
+
+
+class TeamMetricsResponse(TeamMetrics):
+    """The stored Phase 3 TeamMetrics, unchanged, plus its `validation` block (P7-Q13, additive). A subclass, so
+    TeamMetrics itself -- and everything validated against it -- is untouched."""
+
+    validation: MetricsValidation
+
+
+def _with_validation(metrics: TeamMetrics) -> TeamMetricsResponse:
+    labels = stored_metrics_labels(metrics)
+    validation = MetricsValidation(**{part: Validation(status=status, reasons=reasons)
+                                      for part, (status, reasons) in labels.items()})
+    return TeamMetricsResponse(**metrics.model_dump(), validation=validation)
 
 
 # Maps each of data.metrics.read's not-found statuses onto the response it
@@ -99,7 +127,7 @@ _NOT_FOUND_RESPONSES: dict[str, tuple[str, str]] = {
 
 @router.get(
     "/teams/{team_number}/events/{event_key}/metrics",
-    response_model=TeamMetrics,
+    response_model=TeamMetricsResponse,
     summary="Team metrics at one event",
     description=(
         "Returns the complete computed metrics object for one team at one event: "
@@ -111,25 +139,22 @@ _NOT_FOUND_RESPONSES: dict[str, tuple[str, str]] = {
         "placeholder: the attendance ratio 100 * matches_used / matches_scheduled, "
         "not a robot-failure or disqualification measure. Returns 404 with one of "
         "four distinct error codes -- team_not_found, event_not_found, "
-        "team_did_not_attend, metrics_not_computed -- when no metrics object exists."
+        "team_did_not_attend, metrics_not_computed -- when no metrics object exists. "
+        "This is the current-state snapshot (it includes every match computed so far), not a point-in-time view: "
+        "for a past moment use the strength endpoint's as_of. The validation block labels each part: scoring "
+        "descriptive, defense descriptive_definition_pending, feeding not_validated."
     ),
-    responses={
-        HTTPStatus.NOT_FOUND: {"model": ErrorResponse},
-        # Declared explicitly, overriding the HTTPValidationError schema FastAPI
-        # generates for any route with validated parameters. That default would
-        # document {"detail": [...]}, which is not what this API returns:
-        # api.errors renders a 422 into the same envelope as every other error.
-        # The first route with path parameters is the first place that default
-        # could have misdocumented the contract.
-        HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse},
-    },
+    # error_responses declares 422 explicitly, overriding the HTTPValidationError schema FastAPI generates for any
+    # route with validated parameters. That default would document {"detail": [...]}, which is not what this API
+    # returns: api.errors renders a 422 into the same envelope as every other error.
+    responses=error_responses({HTTPStatus.NOT_FOUND: [code for code, _ in _NOT_FOUND_RESPONSES.values()]}),
 )
 def team_metrics(
     request: Request,
     team_number: int = Path(gt=0, description="FRC team number, e.g. 1114."),
     event_key: str = Path(min_length=1, description="TBA event key, e.g. 2026casj."),
     database: Database = Depends(get_database),
-) -> TeamMetrics:
+) -> TeamMetricsResponse:
     """Return one team's stored metrics at one event.
 
     Declared with def rather than async def for the same reason /ready is:
@@ -145,7 +170,7 @@ def team_metrics(
     """
     lookup = look_up_team_metrics(database, team_number, event_key)
     if lookup.metrics is not None:
-        return lookup.metrics
+        return _with_validation(lookup.metrics)
 
     code, message_template = _NOT_FOUND_RESPONSES[lookup.status]
     # Logged at info: a 404 here is an ordinary, expected answer (a client

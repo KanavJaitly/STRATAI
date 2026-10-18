@@ -30,22 +30,24 @@ from http import HTTPStatus
 from fastapi import APIRouter, Depends, Path, Query
 from pydantic import BaseModel
 
+from api.contract import error_responses
 from api.dependencies import get_database, get_epa_source, get_ranking_model
-from api.errors import ApiError, ErrorResponse
 from api.ml_loading import ServedEpaSource, ServedModel
 from api.routes.common import (
+    CODE_EPA_SOURCE_INCOMPLETE,
+    CODE_EPA_SOURCE_NOT_LOADED,
+    CODE_EPA_SOURCE_PENDING,
+    CODE_EVENT_NOT_FOUND,
     EpaSourceInfo,
     epa_info,
     epa_source_incomplete_error,
     event_not_found_error,
     require_epa_source,
 )
-from api.routes.strength import parse_as_of
+from api.routes.common import AS_OF_DESCRIPTION, CODE_INVALID_AS_OF, CODE_MODEL_NOT_LOADED, model_not_loaded_error, parse_as_of
 from database.connection import Database
-from ml.features.assembler import TeamFeatures, build_team_features
-from ml.features.roster import event_exists, list_teams_at_event
-from ml.features.scale import ScaleLookup
-from ml.models.baselines import RawEpaRankingBaseline
+from ml.features.assembler import TeamFeatures
+from ml.features.roster import event_exists
 from ml.ratings.statbotics_primary import SilentFallbackError
 from ml.views.event_analysis import (
     CAPTAINS,
@@ -53,15 +55,13 @@ from ml.views.event_analysis import (
     POLICY_M5V2,
     VALIDATED_AS_MEASURED,
     VALIDATED_RAW_EPA,
-    order_teams,
-    policy_model,
-    serving_switch,
+    M5V2Required,
+    analyze_event,
 )
-from ml.views.strength import TeamStrengthView, build_team_strength
+from ml.views.strength import TeamStrengthView
 
 router = APIRouter(tags=["event analysis"])
 
-CODE_MODEL_NOT_LOADED = "model_not_loaded"
 EVIDENCE_RAW_EPA = ("Raw EPA (D18 M4 baseline): mean per-event Spearman 0.5955 against final qualification rank, "
                     "held-out 2026, 208 events; pre-event orderings included.")
 EVIDENCE_M5V2 = ("M5 v2 after the event switch point, measured once (P5-M4 (b), "
@@ -123,11 +123,14 @@ class EventAnalysisResponse(BaseModel):
                 "status; no playoff probability is served. The team comparison's reliability_score is an INTERIM "
                 "placeholder (100 * matches_used / matches_scheduled, an attendance ratio, not a robot-failure "
                 "measure; docs/metrics_pipeline.md section 6.3).",
-    responses={HTTPStatus.NOT_FOUND: {"model": ErrorResponse}, HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse}},
+    responses=error_responses({
+        HTTPStatus.NOT_FOUND: [CODE_MODEL_NOT_LOADED, CODE_EPA_SOURCE_NOT_LOADED, CODE_EVENT_NOT_FOUND],
+        HTTPStatus.UNPROCESSABLE_ENTITY: [CODE_INVALID_AS_OF, CODE_EPA_SOURCE_INCOMPLETE, CODE_EPA_SOURCE_PENDING],
+    }, validates_input=False),  # a path segment and a raw as_of string (checked by parse_as_of: invalid_as_of)
 )
 def event_analysis(
     event_key: str = Path(min_length=1),
-    as_of: str | None = Query(default=None, description="ISO-8601 with offset; default: now"),
+    as_of: str | None = Query(default=None, description=AS_OF_DESCRIPTION),
     database: Database = Depends(get_database),
     served: ServedModel | None = Depends(get_ranking_model),
     epa_source: ServedEpaSource | None = Depends(get_epa_source),
@@ -136,22 +139,15 @@ def event_analysis(
     when = parse_as_of(as_of)
     if not event_exists(database, event_key):
         raise event_not_found_error(event_key)
-    switch = serving_switch(database, event_key, when)
-    model = policy_model(switch.passed)
-    if model == POLICY_M5V2 and served is None:
-        raise ApiError(status_code=HTTPStatus.NOT_FOUND, code=CODE_MODEL_NOT_LOADED,
-                       message="The event switch point has passed, so the policy serves M5 v2, which is not loaded.")
-    scales = ScaleLookup(database)
-    teams = list_teams_at_event(database, event_key)
     try:
-        features = [build_team_features(database, t, event_key, when, epa_provider=epa_source.provider,
-                                        scale_lookup=scales) for t in teams]
-        views = [build_team_strength(database, t, event_key, when, epa_provider=epa_source.provider,
-                                     scale_lookup=scales) for t in teams]
+        analysis = analyze_event(database, event_key, when, epa_provider=epa_source.provider,
+                                 m5v2_predict_rating=served.model.predict_rating if served is not None else None)
+    except M5V2Required:
+        raise model_not_loaded_error("ranking_xgb_v2 (M5 v2)", "the event switch point has passed, so the frozen policy serves M5 v2")
     except SilentFallbackError as exc:
         raise epa_source_incomplete_error(exc) from exc
-    score = served.model.predict_rating if model == POLICY_M5V2 else RawEpaRankingBaseline().predict_rating  # type: ignore[union-attr]
-    ordering = order_teams(features, score)
+    switch, model, features, views, ordering = (analysis.switch, analysis.model, analysis.features, analysis.views,
+                                                analysis.ordering)
     by_team: dict[int, TeamFeatures] = {f.team_number: f for f in features}
     ranked = [RankedTeam(rank=o.rank, team_number=o.team_number,
                          score=o.score if o.score != float("-inf") else None,
