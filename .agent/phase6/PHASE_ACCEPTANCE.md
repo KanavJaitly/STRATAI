@@ -1,5 +1,7 @@
 # Phase 6 — phase acceptance review (2026-10-05)
 
+> **Update 2026-10-17: Phase 6 accepted as complete by Kanav, with P6-DM1 deferred** (`decisions/P6_PHASE_ACCEPTANCE_2026-10-17.md`). The review below is kept as written; its facts are unchanged. DM1 is still not met, and the remaining items listed at the end stay open as deferred work.
+
 **Verdict: Phase 6 is NOT complete.** P6-DM2 is met; P6-DM1 is not met. Its whole dependency chain (P6-M1 → PX-1 → PX-2 → PX-4 → P6-M8) waits on **required human input**: the 2024–2026 season rulesets, entered from the official game manuals and approved by a different named reviewer. Nothing was fabricated to work around that.
 
 | Outcome | Milestones |
