@@ -1,0 +1,57 @@
+{
+ "beta": {
+  "auto": 0.7406426846752129,
+  "endgame": 0.8846389021366173,
+  "teleop": 0.9496312440087671
+ },
+ "excluded": {
+  "epa_incomplete": 12570,
+  "model_input_absent": 67
+ },
+ "fit_rows": 15956,
+ "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+ "latest_fit_row": "2025-04-18T19:00:00-04:00",
+ "milestone": "P6-M10",
+ "provenance": {
+  "commit": "48ac1ea6311940ba529b519f0a98e1c3787312ad",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-05T22:43:35.326076+00:00"
+ },
+ "registry": {
+  "model_sha256": "aded2c829a1f2edbd1ddb50e099b0e88df8a5cc4033efe0fa7270dae235fbf5f",
+  "model_type": "strategy_outcome_component",
+  "path": "C:\\Dev\\StratAI-artifacts\\ml_registry\\strategy_outcome_component\\p6m10-v1",
+  "version_tag": "p6m10-v1"
+ },
+ "seconds": 10.2,
+ "sigma": 0.8987916813111286,
+ "sigma_matrix": [
+  [
+   0.11843629343777262,
+   0.033139591947032386,
+   0.008090198587228304,
+   0.005898511517058431
+  ],
+  [
+   0.033139591947032386,
+   0.412673606775573,
+   0.014145178908443194,
+   0.012913634090856106
+  ],
+  [
+   0.008090198587228304,
+   0.014145178908443194,
+   0.04639665712720382,
+   0.0026337953146202777
+  ],
+  [
+   0.005898511517058431,
+   0.012913634090856106,
+   0.0026337953146202777,
+   0.07667810832305863
+  ]
+ ],
+ "spec": ".agent/phase6/P6_M10_MODEL_SPEC.md",
+ "spec_sha256": "7b93609205c17956c26ac85c2cee8fac6b7d11b1ee01e3b404360a091e1fee23",
+ "step": "fit"
+}

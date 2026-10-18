@@ -1,0 +1,181 @@
+{
+ "epa_integrity": {
+  "a1_team_events": 331,
+  "invalid_team_events": 143,
+  "ok": true,
+  "raw_equals_table_epa_total": 24022,
+  "raw_files_verified": 608,
+  "raw_records": 24022,
+  "table_rows": 24022,
+  "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5"
+ },
+ "minutes": 0.6,
+ "provenance": {
+  "commit": "84413544f8050efcf445e9345edbdcf0c02f74bb",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-06T00:58:12.245025+00:00"
+ },
+ "seasons": {
+  "2024": {
+   "alliance_listed_sizes": {
+    "3": 1267,
+    "4": 213
+   },
+   "anomalies": [
+    {
+     "event": "2024isde2",
+     "kind": "anomalous_backup_in_first_match",
+     "seed": 7
+    }
+   ],
+   "championship_division_pattern_events": [
+    "2024arc",
+    "2024cur",
+    "2024dal",
+    "2024gal",
+    "2024hop",
+    "2024joh",
+    "2024mil",
+    "2024new"
+   ],
+   "events_with_playoffs": 190,
+   "fourth_listed_team_meanings": {
+    "anomalous_backup_in_first_match": 1,
+    "backup_consistent": 148,
+    "round3_pick": 64
+   },
+   "px1_candidate_rows": {
+    "excluded_division_champion_or_no_alliances_events": 5,
+    "tie_or_unplayed": 5,
+    "train:candidate": 2817,
+    "train:composition_differs_A_vs_B": 120,
+    "train:composition_differs_current_vs_A": 675,
+    "train:composition_differs_current_vs_A:eligible_under_both": 314,
+    "train:composition_differs_current_vs_B": 555,
+    "train:eligibility_differs_current_vs_A": 17,
+    "train:eligible:A_captain_two_picks": 1126,
+    "train:eligible:B_selection_members": 1126,
+    "train:eligible:current_listed": 1109,
+    "train:on_field_trio_differs_from_A": 265
+   },
+   "seeded_event_kinds": {
+    "championship_division_pattern": 8,
+    "standard_no_fourth": 81,
+    "standard_with_anomaly": 1,
+    "standard_with_backup": 95
+   },
+   "side_appearances_with_a_fourth_listed_team_by_meaning": {
+    "train:anomalous_backup_in_first_match": 2,
+    "train:backup_consistent": 587,
+    "train:round3_pick": 240
+   }
+  },
+  "2025": {
+   "alliance_listed_sizes": {
+    "3": 1412,
+    "4": 172
+   },
+   "anomalies": [],
+   "championship_division_pattern_events": [
+    "2025arc",
+    "2025cur",
+    "2025dal",
+    "2025gal",
+    "2025hop",
+    "2025joh",
+    "2025mil",
+    "2025new"
+   ],
+   "events_with_playoffs": 203,
+   "fourth_listed_team_meanings": {
+    "backup_consistent": 108,
+    "round3_pick": 64
+   },
+   "px1_candidate_rows": {
+    "excluded_division_champion_or_no_alliances_events": 5,
+    "tie_or_unplayed": 4,
+    "train:candidate": 3007,
+    "train:composition_differs_A_vs_B": 122,
+    "train:composition_differs_current_vs_A": 550,
+    "train:composition_differs_current_vs_A:eligible_under_both": 472,
+    "train:composition_differs_current_vs_B": 428,
+    "train:eligibility_differs_current_vs_A": 25,
+    "train:eligible:A_captain_two_picks": 2585,
+    "train:eligible:B_selection_members": 2585,
+    "train:eligible:current_listed": 2560,
+    "train:on_field_trio_differs_from_A": 189
+   },
+   "seeded_event_kinds": {
+    "championship_division_pattern": 8,
+    "standard_no_fourth": 98,
+    "standard_with_backup": 92
+   },
+   "side_appearances_with_a_fourth_listed_team_by_meaning": {
+    "train:backup_consistent": 438,
+    "train:round3_pick": 244
+   }
+  },
+  "2026": {
+   "alliance_listed_sizes": {
+    "3": 1411,
+    "4": 253
+   },
+   "anomalies": [
+    {
+     "event": "2026tuak2",
+     "kind": "anomalous_backup_in_first_match",
+     "seed": 8
+    },
+    {
+     "event": "2026tuis4",
+     "kind": "anomalous_backup_never_played",
+     "seed": 4
+    }
+   ],
+   "championship_division_pattern_events": [
+    "2026arc",
+    "2026cur",
+    "2026dal",
+    "2026gal",
+    "2026hop",
+    "2026joh",
+    "2026mil",
+    "2026new"
+   ],
+   "events_with_playoffs": 213,
+   "fourth_listed_team_meanings": {
+    "anomalous_backup_in_first_match": 1,
+    "anomalous_backup_never_played": 1,
+    "backup_consistent": 187,
+    "round3_pick": 64
+   },
+   "px1_candidate_rows": {
+    "excluded_division_champion_or_no_alliances_events": 5,
+    "held_out:candidate": 3165,
+    "held_out:composition_differs_A_vs_B": 122,
+    "held_out:composition_differs_current_vs_A": 866,
+    "held_out:composition_differs_current_vs_A:eligible_under_both": 720,
+    "held_out:composition_differs_current_vs_B": 744,
+    "held_out:eligibility_differs_current_vs_A": 59,
+    "held_out:eligible:A_captain_two_picks": 2797,
+    "held_out:eligible:B_selection_members": 2797,
+    "held_out:eligible:current_listed": 2738,
+    "held_out:on_field_trio_differs_from_A": 321,
+    "tie_or_unplayed": 1
+   },
+   "seeded_event_kinds": {
+    "championship_division_pattern": 8,
+    "standard_no_fourth": 82,
+    "standard_with_anomaly": 2,
+    "standard_with_backup": 116
+   },
+   "side_appearances_with_a_fourth_listed_team_by_meaning": {
+    "held_out:anomalous_backup_in_first_match": 3,
+    "held_out:anomalous_backup_never_played": 4,
+    "held_out:backup_consistent": 798,
+    "held_out:round3_pick": 244
+   }
+  }
+ },
+ "what": "read-only PX-1 composition diagnostic; nothing fitted or evaluated"
+}

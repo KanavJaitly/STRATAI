@@ -1,0 +1,649 @@
+{
+ "2024": {
+  "section_refs": [
+   {
+    "ref": "§10.6.1 p.121",
+    "section_pages": [
+     121,
+     121
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.2 p.123",
+    "section_pages": [
+     121,
+     123
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.2.1 p.123",
+    "section_pages": [
+     123,
+     124
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.2.2 p.124",
+    "section_pages": [
+     124,
+     124
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.3 p.124",
+    "section_pages": [
+     124,
+     126
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.6 p.127",
+    "section_pages": [
+     127,
+     129
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§12.2 p.137",
+    "section_pages": [
+     137,
+     137
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§12.4 p.138",
+    "section_pages": [
+     138,
+     139
+    ],
+    "ok": true
+   }
+  ],
+  "quotes": [
+   {
+    "fragment": " V5, Section 11 ",
+    "found_in": null
+   },
+   {
+    "fragment": " V5, Section 12 ",
+    "found_in": null
+   },
+   {
+    "fragment": "The first ALLIANCE to win 2 MATCHES in the Finals",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "ALLIANCE PARK, ONSTAGE, and NOTE in TRAP STAGE points",
+    "found_in": "team_updates"
+   },
+   {
+    "fragment": "the top 8 ranked teams become the ALLIANCE Leads",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "s playoff matches and 2212 (a round-2 pick) none. 2024 T604 forbids a BACKUP TEAM before the alliance",
+    "found_in": null
+   },
+   {
+    "fragment": "Archimedes Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Curie Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Daly Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Galileo Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Hopper Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Johnson Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Milstein Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Newton Division",
+    "found_in": null
+   },
+   {
+    "fragment": "4-ROBOT ALLIANCES",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "There is no provision for BACKUP TEAMS at the FIRST Championship",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "the process continues with a third round of selection",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "reversed again, with ALLIANCE 1 picking first",
+    "found_in": "game_manual"
+   }
+  ],
+  "footers": [
+   "Section 10 Tournaments V5",
+   "Section 11 District Tournaments V5",
+   "Section 12 FIRST Championship Tournament V0",
+   "Section 13 Event Rules V1"
+  ],
+  "cover_version": [],
+  "sha_manual_ok": true,
+  "sha_tu_ok": true
+ },
+ "2025": {
+  "section_refs": [
+   {
+    "ref": "§10.6.1 p.123",
+    "section_pages": [
+     123,
+     125
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.1 p.125",
+    "section_pages": [
+     123,
+     125
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.2 p.127",
+    "section_pages": [
+     125,
+     127
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.2.1 p.128",
+    "section_pages": [
+     127,
+     128
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.2.2 p.128",
+    "section_pages": [
+     128,
+     128
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.3 p.128",
+    "section_pages": [
+     128,
+     130
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.6 p.131",
+    "section_pages": [
+     131,
+     133
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§13.2 p.147",
+    "section_pages": [
+     147,
+     147
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§13.4 p.148",
+    "section_pages": [
+     148,
+     149
+    ],
+    "ok": true
+   }
+  ],
+  "quotes": [
+   {
+    "fragment": "Tournaments (T)",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "District Tournaments",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "FIRST Championship Tournament (C)",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "The first ALLIANCE to win 2 MATCHES in the Finals",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "to reflect how the FMS has been calculating AUTO points",
+    "found_in": "team_updates"
+   },
+   {
+    "fragment": "join or form your own Alliance",
+    "found_in": "first_volunteer_docs"
+   },
+   {
+    "fragment": "bringing in new Alliance Leads",
+    "found_in": "first_volunteer_docs"
+   },
+   {
+    "fragment": "the top 8 ranked teams become the ALLIANCE Leads",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Archimedes Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Curie Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Daly Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Galileo Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Hopper Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Johnson Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Milstein Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Newton Division",
+    "found_in": null
+   },
+   {
+    "fragment": "4-ROBOT ALLIANCES",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "There is no provision for BACKUP TEAMS at the FIRST Championship",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "the process continues with a third round of selection",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "reversed again, with ALLIANCE 1 picking first",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "join or form your own Alliance",
+    "found_in": "first_volunteer_docs"
+   },
+   {
+    "fragment": "bringing in new Alliance Leads",
+    "found_in": "first_volunteer_docs"
+   }
+  ],
+  "footers": [
+   "Section 10 Tournaments (T) V6",
+   "Section 11 District Tournaments V3",
+   "Section 12 Regional Tournaments V3",
+   "Section 13 FIRST Championship Tournament (C) V0"
+  ],
+  "cover_version": [],
+  "sha_manual_ok": true,
+  "sha_tu_ok": true
+ },
+ "2026": {
+  "section_refs": [
+   {
+    "ref": "§10.6.1 p.123",
+    "section_pages": [
+     123,
+     126
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.1 p.125",
+    "section_pages": [
+     123,
+     126
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.2 p.127",
+    "section_pages": [
+     126,
+     127
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.2.1 p.128",
+    "section_pages": [
+     128,
+     128
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.2.2 p.128",
+    "section_pages": [
+     128,
+     128
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.3 p.128",
+    "section_pages": [
+     128,
+     130
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§10.6.6 p.131",
+    "section_pages": [
+     131,
+     133
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§13.2 p.147",
+    "section_pages": [
+     147,
+     148
+    ],
+    "ok": true
+   },
+   {
+    "ref": "§13.4 p.148",
+    "section_pages": [
+     148,
+     149
+    ],
+    "ok": true
+   }
+  ],
+  "quotes": [
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "The first ALLIANCE to win 2 MATCHES in the Finals",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "the top 8 ranked teams become the ALLIANCE Leads",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Teams highlighted in orange (will become captain if not picked) will NOT get a strikethrough if they decline as they can still become captains.",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "highlighted in orange (will become captain if not picked)",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "the top 8 ranked teams become the ALLIANCE Leads",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Archimedes Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Curie Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Daly Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Galileo Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Hopper Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Johnson Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Milstein Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Newton Division",
+    "found_in": null
+   },
+   {
+    "fragment": "Version: TU22",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "4-ROBOT ALLIANCES",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "There is no provision for BACKUP TEAMS at the FIRST Championship",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "the process continues with a third round of selection",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "reversed again, with ALLIANCE 1 picking first",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "the top 8 ranked teams become the ALLIANCE Leads",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "Teams highlighted in orange (will become captain if not picked) will NOT get a strikethrough if they decline as they can still become captains.",
+    "found_in": "game_manual"
+   },
+   {
+    "fragment": "highlighted in orange (will become captain if not picked)",
+    "found_in": "game_manual"
+   }
+  ],
+  "footers": [
+   "Section 10 Tournaments (T) Version: TU22",
+   "Section 11 District Tournaments Version: TU22",
+   "Section 12 Regional Tournaments Version: TU22",
+   "Section 13 FIRST Championship Tournament (C) Version: TU22"
+  ],
+  "cover_version": [
+   "Version: TU22"
+  ],
+  "sha_manual_ok": true,
+  "sha_tu_ok": true
+ }
+}
