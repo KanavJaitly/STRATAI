@@ -80,11 +80,15 @@ from pydantic import BaseModel, Field
 from ml.features.assembler import TeamFeatures
 
 __all__ = [
+    "SYNERGY_VALIDATION_STATUS",
     "SynergyWeights",
     "DEFAULT_SYNERGY_WEIGHTS",
     "AllianceSynergyScore",
     "alliance_synergy",
 ]
+
+# How far a synergy score may be trusted: a documented heuristic, never checked against match outcomes.
+SYNERGY_VALIDATION_STATUS = "not_validated_against_outcomes"
 
 
 @dataclass(frozen=True)

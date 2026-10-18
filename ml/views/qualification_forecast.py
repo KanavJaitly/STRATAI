@@ -20,12 +20,15 @@ Specification: docs/P5Milestones.md, P5-M5 (frozen at P5-M0); decisions P5-D5 an
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
+from datetime import datetime
 
 import numpy as np
 
 from ml.calibration.gate import poisson_binomial_pmf
+from ml.features.assembler import MatchFeatureRow, build_match_feature_row
+from ml.features.scale import ScaleLookup
 
 RANGE_LOWER, RANGE_UPPER = 0.10, 0.90
 COVERAGE_BAND = (0.75, 0.85)  # P5-D9
@@ -153,3 +156,51 @@ def qualification_matches(database, event_key: str) -> list[tuple[str, object]]:
     with database.cursor() as cursor:
         cursor.execute(QUAL_MATCHES_SQL, {"event": event_key})
         return cursor.fetchall()
+
+
+# --- the event-level service (P7-M4: extracted unchanged from api/routes/qualification_forecast.py) -------------
+
+
+@dataclass(frozen=True)
+class ForecastMatch:
+    """One qualification match's forecast inputs and raw model output (display and labels are the API's job)."""
+
+    match_key: str
+    scheduled_time: datetime
+    features_as_of: datetime
+    red: tuple[int, ...]
+    blue: tuple[int, ...]
+    q: float
+    epa_complete: bool
+
+
+@dataclass(frozen=True)
+class EventQualificationForecast:
+    matches: list[ForecastMatch]
+    records: dict[int, TeamRecordForecast]
+    statbotics_week: int | None
+    epa_source_states: list[str | None]
+
+
+def forecast_event_qualification(
+    database, event_key: str, as_of: datetime, *, epa_provider,
+    predict_win_prob: Callable[[MatchFeatureRow], float],
+) -> EventQualificationForecast:
+    """Every qualification match's q, with features built at min(as_of, scheduled time) so a played match keeps its
+    pre-match forecast, plus each team's expected record. SilentFallbackError (EPA source) propagates."""
+    scales = ScaleLookup(database)
+    matches: list[ForecastMatch] = []
+    states: list[str | None] = []
+    for match_key, scheduled in qualification_matches(database, event_key):
+        features_as_of = min(as_of, scheduled)
+        row = build_match_feature_row(database, match_key, features_as_of, epa_provider=epa_provider,
+                                      scale_lookup=scales)
+        teams = [*row.red_teams, *row.blue_teams]
+        states += [t.epa_source_state for t in teams]
+        complete = bool(row.red_teams) and bool(row.blue_teams) and all(t.epa_total_present for t in teams)
+        matches.append(ForecastMatch(match_key, scheduled, features_as_of,
+                                     tuple(t.team_number for t in row.red_teams),
+                                     tuple(t.team_number for t in row.blue_teams),
+                                     float(predict_win_prob(row)), complete))
+    records = team_records(MatchForecast(m.match_key, m.red, m.blue, m.q, m.epa_complete) for m in matches)
+    return EventQualificationForecast(matches, records, statbotics_event_week(database, event_key), states)

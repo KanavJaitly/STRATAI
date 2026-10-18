@@ -35,8 +35,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from starlette.requests import Request
 
+from api.contract import error_responses
 from api.dependencies import get_database, get_settings
-from api.errors import ErrorResponse
+from api.errors import error_code_for_status
 from api.request_id import get_request_id
 from data.config import Settings
 from database.connection import Database
@@ -69,6 +70,7 @@ class ReadinessResponse(BaseModel):
     response_model=HealthResponse,
     summary="Liveness check",
     description="Returns 200 whenever the process is running. Performs no I/O.",
+    responses=error_responses({}, validates_input=False),
 )
 async def health(settings: Settings = Depends(get_settings)) -> HealthResponse:
     """Report that the process is alive.
@@ -87,7 +89,8 @@ async def health(settings: Settings = Depends(get_settings)) -> HealthResponse:
         "Returns 200 when the API can reach every dependency it needs to serve "
         "requests, and 503 otherwise. Verifies database connectivity."
     ),
-    responses={HTTPStatus.SERVICE_UNAVAILABLE: {"model": ErrorResponse}},
+    responses=error_responses({HTTPStatus.SERVICE_UNAVAILABLE: [error_code_for_status(HTTPStatus.SERVICE_UNAVAILABLE)]},
+                              validates_input=False),
 )
 def ready(
     request: Request,

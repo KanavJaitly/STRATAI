@@ -46,20 +46,34 @@ Outcome codes:
 from __future__ import annotations
 
 import logging
-import math
 from datetime import datetime, timezone
 from http import HTTPStatus
-from typing import Any, Literal
+from typing import Literal
 
-from fastapi import APIRouter, Body, Depends, Path
+from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic import BaseModel, Field
 from starlette.requests import Request
 
+from api.contract import (
+    CALIBRATION_STATUS_M7_FAILED,
+    M6M7_DISPLAY_MAX,
+    M6M7_DISPLAY_MIN,
+    M6M7_DISPLAY_STEP,
+    REASON_EPA_INCOMPLETE,
+    REASON_PLAYOFF_SCOPE,
+    REASON_UNSPECIFIED_CONTEXT,
+    STATUS_NOT_VALIDATED,
+    STATUS_VALIDATED_QUALIFICATION,
+    CalibratedWinProbability,
+    ServedModelInfo,
+    error_responses,
+)
 from api.dependencies import get_database, get_epa_source, get_ranking_model, get_win_prob_model
-from api.errors import ApiError, ErrorResponse
+from api.errors import ApiError
 from api.routes.common import (
     CODE_EPA_SOURCE_INCOMPLETE,
     CODE_EPA_SOURCE_NOT_LOADED,
+    CODE_EPA_SOURCE_PENDING,
     CODE_EVENT_NOT_FOUND,
     CODE_TEAM_NOT_FOUND,
     EpaSourceInfo,
@@ -72,6 +86,8 @@ from api.routes.common import (
     team_not_found_error,
 )
 from api.ml_loading import ServedEpaSource, ServedModel
+from api.win_probability import NoFeatures, evaluate_m6m7, served_model_info
+from api.routes.common import AS_OF_DESCRIPTION, CODE_INVALID_AS_OF, CODE_MODEL_NOT_LOADED, model_not_loaded_error, parse_as_of
 from database.connection import Database
 from ml.features.assembler import MatchFeatureRow, TeamFeatures, build_match_feature_row, build_team_features
 from ml.features.roster import (
@@ -81,29 +97,29 @@ from ml.features.roster import (
     get_match_event_and_scheduled_time,
     list_teams_at_event,
 )
+from ml.calibration.display import display_probability  # re-exported: scripts and tests import it from here (R7)
 from ml.features.scale import ScaleLookup
 from ml.ratings.statbotics_primary import SilentFallbackError
-from ml.synergy.score import alliance_synergy
+from ml.synergy.score import SYNERGY_VALIDATION_STATUS, alliance_synergy
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["predictions"])
 
-PROBABILITY_DISPLAY_STEP = 0.05
-PROBABILITY_DISPLAY_MIN = 0.05
-PROBABILITY_DISPLAY_MAX = 0.95
+# Defined once in api.contract (P7-M1); these names are kept because docs, scripts and tests import them here.
+PROBABILITY_DISPLAY_STEP = M6M7_DISPLAY_STEP
+PROBABILITY_DISPLAY_MIN = M6M7_DISPLAY_MIN
+PROBABILITY_DISPLAY_MAX = M6M7_DISPLAY_MAX
 
 SCOPE_QUALIFICATION = "qualification"
 SCOPE_PLAYOFF = "playoff"
 SCOPE_UNSPECIFIED = "unspecified"
-VALIDATION_QUALIFICATION_APPROXIMATELY_CALIBRATED = "approximately_calibrated_qualification"
-VALIDATION_NOT_VALIDATED = "not_validated"
-NOT_VALIDATED_PLAYOFF = "playoff_scope"
-NOT_VALIDATED_UNSPECIFIED = "unspecified_context"
-NOT_VALIDATED_EPA_INCOMPLETE = "epa_incomplete"
-CALIBRATION_STATUS_M7_FAILED = "m7_gate_failed"
+VALIDATION_QUALIFICATION_APPROXIMATELY_CALIBRATED = STATUS_VALIDATED_QUALIFICATION
+VALIDATION_NOT_VALIDATED = STATUS_NOT_VALIDATED
+NOT_VALIDATED_PLAYOFF = REASON_PLAYOFF_SCOPE
+NOT_VALIDATED_UNSPECIFIED = REASON_UNSPECIFIED_CONTEXT
+NOT_VALIDATED_EPA_INCOMPLETE = REASON_EPA_INCOMPLETE
 RANKING_VALIDATION_STATUS = "moderate_held_out"
-SYNERGY_VALIDATION_STATUS = "not_validated_against_outcomes"
 
 WIN_PROBABILITY_EVIDENCE = (
     "D18 held-out 2026: qualification probabilities approximately calibrated (ECE 0.015, bins within "
@@ -121,18 +137,14 @@ RANKING_EVIDENCE = (
     "uncertainty; predicted_rating is a relative score. See docs/ml_models.md section 10."
 )
 
-CODE_MODEL_NOT_LOADED = "model_not_loaded"
 CODE_MATCH_NOT_FOUND = "match_not_found"
 CODE_INSUFFICIENT_FEATURES = "insufficient_features"
 
-
-class ServedModelInfo(BaseModel):
-    model_type: str
-    model_version: str
-    model_version_tag: str
-    model_sha256: str = Field(description="sha256 of the served registry artifact")
-    training_dataset_hash: str
-    provenance: dict[str, Any] = Field(description="Where the artifact comes from (source version, frame, record)")
+RANKING_DEPRECATION = (
+    " DEPRECATED (P7-Q2, 2026-10-17): not the canonical rankings surface. Use GET /events/{event_key}/analysis, "
+    "whose ordering follows the validated P5-D6 policy (raw EPA before the switch point, M5 v2 after). Before an "
+    "event, M5 v2 ranks worse than raw EPA (Spearman 0.5565 vs 0.5955). This route keeps working unchanged for "
+    "its existing consumers.")
 
 
 class TeamEpaProvenance(BaseModel):
@@ -171,6 +183,9 @@ class WinProbabilityResponse(BaseModel):
     model: ServedModelInfo
     epa: EpaSourceInfo
     teams: list[TeamEpaProvenance]
+    win_probability: CalibratedWinProbability = Field(
+        description="P7-Q3: the same value as the fields above, in the shared M6/M7 probability object. Exactly one "
+                    "of validated_value / unvalidated_value is set; an unvalidated value is not a probability.")
 
 
 class TeamRankingEntry(BaseModel):
@@ -226,23 +241,6 @@ class AllianceSynergyResponse(BaseModel):
     teams: list[TeamEpaProvenance]
 
 
-def display_probability(probability: float) -> float:
-    """Round to PROBABILITY_DISPLAY_STEP, symmetrically about 0.5, and clip to
-    [PROBABILITY_DISPLAY_MIN, PROBABILITY_DISPLAY_MAX]: display(1 - p) = 1 - display(p),
-    so the swapped matchup always shows the complement, and nothing reads as certain."""
-    offset = probability - 0.5
-    steps = math.floor(abs(offset) / PROBABILITY_DISPLAY_STEP + 0.5)
-    shown = 0.5 + math.copysign(steps * PROBABILITY_DISPLAY_STEP, offset)
-    return round(min(max(shown, PROBABILITY_DISPLAY_MIN), PROBABILITY_DISPLAY_MAX), 2)
-
-
-def _model_not_loaded_error(model_type: str) -> ApiError:
-    return ApiError(
-        status_code=HTTPStatus.NOT_FOUND, code=CODE_MODEL_NOT_LOADED,
-        message=f"No {model_type} model of record is currently pinned/loadable -- this endpoint cannot serve a prediction.",
-    )
-
-
 def _insufficient_features_error() -> ApiError:
     return ApiError(
         status_code=HTTPStatus.UNPROCESSABLE_ENTITY, code=CODE_INSUFFICIENT_FEATURES,
@@ -250,27 +248,13 @@ def _insufficient_features_error() -> ApiError:
     )
 
 
-def _model_info(served: ServedModel) -> ServedModelInfo:
-    return ServedModelInfo(**served.identity())
+_model_info = served_model_info  # moved to api.win_probability (P7-M7)
 
 
 def _team_provenance(team: TeamFeatures, alliance: str | None = None) -> TeamEpaProvenance:
     return TeamEpaProvenance(team_number=team.team_number, alliance=alliance, epa_value_source=team.epa_value_source,
                              epa_source_state=team.epa_source_state,
                              epa_source_event_key=team.epa_source_event_key, epa_withheld_reason=team.epa_withheld_reason)
-
-
-def _team_features_are_fully_absent(team_features: TeamFeatures) -> bool:
-    """True if literally none of a team's optional features are present --
-    the API-level "no real evidence at all" case, distinct from thin-but-
-    real data (which the underlying models already handle gracefully)."""
-    return not any((
-        team_features.epa_total_present, team_features.epa_auto_present,
-        team_features.epa_teleop_present, team_features.epa_endgame_present,
-        team_features.average_score_present, team_features.average_auto_points_present,
-        team_features.defense_score_present,
-        team_features.feeding_score_present,
-    ))
 
 
 def _teams(database: Database, team_numbers: list[int], event_key: str, as_of: datetime,
@@ -287,22 +271,11 @@ def _win_probability_response(
     served: ServedModel, epa_source: ServedEpaSource, scope: str, competition_level: str | None,
 ) -> WinProbabilityResponse:
     all_teams = list(match_features.red_teams) + list(match_features.blue_teams)
-    if all_teams and all(_team_features_are_fully_absent(team) for team in all_teams):
-        raise _insufficient_features_error()
-
-    shown = display_probability(served.model.predict_win_prob(match_features))
-    # M7's evaluated population: qualification matches whose two non-empty alliances all have
-    # prior EPA (scripts/run_m4_baseline_backtest._team_epa_complete). Anything else is outside it.
-    epa_complete = bool(match_features.red_teams) and bool(match_features.blue_teams) and all(
-        team.epa_total_present for team in all_teams)
-    if scope == SCOPE_PLAYOFF:
-        reason = NOT_VALIDATED_PLAYOFF
-    elif scope != SCOPE_QUALIFICATION:
-        reason = NOT_VALIDATED_UNSPECIFIED
-    elif not epa_complete:
-        reason = NOT_VALIDATED_EPA_INCOMPLETE
-    else:
-        reason = None
+    try:
+        value = evaluate_m6m7(served, match_features, scope)  # the one M6/M7 evaluation (api.win_probability)
+    except NoFeatures as exc:
+        raise _insufficient_features_error() from exc
+    shown, reason = value.shown, value.unvalidated_reason
     validated = reason is None
     identity = served.identity()
     return WinProbabilityResponse(
@@ -321,6 +294,7 @@ def _win_probability_response(
         epa=epa_info(epa_source, as_of, [t.epa_source_state for t in all_teams]),
         teams=[_team_provenance(t, "red") for t in match_features.red_teams]
         + [_team_provenance(t, "blue") for t in match_features.blue_teams],
+        win_probability=value.calibrated(),
     )
 
 
@@ -333,10 +307,11 @@ def _win_probability_response(
         "Served as a rounded probability for qualification matches only; for playoff matches the model "
         "output is returned only as an explicitly unvalidated value (see validation_status)."
     ),
-    responses={
-        HTTPStatus.NOT_FOUND: {"model": ErrorResponse},
-        HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse},
-    },
+    responses=error_responses({
+        HTTPStatus.NOT_FOUND: [CODE_MODEL_NOT_LOADED, CODE_EPA_SOURCE_NOT_LOADED, CODE_MATCH_NOT_FOUND],
+        HTTPStatus.UNPROCESSABLE_ENTITY: [CODE_INSUFFICIENT_FEATURES, CODE_EPA_SOURCE_INCOMPLETE,
+                                          CODE_EPA_SOURCE_PENDING],
+    }, validates_input=False),  # its only input is a path segment, which cannot fail validation
 )
 def match_win_probability(
     request: Request,
@@ -346,7 +321,7 @@ def match_win_probability(
     epa_source: ServedEpaSource | None = Depends(get_epa_source),
 ) -> WinProbabilityResponse:
     if served is None:
-        raise _model_not_loaded_error("win_prob_xgb_calibrated")
+        raise model_not_loaded_error("win_prob_xgb_calibrated")
     epa_source = require_epa_source(epa_source)
 
     context = get_match_event_and_scheduled_time(database, match_key)
@@ -364,12 +339,15 @@ def match_win_probability(
 
     level = get_match_competition_level(database, match_key)
     scope = SCOPE_QUALIFICATION if level == "qualification" else (SCOPE_PLAYOFF if level else SCOPE_UNSPECIFIED)
+    # P7-D6: features as of min(now, scheduled_time). A past match is unchanged (its scheduled time); an upcoming one
+    # is predicted from what is known now, never at its future scheduled time (P7-D4: no future moment on any route).
+    moment = min(datetime.now(timezone.utc), scheduled_time)
     try:
-        match_features = build_match_feature_row(database, match_key, as_of=scheduled_time,
+        match_features = build_match_feature_row(database, match_key, as_of=moment,
                                                  epa_provider=epa_source.provider, scale_lookup=ScaleLookup(database))
     except SilentFallbackError as exc:
         raise epa_source_incomplete_error(exc) from exc
-    return _win_probability_response(match_key, event_key, match_features, scheduled_time, served, epa_source,
+    return _win_probability_response(match_key, event_key, match_features, moment, served, epa_source,
                                      scope, level)
 
 
@@ -378,55 +356,60 @@ def match_win_probability(
     response_model=WinProbabilityResponse,
     summary="Win probability for two supplied (possibly hypothetical) alliances",
     description=(
-        "P(red wins) for two supplied 3-team alliances at an event, evaluated as of the request. "
+        "P(red wins) for two supplied 3-team alliances at an event, evaluated as of `as_of` (default: now). "
         "Served as a rounded probability only when match_context is 'qualification'; otherwise the "
         "model output is returned only as an explicitly unvalidated value."
     ),
-    responses={
-        HTTPStatus.NOT_FOUND: {"model": ErrorResponse},
-        HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse},
-    },
+    responses=error_responses({
+        HTTPStatus.NOT_FOUND: [CODE_MODEL_NOT_LOADED, CODE_EPA_SOURCE_NOT_LOADED, CODE_EVENT_NOT_FOUND,
+                               CODE_TEAM_NOT_FOUND],
+        HTTPStatus.UNPROCESSABLE_ENTITY: [CODE_INVALID_AS_OF, CODE_INSUFFICIENT_FEATURES, CODE_EPA_SOURCE_INCOMPLETE,
+                                          CODE_EPA_SOURCE_PENDING],
+    }),
 )
 def win_probability_for_alliances(
     request: Request,
     body: WinProbabilityByAlliancesRequestBody = Body(...),
+    as_of: str | None = Query(default=None, description=AS_OF_DESCRIPTION),
     database: Database = Depends(get_database),
     served: ServedModel | None = Depends(get_win_prob_model),
     epa_source: ServedEpaSource | None = Depends(get_epa_source),
 ) -> WinProbabilityResponse:
     if served is None:
-        raise _model_not_loaded_error("win_prob_xgb_calibrated")
+        raise model_not_loaded_error("win_prob_xgb_calibrated")
     epa_source = require_epa_source(epa_source)
+    when = parse_as_of(as_of)
     if not event_exists(database, body.event_key):
         raise event_not_found_error(body.event_key)
     require_teams_rostered(database, body.event_key, body.red_team_numbers + body.blue_team_numbers)
 
-    as_of = datetime.now(timezone.utc)
     season = get_event_season(database, body.event_key)
     assert season is not None  # event_exists already confirmed above
     scales = ScaleLookup(database)
-    red_teams = _teams(database, body.red_team_numbers, body.event_key, as_of, epa_source, scales)
-    blue_teams = _teams(database, body.blue_team_numbers, body.event_key, as_of, epa_source, scales)
+    red_teams = _teams(database, body.red_team_numbers, body.event_key, when, epa_source, scales)
+    blue_teams = _teams(database, body.blue_team_numbers, body.event_key, when, epa_source, scales)
     match_features = MatchFeatureRow(
-        match_key=f"__adhoc__{body.event_key}", as_of=as_of, event_key=body.event_key,
+        match_key=f"__adhoc__{body.event_key}", as_of=when, event_key=body.event_key,
         season=season, red_teams=red_teams, blue_teams=blue_teams,
     )
     scope = body.match_context or SCOPE_UNSPECIFIED
-    return _win_probability_response(None, body.event_key, match_features, as_of, served, epa_source, scope, None)
+    return _win_probability_response(None, body.event_key, match_features, when, served, epa_source, scope, None)
 
 
 @router.get(
     "/predictions/events/{event_key}/ranking",
     response_model=TeamRankingResponse,
-    summary="Predicted team ranking for an event",
+    summary="Predicted team ranking for an event (deprecated: use the event analysis ordering)",
     description=(
         "Every rostered team's M5 v2 rating at one event, as of the request, sorted strongest to weakest. "
         "An ordering with moderate held-out accuracy (see evidence); predicted_rating is a relative score."
+        + RANKING_DEPRECATION
     ),
-    responses={
-        HTTPStatus.NOT_FOUND: {"model": ErrorResponse},
-        HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse},
-    },
+    deprecated=True,
+    responses=error_responses({
+        HTTPStatus.NOT_FOUND: [CODE_MODEL_NOT_LOADED, CODE_EPA_SOURCE_NOT_LOADED, CODE_EVENT_NOT_FOUND],
+        HTTPStatus.UNPROCESSABLE_ENTITY: [CODE_EPA_SOURCE_INCOMPLETE, CODE_EPA_SOURCE_PENDING],
+    }, validates_input=False),  # its only input is a path segment, which cannot fail validation
 )
 def event_team_ranking(
     request: Request,
@@ -436,7 +419,7 @@ def event_team_ranking(
     epa_source: ServedEpaSource | None = Depends(get_epa_source),
 ) -> TeamRankingResponse:
     if served is None:
-        raise _model_not_loaded_error("ranking_xgb_v2")
+        raise model_not_loaded_error("ranking_xgb_v2")
     epa_source = require_epa_source(epa_source)
     if not event_exists(database, event_key):
         raise event_not_found_error(event_key)
@@ -464,32 +447,33 @@ def event_team_ranking(
     response_model=AllianceSynergyResponse,
     summary="Alliance synergy score for three supplied teams",
     description=(
-        "Scores one three-team alliance's synergy (ml.synergy.score.alliance_synergy), as of the request. "
+        "Scores one three-team alliance's synergy (ml.synergy.score.alliance_synergy), as of `as_of` (default: now). "
         "A documented, deterministic heuristic that has not been validated against match outcomes."
     ),
-    responses={
-        HTTPStatus.NOT_FOUND: {"model": ErrorResponse},
-        HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse},
-    },
+    responses=error_responses({
+        HTTPStatus.NOT_FOUND: [CODE_EPA_SOURCE_NOT_LOADED, CODE_EVENT_NOT_FOUND, CODE_TEAM_NOT_FOUND],
+        HTTPStatus.UNPROCESSABLE_ENTITY: [CODE_INVALID_AS_OF, CODE_EPA_SOURCE_INCOMPLETE, CODE_EPA_SOURCE_PENDING],
+    }),
 )
 def alliance_synergy_score(
     request: Request,
     body: AllianceSynergyRequestBody = Body(...),
+    as_of: str | None = Query(default=None, description=AS_OF_DESCRIPTION),
     database: Database = Depends(get_database),
     epa_source: ServedEpaSource | None = Depends(get_epa_source),
 ) -> AllianceSynergyResponse:
     epa_source = require_epa_source(epa_source)
+    when = parse_as_of(as_of)
     if not event_exists(database, body.event_key):
         raise event_not_found_error(body.event_key)
     require_teams_rostered(database, body.event_key, body.team_numbers)
 
-    as_of = datetime.now(timezone.utc)
-    team_a, team_b, team_c = _teams(database, body.team_numbers, body.event_key, as_of, epa_source,
+    team_a, team_b, team_c = _teams(database, body.team_numbers, body.event_key, when, epa_source,
                                     ScaleLookup(database))
     result = alliance_synergy(team_a, team_b, team_c)
 
     return AllianceSynergyResponse(
-        event_key=body.event_key, team_numbers=body.team_numbers, as_of=as_of,
+        event_key=body.event_key, team_numbers=body.team_numbers, as_of=when,
         validation_status=SYNERGY_VALIDATION_STATUS,
         overall_score=result.overall_score,
         role_fit_term=result.role_fit_term, role_fit_axes_used=result.role_fit_axes_used,
@@ -498,6 +482,6 @@ def alliance_synergy_score(
         defense_feeding_coverage_term=result.defense_feeding_coverage_term,
         defense_feeding_coverage_present_count=result.defense_feeding_coverage_present_count,
         confidence=result.confidence,
-        epa=epa_info(epa_source, as_of, [t.epa_source_state for t in (team_a, team_b, team_c)]),
+        epa=epa_info(epa_source, when, [t.epa_source_state for t in (team_a, team_b, team_c)]),
         teams=[_team_provenance(t) for t in (team_a, team_b, team_c)],
     )

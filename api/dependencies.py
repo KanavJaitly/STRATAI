@@ -57,6 +57,17 @@ def get_win_prob_model(request: Request) -> ServedModel | None:
     return request.app.state.win_prob_model
 
 
+def get_strategy_model(request: Request):  # -> ml.strategy.outcome.ComponentOutcomeModel | None
+    """The pinned P6-M10 strategy outcome model (P7-M5), or None -- served as model_not_loaded, exactly as
+    get_ranking_model's contract."""
+    return request.app.state.strategy_model
+
+
+def get_playoff_models(request: Request):  # -> ml.playoffs.service.PlayoffModels | None
+    """The pinned PX-1 model and PX-2 calibrator (P7-M6), or None -- model_not_loaded once the PX gates pass."""
+    return request.app.state.playoff_models
+
+
 def get_epa_source(request: Request) -> ServedEpaSource | None:
     """The configured EPA source, loaded on first use and then reused; None (served as
     epa_source_not_loaded) if it is unconfigured or fails its integrity checks. A

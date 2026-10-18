@@ -29,7 +29,7 @@ from typing import Literal
 from pydantic import BaseModel, model_validator
 
 from data.metrics.aggregation import MIN_OBSERVATIONS_FOR_SCORE
-from data.metrics.schemas import MIN_MATCHES_FOR_STDDEV
+from data.metrics.schemas import MIN_MATCHES_FOR_STDDEV, TeamMetrics
 from data.metrics.statistics import classify_match_days
 from database.connection import Database
 from ml.features.assembler import (
@@ -273,3 +273,20 @@ def matches_features(view: TeamStrengthView, features: TeamFeatures) -> list[str
         "feeding_observation_count": (view.feeding.score.n, features.feeding_observation_count),
     }
     return sorted(name for name, (a, b) in pairs.items() if a != b)
+
+
+# P7-Q13: the labels for the stored Phase 3 metrics object (data.metrics.schemas.TeamMetrics), served by
+# GET /teams/{team_number}/events/{event_key}/metrics. Only labels this module already assigns are used, derived
+# only from the object's own insufficient-data flags plus the INTERIM reliability caveat; nothing is upgraded.
+RELIABILITY_INTERIM = ("reliability_score_interim: an attendance ratio (100 * matches_used / matches_scheduled), "
+                       "not a robot-failure measure")
+
+
+def stored_metrics_labels(metrics: TeamMetrics) -> dict[str, tuple[str, list[str]]]:
+    """(status, reasons) for the scoring, defense and feeding parts of a stored TeamMetrics."""
+    profile = metrics.defense_feeding
+    return {
+        "scoring": (DESCRIPTIVE, [RELIABILITY_INTERIM]),
+        "defense": (DEFINITION_PENDING, [INSUFFICIENT_OBSERVATIONS] if profile.defense_insufficient_data else []),
+        "feeding": (NOT_VALIDATED, [INSUFFICIENT_OBSERVATIONS] if profile.feeding_insufficient_data else []),
+    }

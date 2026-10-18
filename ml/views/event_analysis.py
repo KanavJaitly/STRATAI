@@ -31,7 +31,11 @@ from datetime import datetime
 import numpy as np
 
 from ml.backtest.metrics import spearman_correlation
-from ml.features.assembler import TeamFeatures
+from ml.features.assembler import TeamFeatures, build_team_features
+from ml.features.roster import list_teams_at_event
+from ml.features.scale import ScaleLookup
+from ml.models.baselines import RawEpaRankingBaseline
+from ml.views.strength import TeamStrengthView, build_team_strength
 
 POLICY_RAW_EPA = "raw_epa"
 POLICY_M5V2 = "ranking_xgb_v2"
@@ -138,3 +142,44 @@ def serving_switch(database, event_key: str, as_of: datetime) -> SwitchState:
     switch = max(when for when, _ in midpoints)
     passed = all(completed and when < as_of for when, completed in midpoints)
     return SwitchState(passed, switch, len(schedule))
+
+
+# --- the event-level service (P7-M4: extracted unchanged from api/routes/event_analysis.py) -----------------------
+
+
+class M5V2Required(RuntimeError):
+    """The switch point has passed, so the frozen policy serves M5 v2, but no M5 v2 model was supplied."""
+
+
+@dataclass(frozen=True)
+class EventAnalysis:
+    """The P5-M4 analysis of one event at one moment, before labelling and serialization."""
+
+    switch: SwitchState
+    model: str  # POLICY_RAW_EPA or POLICY_M5V2
+    features: list[TeamFeatures]
+    views: list[TeamStrengthView]
+    ordering: list[OrderedTeam]
+
+
+def analyze_event(
+    database, event_key: str, as_of: datetime, *, epa_provider,
+    m5v2_predict_rating: Callable[[TeamFeatures], float] | None,
+) -> EventAnalysis:
+    """The frozen P5-M4 policy: raw EPA before the switch point, M5 v2 after it, one model per ordering.
+
+    Every attending team's features and strength view are built at as_of. Raises M5V2Required when the policy needs
+    M5 v2 and none is supplied (checked before any feature is built); SilentFallbackError propagates.
+    """
+    switch = serving_switch(database, event_key, as_of)
+    model = policy_model(switch.passed)
+    if model == POLICY_M5V2 and m5v2_predict_rating is None:
+        raise M5V2Required(event_key)
+    scales = ScaleLookup(database)
+    teams = list_teams_at_event(database, event_key)
+    features = [build_team_features(database, t, event_key, as_of, epa_provider=epa_provider, scale_lookup=scales)
+                for t in teams]
+    views = [build_team_strength(database, t, event_key, as_of, epa_provider=epa_provider, scale_lookup=scales)
+             for t in teams]
+    score = m5v2_predict_rating if model == POLICY_M5V2 else RawEpaRankingBaseline().predict_rating
+    return EventAnalysis(switch, model, features, views, order_teams(features, score))

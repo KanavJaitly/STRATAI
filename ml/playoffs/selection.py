@@ -179,6 +179,12 @@ def _captain(state: DraftState, ranks: Mapping[int, int], rules: EventRules) -> 
     return min(eligible, key=lambda t: (ranks[t], t))
 
 
+def next_captain(state: DraftState, ranks: Mapping[int, int], rules: EventRules) -> int:
+    """The team the event's captain rule names next from `state` (the public form of `_captain`; P7-M6 checks a
+    caller's draft state with it)."""
+    return _captain(state, ranks, rules)
+
+
 Chooser = Callable[[DraftState, int, list[int]], int]
 
 
@@ -309,7 +315,8 @@ class SelectionEngine:
             key = (outcome.p_win_event, outcome.p_reach_finals)
             if best is None or key > (best[0].p_win_event, best[0].p_reach_finals):
                 best = (outcome, final)
-        assert best is not None
+        if best is None:  # the run_draft refusal, for this seed's own turn (P7-D5; was an assert)
+            raise RulesetError("infeasible", f"no team is available for seed {seed}'s pick")
         return best
 
     def _options(self, state: DraftState) -> list[int]:
@@ -325,6 +332,8 @@ class SelectionEngine:
             state = _assign_captain(state, seed, self.ranks, self.rules)
         self.fields_evaluated = 0
         evaluated = []
+        if not self._options(state):  # P7-D5: no available pick is a refusal, never an empty ranking
+            raise RulesetError("infeasible", f"no team is available for seed {seed}'s pick")
         for candidate in self._options(state):
             outcome, final = self._finish(_apply_pick(state, seed, candidate), seed)
             evaluated.append((candidate, outcome))

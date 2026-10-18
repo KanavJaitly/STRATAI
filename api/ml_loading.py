@@ -42,6 +42,8 @@ __all__ = [
     "ServedModel",
     "load_epa_source",
     "load_pinned_ranking_model",
+    "load_pinned_strategy_model",
+    "load_playoff_models",
     "load_pinned_win_prob_model",
 ]
 
@@ -122,6 +124,79 @@ def load_pinned_ranking_model(settings: Settings) -> ServedModel | None:
 def load_pinned_win_prob_model(settings: Settings) -> ServedModel | None:
     return _load("win_prob", SERVABLE_WIN_PROB_MODELS, settings.ml_win_prob_model_type,
                  settings.ml_win_prob_model_version_tag, settings.ml_win_prob_model_sha256, settings)
+
+
+def load_pinned_strategy_model(settings: Settings) -> Any | None:
+    """The pinned P6-M10 model (P7-M5), or None (served as model_not_loaded).
+
+    Loaded only through ml.strategy.outcome.load_registered_strategy_model, which checks the artifact's sha256 and
+    attaches the status its recorded evaluation earned (not_validated, p6_m10_gate_failed). The generic loader
+    would serve the constructor default reason instead (p6_m10_evaluation_not_recorded; docs/P7Milestones.md P7-M5 (a)).
+    """
+    from ml.strategy.outcome import MODEL_TYPE, load_registered_strategy_model
+
+    if settings.ml_strategy_model_type != MODEL_TYPE:
+        logger.error("Refusing to serve strategy model type %r -- serving model_not_loaded",
+                     settings.ml_strategy_model_type)
+        return None
+    if not settings.ml_strategy_model_version_tag:
+        logger.info("No strategy model version pinned (ML_STRATEGY_MODEL_VERSION_TAG unset) -- serving "
+                    "model_not_loaded")
+        return None
+    if not settings.ml_strategy_model_sha256:
+        # The pin is (type, version tag, sha256); without the sha256 nothing proves the artifact is the one pinned.
+        logger.error("Strategy model %s is pinned without ML_STRATEGY_MODEL_SHA256 -- serving model_not_loaded",
+                     settings.ml_strategy_model_version_tag)
+        return None
+    try:
+        model = load_registered_strategy_model(Path(settings.ml_registry_dir),
+                                               version_tag=settings.ml_strategy_model_version_tag,
+                                               expected_sha256=settings.ml_strategy_model_sha256)
+    except (FileNotFoundError, ValueError, KeyError) as exc:  # KeyError: an artifact missing its fields
+        logger.error("Failed to load pinned strategy model %s/%s: %s -- serving model_not_loaded", MODEL_TYPE,
+                     settings.ml_strategy_model_version_tag, exc)
+        return None
+    logger.info("Loaded pinned strategy model %s/%s (sha256=%s)", MODEL_TYPE, settings.ml_strategy_model_version_tag,
+                model.artifact_sha256)
+    return model
+
+
+def load_playoff_models(settings: Settings) -> Any | None:
+    """The pinned PX-1 model and PX-2 calibrator (P7-M6), or None (served as model_not_loaded once the PX gates have
+    passed; before that the pick list refuses with playoff_models_not_accepted). Every file is checked against its
+    pinned sha256 before it is loaded, and the PX-1 file must be a `playoff_px1` model; nothing is substituted. The
+    pick list also requires those sha256s to appear in the PX gate records (ml.playoffs.service, P7-D5)."""
+    import hashlib
+
+    from ml.calibration.calibrator import SymmetricIsotonicCalibrator
+    from ml.playoffs.px1 import MODEL_TYPE, PlayoffLogisticModel
+    from ml.playoffs.service import PlayoffModels
+
+    pins = (settings.ml_px1_version_tag, settings.ml_px1_sha256, settings.ml_px2_calibrator_path,
+            settings.ml_px2_calibrator_sha256)
+    if not any(pins):
+        logger.info("No playoff models pinned (ML_PX1_* / ML_PX2_*) -- the pick list serves model_not_loaded")
+        return None
+    if not all(pins):
+        logger.error("Playoff models are partly pinned; every ML_PX1_* and ML_PX2_* setting is required -- "
+                     "serving model_not_loaded")
+        return None
+    px1_path = Path(settings.ml_registry_dir) / MODEL_TYPE / settings.ml_px1_version_tag / "model.json"
+    px2_path = Path(settings.ml_px2_calibrator_path)
+    try:
+        px1_sha = hashlib.sha256(px1_path.read_bytes()).hexdigest()
+        px2_sha = hashlib.sha256(px2_path.read_bytes()).hexdigest()
+        if px1_sha != settings.ml_px1_sha256 or px2_sha != settings.ml_px2_calibrator_sha256:
+            raise ValueError("a playoff model file does not match its pinned sha256")
+        px1 = PlayoffLogisticModel.load(px1_path)
+        if px1.model_type != MODEL_TYPE:  # the seed-only baseline is never served as PX-1
+            raise ValueError(f"the pinned PX-1 file is a {px1.model_type!r} model, not {MODEL_TYPE!r}")
+        calibrator = SymmetricIsotonicCalibrator.load(px2_path)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+        logger.error("Failed to load the pinned playoff models: %s -- serving model_not_loaded", exc)
+        return None
+    logger.info("Loaded pinned playoff models (PX-1 %s, PX-2 %s)", px1_sha, px2_sha)
+    return PlayoffModels(px1, calibrator.calibrate, px1_sha, px2_sha)
 
 
 def load_epa_source(settings: Settings, database: Database) -> ServedEpaSource | None:

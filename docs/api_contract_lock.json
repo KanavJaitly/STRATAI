@@ -1,0 +1,5703 @@
+{
+ "building_blocks": {
+  "CalibratedWinProbability": {
+   "$defs": {
+    "ServedModelInfo": {
+     "properties": {
+      "model_sha256": {
+       "type": "string"
+      },
+      "model_type": {
+       "type": "string"
+      },
+      "model_version": {
+       "type": "string"
+      },
+      "model_version_tag": {
+       "type": "string"
+      },
+      "provenance": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "training_dataset_hash": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "model_sha256",
+      "model_type",
+      "model_version",
+      "model_version_tag",
+      "provenance",
+      "training_dataset_hash"
+     ],
+     "type": "object"
+    },
+    "Validation": {
+     "properties": {
+      "evidence": {
+       "anyOf": [
+        {
+         "type": "null"
+        },
+        {
+         "type": "string"
+        }
+       ],
+       "default": null
+      },
+      "reasons": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "status": {
+       "minLength": 1,
+       "type": "string"
+      }
+     },
+     "required": [
+      "status"
+     ],
+     "type": "object"
+    }
+   },
+   "properties": {
+    "calibration_status": {
+     "type": "string"
+    },
+    "model": {
+     "$ref": "#/$defs/ServedModelInfo"
+    },
+    "rounding": {
+     "type": "number"
+    },
+    "unvalidated_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "unvalidated_value": {
+     "anyOf": [
+      {
+       "maximum": 1.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "validated_value": {
+     "anyOf": [
+      {
+       "maximum": 1.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "validation": {
+     "$ref": "#/$defs/Validation"
+    }
+   },
+   "required": [
+    "calibration_status",
+    "model",
+    "rounding",
+    "unvalidated_reason",
+    "unvalidated_value",
+    "validated_value",
+    "validation"
+   ],
+   "type": "object"
+  },
+  "StrategyOdds": {
+   "$defs": {
+    "Validation": {
+     "properties": {
+      "evidence": {
+       "anyOf": [
+        {
+         "type": "null"
+        },
+        {
+         "type": "string"
+        }
+       ],
+       "default": null
+      },
+      "reasons": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "status": {
+       "minLength": 1,
+       "type": "string"
+      }
+     },
+     "required": [
+      "status"
+     ],
+     "type": "object"
+    }
+   },
+   "properties": {
+    "display": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "validation": {
+     "$ref": "#/$defs/Validation"
+    }
+   },
+   "required": [
+    "display",
+    "validation"
+   ],
+   "type": "object"
+  },
+  "Validation": {
+   "properties": {
+    "evidence": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ],
+     "default": null
+    },
+    "reasons": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "status": {
+     "minLength": 1,
+     "type": "string"
+    }
+   },
+   "required": [
+    "status"
+   ],
+   "type": "object"
+  }
+ },
+ "operations": {
+  "GET /events": {
+   "deprecated": false,
+   "operation_id": "list_season_events_events_get",
+   "parameters": [
+    {
+     "in": "query",
+     "name": "season",
+     "required": true,
+     "schema": {
+      "minimum": 1992,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/SeasonEventsResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /events/{event_key}/alliance-selection/candidates": {
+   "deprecated": false,
+   "operation_id": "alliance_selection_candidates_events__event_key__alliance_selection_candidates_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "event_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    },
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    },
+    {
+     "in": "query",
+     "name": "configuration",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "integer"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/CandidatesResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "team_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "selection_time_unavailable"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_as_of",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /events/{event_key}/analysis": {
+   "deprecated": false,
+   "operation_id": "event_analysis_events__event_key__analysis_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "event_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    },
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/EventAnalysisResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "model_not_loaded"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_as_of"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /events/{event_key}/matches": {
+   "deprecated": false,
+   "operation_id": "list_event_matches_events__event_key__matches_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "event_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    },
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/EventMatchesResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "event_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "invalid_as_of"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /events/{event_key}/qualification-forecast": {
+   "deprecated": false,
+   "operation_id": "qualification_forecast_events__event_key__qualification_forecast_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "event_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    },
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/QualificationForecastResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "model_not_loaded"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_as_of"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /events/{event_key}/teams": {
+   "deprecated": false,
+   "operation_id": "list_event_teams_events__event_key__teams_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "event_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/EventTeamsResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "event_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /health": {
+   "deprecated": false,
+   "operation_id": "health_health_get",
+   "parameters": [],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/HealthResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /matches/{match_key}/pre-match-report": {
+   "deprecated": false,
+   "operation_id": "pre_match_report_matches__match_key__pre_match_report_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "match_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    },
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/PreMatchReportResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "match_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_as_of",
+      "match_not_scheduled"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /predictions/events/{event_key}/ranking": {
+   "deprecated": true,
+   "operation_id": "event_team_ranking_predictions_events__event_key__ranking_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "event_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/TeamRankingResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "model_not_loaded"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /predictions/matches/{match_key}/win-probability": {
+   "deprecated": false,
+   "operation_id": "match_win_probability_predictions_matches__match_key__win_probability_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "match_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/WinProbabilityResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "match_not_found",
+      "model_not_loaded"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "insufficient_features"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /ready": {
+   "deprecated": false,
+   "operation_id": "ready_ready_get",
+   "parameters": [],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ReadinessResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "503": {
+     "codes": [
+      "service_unavailable"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /teams/{team_number}/events/{event_key}/metrics": {
+   "deprecated": false,
+   "operation_id": "team_metrics_teams__team_number__events__event_key__metrics_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "event_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    },
+    {
+     "in": "path",
+     "name": "team_number",
+     "required": true,
+     "schema": {
+      "exclusiveMinimum": 0,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/TeamMetricsResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "event_not_found",
+      "metrics_not_computed",
+      "team_did_not_attend",
+      "team_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /teams/{team_number}/events/{event_key}/strength": {
+   "deprecated": false,
+   "operation_id": "team_strength_teams__team_number__events__event_key__strength_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "event_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    },
+    {
+     "in": "path",
+     "name": "team_number",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    },
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/TeamStrengthResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "team_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_as_of",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /events/{event_key}/alliance-selection/pick-list": {
+   "deprecated": false,
+   "operation_id": "alliance_selection_pick_list_events__event_key__alliance_selection_pick_list_post",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "event_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/DraftStateBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/PickListResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "model_not_loaded"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "event_excluded",
+      "infeasible",
+      "invalid_state",
+      "not_approved",
+      "not_covered",
+      "not_established",
+      "not_supported",
+      "playoff_inputs_insufficient",
+      "playoff_models_not_accepted",
+      "rankings_unavailable",
+      "selection_time_unavailable",
+      "storage_integrity",
+      "wrong_season"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /predictions/alliance-synergy": {
+   "deprecated": false,
+   "operation_id": "alliance_synergy_score_predictions_alliance_synergy_post",
+   "parameters": [
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/AllianceSynergyRequestBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/AllianceSynergyResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "team_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_as_of",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /predictions/win-probability": {
+   "deprecated": false,
+   "operation_id": "win_probability_for_alliances_predictions_win_probability_post",
+   "parameters": [
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/WinProbabilityByAlliancesRequestBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/WinProbabilityResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "model_not_loaded",
+      "team_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "insufficient_features",
+      "invalid_as_of",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /strategy/coach-observations": {
+   "deprecated": false,
+   "operation_id": "post_coach_observation_strategy_coach_observations_post",
+   "parameters": [],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "additionalProperties": true,
+      "type": "object"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "201": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/CoachObservationStored"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "write_not_authorized",
+      "writes_disabled"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "invalid_coach_input",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /strategy/coach-strategies": {
+   "deprecated": false,
+   "operation_id": "post_coach_strategy_strategy_coach_strategies_post",
+   "parameters": [],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "additionalProperties": true,
+      "type": "object"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "201": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/CoachStrategyStored"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "write_not_authorized",
+      "writes_disabled"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "invalid_coach_input",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /strategy/hypothetical/assess": {
+   "deprecated": false,
+   "operation_id": "assess_hypothetical_strategy_hypothetical_assess_post",
+   "parameters": [
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/HypotheticalAssessBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/AssessResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "model_not_loaded",
+      "team_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "mixed_season_scale"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_as_of",
+      "invalid_strategy",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /strategy/hypothetical/compare": {
+   "deprecated": false,
+   "operation_id": "compare_hypothetical_strategy_hypothetical_compare_post",
+   "parameters": [
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/HypotheticalCompareBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/CompareResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "model_not_loaded",
+      "team_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "mixed_season_scale"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_as_of",
+      "invalid_strategy",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /strategy/hypothetical/recommend": {
+   "deprecated": false,
+   "operation_id": "recommend_hypothetical_strategy_hypothetical_recommend_post",
+   "parameters": [
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/HypotheticalRecommendBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/RecommendResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "event_not_found",
+      "model_not_loaded",
+      "team_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "mixed_season_scale"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_as_of",
+      "invalid_strategy",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /strategy/matches/{match_key}/assess": {
+   "deprecated": false,
+   "operation_id": "assess_match_strategy_matches__match_key__assess_post",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "match_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/AssessBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/AssessResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "match_not_found",
+      "model_not_loaded"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "alliance_incomplete",
+      "mixed_season_scale"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_strategy",
+      "match_context_unknown",
+      "match_not_scheduled",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /strategy/matches/{match_key}/compare": {
+   "deprecated": false,
+   "operation_id": "compare_match_strategy_matches__match_key__compare_post",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "match_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/CompareBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/CompareResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "match_not_found",
+      "model_not_loaded"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "alliance_incomplete",
+      "mixed_season_scale"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_strategy",
+      "match_context_unknown",
+      "match_not_scheduled",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /strategy/matches/{match_key}/recommend": {
+   "deprecated": false,
+   "operation_id": "recommend_match_strategy_matches__match_key__recommend_post",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "match_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/RecommendBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/RecommendResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "match_not_found",
+      "model_not_loaded"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "alliance_incomplete",
+      "mixed_season_scale"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_strategy",
+      "match_context_unknown",
+      "match_not_scheduled",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  }
+ },
+ "revisions": [
+  {
+   "added_leaves": 86,
+   "changed": [],
+   "command": "lock",
+   "date": "2026-10-17",
+   "decision": null,
+   "operations_added": [
+    "GET /health",
+    "GET /ready"
+   ],
+   "operations_removed": [],
+   "reason": "P7-M1: initial lock -- the probes, the one error envelope, and the api.contract building blocks (P7-A4, P7-Q4)"
+  },
+  {
+   "added_leaves": 153,
+   "changed": [],
+   "command": "lock",
+   "date": "2026-10-17",
+   "decision": null,
+   "operations_added": [
+    "GET /teams/{team_number}/events/{event_key}/metrics",
+    "GET /teams/{team_number}/events/{event_key}/strength"
+   ],
+   "operations_removed": [],
+   "reason": "P7-M2: lock team metrics (with the P7-Q13 validation block) and the point-in-time strength view"
+  },
+  {
+   "added_leaves": 164,
+   "changed": [],
+   "command": "lock",
+   "date": "2026-10-17",
+   "decision": null,
+   "operations_added": [
+    "GET /predictions/matches/{match_key}/win-probability",
+    "POST /predictions/win-probability",
+    "GET /predictions/events/{event_key}/ranking",
+    "POST /predictions/alliance-synergy"
+   ],
+   "operations_removed": [],
+   "reason": "P7-M3: lock win probability (match, ad hoc with as_of), the deprecated ranking route, and alliance synergy (with as_of); additive probability object (P7-Q2, P7-Q3, P7-Q7)"
+  },
+  {
+   "added_leaves": 191,
+   "changed": [],
+   "command": "lock",
+   "date": "2026-10-18",
+   "decision": null,
+   "operations_added": [
+    "GET /events/{event_key}/analysis",
+    "GET /events/{event_key}/qualification-forecast",
+    "GET /events",
+    "GET /events/{event_key}/teams",
+    "GET /events/{event_key}/matches"
+   ],
+   "operations_removed": [],
+   "reason": "P7-M4: lock event analysis (canonical rankings surface, P7-Q2), the qualification forecast (with the P7-M3 probability object), and the discovery reads (P7-Q8)"
+  },
+  {
+   "added_leaves": 0,
+   "changed": [
+    "/schemas/EventOut/properties/event_type/anyOf",
+    "/schemas/EventOut/required"
+   ],
+   "command": "relock",
+   "date": "2026-10-18",
+   "decision": ".agent/phase7/decisions/P7_D2_DISCOVERY_CORRECTIONS.md item 2 (2026-10-18)",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P7-D2: remove events.event_type from GET /events (never written, always null) before any client depends on it"
+  },
+  {
+   "added_leaves": 301,
+   "changed": [],
+   "command": "lock",
+   "date": "2026-10-18",
+   "decision": null,
+   "operations_added": [
+    "POST /strategy/matches/{match_key}/assess",
+    "POST /strategy/matches/{match_key}/recommend",
+    "POST /strategy/matches/{match_key}/compare",
+    "POST /strategy/hypothetical/assess",
+    "POST /strategy/hypothetical/recommend",
+    "POST /strategy/hypothetical/compare",
+    "POST /strategy/coach-strategies",
+    "POST /strategy/coach-observations"
+   ],
+   "operations_removed": [],
+   "reason": "P7-M5: lock the match strategy endpoints (scheduled and hypothetical assess/recommend/compare) and the coach writes (P7-Q9, P7-Q10)"
+  },
+  {
+   "added_leaves": 3,
+   "changed": [
+    "/schemas/AssessResponse/required",
+    "/schemas/CompareResponse/required",
+    "/schemas/RecommendResponse/required"
+   ],
+   "command": "relock",
+   "date": "2026-10-18",
+   "decision": ".agent/phase7/decisions/P7_D3_STRATEGY_CORRECTIONS.md item 1 (2026-10-18)",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P7-D3: the strategy responses carry the EPA source envelope (epa: EpaSourceInfo), as every EPA-backed route does"
+  },
+  {
+   "added_leaves": 3,
+   "changed": [
+    "/schemas/EventOut/properties/state_prov/anyOf",
+    "/schemas/EventOut/required",
+    "/schemas/StrategyModelInfo/properties/model_sha256/anyOf",
+    "/schemas/StrategyModelInfo/properties/model_version_tag/anyOf"
+   ],
+   "command": "relock",
+   "date": "2026-10-18",
+   "decision": ".agent/phase7/decisions/P7_D4_MID_PHASE_AUDIT.md items 2-3 (2026-10-18)",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P7-D4: GET /events state_prov renamed state_province; strategy model version tag and sha256 non-nullable"
+  },
+  {
+   "added_leaves": 103,
+   "changed": [],
+   "command": "lock",
+   "date": "2026-10-18",
+   "decision": null,
+   "operations_added": [
+    "GET /events/{event_key}/alliance-selection/candidates",
+    "POST /events/{event_key}/alliance-selection/pick-list"
+   ],
+   "operations_removed": [],
+   "reason": "P7-M6: lock alliance selection -- candidate profiles and the pick list's full shape with its real refusals (P7-Q1)"
+  },
+  {
+   "added_leaves": 9,
+   "changed": [
+    "/operations/POST /events/{event_key}/alliance-selection/pick-list/responses/409/codes",
+    "/schemas/PickListResponse/required",
+    "/schemas/PlayoffModelInfo/required",
+    "/schemas/RankedPickOut/required"
+   ],
+   "command": "relock",
+   "date": "2026-10-18",
+   "decision": ".agent/phase7/decisions/P7_D5_SELECTION_CORRECTIONS.md 2026-10-18",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P7-M6 review corrections: validated_playoff_success label, reach-finals comparison, provenance, ranking model sha, event_rules_required undeclared"
+  },
+  {
+   "added_leaves": 0,
+   "changed": [
+    "/schemas/PickListResponse/properties/probability_status/const"
+   ],
+   "command": "relock",
+   "date": "2026-10-18",
+   "decision": ".agent/phase7/decisions/P7_D5_SELECTION_CORRECTIONS.md 2026-10-18",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P7-D5 item 1: the pick-list status follows the frozen P7-M6 spec (validated_playoff); the naming conflict with the P6 spec is open"
+  },
+  {
+   "added_leaves": 112,
+   "changed": [],
+   "command": "lock",
+   "date": "2026-10-18",
+   "decision": null,
+   "operations_added": [
+    "GET /matches/{match_key}/pre-match-report"
+   ],
+   "operations_removed": [],
+   "reason": "P7-M7: pre-match report data (P7-Q12)"
+  },
+  {
+   "added_leaves": 0,
+   "changed": [
+    "/schemas/PickListResponse/properties/probability_status/const"
+   ],
+   "command": "relock",
+   "date": "2026-10-18",
+   "decision": ".agent/phase7/decisions/P7_D7_PLAYOFF_LABEL.md 2026-10-18",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P7-D7 (approved by Sven Morais 2026-10-18): canonical playoff label validated_playoff_success for the pick list's event-level values"
+  }
+ ],
+ "schemas": {
+  "AllianceSynergyOut": {
+   "properties": {
+    "absent_code": {
+     "anyOf": [
+      {
+       "const": "alliance_incomplete",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "absent_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "alliance": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    },
+    "score": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/AllianceSynergyScore"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "validation": {
+     "$ref": "#/components/schemas/Validation"
+    }
+   },
+   "required": [
+    "absent_code",
+    "absent_reason",
+    "alliance",
+    "score",
+    "team_numbers",
+    "validation"
+   ],
+   "type": "object"
+  },
+  "AllianceSynergyRequestBody": {
+   "properties": {
+    "event_key": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "maxItems": 3,
+     "minItems": 3,
+     "type": "array"
+    }
+   },
+   "required": [
+    "event_key",
+    "team_numbers"
+   ],
+   "type": "object"
+  },
+  "AllianceSynergyResponse": {
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "confidence": {
+     "type": "number"
+    },
+    "defense_feeding_coverage_present_count": {
+     "type": "integer"
+    },
+    "defense_feeding_coverage_term": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "overall_score": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "role_fit_axes_used": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "role_fit_term": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "scoring_distribution_axes_used": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "scoring_distribution_term": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "teams": {
+     "items": {
+      "$ref": "#/components/schemas/TeamEpaProvenance"
+     },
+     "type": "array"
+    },
+    "validation_status": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "as_of",
+    "confidence",
+    "defense_feeding_coverage_present_count",
+    "defense_feeding_coverage_term",
+    "epa",
+    "event_key",
+    "overall_score",
+    "role_fit_axes_used",
+    "role_fit_term",
+    "scoring_distribution_axes_used",
+    "scoring_distribution_term",
+    "team_numbers",
+    "teams",
+    "validation_status"
+   ],
+   "type": "object"
+  },
+  "AllianceSynergyScore": {
+   "properties": {
+    "confidence": {
+     "maximum": 1.0,
+     "minimum": 0.0,
+     "type": "number"
+    },
+    "defense_feeding_coverage_present_count": {
+     "maximum": 6.0,
+     "minimum": 0.0,
+     "type": "integer"
+    },
+    "defense_feeding_coverage_term": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "overall_score": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "role_fit_axes_used": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "role_fit_term": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "scoring_distribution_axes_used": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "scoring_distribution_term": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    }
+   },
+   "required": [
+    "confidence",
+    "defense_feeding_coverage_present_count",
+    "defense_feeding_coverage_term",
+    "overall_score",
+    "role_fit_term",
+    "scoring_distribution_term"
+   ],
+   "type": "object"
+  },
+  "AssessBody": {
+   "properties": {
+    "opponent_strategy": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/Strategy"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "side": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    },
+    "strategy": {
+     "$ref": "#/components/schemas/Strategy"
+    }
+   },
+   "required": [
+    "side",
+    "strategy"
+   ],
+   "type": "object"
+  },
+  "AssessResponse": {
+   "properties": {
+    "assessment": {
+     "$ref": "#/components/schemas/AssessmentOut"
+    },
+    "context": {
+     "$ref": "#/components/schemas/StrategyContextOut"
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "model": {
+     "$ref": "#/components/schemas/StrategyModelInfo"
+    },
+    "side": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "assessment",
+    "context",
+    "epa",
+    "model",
+    "side"
+   ],
+   "type": "object"
+  },
+  "AssessmentOut": {
+   "properties": {
+    "odds": {
+     "$ref": "#/components/schemas/StrategyOdds"
+    },
+    "opponent_strategy": {
+     "$ref": "#/components/schemas/Strategy"
+    },
+    "strategy": {
+     "$ref": "#/components/schemas/Strategy"
+    }
+   },
+   "required": [
+    "odds",
+    "opponent_strategy",
+    "strategy"
+   ],
+   "type": "object"
+  },
+  "AutoPointsView": {
+   "properties": {
+    "season_by_event": {
+     "items": {
+      "$ref": "#/components/schemas/EventAutoPoints"
+     },
+     "type": "array"
+    },
+    "this_event": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "validation_status": {
+     "default": "descriptive",
+     "type": "string"
+    }
+   },
+   "required": [
+    "season_by_event",
+    "this_event"
+   ],
+   "type": "object"
+  },
+  "CalibratedWinProbability": {
+   "properties": {
+    "calibration_status": {
+     "type": "string"
+    },
+    "model": {
+     "$ref": "#/components/schemas/ServedModelInfo"
+    },
+    "rounding": {
+     "type": "number"
+    },
+    "unvalidated_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "unvalidated_value": {
+     "anyOf": [
+      {
+       "maximum": 1.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "validated_value": {
+     "anyOf": [
+      {
+       "maximum": 1.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "validation": {
+     "$ref": "#/components/schemas/Validation"
+    }
+   },
+   "required": [
+    "calibration_status",
+    "model",
+    "rounding",
+    "unvalidated_reason",
+    "unvalidated_value",
+    "validated_value",
+    "validation"
+   ],
+   "type": "object"
+  },
+  "CandidateOut": {
+   "properties": {
+    "average_score": {
+     "$ref": "#/components/schemas/FactorOut"
+    },
+    "consistency": {
+     "$ref": "#/components/schemas/FactorOut"
+    },
+    "defense": {
+     "$ref": "#/components/schemas/FactorOut"
+    },
+    "feeding": {
+     "$ref": "#/components/schemas/FactorOut"
+    },
+    "reliability": {
+     "$ref": "#/components/schemas/FactorOut"
+    },
+    "role_compatibility": {
+     "$ref": "#/components/schemas/FactorOut"
+    },
+    "scoring_epa": {
+     "$ref": "#/components/schemas/FactorOut"
+    },
+    "synergy": {
+     "$ref": "#/components/schemas/FactorOut"
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "average_score",
+    "consistency",
+    "defense",
+    "feeding",
+    "reliability",
+    "role_compatibility",
+    "scoring_epa",
+    "synergy",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "CandidatesResponse": {
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "as_of_source": {
+     "enum": [
+      "now",
+      "requested",
+      "selection_moment"
+     ],
+     "type": "string"
+    },
+    "candidates": {
+     "items": {
+      "$ref": "#/components/schemas/CandidateOut"
+     },
+     "type": "array"
+    },
+    "configuration": {
+     "anyOf": [
+      {
+       "items": {
+        "type": "integer"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "event_key": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "as_of",
+    "as_of_source",
+    "candidates",
+    "configuration",
+    "epa",
+    "event_key"
+   ],
+   "type": "object"
+  },
+  "CoachObservation": {
+   "additionalProperties": false,
+   "properties": {
+    "component": {
+     "anyOf": [
+      {
+       "enum": [
+        "auto",
+        "endgame",
+        "teleop"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "event_key": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "kind": {
+     "enum": [
+      "component_unavailable",
+      "robot_unavailable"
+     ],
+     "type": "string"
+    },
+    "observed_at": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "observer": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "team_number": {
+     "exclusiveMinimum": 0.0,
+     "type": "integer"
+    }
+   },
+   "required": [
+    "event_key",
+    "kind",
+    "observed_at",
+    "observer",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "CoachObservationStored": {
+   "properties": {
+    "observation": {
+     "$ref": "#/components/schemas/CoachObservation"
+    }
+   },
+   "required": [
+    "observation"
+   ],
+   "type": "object"
+  },
+  "CoachStrategyStored": {
+   "properties": {
+    "author": {
+     "type": "string"
+    },
+    "created_at": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "match_key": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "origin": {
+     "const": "human_entered",
+     "type": "string"
+    },
+    "strategy": {
+     "$ref": "#/components/schemas/Strategy"
+    },
+    "strategy_sha256": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "author",
+    "created_at",
+    "event_key",
+    "match_key",
+    "origin",
+    "strategy",
+    "strategy_sha256"
+   ],
+   "type": "object"
+  },
+  "CompareBody": {
+   "properties": {
+    "first": {
+     "$ref": "#/components/schemas/Strategy"
+    },
+    "opponent_strategy": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/Strategy"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "second": {
+     "$ref": "#/components/schemas/Strategy"
+    },
+    "side": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "first",
+    "second",
+    "side"
+   ],
+   "type": "object"
+  },
+  "CompareResponse": {
+   "properties": {
+    "context": {
+     "$ref": "#/components/schemas/StrategyContextOut"
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "first": {
+     "$ref": "#/components/schemas/CompareSide"
+    },
+    "label": {
+     "type": "string"
+    },
+    "model": {
+     "$ref": "#/components/schemas/StrategyModelInfo"
+    },
+    "opponent_strategy": {
+     "$ref": "#/components/schemas/Strategy"
+    },
+    "second": {
+     "$ref": "#/components/schemas/CompareSide"
+    },
+    "side": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "context",
+    "epa",
+    "first",
+    "label",
+    "model",
+    "opponent_strategy",
+    "second",
+    "side"
+   ],
+   "type": "object"
+  },
+  "CompareSide": {
+   "properties": {
+    "odds": {
+     "$ref": "#/components/schemas/StrategyOdds"
+    },
+    "strategy": {
+     "$ref": "#/components/schemas/Strategy"
+    }
+   },
+   "required": [
+    "odds",
+    "strategy"
+   ],
+   "type": "object"
+  },
+  "DefenseFeedingProfile": {
+   "properties": {
+    "contributing_sources": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "defense_agreement": {
+     "anyOf": [
+      {
+       "maximum": 1.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "defense_insufficient_data": {
+     "type": "boolean"
+    },
+    "defense_observation_count": {
+     "minimum": 0.0,
+     "type": "integer"
+    },
+    "defense_score": {
+     "anyOf": [
+      {
+       "maximum": 5.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "feeding_agreement": {
+     "anyOf": [
+      {
+       "maximum": 1.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "feeding_insufficient_data": {
+     "type": "boolean"
+    },
+    "feeding_observation_count": {
+     "minimum": 0.0,
+     "type": "integer"
+    },
+    "feeding_score": {
+     "anyOf": [
+      {
+       "maximum": 5.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "defense_insufficient_data",
+    "defense_observation_count",
+    "feeding_insufficient_data",
+    "feeding_observation_count"
+   ],
+   "type": "object"
+  },
+  "DraftStateBody": {
+   "properties": {
+    "alliances": {
+     "items": {
+      "items": {
+       "type": "integer"
+      },
+      "type": "array"
+     },
+     "type": "array"
+    },
+    "declined": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "seed": {
+     "minimum": 1.0,
+     "type": "integer"
+    },
+    "turns_taken": {
+     "minimum": 0.0,
+     "type": "integer"
+    }
+   },
+   "required": [
+    "alliances",
+    "seed",
+    "turns_taken"
+   ],
+   "type": "object"
+  },
+  "EpaSourceInfo": {
+   "properties": {
+    "adoption": {
+     "anyOf": [
+      {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "epa_source": {
+     "type": "string"
+    },
+    "evaluated_configuration": {
+     "type": "boolean"
+    },
+    "provenance": {
+     "additionalProperties": true,
+     "type": "object"
+    },
+    "validation_flags": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "required": [
+    "epa_source",
+    "evaluated_configuration",
+    "provenance"
+   ],
+   "type": "object"
+  },
+  "EpaView": {
+   "properties": {
+    "auto": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "endgame": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "epa_source_state": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa_value_source": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "n_kind": {
+     "default": "canonical_completed_matches_at_source_event",
+     "type": "string"
+    },
+    "source_event_key": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "teleop": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "total": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "validation_status": {
+     "default": "descriptive",
+     "type": "string"
+    },
+    "withheld_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "auto",
+    "endgame",
+    "epa_source_state",
+    "epa_value_source",
+    "source_event_key",
+    "teleop",
+    "total",
+    "withheld_reason"
+   ],
+   "type": "object"
+  },
+  "ErrorBody": {
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "details": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/components/schemas/ErrorDetail"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "message": {
+     "type": "string"
+    },
+    "request_id": {
+     "type": "string"
+    },
+    "status": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "code",
+    "message",
+    "request_id",
+    "status"
+   ],
+   "type": "object"
+  },
+  "ErrorDetail": {
+   "properties": {
+    "field": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "field",
+    "message",
+    "type"
+   ],
+   "type": "object"
+  },
+  "ErrorResponse": {
+   "properties": {
+    "error": {
+     "$ref": "#/components/schemas/ErrorBody"
+    }
+   },
+   "required": [
+    "error"
+   ],
+   "type": "object"
+  },
+  "EventAnalysisResponse": {
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "captain_candidates": {
+     "$ref": "#/components/schemas/LabelledTeams"
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "ordering": {
+     "$ref": "#/components/schemas/EventOrdering"
+    },
+    "ranking_model_sha256": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "strongest_teams": {
+     "$ref": "#/components/schemas/LabelledTeams"
+    },
+    "team_comparison": {
+     "$ref": "#/components/schemas/TeamComparison"
+    }
+   },
+   "required": [
+    "as_of",
+    "captain_candidates",
+    "epa",
+    "event_key",
+    "ordering",
+    "ranking_model_sha256",
+    "strongest_teams",
+    "team_comparison"
+   ],
+   "type": "object"
+  },
+  "EventAutoPoints": {
+   "properties": {
+    "average_auto_points": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "event_key": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "average_auto_points",
+    "event_key"
+   ],
+   "type": "object"
+  },
+  "EventMatchesResponse": {
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "matches": {
+     "items": {
+      "$ref": "#/components/schemas/ScheduledMatchOut"
+     },
+     "type": "array"
+    },
+    "validation": {
+     "$ref": "#/components/schemas/Validation"
+    }
+   },
+   "required": [
+    "as_of",
+    "event_key",
+    "matches",
+    "validation"
+   ],
+   "type": "object"
+  },
+  "EventOrdering": {
+   "properties": {
+    "evidence": {
+     "type": "string"
+    },
+    "model": {
+     "type": "string"
+    },
+    "switch_point_passed": {
+     "type": "boolean"
+    },
+    "switch_time": {
+     "anyOf": [
+      {
+       "format": "date-time",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "teams": {
+     "items": {
+      "$ref": "#/components/schemas/RankedTeam"
+     },
+     "type": "array"
+    },
+    "validation_status": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "evidence",
+    "model",
+    "switch_point_passed",
+    "switch_time",
+    "teams",
+    "validation_status"
+   ],
+   "type": "object"
+  },
+  "EventOut": {
+   "properties": {
+    "city": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "country": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "end_date": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "name": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "season": {
+     "type": "integer"
+    },
+    "start_date": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "state_province": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "city",
+    "country",
+    "end_date",
+    "event_key",
+    "name",
+    "season",
+    "start_date",
+    "state_province"
+   ],
+   "type": "object"
+  },
+  "EventTeamsResponse": {
+   "properties": {
+    "event_key": {
+     "type": "string"
+    },
+    "teams": {
+     "items": {
+      "$ref": "#/components/schemas/RosterTeamOut"
+     },
+     "type": "array"
+    },
+    "validation": {
+     "$ref": "#/components/schemas/Validation"
+    }
+   },
+   "required": [
+    "event_key",
+    "teams",
+    "validation"
+   ],
+   "type": "object"
+  },
+  "FactorOut": {
+   "properties": {
+    "n": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "validation": {
+     "$ref": "#/components/schemas/Validation"
+    },
+    "value": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    }
+   },
+   "required": [
+    "n",
+    "validation",
+    "value"
+   ],
+   "type": "object"
+  },
+  "FieldOut": {
+   "properties": {
+    "alliances": {
+     "items": {
+      "items": {
+       "type": "integer"
+      },
+      "type": "array"
+     },
+     "type": "array"
+    },
+    "reach_finals": {
+     "$ref": "#/components/schemas/StrategyOdds"
+    },
+    "win_event": {
+     "$ref": "#/components/schemas/StrategyOdds"
+    }
+   },
+   "required": [
+    "alliances",
+    "reach_finals",
+    "win_event"
+   ],
+   "type": "object"
+  },
+  "HealthResponse": {
+   "properties": {
+    "env": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "env",
+    "status"
+   ],
+   "type": "object"
+  },
+  "HypotheticalAssessBody": {
+   "properties": {
+    "blue_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "maxItems": 3,
+     "minItems": 3,
+     "type": "array"
+    },
+    "event_key": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "match_context": {
+     "enum": [
+      "playoff",
+      "qualification"
+     ],
+     "type": "string"
+    },
+    "opponent_strategy": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/Strategy"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "red_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "maxItems": 3,
+     "minItems": 3,
+     "type": "array"
+    },
+    "side": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    },
+    "strategy": {
+     "$ref": "#/components/schemas/Strategy"
+    }
+   },
+   "required": [
+    "blue_team_numbers",
+    "event_key",
+    "match_context",
+    "red_team_numbers",
+    "side",
+    "strategy"
+   ],
+   "type": "object"
+  },
+  "HypotheticalCompareBody": {
+   "properties": {
+    "blue_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "maxItems": 3,
+     "minItems": 3,
+     "type": "array"
+    },
+    "event_key": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "first": {
+     "$ref": "#/components/schemas/Strategy"
+    },
+    "match_context": {
+     "enum": [
+      "playoff",
+      "qualification"
+     ],
+     "type": "string"
+    },
+    "opponent_strategy": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/Strategy"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "red_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "maxItems": 3,
+     "minItems": 3,
+     "type": "array"
+    },
+    "second": {
+     "$ref": "#/components/schemas/Strategy"
+    },
+    "side": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "blue_team_numbers",
+    "event_key",
+    "first",
+    "match_context",
+    "red_team_numbers",
+    "second",
+    "side"
+   ],
+   "type": "object"
+  },
+  "HypotheticalRecommendBody": {
+   "properties": {
+    "blue_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "maxItems": 3,
+     "minItems": 3,
+     "type": "array"
+    },
+    "event_key": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "match_context": {
+     "enum": [
+      "playoff",
+      "qualification"
+     ],
+     "type": "string"
+    },
+    "opponent_strategy": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/Strategy"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "red_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "maxItems": 3,
+     "minItems": 3,
+     "type": "array"
+    },
+    "side": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "blue_team_numbers",
+    "event_key",
+    "match_context",
+    "red_team_numbers",
+    "side"
+   ],
+   "type": "object"
+  },
+  "LabelledTeams": {
+   "properties": {
+    "evidence": {
+     "type": "string"
+    },
+    "team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "validation_status": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "evidence",
+    "team_numbers",
+    "validation_status"
+   ],
+   "type": "object"
+  },
+  "MatchForecastOut": {
+   "properties": {
+    "blue_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "features_as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "match_key": {
+     "type": "string"
+    },
+    "not_validated_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "red_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "red_win_probability": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "scheduled_time": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "unvalidated_red_win_probability": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "validation_status": {
+     "type": "string"
+    },
+    "win_probability": {
+     "$ref": "#/components/schemas/CalibratedWinProbability"
+    }
+   },
+   "required": [
+    "blue_team_numbers",
+    "features_as_of",
+    "match_key",
+    "not_validated_reason",
+    "red_team_numbers",
+    "red_win_probability",
+    "scheduled_time",
+    "unvalidated_red_win_probability",
+    "validation_status",
+    "win_probability"
+   ],
+   "type": "object"
+  },
+  "MatchResultOut": {
+   "properties": {
+    "score_blue": {
+     "type": "integer"
+    },
+    "score_red": {
+     "type": "integer"
+    },
+    "winning_alliance": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "score_blue",
+    "score_red",
+    "winning_alliance"
+   ],
+   "type": "object"
+  },
+  "Measure": {
+   "properties": {
+    "absent_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "n": {
+     "type": "integer"
+    },
+    "uncertainty": {
+     "$ref": "#/components/schemas/Uncertainty"
+    },
+    "value": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    }
+   },
+   "required": [
+    "n",
+    "uncertainty",
+    "value"
+   ],
+   "type": "object"
+  },
+  "MetricsValidation": {
+   "properties": {
+    "defense": {
+     "$ref": "#/components/schemas/Validation"
+    },
+    "feeding": {
+     "$ref": "#/components/schemas/Validation"
+    },
+    "scoring": {
+     "$ref": "#/components/schemas/Validation"
+    }
+   },
+   "required": [
+    "defense",
+    "feeding",
+    "scoring"
+   ],
+   "type": "object"
+  },
+  "NotProduced": {
+   "properties": {
+    "reason": {
+     "const": "not_produced_by_any_engine",
+     "default": "not_produced_by_any_engine",
+     "type": "string"
+    },
+    "semantics": {
+     "type": "string"
+    },
+    "value": {
+     "type": "null"
+    }
+   },
+   "required": [
+    "semantics"
+   ],
+   "type": "object"
+  },
+  "NotProducedItems": {
+   "properties": {
+    "critical_matchups": {
+     "$ref": "#/components/schemas/NotProduced"
+    },
+    "defensive_threats": {
+     "$ref": "#/components/schemas/NotProduced"
+    },
+    "key_risks": {
+     "$ref": "#/components/schemas/NotProduced"
+    },
+    "key_success_factors": {
+     "$ref": "#/components/schemas/NotProduced"
+    },
+    "predicted_flow": {
+     "$ref": "#/components/schemas/NotProduced"
+    },
+    "strengths_and_weaknesses": {
+     "$ref": "#/components/schemas/NotProduced"
+    }
+   },
+   "required": [
+    "critical_matchups",
+    "defensive_threats",
+    "key_risks",
+    "key_success_factors",
+    "predicted_flow",
+    "strengths_and_weaknesses"
+   ],
+   "type": "object"
+  },
+  "PickListProvenance": {
+   "properties": {
+    "ordering_policy": {
+     "type": "string"
+    },
+    "ruleset_sha256": {
+     "type": "string"
+    },
+    "ruleset_variant": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "ordering_policy",
+    "ruleset_sha256",
+    "ruleset_variant"
+   ],
+   "type": "object"
+  },
+  "PickListResponse": {
+   "properties": {
+    "alternatives": {
+     "items": {
+      "$ref": "#/components/schemas/FieldOut"
+     },
+     "type": "array"
+    },
+    "alternatives_note": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "evaluated_fields": {
+     "type": "integer"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "models": {
+     "$ref": "#/components/schemas/PlayoffModelInfo"
+    },
+    "notes": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "probability_status": {
+     "const": "validated_playoff_success",
+     "type": "string"
+    },
+    "provenance": {
+     "$ref": "#/components/schemas/PickListProvenance"
+    },
+    "ranked": {
+     "items": {
+      "$ref": "#/components/schemas/RankedPickOut"
+     },
+     "type": "array"
+    },
+    "seed": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "alternatives",
+    "alternatives_note",
+    "as_of",
+    "epa",
+    "evaluated_fields",
+    "event_key",
+    "models",
+    "notes",
+    "probability_status",
+    "provenance",
+    "ranked",
+    "seed"
+   ],
+   "type": "object"
+  },
+  "PlayoffModelInfo": {
+   "properties": {
+    "px1_sha256": {
+     "type": "string"
+    },
+    "px2_calibrator_sha256": {
+     "type": "string"
+    },
+    "ranking_model_sha256": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "px1_sha256",
+    "px2_calibrator_sha256",
+    "ranking_model_sha256"
+   ],
+   "type": "object"
+  },
+  "PreMatchReportResponse": {
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "as_of_source": {
+     "enum": [
+      "now",
+      "requested",
+      "scheduled_time"
+     ],
+     "type": "string"
+    },
+    "blue_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "competition_level": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "match_key": {
+     "type": "string"
+    },
+    "not_produced": {
+     "$ref": "#/components/schemas/NotProducedItems"
+    },
+    "red_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "scheduled_time": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "strategy": {
+     "$ref": "#/components/schemas/StrategySection"
+    },
+    "synergy": {
+     "items": {
+      "$ref": "#/components/schemas/AllianceSynergyOut"
+     },
+     "type": "array"
+    },
+    "teams": {
+     "items": {
+      "$ref": "#/components/schemas/PreMatchTeam"
+     },
+     "type": "array"
+    },
+    "win_probability": {
+     "$ref": "#/components/schemas/WinProbabilitySection"
+    }
+   },
+   "required": [
+    "as_of",
+    "as_of_source",
+    "blue_team_numbers",
+    "competition_level",
+    "epa",
+    "event_key",
+    "match_key",
+    "not_produced",
+    "red_team_numbers",
+    "scheduled_time",
+    "strategy",
+    "synergy",
+    "teams",
+    "win_probability"
+   ],
+   "type": "object"
+  },
+  "PreMatchTeam": {
+   "properties": {
+    "alliance": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    },
+    "strength": {
+     "$ref": "#/components/schemas/TeamStrengthView"
+    },
+    "team_number": {
+     "type": "integer"
+    },
+    "validation": {
+     "$ref": "#/components/schemas/Validation"
+    }
+   },
+   "required": [
+    "alliance",
+    "strength",
+    "team_number",
+    "validation"
+   ],
+   "type": "object"
+  },
+  "QualificationForecastResponse": {
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "low_confidence": {
+     "anyOf": [
+      {
+       "type": "boolean"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "matches": {
+     "items": {
+      "$ref": "#/components/schemas/MatchForecastOut"
+     },
+     "type": "array"
+    },
+    "range_evidence": {
+     "type": "string"
+    },
+    "record_evidence": {
+     "type": "string"
+    },
+    "statbotics_week": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "teams": {
+     "items": {
+      "$ref": "#/components/schemas/TeamRecordOut"
+     },
+     "type": "array"
+    },
+    "win_prob_model_sha256": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "as_of",
+    "epa",
+    "event_key",
+    "low_confidence",
+    "matches",
+    "range_evidence",
+    "record_evidence",
+    "statbotics_week",
+    "teams",
+    "win_prob_model_sha256"
+   ],
+   "type": "object"
+  },
+  "RankedPickOut": {
+   "properties": {
+    "configuration": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "profile": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/CandidateOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "reach_finals": {
+     "$ref": "#/components/schemas/StrategyOdds"
+    },
+    "team_number": {
+     "type": "integer"
+    },
+    "vs_next_label": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "vs_next_reach_finals_label": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "vs_next_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "win_event": {
+     "$ref": "#/components/schemas/StrategyOdds"
+    }
+   },
+   "required": [
+    "configuration",
+    "profile",
+    "reach_finals",
+    "team_number",
+    "vs_next_label",
+    "vs_next_reach_finals_label",
+    "vs_next_reason",
+    "win_event"
+   ],
+   "type": "object"
+  },
+  "RankedTeam": {
+   "properties": {
+    "epa_source_event_key": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa_source_state": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa_value_source": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "rank": {
+     "type": "integer"
+    },
+    "score": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "epa_source_event_key",
+    "epa_source_state",
+    "epa_value_source",
+    "rank",
+    "score",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "ReadinessResponse": {
+   "properties": {
+    "checks": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "status": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "checks",
+    "status"
+   ],
+   "type": "object"
+  },
+  "RecommendBody": {
+   "properties": {
+    "opponent_strategy": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/Strategy"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "side": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "side"
+   ],
+   "type": "object"
+  },
+  "RecommendResponse": {
+   "properties": {
+    "alternatives": {
+     "items": {
+      "$ref": "#/components/schemas/AssessmentOut"
+     },
+     "type": "array"
+    },
+    "baseline": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/AssessmentOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "candidates_evaluated": {
+     "type": "integer"
+    },
+    "context": {
+     "$ref": "#/components/schemas/StrategyContextOut"
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "model": {
+     "$ref": "#/components/schemas/StrategyModelInfo"
+    },
+    "recommended": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/AssessmentOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "selection_note": {
+     "type": "string"
+    },
+    "side": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    },
+    "unavailable_reasons": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "vs_baseline_label": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "alternatives",
+    "baseline",
+    "candidates_evaluated",
+    "context",
+    "epa",
+    "model",
+    "recommended",
+    "selection_note",
+    "side",
+    "unavailable_reasons",
+    "vs_baseline_label"
+   ],
+   "type": "object"
+  },
+  "RobotPlan": {
+   "additionalProperties": false,
+   "properties": {
+    "components": {
+     "default": [
+      "auto",
+      "teleop",
+      "endgame"
+     ],
+     "items": {
+      "enum": [
+       "auto",
+       "endgame",
+       "teleop"
+      ],
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "defense_target": {
+     "anyOf": [
+      {
+       "exclusiveMinimum": 0.0,
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "feed_target": {
+     "anyOf": [
+      {
+       "exclusiveMinimum": 0.0,
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "role": {
+     "default": "scoring",
+     "enum": [
+      "defense",
+      "feeding",
+      "scoring"
+     ],
+     "type": "string"
+    },
+    "team_number": {
+     "exclusiveMinimum": 0.0,
+     "type": "integer"
+    }
+   },
+   "required": [
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "RosterTeamOut": {
+   "properties": {
+    "city": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "country": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "name": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "rookie_year": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "state_province": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "city",
+    "country",
+    "name",
+    "rookie_year",
+    "state_province",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "ScheduledMatchOut": {
+   "properties": {
+    "blue_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "competition_level": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "match_key": {
+     "type": "string"
+    },
+    "match_number": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "red_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "result": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/MatchResultOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "result_withheld_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "scheduled_time": {
+     "anyOf": [
+      {
+       "format": "date-time",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "set_number": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "blue_team_numbers",
+    "competition_level",
+    "match_key",
+    "match_number",
+    "red_team_numbers",
+    "result",
+    "result_withheld_reason",
+    "scheduled_time",
+    "set_number"
+   ],
+   "type": "object"
+  },
+  "ScoringProfile": {
+   "properties": {
+    "average_day_count": {
+     "anyOf": [
+      {
+       "minimum": 0.0,
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "average_score": {
+     "anyOf": [
+      {
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "bad_day_count": {
+     "anyOf": [
+      {
+       "minimum": 0.0,
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "consistency_rating": {
+     "anyOf": [
+      {
+       "maximum": 100.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "good_day_count": {
+     "anyOf": [
+      {
+       "minimum": 0.0,
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "matches_scheduled": {
+     "minimum": 0.0,
+     "type": "integer"
+    },
+    "matches_used": {
+     "minimum": 0.0,
+     "type": "integer"
+    },
+    "reliability_score": {
+     "anyOf": [
+      {
+       "maximum": 100.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "score_stddev": {
+     "anyOf": [
+      {
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "matches_scheduled",
+    "matches_used"
+   ],
+   "type": "object"
+  },
+  "ScoringView": {
+   "properties": {
+    "average_day_count": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "average_score": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "bad_day_count": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "consistency_rating": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "good_day_count": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "matches_considered": {
+     "type": "integer"
+    },
+    "reliability_score": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "score_stddev": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "validation_status": {
+     "default": "descriptive",
+     "type": "string"
+    }
+   },
+   "required": [
+    "average_day_count",
+    "average_score",
+    "bad_day_count",
+    "consistency_rating",
+    "good_day_count",
+    "matches_considered",
+    "reliability_score",
+    "score_stddev"
+   ],
+   "type": "object"
+  },
+  "ScoutingView": {
+   "properties": {
+    "agreement": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "contributing_sources": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "score": {
+     "$ref": "#/components/schemas/Measure"
+    },
+    "validation_status": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "agreement",
+    "contributing_sources",
+    "score",
+    "validation_status"
+   ],
+   "type": "object"
+  },
+  "SeasonEventsResponse": {
+   "properties": {
+    "events": {
+     "items": {
+      "$ref": "#/components/schemas/EventOut"
+     },
+     "type": "array"
+    },
+    "season": {
+     "type": "integer"
+    },
+    "validation": {
+     "$ref": "#/components/schemas/Validation"
+    }
+   },
+   "required": [
+    "events",
+    "season",
+    "validation"
+   ],
+   "type": "object"
+  },
+  "ServedModelInfo": {
+   "properties": {
+    "model_sha256": {
+     "type": "string"
+    },
+    "model_type": {
+     "type": "string"
+    },
+    "model_version": {
+     "type": "string"
+    },
+    "model_version_tag": {
+     "type": "string"
+    },
+    "provenance": {
+     "additionalProperties": true,
+     "type": "object"
+    },
+    "training_dataset_hash": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "model_sha256",
+    "model_type",
+    "model_version",
+    "model_version_tag",
+    "provenance",
+    "training_dataset_hash"
+   ],
+   "type": "object"
+  },
+  "Strategy": {
+   "additionalProperties": false,
+   "properties": {
+    "robots": {
+     "maxItems": 3,
+     "minItems": 3,
+     "prefixItems": [
+      {
+       "$ref": "#/components/schemas/RobotPlan"
+      },
+      {
+       "$ref": "#/components/schemas/RobotPlan"
+      },
+      {
+       "$ref": "#/components/schemas/RobotPlan"
+      }
+     ],
+     "type": "array"
+    },
+    "vocabulary": {
+     "const": "p6-strategy-v1",
+     "default": "p6-strategy-v1",
+     "type": "string"
+    }
+   },
+   "required": [
+    "robots"
+   ],
+   "type": "object"
+  },
+  "StrategyContextOut": {
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "blue_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "coach_observations_applied": {
+     "type": "integer"
+    },
+    "coach_observations_invalid_ignored": {
+     "type": "integer"
+    },
+    "competition_level": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "match_context": {
+     "enum": [
+      "playoff",
+      "qualification"
+     ],
+     "type": "string"
+    },
+    "match_key": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "red_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    }
+   },
+   "required": [
+    "as_of",
+    "blue_team_numbers",
+    "coach_observations_applied",
+    "coach_observations_invalid_ignored",
+    "competition_level",
+    "event_key",
+    "match_context",
+    "match_key",
+    "red_team_numbers"
+   ],
+   "type": "object"
+  },
+  "StrategyModelInfo": {
+   "properties": {
+    "model_sha256": {
+     "type": "string"
+    },
+    "model_type": {
+     "type": "string"
+    },
+    "model_version": {
+     "type": "string"
+    },
+    "model_version_tag": {
+     "type": "string"
+    },
+    "spec_sha256": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "model_sha256",
+    "model_type",
+    "model_version",
+    "model_version_tag",
+    "spec_sha256"
+   ],
+   "type": "object"
+  },
+  "StrategyOdds": {
+   "properties": {
+    "display": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "validation": {
+     "$ref": "#/components/schemas/Validation"
+    }
+   },
+   "required": [
+    "display",
+    "validation"
+   ],
+   "type": "object"
+  },
+  "StrategySection": {
+   "properties": {
+    "absent_code": {
+     "anyOf": [
+      {
+       "enum": [
+        "alliance_incomplete",
+        "match_context_unknown",
+        "mixed_season_scale",
+        "model_not_loaded"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "absent_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "context": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/StrategyContextOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "model": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/StrategyModelInfo"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "sides": {
+     "items": {
+      "$ref": "#/components/schemas/StrategySide"
+     },
+     "type": "array"
+    },
+    "source": {
+     "default": "ml.strategy.engine.StrategyEngine.recommend with the P6-M10 model (P6-M11, via P7-M5)",
+     "type": "string"
+    }
+   },
+   "required": [
+    "absent_code",
+    "absent_reason",
+    "context",
+    "model",
+    "sides"
+   ],
+   "type": "object"
+  },
+  "StrategySide": {
+   "properties": {
+    "baseline": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/AssessmentOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "candidates_evaluated": {
+     "type": "integer"
+    },
+    "recommended": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/AssessmentOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "selection_note": {
+     "type": "string"
+    },
+    "side": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    },
+    "unavailable_reasons": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "vs_baseline_label": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "baseline",
+    "candidates_evaluated",
+    "recommended",
+    "selection_note",
+    "side",
+    "unavailable_reasons",
+    "vs_baseline_label"
+   ],
+   "type": "object"
+  },
+  "TeamComparison": {
+   "properties": {
+    "teams": {
+     "items": {
+      "$ref": "#/components/schemas/TeamStrengthView"
+     },
+     "type": "array"
+    },
+    "validation_status": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "teams",
+    "validation_status"
+   ],
+   "type": "object"
+  },
+  "TeamEpaProvenance": {
+   "properties": {
+    "alliance": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa_source_event_key": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa_source_state": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa_value_source": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa_withheld_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "epa_source_event_key",
+    "epa_source_state",
+    "epa_value_source",
+    "epa_withheld_reason",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "TeamMetricsResponse": {
+   "properties": {
+    "computed_at": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "defense_feeding": {
+     "$ref": "#/components/schemas/DefenseFeedingProfile"
+    },
+    "event_key": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "scoring": {
+     "$ref": "#/components/schemas/ScoringProfile"
+    },
+    "season": {
+     "type": "integer"
+    },
+    "team_number": {
+     "exclusiveMinimum": 0.0,
+     "type": "integer"
+    },
+    "validation": {
+     "$ref": "#/components/schemas/MetricsValidation"
+    }
+   },
+   "required": [
+    "computed_at",
+    "defense_feeding",
+    "event_key",
+    "scoring",
+    "season",
+    "team_number",
+    "validation"
+   ],
+   "type": "object"
+  },
+  "TeamRankingEntry": {
+   "properties": {
+    "epa_source_event_key": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa_value_source": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa_withheld_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "predicted_rating": {
+     "type": "number"
+    },
+    "rank": {
+     "type": "integer"
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "epa_source_event_key",
+    "epa_value_source",
+    "epa_withheld_reason",
+    "predicted_rating",
+    "rank",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "TeamRankingResponse": {
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "evidence": {
+     "type": "string"
+    },
+    "model": {
+     "$ref": "#/components/schemas/ServedModelInfo"
+    },
+    "model_type": {
+     "type": "string"
+    },
+    "model_version": {
+     "type": "string"
+    },
+    "model_version_tag": {
+     "type": "string"
+    },
+    "rankings": {
+     "items": {
+      "$ref": "#/components/schemas/TeamRankingEntry"
+     },
+     "type": "array"
+    },
+    "validation_status": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "as_of",
+    "epa",
+    "event_key",
+    "evidence",
+    "model",
+    "model_type",
+    "model_version",
+    "model_version_tag",
+    "rankings",
+    "validation_status"
+   ],
+   "type": "object"
+  },
+  "TeamRecordOut": {
+   "properties": {
+    "expected_wins": {
+     "type": "number"
+    },
+    "qualification_matches": {
+     "type": "integer"
+    },
+    "range80_high": {
+     "type": "integer"
+    },
+    "range80_low": {
+     "type": "integer"
+    },
+    "range_not_validated_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "range_validation_status": {
+     "type": "string"
+    },
+    "record_not_validated_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "record_validation_status": {
+     "type": "string"
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "expected_wins",
+    "qualification_matches",
+    "range80_high",
+    "range80_low",
+    "range_not_validated_reason",
+    "range_validation_status",
+    "record_not_validated_reason",
+    "record_validation_status",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "TeamStrengthResponse": {
+   "properties": {
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "strength": {
+     "$ref": "#/components/schemas/TeamStrengthView"
+    }
+   },
+   "required": [
+    "epa",
+    "strength"
+   ],
+   "type": "object"
+  },
+  "TeamStrengthView": {
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "auto_points": {
+     "$ref": "#/components/schemas/AutoPointsView"
+    },
+    "defense": {
+     "$ref": "#/components/schemas/ScoutingView"
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaView"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "feeding": {
+     "$ref": "#/components/schemas/ScoutingView"
+    },
+    "scoring": {
+     "$ref": "#/components/schemas/ScoringView"
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "as_of",
+    "auto_points",
+    "defense",
+    "epa",
+    "event_key",
+    "feeding",
+    "scoring",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "Uncertainty": {
+   "properties": {
+    "kind": {
+     "enum": [
+      "none",
+      "sd"
+     ],
+     "type": "string"
+    },
+    "reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "value": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    }
+   },
+   "required": [
+    "kind"
+   ],
+   "type": "object"
+  },
+  "Validation": {
+   "properties": {
+    "evidence": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "reasons": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "status": {
+     "minLength": 1,
+     "type": "string"
+    }
+   },
+   "required": [
+    "status"
+   ],
+   "type": "object"
+  },
+  "WinProbabilityByAlliancesRequestBody": {
+   "properties": {
+    "blue_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "maxItems": 3,
+     "minItems": 3,
+     "type": "array"
+    },
+    "event_key": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "match_context": {
+     "anyOf": [
+      {
+       "enum": [
+        "playoff",
+        "qualification"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "red_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "maxItems": 3,
+     "minItems": 3,
+     "type": "array"
+    }
+   },
+   "required": [
+    "blue_team_numbers",
+    "event_key",
+    "red_team_numbers"
+   ],
+   "type": "object"
+  },
+  "WinProbabilityResponse": {
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "blue_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "calibration_status": {
+     "type": "string"
+    },
+    "competition_level": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "epa": {
+     "$ref": "#/components/schemas/EpaSourceInfo"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "evidence": {
+     "type": "string"
+    },
+    "match_key": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "model": {
+     "$ref": "#/components/schemas/ServedModelInfo"
+    },
+    "model_type": {
+     "type": "string"
+    },
+    "model_version": {
+     "type": "string"
+    },
+    "model_version_tag": {
+     "type": "string"
+    },
+    "not_validated_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "probability_rounding": {
+     "type": "number"
+    },
+    "probability_scope": {
+     "type": "string"
+    },
+    "red_team_numbers": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "red_win_probability": {
+     "anyOf": [
+      {
+       "maximum": 1.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "teams": {
+     "items": {
+      "$ref": "#/components/schemas/TeamEpaProvenance"
+     },
+     "type": "array"
+    },
+    "unvalidated_red_win_probability": {
+     "anyOf": [
+      {
+       "maximum": 1.0,
+       "minimum": 0.0,
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "validation_status": {
+     "type": "string"
+    },
+    "warning": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "win_probability": {
+     "$ref": "#/components/schemas/CalibratedWinProbability"
+    }
+   },
+   "required": [
+    "as_of",
+    "blue_team_numbers",
+    "calibration_status",
+    "epa",
+    "event_key",
+    "evidence",
+    "model",
+    "model_type",
+    "model_version",
+    "model_version_tag",
+    "probability_rounding",
+    "probability_scope",
+    "red_team_numbers",
+    "teams",
+    "validation_status",
+    "win_probability"
+   ],
+   "type": "object"
+  },
+  "WinProbabilitySection": {
+   "properties": {
+    "absent_code": {
+     "anyOf": [
+      {
+       "enum": [
+        "insufficient_features",
+        "model_not_loaded"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "absent_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "probability_scope": {
+     "enum": [
+      "playoff",
+      "qualification",
+      "unspecified"
+     ],
+     "type": "string"
+    },
+    "source": {
+     "default": "win_prob_xgb_calibrated (Phase 4 M6/M7), gated as /predictions/matches/{match_key}/win-probability",
+     "type": "string"
+    },
+    "value": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/CalibratedWinProbability"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "absent_code",
+    "absent_reason",
+    "probability_scope",
+    "value"
+   ],
+   "type": "object"
+  }
+ }
+}
