@@ -33,7 +33,12 @@ def _client(database, model) -> TestClient:  # noqa: F811
     return TestClient(app)
 
 
-STUB = SimpleNamespace(model=SimpleNamespace(predict_win_prob=lambda row: 0.6), sha256="stub")
+# identity() added 2026-10-17 (P7-M3): the route now builds the shared probability object, which names the served
+# model through api.ml_loading.ServedModel.identity(); the stub mirrors that real interface.
+STUB = SimpleNamespace(model=SimpleNamespace(predict_win_prob=lambda row: 0.6), sha256="stub",
+                       identity=lambda: {"model_type": "win_prob_xgb_calibrated", "model_version": "stub",
+                                         "model_version_tag": "stub", "model_sha256": "stub",
+                                         "training_dataset_hash": "stub", "provenance": {}})
 
 
 def test_forecast_records_and_labels(database):  # noqa: F811

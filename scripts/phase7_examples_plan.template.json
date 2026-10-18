@@ -1,0 +1,932 @@
+{
+ "_note": "P7-M8 plan template: fill every <<KEY>> with --set in the environment of record (P7-Q5). A placeholder standing alone takes its value as JSON when it parses (e.g. EMPTY_ALLIANCES='[[],[],[],[],[],[],[],[]]').",
+ "examples": [
+  {
+   "operation": "GET /events",
+   "name": "season",
+   "kind": "real",
+   "summary": "Every event of one season",
+   "expect_status": 200,
+   "request": {
+    "query": {
+     "season": "<<SEASON>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /events",
+   "name": "season_missing",
+   "kind": "real",
+   "summary": "season is required",
+   "expect_status": 422,
+   "request": {
+    "query": {}
+   }
+  },
+  {
+   "operation": "GET /events/{event_key}/teams",
+   "name": "event",
+   "kind": "real",
+   "summary": "An event's roster",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "event_key": "<<EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /events/{event_key}/teams",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "event_key": "<<UNKNOWN_EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /events/{event_key}/matches",
+   "name": "mid_event",
+   "kind": "real",
+   "summary": "Matches available at as_of",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "event_key": "<<EVENT>>"
+    },
+    "query": {
+     "as_of": "{as_of}"
+    }
+   }
+  },
+  {
+   "operation": "GET /events/{event_key}/matches",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "event_key": "<<UNKNOWN_EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /events/{event_key}/analysis",
+   "name": "mid_event",
+   "kind": "real",
+   "summary": "Event analysis at as_of",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "event_key": "<<EVENT>>"
+    },
+    "query": {
+     "as_of": "{as_of}"
+    }
+   }
+  },
+  {
+   "operation": "GET /events/{event_key}/analysis",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "event_key": "<<UNKNOWN_EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /events/{event_key}/qualification-forecast",
+   "name": "mid_event",
+   "kind": "real",
+   "summary": "Qualification forecast at as_of",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "event_key": "<<EVENT>>"
+    },
+    "query": {
+     "as_of": "{as_of}"
+    }
+   }
+  },
+  {
+   "operation": "GET /events/{event_key}/qualification-forecast",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "event_key": "<<UNKNOWN_EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /teams/{team_number}/events/{event_key}/metrics",
+   "name": "team",
+   "kind": "real",
+   "summary": "Stored Phase 3 metrics",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "team_number": "<<TEAM>>",
+     "event_key": "<<EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /teams/{team_number}/events/{event_key}/metrics",
+   "name": "did_not_attend",
+   "kind": "real",
+   "summary": "A team that did not attend",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "team_number": "<<ABSENT_TEAM>>",
+     "event_key": "<<EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /teams/{team_number}/events/{event_key}/strength",
+   "name": "team",
+   "kind": "real",
+   "summary": "Strength view at as_of",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "team_number": "<<TEAM>>",
+     "event_key": "<<EVENT>>"
+    },
+    "query": {
+     "as_of": "{as_of}"
+    }
+   }
+  },
+  {
+   "operation": "GET /teams/{team_number}/events/{event_key}/strength",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "team_number": "<<TEAM>>",
+     "event_key": "<<UNKNOWN_EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /predictions/matches/{match_key}/win-probability",
+   "name": "qualification",
+   "kind": "real",
+   "summary": "M6/M7 for a qualification match",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "match_key": "<<QUAL_MATCH>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /predictions/matches/{match_key}/win-probability",
+   "name": "unknown_match",
+   "kind": "real",
+   "summary": "An unknown match",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "match_key": "<<UNKNOWN_MATCH>>"
+    }
+   }
+  },
+  {
+   "operation": "POST /predictions/win-probability",
+   "name": "hypothetical",
+   "kind": "real",
+   "summary": "M6/M7 for two supplied alliances",
+   "expect_status": 200,
+   "request": {
+    "query": {
+     "as_of": "{as_of}"
+    },
+    "body": {
+     "event_key": "<<EVENT>>",
+     "red_team_numbers": [
+      "<<RED1>>",
+      "<<RED2>>",
+      "<<RED3>>"
+     ],
+     "blue_team_numbers": [
+      "<<BLUE1>>",
+      "<<BLUE2>>",
+      "<<BLUE3>>"
+     ],
+     "match_context": "qualification"
+    }
+   }
+  },
+  {
+   "operation": "POST /predictions/win-probability",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "query": {
+     "as_of": "{as_of}"
+    },
+    "body": {
+     "event_key": "<<UNKNOWN_EVENT>>",
+     "red_team_numbers": [
+      "<<RED1>>",
+      "<<RED2>>",
+      "<<RED3>>"
+     ],
+     "blue_team_numbers": [
+      "<<BLUE1>>",
+      "<<BLUE2>>",
+      "<<BLUE3>>"
+     ],
+     "match_context": "qualification"
+    }
+   }
+  },
+  {
+   "operation": "GET /predictions/events/{event_key}/ranking",
+   "name": "event",
+   "kind": "real",
+   "summary": "Deprecated ranking (M5 v2)",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "event_key": "<<EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /predictions/events/{event_key}/ranking",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "event_key": "<<UNKNOWN_EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "POST /predictions/alliance-synergy",
+   "name": "alliance",
+   "kind": "real",
+   "summary": "Synergy of three teams",
+   "expect_status": 200,
+   "request": {
+    "query": {
+     "as_of": "{as_of}"
+    },
+    "body": {
+     "event_key": "<<EVENT>>",
+     "team_numbers": [
+      "<<RED1>>",
+      "<<RED2>>",
+      "<<RED3>>"
+     ]
+    }
+   }
+  },
+  {
+   "operation": "POST /predictions/alliance-synergy",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "query": {
+     "as_of": "{as_of}"
+    },
+    "body": {
+     "event_key": "<<UNKNOWN_EVENT>>",
+     "team_numbers": [
+      "<<RED1>>",
+      "<<RED2>>",
+      "<<RED3>>"
+     ]
+    }
+   }
+  },
+  {
+   "operation": "GET /events/{event_key}/alliance-selection/candidates",
+   "name": "selection_moment",
+   "kind": "real",
+   "summary": "Candidate profiles at the selection moment",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "event_key": "<<EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "GET /events/{event_key}/alliance-selection/candidates",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "event_key": "<<UNKNOWN_EVENT>>"
+    }
+   }
+  },
+  {
+   "operation": "POST /events/{event_key}/alliance-selection/pick-list",
+   "name": "not_approved",
+   "kind": "refusal_only",
+   "summary": "Refusal only today: no approved ruleset (P7-Q1)",
+   "expect_status": 409,
+   "request": {
+    "path_params": {
+     "event_key": "<<EVENT>>"
+    },
+    "body": {
+     "seed": 1,
+     "alliances": "<<EMPTY_ALLIANCES>>",
+     "declined": [],
+     "turns_taken": 0
+    }
+   }
+  },
+  {
+   "operation": "GET /matches/{match_key}/pre-match-report",
+   "name": "qualification",
+   "kind": "real",
+   "summary": "Pre-match report data",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "match_key": "<<QUAL_MATCH>>"
+    },
+    "query": {
+     "as_of": "{as_of}"
+    }
+   }
+  },
+  {
+   "operation": "GET /matches/{match_key}/pre-match-report",
+   "name": "unknown_match",
+   "kind": "real",
+   "summary": "An unknown match",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "match_key": "<<UNKNOWN_MATCH>>"
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/matches/{match_key}/assess",
+   "name": "qualification",
+   "kind": "real",
+   "summary": "Assess for a scheduled qualification match",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "match_key": "<<QUAL_MATCH>>"
+    },
+    "body": {
+     "side": "red",
+     "strategy": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>"
+       },
+       {
+        "team_number": "<<RED2>>"
+       },
+       {
+        "team_number": "<<RED3>>"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/matches/{match_key}/assess",
+   "name": "unknown_match",
+   "kind": "real",
+   "summary": "An unknown match",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "match_key": "<<UNKNOWN_MATCH>>"
+    },
+    "body": {
+     "side": "red",
+     "strategy": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>"
+       },
+       {
+        "team_number": "<<RED2>>"
+       },
+       {
+        "team_number": "<<RED3>>"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/hypothetical/assess",
+   "name": "qualification",
+   "kind": "real",
+   "summary": "Assess for a hypothetical qualification pairing",
+   "expect_status": 200,
+   "request": {
+    "query": {
+     "as_of": "{as_of}"
+    },
+    "body": {
+     "event_key": "<<EVENT>>",
+     "red_team_numbers": [
+      "<<RED1>>",
+      "<<RED2>>",
+      "<<RED3>>"
+     ],
+     "blue_team_numbers": [
+      "<<BLUE1>>",
+      "<<BLUE2>>",
+      "<<BLUE3>>"
+     ],
+     "match_context": "qualification",
+     "side": "red",
+     "strategy": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>"
+       },
+       {
+        "team_number": "<<RED2>>"
+       },
+       {
+        "team_number": "<<RED3>>"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/hypothetical/assess",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "query": {
+     "as_of": "{as_of}"
+    },
+    "body": {
+     "event_key": "<<UNKNOWN_EVENT>>",
+     "red_team_numbers": [
+      "<<RED1>>",
+      "<<RED2>>",
+      "<<RED3>>"
+     ],
+     "blue_team_numbers": [
+      "<<BLUE1>>",
+      "<<BLUE2>>",
+      "<<BLUE3>>"
+     ],
+     "match_context": "qualification",
+     "side": "red",
+     "strategy": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>"
+       },
+       {
+        "team_number": "<<RED2>>"
+       },
+       {
+        "team_number": "<<RED3>>"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/matches/{match_key}/recommend",
+   "name": "qualification",
+   "kind": "real",
+   "summary": "Recommend for a scheduled qualification match",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "match_key": "<<QUAL_MATCH>>"
+    },
+    "body": {
+     "side": "red"
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/matches/{match_key}/recommend",
+   "name": "unknown_match",
+   "kind": "real",
+   "summary": "An unknown match",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "match_key": "<<UNKNOWN_MATCH>>"
+    },
+    "body": {
+     "side": "red"
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/hypothetical/recommend",
+   "name": "qualification",
+   "kind": "real",
+   "summary": "Recommend for a hypothetical qualification pairing",
+   "expect_status": 200,
+   "request": {
+    "query": {
+     "as_of": "{as_of}"
+    },
+    "body": {
+     "event_key": "<<EVENT>>",
+     "red_team_numbers": [
+      "<<RED1>>",
+      "<<RED2>>",
+      "<<RED3>>"
+     ],
+     "blue_team_numbers": [
+      "<<BLUE1>>",
+      "<<BLUE2>>",
+      "<<BLUE3>>"
+     ],
+     "match_context": "qualification",
+     "side": "red"
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/hypothetical/recommend",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "query": {
+     "as_of": "{as_of}"
+    },
+    "body": {
+     "event_key": "<<UNKNOWN_EVENT>>",
+     "red_team_numbers": [
+      "<<RED1>>",
+      "<<RED2>>",
+      "<<RED3>>"
+     ],
+     "blue_team_numbers": [
+      "<<BLUE1>>",
+      "<<BLUE2>>",
+      "<<BLUE3>>"
+     ],
+     "match_context": "qualification",
+     "side": "red"
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/matches/{match_key}/compare",
+   "name": "qualification",
+   "kind": "real",
+   "summary": "Compare for a scheduled qualification match",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "match_key": "<<QUAL_MATCH>>"
+    },
+    "body": {
+     "side": "red",
+     "first": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>"
+       },
+       {
+        "team_number": "<<RED2>>"
+       },
+       {
+        "team_number": "<<RED3>>"
+       }
+      ]
+     },
+     "second": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>",
+        "components": [
+         "auto"
+        ]
+       },
+       {
+        "team_number": "<<RED2>>",
+        "components": [
+         "auto"
+        ]
+       },
+       {
+        "team_number": "<<RED3>>",
+        "components": [
+         "auto"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/matches/{match_key}/compare",
+   "name": "unknown_match",
+   "kind": "real",
+   "summary": "An unknown match",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "match_key": "<<UNKNOWN_MATCH>>"
+    },
+    "body": {
+     "side": "red",
+     "first": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>"
+       },
+       {
+        "team_number": "<<RED2>>"
+       },
+       {
+        "team_number": "<<RED3>>"
+       }
+      ]
+     },
+     "second": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>",
+        "components": [
+         "auto"
+        ]
+       },
+       {
+        "team_number": "<<RED2>>",
+        "components": [
+         "auto"
+        ]
+       },
+       {
+        "team_number": "<<RED3>>",
+        "components": [
+         "auto"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/hypothetical/compare",
+   "name": "qualification",
+   "kind": "real",
+   "summary": "Compare for a hypothetical qualification pairing",
+   "expect_status": 200,
+   "request": {
+    "query": {
+     "as_of": "{as_of}"
+    },
+    "body": {
+     "event_key": "<<EVENT>>",
+     "red_team_numbers": [
+      "<<RED1>>",
+      "<<RED2>>",
+      "<<RED3>>"
+     ],
+     "blue_team_numbers": [
+      "<<BLUE1>>",
+      "<<BLUE2>>",
+      "<<BLUE3>>"
+     ],
+     "match_context": "qualification",
+     "side": "red",
+     "first": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>"
+       },
+       {
+        "team_number": "<<RED2>>"
+       },
+       {
+        "team_number": "<<RED3>>"
+       }
+      ]
+     },
+     "second": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>",
+        "components": [
+         "auto"
+        ]
+       },
+       {
+        "team_number": "<<RED2>>",
+        "components": [
+         "auto"
+        ]
+       },
+       {
+        "team_number": "<<RED3>>",
+        "components": [
+         "auto"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/hypothetical/compare",
+   "name": "unknown_event",
+   "kind": "real",
+   "summary": "An unknown event",
+   "expect_status": 404,
+   "request": {
+    "query": {
+     "as_of": "{as_of}"
+    },
+    "body": {
+     "event_key": "<<UNKNOWN_EVENT>>",
+     "red_team_numbers": [
+      "<<RED1>>",
+      "<<RED2>>",
+      "<<RED3>>"
+     ],
+     "blue_team_numbers": [
+      "<<BLUE1>>",
+      "<<BLUE2>>",
+      "<<BLUE3>>"
+     ],
+     "match_context": "qualification",
+     "side": "red",
+     "first": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>"
+       },
+       {
+        "team_number": "<<RED2>>"
+       },
+       {
+        "team_number": "<<RED3>>"
+       }
+      ]
+     },
+     "second": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>",
+        "components": [
+         "auto"
+        ]
+       },
+       {
+        "team_number": "<<RED2>>",
+        "components": [
+         "auto"
+        ]
+       },
+       {
+        "team_number": "<<RED3>>",
+        "components": [
+         "auto"
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/coach-strategies",
+   "name": "stored",
+   "kind": "real",
+   "summary": "A coach strategy stored raw-first (writes to the environment's database copy)",
+   "expect_status": 201,
+   "request": {
+    "headers": {
+     "X-StratAI-Write-Token": "<<WRITE_TOKEN>>"
+    },
+    "body": {
+     "event_key": "<<EVENT>>",
+     "match_key": "<<QUAL_MATCH>>",
+     "author": "<<AUTHOR>>",
+     "strategy": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>"
+       },
+       {
+        "team_number": "<<RED2>>"
+       },
+       {
+        "team_number": "<<RED3>>"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/coach-strategies",
+   "name": "no_token",
+   "kind": "real",
+   "summary": "Without the write token",
+   "expect_status": 403,
+   "request": {
+    "body": {
+     "event_key": "<<EVENT>>",
+     "match_key": "<<QUAL_MATCH>>",
+     "author": "<<AUTHOR>>",
+     "strategy": {
+      "robots": [
+       {
+        "team_number": "<<RED1>>"
+       },
+       {
+        "team_number": "<<RED2>>"
+       },
+       {
+        "team_number": "<<RED3>>"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/coach-observations",
+   "name": "stored",
+   "kind": "real",
+   "summary": "A coach observation stored raw-first (writes to the environment's database copy)",
+   "expect_status": 201,
+   "request": {
+    "headers": {
+     "X-StratAI-Write-Token": "<<WRITE_TOKEN>>"
+    },
+    "body": {
+     "event_key": "<<EVENT>>",
+     "team_number": "<<TEAM>>",
+     "kind": "robot_unavailable",
+     "observed_at": "{as_of}",
+     "observer": "<<AUTHOR>>"
+    }
+   }
+  },
+  {
+   "operation": "POST /strategy/coach-observations",
+   "name": "no_token",
+   "kind": "real",
+   "summary": "Without the write token",
+   "expect_status": 403,
+   "request": {
+    "body": {
+     "event_key": "<<EVENT>>",
+     "team_number": "<<TEAM>>",
+     "kind": "robot_unavailable",
+     "observed_at": "{as_of}",
+     "observer": "<<AUTHOR>>"
+    }
+   }
+  }
+ ]
+}
