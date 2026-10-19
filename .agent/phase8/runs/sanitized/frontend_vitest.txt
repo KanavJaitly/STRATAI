@@ -1,0 +1,18 @@
+# SANITIZED DERIVATIVE of .agent/phase8/runs/frontend_vitest.txt (git blob 9b5873edd10ca909e7d60c78aa7fc3972dbd4747), made 2026-10-19.
+# The original stays local as evidence and is excluded from the commit candidate. Only path prefixes changed:
+# 1 repository path(s) became <repo-root>, and 0 other home path(s) became <home>. All results, counts and
+# exit codes are unchanged.
+
+ RUN  v5.0.3 <repo-root>/frontend
+
+
+ Test Files  27 passed (27)
+      Tests  157 passed (157)
+   Start at  16:09:43
+   Duration  22.34s (tests 42%, environment 40%, setup 7%, import 7%, transform 4%)
+
+Environment  jsdom was created 27 times · 32.23s total, 40% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+exit=0 (full run 3 of 3, final audit 2026-10-19)
