@@ -18,5 +18,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // axe over a whole page in jsdom can take several seconds when every test file runs in parallel
+    testTimeout: 15_000,
+    // One jsdom worker per CPU (the default) oversubscribed an 8-CPU machine: whole files ran 10-20x slower and
+    // axe-heavy tests hit the timeout intermittently. Half the CPUs is stable and faster (P8-D1 D1.9).
+    maxWorkers: '50%',
   },
 })

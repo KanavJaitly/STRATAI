@@ -1,0 +1,37 @@
+ok  GET  /health                                                        200  0.0s
+ok  GET  /ready                                                         200  0.01s
+ok  GET  /events                                                        200  0.01s
+ok  GET  /events/2026mrcmp/teams                                        200  0.04s
+ok  GET  /events/2026mrcmp/matches                                      200  0.04s
+ok  GET  /events/2026mrcmp/analysis                                     404 model_not_loaded 0.03s
+ok  GET  /events/2026mrcmp/qualification-forecast                       404 model_not_loaded 0.0s
+ok  GET  /teams/10070/events/2026mrcmp/metrics                          200  0.02s
+ok  GET  /teams/10070/events/2026mrcmp/strength                         200  0.16s
+ok  GET  /predictions/matches/2026mrcmp_qm1/win-probability             404 model_not_loaded 0.01s
+ok  POST /predictions/win-probability                                   404 model_not_loaded 0.0s
+ok  POST /predictions/alliance-synergy                                  200  0.18s
+ok  GET  /events/2026mrcmp/alliance-selection/candidates                200  3.77s
+ok  POST /events/2026mrcmp/alliance-selection/pick-list                 409 not_approved 0.03s
+ok  POST /strategy/matches/2026mrcmp_qm1/assess                         404 model_not_loaded 0.02s
+ok  POST /strategy/matches/2026mrcmp_qm1/recommend                      404 model_not_loaded 0.0s
+ok  POST /strategy/matches/2026mrcmp_qm1/compare                        404 model_not_loaded 0.0s
+ok  POST /strategy/hypothetical/assess                                  404 model_not_loaded 0.0s
+ok  POST /strategy/hypothetical/recommend                               404 model_not_loaded 0.0s
+ok  POST /strategy/hypothetical/compare                                 404 model_not_loaded 0.0s
+ok  POST /strategy/coach-strategies                                     403 writes_disabled 0.0s
+ok  POST /strategy/coach-observations                                   403 writes_disabled 0.0s
+ok  GET  /matches/2026mrcmp_qm1/pre-match-report                        200  0.97s
+ok  GET  /events/2026mrcmp/analysis?as_of=2026-04-16T00:00:00Z          200  9.46s
+ok  page events          3.0s refusals=[] []
+ok  page event           1.3s refusals=['model_not_loaded'] []
+ok  page event_teams     0.6s refusals=[] []
+ok  page event_matches   0.7s refusals=[] []
+ok  page event_forecast  0.4s refusals=['model_not_loaded'] []
+ok  page team            0.6s refusals=[] []
+ok  page match           0.7s refusals=['model_not_loaded'] []
+ok  page strategy_lab    0.5s refusals=['model_not_loaded'] []
+ok  page alliance        5.2s refusals=[] []
+ok  page report          1.6s refusals=[] []
+ok  page status          0.4s refusals=[] []
+ALL OK
+smoke_exit=0

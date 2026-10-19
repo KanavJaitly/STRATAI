@@ -17,6 +17,9 @@ import type {
   WriteAccess,
 } from './types'
 
+import { ApiRequestError, requestJson } from './http'
+
+export { ApiRequestError }
 export const WRITE_TOKEN_HEADER = 'X-StratAI-Write-Token'
 export const API_BASE: string = import.meta.env.VITE_API_BASE ?? '/api'
 
@@ -49,26 +52,16 @@ export const ENDPOINTS = {
 
 type EndpointName = keyof typeof ENDPOINTS
 
-/** An error in the API's envelope: {"error": {code, message, status, request_id}}. */
-export class ApiRequestError extends Error {
-  readonly code: string
-  readonly status: number
-  readonly requestId: string | null
-
-  constructor(code: string, message: string, status: number, requestId: string | null) {
-    super(message)
-    this.name = 'ApiRequestError'
-    this.code = code
-    this.status = status
-    this.requestId = requestId
-  }
-}
-
 let writeToken = ''
 
 /** The token is held in memory only; the page asks for it again after a reload. */
 export function setWriteToken(token: string): void {
   writeToken = token
+}
+
+/** The in-memory token, for the dashboard's coach writes (P8-Q8); never stored anywhere else. */
+export function getWriteToken(): string {
+  return writeToken
 }
 
 export function buildPath(name: EndpointName, params: Record<string, string | number> = {}): string {
@@ -83,6 +76,8 @@ interface CallOptions {
   query?: Record<string, string | number | boolean | undefined>
   body?: unknown
   raw?: { data: BodyInit; contentType: string }
+  /** Overrides the default: reads time out after DEFAULT_TIMEOUT_MS; writes never do (see call()). */
+  timeoutMs?: number
 }
 
 async function call<T>(name: EndpointName, options: CallOptions = {}): Promise<T> {
@@ -101,20 +96,10 @@ async function call<T>(name: EndpointName, options: CallOptions = {}): Promise<T
   }
   if (method !== 'GET' && writeToken) headers[WRITE_TOKEN_HEADER] = writeToken
   if (name === 'writeAccess' && writeToken) headers[WRITE_TOKEN_HEADER] = writeToken
-  const response = await fetch(url, { method, headers, body })
-  const text = await response.text()
-  let parsed: unknown = null
-  try {
-    parsed = text ? JSON.parse(text) : null
-  } catch {
-    parsed = null
-  }
-  if (!response.ok) {
-    const error = (parsed as { error?: { code?: string; message?: string; request_id?: string } } | null)?.error
-    throw new ApiRequestError(error?.code ?? 'http_error', error?.message ?? `HTTP ${response.status}`,
-      response.status, error?.request_id ?? null)
-  }
-  return parsed as T
+  // Only reads time out. A write is not idempotent: a client-side timeout could fire after the server stored it and
+  // invite a duplicate on resubmission, so every write (and the manual upload) waits for the server's answer, as it
+  // did before Phase 8.
+  return requestJson<T>(url, { method, headers, body, timeoutMs: options.timeoutMs ?? (method === 'GET' ? undefined : 0) })
 }
 
 export const api = {
@@ -125,6 +110,7 @@ export const api = {
     call<{ manual: Manual; created: boolean }>('uploadManual', {
       query: meta,
       raw: { data: file, contentType: 'application/pdf' },
+      timeoutMs: 0,
     }),
   manualFileUrl: (manualId: number) => API_BASE + buildPath('manualFile', { manual_id: manualId }),
 

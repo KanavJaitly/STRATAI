@@ -1,0 +1,344 @@
+{
+ "captured_at": "2026-10-19T20:11:01.050073+00:00",
+ "season": 2026,
+ "api_run": {
+  "api": "http://127.0.0.1:8765",
+  "keys": {
+   "event": "2026mrcmp",
+   "match": "2026mrcmp_qm1",
+   "red": [
+    10070,
+    1672,
+    1712
+   ],
+   "blue": [
+    484,
+    1640,
+    708
+   ],
+   "team": 10070,
+   "scheduled": "2026-04-16T11:15:00-04:00"
+  },
+  "results": [
+   {
+    "operation": "health",
+    "method": "GET",
+    "path": "/health",
+    "status": 200,
+    "code": null,
+    "seconds": 0.0,
+    "ok": true
+   },
+   {
+    "operation": "ready",
+    "method": "GET",
+    "path": "/ready",
+    "status": 200,
+    "code": null,
+    "seconds": 0.01,
+    "ok": true
+   },
+   {
+    "operation": "events",
+    "method": "GET",
+    "path": "/events",
+    "status": 200,
+    "code": null,
+    "seconds": 0.01,
+    "ok": true
+   },
+   {
+    "operation": "eventTeams",
+    "method": "GET",
+    "path": "/events/2026mrcmp/teams",
+    "status": 200,
+    "code": null,
+    "seconds": 0.04,
+    "ok": true
+   },
+   {
+    "operation": "eventMatches",
+    "method": "GET",
+    "path": "/events/2026mrcmp/matches",
+    "status": 200,
+    "code": null,
+    "seconds": 0.04,
+    "ok": true
+   },
+   {
+    "operation": "eventAnalysis",
+    "method": "GET",
+    "path": "/events/2026mrcmp/analysis",
+    "status": 404,
+    "code": "model_not_loaded",
+    "seconds": 0.03,
+    "ok": true
+   },
+   {
+    "operation": "qualificationForecast",
+    "method": "GET",
+    "path": "/events/2026mrcmp/qualification-forecast",
+    "status": 404,
+    "code": "model_not_loaded",
+    "seconds": 0.0,
+    "ok": true
+   },
+   {
+    "operation": "teamMetrics",
+    "method": "GET",
+    "path": "/teams/10070/events/2026mrcmp/metrics",
+    "status": 200,
+    "code": null,
+    "seconds": 0.02,
+    "ok": true
+   },
+   {
+    "operation": "teamStrength",
+    "method": "GET",
+    "path": "/teams/10070/events/2026mrcmp/strength",
+    "status": 200,
+    "code": null,
+    "seconds": 0.16,
+    "ok": true
+   },
+   {
+    "operation": "matchWinProbability",
+    "method": "GET",
+    "path": "/predictions/matches/2026mrcmp_qm1/win-probability",
+    "status": 404,
+    "code": "model_not_loaded",
+    "seconds": 0.01,
+    "ok": true
+   },
+   {
+    "operation": "allianceWinProbability",
+    "method": "POST",
+    "path": "/predictions/win-probability",
+    "status": 404,
+    "code": "model_not_loaded",
+    "seconds": 0.0,
+    "ok": true
+   },
+   {
+    "operation": "allianceSynergy",
+    "method": "POST",
+    "path": "/predictions/alliance-synergy",
+    "status": 200,
+    "code": null,
+    "seconds": 0.18,
+    "ok": true
+   },
+   {
+    "operation": "candidates",
+    "method": "GET",
+    "path": "/events/2026mrcmp/alliance-selection/candidates",
+    "status": 200,
+    "code": null,
+    "seconds": 3.77,
+    "ok": true
+   },
+   {
+    "operation": "pickList",
+    "method": "POST",
+    "path": "/events/2026mrcmp/alliance-selection/pick-list",
+    "status": 409,
+    "code": "not_approved",
+    "seconds": 0.03,
+    "ok": true
+   },
+   {
+    "operation": "matchAssess",
+    "method": "POST",
+    "path": "/strategy/matches/2026mrcmp_qm1/assess",
+    "status": 404,
+    "code": "model_not_loaded",
+    "seconds": 0.02,
+    "ok": true
+   },
+   {
+    "operation": "matchRecommend",
+    "method": "POST",
+    "path": "/strategy/matches/2026mrcmp_qm1/recommend",
+    "status": 404,
+    "code": "model_not_loaded",
+    "seconds": 0.0,
+    "ok": true
+   },
+   {
+    "operation": "matchCompare",
+    "method": "POST",
+    "path": "/strategy/matches/2026mrcmp_qm1/compare",
+    "status": 404,
+    "code": "model_not_loaded",
+    "seconds": 0.0,
+    "ok": true
+   },
+   {
+    "operation": "hypotheticalAssess",
+    "method": "POST",
+    "path": "/strategy/hypothetical/assess",
+    "status": 404,
+    "code": "model_not_loaded",
+    "seconds": 0.0,
+    "ok": true
+   },
+   {
+    "operation": "hypotheticalRecommend",
+    "method": "POST",
+    "path": "/strategy/hypothetical/recommend",
+    "status": 404,
+    "code": "model_not_loaded",
+    "seconds": 0.0,
+    "ok": true
+   },
+   {
+    "operation": "hypotheticalCompare",
+    "method": "POST",
+    "path": "/strategy/hypothetical/compare",
+    "status": 404,
+    "code": "model_not_loaded",
+    "seconds": 0.0,
+    "ok": true
+   },
+   {
+    "operation": "coachStrategy",
+    "method": "POST",
+    "path": "/strategy/coach-strategies",
+    "status": 403,
+    "code": "writes_disabled",
+    "seconds": 0.0,
+    "ok": true
+   },
+   {
+    "operation": "coachObservation",
+    "method": "POST",
+    "path": "/strategy/coach-observations",
+    "status": 403,
+    "code": "writes_disabled",
+    "seconds": 0.0,
+    "ok": true
+   },
+   {
+    "operation": "preMatchReport",
+    "method": "GET",
+    "path": "/matches/2026mrcmp_qm1/pre-match-report",
+    "status": 200,
+    "code": null,
+    "seconds": 0.97,
+    "ok": true
+   },
+   {
+    "operation": "eventAnalysis (as_of before the switch point)",
+    "method": "GET",
+    "path": "/events/2026mrcmp/analysis?as_of=2026-04-16T00:00:00Z",
+    "status": 200,
+    "code": null,
+    "seconds": 9.46,
+    "ok": true
+   }
+  ],
+  "all_ok": true
+ },
+ "browser_run": {
+  "app": "http://127.0.0.1:5173",
+  "results": [
+   {
+    "page": "events",
+    "url": "http://127.0.0.1:5173/?season=2026",
+    "seconds": 3.0,
+    "refusals_shown": [],
+    "problems": [],
+    "ok": true
+   },
+   {
+    "page": "event",
+    "url": "http://127.0.0.1:5173/events/2026mrcmp",
+    "seconds": 1.3,
+    "refusals_shown": [
+     "model_not_loaded"
+    ],
+    "problems": [],
+    "ok": true
+   },
+   {
+    "page": "event_teams",
+    "url": "http://127.0.0.1:5173/events/2026mrcmp?tab=teams",
+    "seconds": 0.6,
+    "refusals_shown": [],
+    "problems": [],
+    "ok": true
+   },
+   {
+    "page": "event_matches",
+    "url": "http://127.0.0.1:5173/events/2026mrcmp?tab=matches",
+    "seconds": 0.7,
+    "refusals_shown": [],
+    "problems": [],
+    "ok": true
+   },
+   {
+    "page": "event_forecast",
+    "url": "http://127.0.0.1:5173/events/2026mrcmp?tab=forecast",
+    "seconds": 0.4,
+    "refusals_shown": [
+     "model_not_loaded"
+    ],
+    "problems": [],
+    "ok": true
+   },
+   {
+    "page": "team",
+    "url": "http://127.0.0.1:5173/events/2026mrcmp/teams/10070",
+    "seconds": 0.6,
+    "refusals_shown": [],
+    "problems": [],
+    "ok": true
+   },
+   {
+    "page": "match",
+    "url": "http://127.0.0.1:5173/matches/2026mrcmp_qm1",
+    "seconds": 0.7,
+    "refusals_shown": [
+     "model_not_loaded"
+    ],
+    "problems": [],
+    "ok": true
+   },
+   {
+    "page": "strategy_lab",
+    "url": "http://127.0.0.1:5173/events/2026mrcmp/strategy-lab?red=10070,1672,1712&blue=484,1640,708",
+    "seconds": 0.5,
+    "refusals_shown": [
+     "model_not_loaded"
+    ],
+    "problems": [],
+    "ok": true
+   },
+   {
+    "page": "alliance",
+    "url": "http://127.0.0.1:5173/events/2026mrcmp/alliance-selection",
+    "seconds": 5.2,
+    "refusals_shown": [],
+    "problems": [],
+    "ok": true
+   },
+   {
+    "page": "report",
+    "url": "http://127.0.0.1:5173/report/2026mrcmp_qm1",
+    "seconds": 1.6,
+    "refusals_shown": [],
+    "problems": [],
+    "ok": true
+   },
+   {
+    "page": "status",
+    "url": "http://127.0.0.1:5173/status",
+    "seconds": 0.4,
+    "refusals_shown": [],
+    "problems": [],
+    "ok": true
+   }
+  ],
+  "all_ok": true
+ }
+}
