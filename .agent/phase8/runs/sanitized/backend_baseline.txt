@@ -1,0 +1,79 @@
+# SANITIZED DERIVATIVE of .agent/phase8/runs/backend_baseline.txt (git blob c26e86b5e86cae52e5e4d47f6e61d36e5eb8e151), made 2026-10-19.
+# The original stays local as evidence and is excluded from the commit candidate. Only path prefixes changed:
+# 6 repository path(s) became <repo-root>, and 0 other home path(s) became <home>. All results, counts and
+# exit codes are unchanged.
+........................................................................ [  2%]
+........................................................................ [  5%]
+........................................................................ [  8%]
+........................................................................ [ 11%]
+........................................................................ [ 14%]
+........................................................................ [ 17%]
+..ss.................................................................... [ 20%]
+........................................................................ [ 23%]
+........................................................................ [ 25%]
+...................................s.................................... [ 28%]
+.....................s.................................................. [ 31%]
+........................................................................ [ 34%]
+........................................................................ [ 37%]
+........................................................................ [ 40%]
+........................................................................ [ 43%]
+........................................................................ [ 46%]
+.......................................F................................ [ 49%]
+........................................................................ [ 51%]
+........................................................................ [ 54%]
+.........................F...................s.......................... [ 57%]
+........................................................................ [ 60%]
+...............FFF...................................................... [ 63%]
+........................................................................ [ 66%]
+...............................................x........................ [ 69%]
+........................................................................ [ 72%]
+........................................................................ [ 75%]
+........................................................................ [ 77%]
+........................................................................ [ 80%]
+........................................................................ [ 83%]
+........................................................................ [ 86%]
+........................................................................ [ 89%]
+........................................................................ [ 92%]
+........................................................................ [ 95%]
+........................................................................ [ 98%]
+..............................................                           [100%]
+=================================== FAILURES ===================================
+E   AssertionError: {2024: 33954, 2025: 0, 2026: 294}
+    assert False
+     +  where False = all(<generator object test_adapter_resolves_every_real_alliance_breakdown_and_matches_the_official_score.<locals>.<genexpr> at 0x7fd6e79b7030>)
+<repo-root>/tests/test_ml_features_score_breakdown.py:143: AssertionError: {2024: 33954, 2025: 0, 2026: 294}
+E   AssertionError: p5_m2_l1.json
+    assert 'eff0115fee74...54e112d911cd1' == '67a3df01a7e1...3e242e026699b'
+      
+      - 67a3df01a7e133158154c8136d335dd3262a1e0905217092e0c3e242e026699b
+      + eff0115fee744a50d055555ebc90f9aa3455f4f9a45dad7d95354e112d911cd1
+<repo-root>/tests/test_phase5_contract.py:153: AssertionError: p5_m2_l1.json
+E   assert False
+     +  where False = all(<generator object test_m1_reproduction_path_runs_on_real_events_with_injected_rulesets.<locals>.<genexpr> at 0x7fd6e605a0c0>)
+<repo-root>/tests/test_phase6_rulesets.py:256: assert False
+E   assert 0 >= 2
+     +  where 0 = len([])
+<repo-root>/tests/test_phase6_rulesets.py:270: assert 0 >= 2
+E   FileNotFoundError: [Errno 2] No such file or directory: 'C:/Dev/StratAI-artifacts/statbotics/statbotics_snapshot_20261001T220423Z/manifest.json'
+/usr/lib/python3.11/pathlib.py:1045: FileNotFoundError: [Errno 2] No such file or directory: 'C:/Dev/StratAI-artifacts/statbotics/statbotics_snapshot_20261001T220423Z/manifest.json'
+=============================== warnings summary ===============================
+venv/lib/python3.11/site-packages/fastapi/testclient.py:1
+  <repo-root>/venv/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_phase6_px1.py::test_model_is_antisymmetric_and_deterministic
+tests/test_phase6_px1.py::test_model_is_antisymmetric_and_deterministic
+tests/test_phase6_px1.py::test_seed_only_baseline_uses_the_seed_alone
+tests/test_phase6_px1.py::test_missing_used_input_is_insufficient_data
+  <repo-root>/venv/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:1381: FutureWarning: 'penalty' was deprecated in version 1.8 and will be removed in 1.10. To avoid this warning, leave 'penalty' set to its default value and use 'l1_ratio' or 'C' instead. Use l1_ratio=0 instead of penalty='l2', l1_ratio=1 instead of penalty='l1', l1_ratio set to a float between 0 and 1 instead of penalty='elasticnet', and C=np.inf instead of penalty=None.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_ml_features_score_breakdown.py::test_adapter_resolves_every_real_alliance_breakdown_and_matches_the_official_score
+FAILED tests/test_phase5_contract.py::test_p5_d3_adoption_record_matches_the_served_status_and_its_evidence
+FAILED tests/test_phase6_rulesets.py::test_m1_reproduction_path_runs_on_real_events_with_injected_rulesets
+FAILED tests/test_phase6_rulesets.py::test_m1_counts_ruleset_exclusions_and_records_the_variant_applied
+FAILED tests/test_phase6_rulesets.py::test_m8_future_playoff_sentinel_changes_no_selection_moment_input_and_is_removed
+5 failed, 2483 passed, 5 skipped, 1 xfailed, 5 warnings in 693.57s (0:11:33)
+pytest exit: 1

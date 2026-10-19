@@ -176,6 +176,40 @@ observations gets no rating, never one synthesized from its scoring.
 
 ## Current Development Phase
 
+**Phase 8 (Frontend / Dashboard): CONDITIONALLY ACCEPTED, NOT FULLY COMPLETE, confirmed by Sven Morais on 2026-10-19**
+(`.agent/phase8/PHASE_ACCEPTANCE.md` §7; the MASTER_BUILD gate is not satisfied on its own terms). Only staging is
+authorized; nothing is committed
+(branch `phase8/build`, based on main `7c678eb`). A commit needs Sven's explicit authorization;
+`.agent/phase8/COMMIT_CANDIDATE.md` lists the candidate files, with the local run logs excluded.
+- **Spec:** `docs/P8Milestones.md` revision 1 (working freeze, blobs unchanged). The deviations D1.1–D1.9 were
+  ratified on 2026-10-19 (`.agent/phase8/decisions/P8_D2_RULINGS_AND_DEVIATION_DISPOSITIONS_2026-10-19.md`).
+- **Built:** the dashboard in `frontend/src/dashboard/`, with views for events, event, team, match strategy,
+  strategy lab, alliance selection, the pre-match report and status.
+  - It reads only locked Phase 7 operations, through `frontend/src/api/dashboard.ts`.
+  - Its types are generated from OpenAPI (`scripts/phase8_generate_api_types.py`).
+  - The Phase 5 human-input pages live under `/inputs`.
+- **Milestones:**
+  - M1–M5 and M7 are conditionally accepted on local evidence.
+  - M6 is accepted for the report UI only.
+  - Nothing is verified in the environment of record (P7-Q5).
+  - There is no successful live coach submission and no successful alliance-selection result.
+- **Done-means:**
+  - **P8-DM1** is met against the local API only.
+  - **P8-DM2** is NOT MET and deferred. P8-Q6 was decided as Option C now, then D. The six report items stay
+    explicit absences, and the derivation work has not started.
+- **Last checks (2026-10-19):**
+  - frontend (final audit): vitest 157 passed (27 files, 3 of 3 runs, 9 of 9 since `maxWorkers: '50%'`); tsc 0;
+    oxlint 8 warnings (the Phase 5 baseline);
+    build 0;
+  - contract tests 9 passed; the lock check is unchanged;
+  - backend (isolated `stratai_test`): exit 1, 2,489 passed, 5 failed (the known baseline 5), 5 skipped, 1 xfailed.
+    The suite does NOT pass.
+- **Final audit (2026-10-19):** the MASTER_BUILD Phase Acceptance Gate is NOT satisfied on its own terms; the phase
+  is accepted conditionally by the human decision (`PHASE_ACCEPTANCE.md` §6).
+- **Records:** `.agent/phase8/PHASE_STATUS.md`, `PHASE_ACCEPTANCE.md`, `RISK_REGISTER.md` (P8-R1–R15), `decisions/`,
+  `reviews/` (R1–R4, verbatim, with dispositions), and `docs/phase8.md`.
+- **Do not start Phase 9** without explicit instruction.
+
 **Phase 7 (API Layer): ACCEPTED CONDITIONALLY at phase level by Sven Morais, 2026-10-18**
 (`.agent/phase7/decisions/P7_PHASE_ACCEPTANCE_2026-10-18.md`). This is NOT full milestone completion: P7-M8 and the
 environment-of-record suite portion of P7-M9 are deferred, and P7-DM1 is not met. MASTER_BUILD's gate is not

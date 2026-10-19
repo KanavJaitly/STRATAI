@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { api, setWriteToken } from '../api/client'
 import type { WriteAccess } from '../api/types'
@@ -49,11 +49,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [access, setAccess] = useState<WriteAccess | null>(null)
   const [season, setSeasonState] = useState(() => Number(remembered('stratai.season')) || defaultSeason())
 
+  const accessCheck = useRef(0) // a late answer for an earlier (partial) token never overwrites a newer one
   const refreshAccess = useCallback(async () => {
+    const mine = ++accessCheck.current
     try {
-      setAccess(await api.writeAccess())
+      const result = await api.writeAccess()
+      if (mine === accessCheck.current) setAccess(result)
     } catch {
-      setAccess(null)
+      if (mine === accessCheck.current) setAccess(null)
     }
   }, [])
 
