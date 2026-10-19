@@ -7,7 +7,8 @@
 - **Not authorized by this record:** staging, committing, pushing, a PR, or starting Phase 9.
 - **Not claimed:** full Phase 8 completion, real-model verification, a successful live coach submission, or a
   successful alliance-selection result.
-- Branch `phase8/build` (base `7c678eb`); nothing is staged and nothing is committed.
+- Branch `phase8/build` (base `7c678eb`). Nothing was staged or committed when this record was written. It was later
+  committed and merged with authorization (section 8).
 
 **Decision records:**
 - `decisions/P8_D1_IMPLEMENTATION_DEVIATIONS_2026-10-18.md` (the proposal);
@@ -98,13 +99,13 @@ audit on 2026-10-19 (section 6) re-verified this record against the repository a
 - **P8-R9:** accessibility items.
 - **P8-R10:** the smoke script's request bodies are a copy.
 - **P8-R11:** A4 print unverified.
-- **P8-R12:** local paths in the records.
 - **P8-R14:** test reliability under load.
 - **P8-R15:** duplicate loading and error components in the Phase 5 and dashboard areas (final audit).
 
 **Resolved:**
 - **P8-R8:** deviation ratification (P8-D2).
 - **P8-R13:** the Overview fallback (D1.2 ruling).
+- **P8-R12:** local paths in the evidence. Closed 2026-10-19 after the merge (section 8).
 
 ---
 
@@ -247,3 +248,28 @@ Each correction is dated in place, and the history is kept:
 **Git authorization in the same instruction:** staging the reviewed candidate (`COMMIT_CANDIDATE.md`, INCLUDE list
 only) is authorized. **Committing, amending, pushing, creating a remote branch, opening or merging a PR, and starting
 Phase 9 are NOT authorized** and need separate, explicit authorization.
+
+---
+
+## 8. Post-merge record (2026-10-19)
+
+**What happened, verified with Git:**
+- With Sven Morais's authorization, the 106-file candidate was committed as
+  `a5bc422c28b6126b8d8586965ea3424b79e062e3` ("phase8: conditionally accept dashboard implementation"; parent
+  `7c678eb`).
+- It was pushed to `origin/phase8/build` and merged into `main` via PR #33 (merge commit
+  `12a29540ae6c0f82bcfe6bd76b4e90cb075b0e45`). The merge tree is identical to `a5bc422`.
+
+**Status unchanged by the merge:** everything in sections 1–7 stands.
+- Phase 8 is conditionally accepted, not fully complete, and the MASTER_BUILD gate is not satisfied on its own terms.
+- P8-DM2 is deferred, and its six fields stay explicit absences.
+- There is no real-model or environment-of-record verification, no successful live coach submission and no
+  successful alliance-selection result.
+- The backend suite result is still exit 1, with the 5 known baseline failures.
+- All risks other than R8, R12 and R13 stay open.
+
+**P8-R12 closed.** Evidence checked against `origin/main`:
+1. none of the five originals containing local paths is in the merged tree or in any commit since `7c678eb`;
+2. all five sanitized copies are in `main` and labelled;
+3. each original is intact locally: its blob hash equals the hash recorded in its sanitized copy;
+4. the merged Phase 8 content contains no username, home-directory path or temporary local path.

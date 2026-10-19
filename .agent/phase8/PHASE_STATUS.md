@@ -1,7 +1,7 @@
 phase: 8
-branch: phase8/build (from origin/main 7c678eb; upstream deliberately unset); nothing committed: commits need Sven's explicit authorization
+branch: phase8/build, tracking origin/phase8/build. The Phase 8 commit a5bc422 (parent 7c678eb; 106 reviewed files) was committed and pushed with Sven's authorization, and merged into main via PR #33 on 2026-10-19 (merge commit 12a2954)
 current_milestone: P8-M8 (documentation, audit, acceptance proposal)
-status: CONDITIONALLY ACCEPTED, NOT FULLY COMPLETE (confirmed by Sven Morais on 2026-10-19, PHASE_ACCEPTANCE.md §7; the MASTER_BUILD gate is not satisfied on its own terms); the candidate is staged for review (authorized 2026-10-19); nothing committed
+status: CONDITIONALLY ACCEPTED, NOT FULLY COMPLETE (confirmed by Sven Morais on 2026-10-19, PHASE_ACCEPTANCE.md §7; the MASTER_BUILD gate is not satisfied on its own terms); committed as a5bc422 and merged to main via PR #33 (2026-10-19). Merging records the work; it does not complete the phase: DM2 is deferred and the open risks stand
 spec: docs/P8Milestones.md (revision 1, the agent's working freeze; baseline and deviations D1.1-D1.9 ratified 2026-10-19 per Sven Morais (P8-D2); blobs in P8_M0_FREEZE.md, unchanged and rechecked in the final audit)
 decisions:
   - P8_M0_DECISIONS.md (P8-Q1..Q13, frozen; Q6 since decided, see below)
@@ -21,9 +21,8 @@ reviews: reviews/R1..R4 (verbatim, local evidence; the R2 and R4 originals conta
 blocked:
   - real-model verification of every view (P7-Q5, environment of record)
 human_decisions_required:
-  - authorize any commit or push of the staged candidate (COMMIT_CANDIDATE.md; local originals are excluded); staging alone was authorized on 2026-10-19
   - each Option D derivation step for P8-Q6 (none started)
-risks: RISK_REGISTER.md (P8-R1..R15; R8 and R13 resolved; R12 mitigated, still open)
+risks: RISK_REGISTER.md (P8-R1..R15; R8, R12 and R13 resolved; the rest open)
 baselines:
   frontend (before Phase 8): vitest 32 passed (6 files), exit 0; tsc -b exit 0; oxlint 0 errors, 8 warnings; vite build exit 0
   backend: runs/backend_baseline.txt (2483 passed, 5 failed, 5 skipped, 1 xfailed; exit 1)

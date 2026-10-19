@@ -177,10 +177,11 @@ observations gets no rating, never one synthesized from its scoring.
 ## Current Development Phase
 
 **Phase 8 (Frontend / Dashboard): CONDITIONALLY ACCEPTED, NOT FULLY COMPLETE, confirmed by Sven Morais on 2026-10-19**
-(`.agent/phase8/PHASE_ACCEPTANCE.md` §7; the MASTER_BUILD gate is not satisfied on its own terms). Only staging is
-authorized; nothing is committed
-(branch `phase8/build`, based on main `7c678eb`). A commit needs Sven's explicit authorization;
-`.agent/phase8/COMMIT_CANDIDATE.md` lists the candidate files, with the local run logs excluded.
+(`.agent/phase8/PHASE_ACCEPTANCE.md` §7; the MASTER_BUILD gate is not satisfied on its own terms).
+- **Committed and merged:** commit `a5bc422` on `phase8/build`, merged into `main` via PR #33 on 2026-10-19 (merge
+  `12a2954`), with Sven's authorization. It holds the 106 files of `.agent/phase8/COMMIT_CANDIDATE.md`.
+- **Kept local, by design:** the local evidence originals that contain machine paths. Sanitized copies are committed.
+- **Merged is not complete.** The phase is still conditional: DM2 is deferred, and the open risks stand.
 - **Spec:** `docs/P8Milestones.md` revision 1 (working freeze, blobs unchanged). The deviations D1.1–D1.9 were
   ratified on 2026-10-19 (`.agent/phase8/decisions/P8_D2_RULINGS_AND_DEVIATION_DISPOSITIONS_2026-10-19.md`).
 - **Built:** the dashboard in `frontend/src/dashboard/`, with views for events, event, team, match strategy,
