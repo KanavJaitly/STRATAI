@@ -62,10 +62,14 @@ export function OverviewPage() {
             </thead>
             <tbody>
               {data.items.map((item) => {
-                const label = LABELS[item.artifact] ?? { title: item.artifact, where: '', page: '/' }
+                // An input this app has no page for is listed as served, without a link (it must never send the
+                // person to another area of the app; P8-D1 D1.2, ruling of 2026-10-19).
+                const label = LABELS[item.artifact]
                 return (
                   <tr key={item.artifact} data-testid={`dm1-${item.artifact}`}>
-                    <td><Link to={label.page}>{label.title}</Link><div className="muted small">{label.where}</div></td>
+                    <td>{label
+                      ? <><Link to={label.page}>{label.title}</Link><div className="muted small">{label.where}</div></>
+                      : <>{item.artifact}<div className="muted small">no input page for this item in this app</div></>}</td>
                     <td><StateBadge state={item.state} /></td>
                     <td>{item.provided ? 'yes' : 'no'}</td>
                     <td className="small">{detailText(item)}</td>

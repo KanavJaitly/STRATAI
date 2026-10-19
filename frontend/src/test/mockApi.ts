@@ -13,7 +13,7 @@ export interface Recorded {
   rawBody: unknown
 }
 
-type Handler = (request: Recorded) => { status?: number; body: unknown } | unknown
+type Handler = (request: Recorded) => { status?: number; body: unknown } | unknown | Promise<unknown>
 
 export function mockApi(routes: Record<string, Handler | unknown>) {
   const calls: Recorded[] = []
@@ -34,7 +34,7 @@ export function mockApi(routes: Record<string, Handler | unknown>) {
         { status: 404 })
     }
     const route = routes[key]
-    const result = typeof route === 'function' ? (route as Handler)(request) : route
+    const result = await (typeof route === 'function' ? (route as Handler)(request) : route) // handlers may be async
     const shaped = (result && typeof result === 'object' && 'body' in (result as object) && 'status' in (result as object))
       ? result as { status: number; body: unknown } : { status: 200, body: result }
     return new Response(JSON.stringify(shaped.body), { status: shaped.status })
