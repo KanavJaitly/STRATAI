@@ -2,9 +2,9 @@
   "consecutive_contract_failures": 0,
   "escalation_reason": null,
   "last_check": {
-    "checked_at": "2026-10-19T20:41:26.231707+00:00",
+    "checked_at": "2026-10-20T19:32:56.819634+00:00",
     "detail": "HTTP 500",
-    "elapsed_ms": 4019,
+    "elapsed_ms": 11748,
     "epa_total": null,
     "failed_stage": "A",
     "failure_code": "http_status",
