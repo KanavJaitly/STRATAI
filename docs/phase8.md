@@ -152,14 +152,15 @@ All are in `.agent/phase8/RISK_REGISTER.md`.
   view has been seen only as its refusal.
 - **Report:** P8-DM2 "complete" is NOT MET and deferred. Six report items have no engine and stay explicit absences
   (P8-Q6 decided 2026-10-19: Option C now, then D; `.agent/phase8/decisions/P8_Q6_DECISION_2026-10-19.md`).
-- **Coach writes:** a successful write was never run against the live API, to avoid storing rows.
-- **Accessibility** (P8-R9):
-  - Tabs activate on arrow keys.
-  - Tables have no sticky first column.
-  - The loading text, the strategy comparison and the pick list use live regions that appear together with their
-    content.
-  - The compare, rank and synergy buttons use `disabled` while busy.
-  - Chart ticks are small on phones.
+- **Coach writes:** verified on 2026-10-19 against a live local API on a disposable, empty database with synthetic
+  data (P8-R7 closed). Not verified in the environment of record.
+- **Accessibility** (P8-R9): closed on 2026-10-19.
+  - Tabs open only on Enter or Space; arrow keys move focus.
+  - Status lines are persistent.
+  - Busy buttons are `aria-disabled` and guarded.
+  - Scrolling tables keep a sticky first column.
+  - Chart ticks are readable on phones.
 - **Test reliability** (P8-R14): the frontend tests run on half the CPUs (`maxWorkers: '50%'`). With one worker per
   CPU, intermittent timeouts occurred.
-- **Printing:** printing the report to A4 has not been checked with a PDF renderer.
+- **Printing:** A4 pagination was fixed and verified on 2026-10-19 for locally servable content. The
+  model-populated sections have not been printed (P8-R11, which depends on the environment of record).

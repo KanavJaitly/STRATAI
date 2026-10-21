@@ -1,0 +1,215 @@
+{
+ "captured_at": "2026-10-21T00:33:58.011661+00:00",
+ "epa_source": "statbotics",
+ "disposable_database": "stratai_test_p10_28363",
+ "event": "2024casj",
+ "matches": 93,
+ "teams": 42,
+ "matches_per_poll": 6,
+ "readers": 6,
+ "polls": [
+  {
+   "completed": 6,
+   "poll_seconds": 7.413,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 12,
+   "poll_seconds": 9.855,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 18,
+   "poll_seconds": 10.205,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 24,
+   "poll_seconds": 9.933,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 30,
+   "poll_seconds": 10.074,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 36,
+   "poll_seconds": 9.762,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 42,
+   "poll_seconds": 9.77,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 48,
+   "poll_seconds": 9.926,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 54,
+   "poll_seconds": 10.291,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 60,
+   "poll_seconds": 10.576,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 66,
+   "poll_seconds": 9.835,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 72,
+   "poll_seconds": 10.112,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 78,
+   "poll_seconds": 10.792,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 84,
+   "poll_seconds": 11.708,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 90,
+   "poll_seconds": 11.957,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 93,
+   "poll_seconds": 11.878,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  }
+ ],
+ "idle_repoll_records_loaded": 0,
+ "load": {
+  "calls": 7372,
+  "by_view": {
+   "metrics": {
+    "calls": 1114,
+    "statuses": {
+     "200": 1114
+    },
+    "latency_s": {
+     "median": 0.054,
+     "p95": 0.079,
+     "max": 0.147
+    }
+   },
+   "event_matches": {
+    "calls": 1152,
+    "statuses": {
+     "200": 1152
+    },
+    "latency_s": {
+     "median": 0.102,
+     "p95": 0.137,
+     "max": 0.236
+    }
+   },
+   "event_teams": {
+    "calls": 1095,
+    "statuses": {
+     "200": 1095
+    },
+    "latency_s": {
+     "median": 0.129,
+     "p95": 0.169,
+     "max": 0.478
+    }
+   },
+   "report": {
+    "calls": 869,
+    "statuses": {
+     "200": 252,
+     "404": 617
+    },
+    "latency_s": {
+     "median": 0.067,
+     "p95": 2.08,
+     "max": 3.017
+    }
+   },
+   "briefing": {
+    "calls": 853,
+    "statuses": {
+     "200": 280,
+     "404": 573
+    },
+    "latency_s": {
+     "median": 0.073,
+     "p95": 2.136,
+     "max": 2.872
+    }
+   },
+   "strength": {
+    "calls": 1121,
+    "statuses": {
+     "200": 1121
+    },
+    "latency_s": {
+     "median": 0.378,
+     "p95": 0.469,
+     "max": 0.688
+    }
+   },
+   "analysis": {
+    "calls": 1168,
+    "statuses": {
+     "200": 60,
+     "404": 1108
+    },
+    "latency_s": {
+     "median": 0.098,
+     "p95": 8.937,
+     "max": 14.521
+    }
+   }
+  },
+  "crashes": [],
+  "server_errors": 0
+ },
+ "disposable_dropped": true,
+ "elapsed_seconds": 458.8,
+ "ok": true
+}

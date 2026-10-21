@@ -36,6 +36,7 @@ from ml.features.roster import list_teams_at_event
 from ml.features.scale import ScaleLookup
 from ml.models.baselines import RawEpaRankingBaseline
 from ml.views.strength import TeamStrengthView, build_team_strength
+from database.connection import consistent_reads
 
 POLICY_RAW_EPA = "raw_epa"
 POLICY_M5V2 = "ranking_xgb_v2"
@@ -162,6 +163,7 @@ class EventAnalysis:
     ordering: list[OrderedTeam]
 
 
+@consistent_reads
 def analyze_event(
     database, event_key: str, as_of: datetime, *, epa_provider,
     m5v2_predict_rating: Callable[[TeamFeatures], float] | None,

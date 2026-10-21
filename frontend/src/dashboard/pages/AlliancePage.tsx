@@ -6,7 +6,7 @@ import type { AllianceSynergyResponse, CandidatesResponse, FactorOut, PickListRe
 import { useResource } from '../../components/useResource'
 import { AsOfControl } from '../asOf'
 import { PageHeader, TeamChip } from '../common'
-import { Absent, EpaSourceNote, OddsView, RefusalNotice, ResourceView, ValidationBadge, When } from '../display'
+import { Absent, ActionStatus, EpaSourceNote, OddsView, RefusalNotice, ResourceView, ValidationBadge, When } from '../display'
 import { useOnDemand } from '../../components/useOnDemand'
 import { useAsOf } from '../asOfParams'
 import { FACTORS, formatNumber, type FactorKey } from '../labels'
@@ -128,6 +128,7 @@ function PickListSection({ eventKey }: { eventKey: string }) {
   }
   const submit = (event: FormEvent) => {
     event.preventDefault()
+    if (pick.busy) return // aria-disabled while busy: the guard, not the browser, blocks a second run
     const draft: DraftState = { seed, alliances: alliances.map(parseTeams), declined: parseTeams(declined), turns_taken: turns }
     pick.run((signal) => dashboardApi.pickList(eventKey, draft, signal))
   }
@@ -153,8 +154,10 @@ function PickListSection({ eventKey }: { eventKey: string }) {
           ))}
         </div>
         <label>Declined teams <input value={declined} onChange={(e) => setDeclined(e.target.value)} placeholder="e.g. 222" /></label>
-        <button type="submit" disabled={pick.busy}>{pick.busy ? 'Ranking picks…' : 'Rank picks'}</button>
+        <button type="submit" aria-disabled={pick.busy || undefined}>{pick.busy ? 'Ranking picks…' : 'Rank picks'}</button>
       </form>
+      <ActionStatus busy={pick.busy} done={pick.result !== null} failed={pick.error != null}
+        busyText="Ranking picks…" doneText="Pick list ready." failedText="The pick list was refused or failed." />
       {pick.error != null && <RefusalNotice error={pick.error} what="Pick list" />}
       {pick.result && <PickListView data={pick.result} />}
     </section>
@@ -163,7 +166,7 @@ function PickListSection({ eventKey }: { eventKey: string }) {
 
 export function PickListView({ data }: { data: PickListResponse }) {
   return (
-    <div className="picklist" aria-live="polite">
+    <div className="picklist">
       <h3>Picks for seed {data.seed}</h3>
       <p className="small">Label: <ValidationBadge validation={{ status: data.probability_status }} compact /></p>
       <p className="small">At the selection moment <When value={data.as_of} />. Probabilities are display strings, with their
@@ -223,11 +226,13 @@ function SynergySection({ eventKey, asOf }: { eventKey: string; asOf: string | n
       <h2 id="synergy-heading">Alliance synergy</h2>
       <form className="inline-form" aria-label="Synergy teams" onSubmit={(e) => {
         e.preventDefault()
-        if (valid) synergy.run((signal) => dashboardApi.allianceSynergy({ event_key: eventKey, team_numbers: parsed }, asOf, signal))
+        if (valid && !synergy.busy) synergy.run((signal) => dashboardApi.allianceSynergy({ event_key: eventKey, team_numbers: parsed }, asOf, signal))
       }}>
         <label className="inline">Three teams <input value={teams} onChange={(e) => { setTeams(e.target.value); synergy.reset() }} placeholder="e.g. 11, 1923, 56" /></label>
-        <button type="submit" className="secondary" disabled={!valid || synergy.busy}>Score synergy</button>
+        <button type="submit" className="secondary" disabled={!valid} aria-disabled={synergy.busy || undefined}>Score synergy</button>
       </form>
+      <ActionStatus busy={synergy.busy} done={synergy.result !== null} failed={synergy.error != null}
+        busyText="Scoring synergy…" doneText="Synergy scored." failedText="The synergy score was refused or failed." />
       {synergy.error != null && <RefusalNotice error={synergy.error} what="Synergy" />}
       {synergy.result && <><p className="small">Teams {synergy.result.team_numbers.join(', ')} as of <When value={synergy.result.as_of} />.</p>
         <SynergyView data={synergy.result} status={synergy.result.validation_status} />

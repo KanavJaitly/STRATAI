@@ -1,0 +1,138 @@
+{
+ "captured_at": "2026-10-21T00:05:36.139295+00:00",
+ "epa_source": "statbotics",
+ "disposable_database": "stratai_test_p10_9409",
+ "event": "2024casj",
+ "matches": 93,
+ "teams": 42,
+ "matches_per_poll": 20,
+ "readers": 3,
+ "polls": [
+  {
+   "completed": 20,
+   "poll_seconds": 4.392,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 40,
+   "poll_seconds": 4.558,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 60,
+   "poll_seconds": 4.424,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 80,
+   "poll_seconds": 5.795,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 93,
+   "poll_seconds": 5.409,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  }
+ ],
+ "idle_repoll_records_loaded": 0,
+ "load": {
+  "calls": 1490,
+  "by_view": {
+   "metrics": {
+    "calls": 239,
+    "statuses": {
+     "200": 239
+    },
+    "latency_s": {
+     "median": 0.025,
+     "p95": 0.034,
+     "max": 0.117
+    }
+   },
+   "event_teams": {
+    "calls": 247,
+    "statuses": {
+     "200": 247
+    },
+    "latency_s": {
+     "median": 0.063,
+     "p95": 0.083,
+     "max": 0.149
+    }
+   },
+   "event_matches": {
+    "calls": 256,
+    "statuses": {
+     "200": 256
+    },
+    "latency_s": {
+     "median": 0.049,
+     "p95": 0.063,
+     "max": 0.109
+    }
+   },
+   "report": {
+    "calls": 121,
+    "statuses": {
+     "200": 28,
+     "404": 93
+    },
+    "latency_s": {
+     "median": 0.029,
+     "p95": 0.985,
+     "max": 1.066
+    }
+   },
+   "briefing": {
+    "calls": 146,
+    "statuses": {
+     "200": 29,
+     "404": 117
+    },
+    "latency_s": {
+     "median": 0.03,
+     "p95": 0.967,
+     "max": 1.02
+    }
+   },
+   "strength": {
+    "calls": 247,
+    "statuses": {
+     "200": 247
+    },
+    "latency_s": {
+     "median": 0.187,
+     "p95": 0.222,
+     "max": 0.369
+    }
+   },
+   "analysis": {
+    "calls": 234,
+    "statuses": {
+     "200": 9,
+     "404": 225
+    },
+    "latency_s": {
+     "median": 0.046,
+     "p95": 0.091,
+     "max": 5.723
+    }
+   }
+  },
+  "crashes": [],
+  "server_errors": 0
+ },
+ "disposable_dropped": true,
+ "elapsed_seconds": 71.5,
+ "ok": true
+}

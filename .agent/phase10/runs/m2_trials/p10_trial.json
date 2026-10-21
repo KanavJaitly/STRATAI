@@ -1,0 +1,115 @@
+{
+ "captured_at": "2026-10-20T23:47:16.652513+00:00",
+ "epa_source": "statbotics",
+ "disposable_database": "stratai_test_p10_3315",
+ "event": "2024casj",
+ "matches": 93,
+ "teams": 42,
+ "matches_per_poll": 20,
+ "readers": 3,
+ "polls": [
+  {
+   "completed": 20,
+   "poll_seconds": 4.558,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 40,
+   "poll_seconds": 5.586,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  }
+ ],
+ "stopped_by_time_budget": true,
+ "idle_repoll_records_loaded": 0,
+ "load": {
+  "calls": 81,
+  "by_view": {
+   "metrics": {
+    "calls": 7,
+    "statuses": {
+     "200": 7
+    },
+    "latency_s": {
+     "median": 0.028,
+     "p95": 0.033,
+     "max": 0.054
+    }
+   },
+   "event_teams": {
+    "calls": 15,
+    "statuses": {
+     "200": 15
+    },
+    "latency_s": {
+     "median": 0.058,
+     "p95": 0.11,
+     "max": 0.162
+    }
+   },
+   "event_matches": {
+    "calls": 15,
+    "statuses": {
+     "200": 15
+    },
+    "latency_s": {
+     "median": 0.043,
+     "p95": 0.06,
+     "max": 0.065
+    }
+   },
+   "report": {
+    "calls": 11,
+    "statuses": {
+     "200": 11
+    },
+    "latency_s": {
+     "median": 1.054,
+     "p95": 1.168,
+     "max": 1.215
+    }
+   },
+   "strength": {
+    "calls": 13,
+    "statuses": {
+     "200": 13
+    },
+    "latency_s": {
+     "median": 0.177,
+     "p95": 0.295,
+     "max": 0.324
+    }
+   },
+   "briefing": {
+    "calls": 11,
+    "statuses": {
+     "200": 11
+    },
+    "latency_s": {
+     "median": 1.065,
+     "p95": 1.191,
+     "max": 1.311
+    }
+   },
+   "analysis": {
+    "calls": 9,
+    "statuses": {
+     "200": 9
+    },
+    "latency_s": {
+     "median": 6.092,
+     "p95": 1009.815,
+     "max": 1010.208
+    }
+   }
+  },
+  "crashes": [],
+  "server_errors": 0
+ },
+ "disposable_dropped": true,
+ "elapsed_seconds": 1041.9,
+ "ok": false
+}

@@ -12,6 +12,7 @@ import type {
   AllianceSynergyResponse,
   AssessBody,
   AssessResponse,
+  BriefingResponse,
   CandidatesResponse,
   CoachObservationStored,
   CoachStrategyStored,
@@ -66,6 +67,7 @@ export const DASHBOARD_ENDPOINTS = {
   coachStrategy: ['POST', '/strategy/coach-strategies'],
   coachObservation: ['POST', '/strategy/coach-observations'],
   preMatchReport: ['GET', '/matches/{match_key}/pre-match-report'],
+  briefing: ['GET', '/matches/{match_key}/briefing'],
 } as const satisfies Record<string, readonly [Method, string]>
 
 /** The query parameters the dashboard sends per operation. call() refuses any other key, and
@@ -77,6 +79,7 @@ export const DASHBOARD_QUERY_PARAMS: Record<keyof typeof DASHBOARD_ENDPOINTS, re
   allianceWinProbability: ['as_of'], allianceSynergy: ['as_of'], candidates: ['as_of', 'configuration'], pickList: [],
   matchAssess: [], matchRecommend: [], matchCompare: [], hypotheticalAssess: ['as_of'], hypotheticalRecommend: ['as_of'],
   hypotheticalCompare: ['as_of'], coachStrategy: [], coachObservation: [], preMatchReport: ['as_of'],
+  briefing: ['as_of'],
 }
 
 /** Locked operations the dashboard deliberately does not call, with the reason (checked by the contract test). */
@@ -198,4 +201,6 @@ export const dashboardApi = {
 
   preMatchReport: (matchKey: string, asOf: string | null, signal?: AbortSignal) =>
     call<PreMatchReportResponse>('preMatchReport', { params: { match_key: matchKey }, query: { as_of: asOf }, signal }),
+  briefing: (matchKey: string, asOf: string | null, signal?: AbortSignal) =>
+    call<BriefingResponse>('briefing', { params: { match_key: matchKey }, query: { as_of: asOf }, signal }),
 }

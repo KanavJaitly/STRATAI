@@ -21,8 +21,11 @@ reviews: reviews/R1..R4 (verbatim, local evidence; the R2 and R4 originals conta
 blocked:
   - real-model verification of every view (P7-Q5, environment of record)
 human_decisions_required:
-  - each Option D derivation step for P8-Q6 (none started)
-risks: RISK_REGISTER.md (P8-R1..R15; R8, R12 and R13 resolved; the rest open)
+  - approve, amend or reject P8-D3 (predicted_flow: the interpretation, the derivation rule, and the locked-entry contract change); nothing is implemented until it is approved
+  - each later Option D derivation step for P8-Q6 (none started)
+  - authorize any commit of the closeout changes
+risks: RISK_REGISTER.md (P8-R1..R15; R7, R8, R9, R12 and R13 resolved; R11 open only for model-populated print; the rest open)
+closeout_2026-10-19 (uncommitted): R11 fixed and verified locally, R7 verified, R9 fixed and verified; P8-D3 predicted_flow PROPOSED (not implemented). Evidence: runs/closeout_2026-10-19.md
 baselines:
   frontend (before Phase 8): vitest 32 passed (6 files), exit 0; tsc -b exit 0; oxlint 0 errors, 8 warnings; vite build exit 0
   backend: runs/backend_baseline.txt (2483 passed, 5 failed, 5 skipped, 1 xfailed; exit 1)
