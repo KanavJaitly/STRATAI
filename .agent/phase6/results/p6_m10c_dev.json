@@ -1,0 +1,717 @@
+{
+ "acceptance": false,
+ "authorizes_registration": false,
+ "authorizes_serving": false,
+ "base": {
+  "excluded": {
+   "epa_incomplete": 9170
+  },
+  "fit_rows": 4797,
+  "fit_set_fingerprint": "7986ef1c932305cbee8dba76e0341e53998b1e207f03fce404e08e9a737fc157",
+  "latest_fit_row": "2024-04-19T18:53:00-04:00",
+  "registered": false,
+  "reproduces_dev_m10b": {
+   "max_abs_beta_diff": 0.0,
+   "max_abs_sigma_diff": 0.0
+  },
+  "sha256": "737b7884891e56d3acf543fb9725b1214948532e1d045dcccfb8527abba5eea9"
+ },
+ "calibration_set": {
+  "excluded": {
+   "model_input_absent": 67,
+   "tie": 56
+  },
+  "fingerprint": "02eef8f0d2e80cbbe1ba1af6860ed8a84b34e1bbb681608717052edcc3dcfd44",
+  "groups": {
+   "mixed": 2931,
+   "prior": 2116,
+   "same": 1039
+  },
+  "latest": "2025-03-23T17:41:00-04:00",
+  "rows": 6086
+ },
+ "classes": {
+  "events": {
+   "C": 133,
+   "E": 70
+  },
+  "other_eligible_rows": 0,
+  "rule": "C: event_type in {0,1,2,5} and week in {0,1,2,3}; E: event_type in {0,1,2,5} and week >= 4, or event_type in {3,4}; other: excluded"
+ },
+ "decision": {
+  "consequence": "M10c stops: the predeclared rule failed; M10b stands as frozen",
+  "diagnostics": {
+   "D1_m10c_fit": {
+    "status": "pass"
+   },
+   "D2_m10b_form_fit": {
+    "status": "pass"
+   },
+   "D3_g2_rejections": {
+    "m10b_form_g2_status": "pass",
+    "m10b_form_rejections": 0,
+    "m10c_g2_status": "fail",
+    "m10c_rejections": 1,
+    "status": "fail"
+   },
+   "D4_ece": {
+    "m10b_form_ece": 0.016603599086505997,
+    "m10c_ece": 0.014894064914754564,
+    "status": "pass"
+   }
+  },
+  "outcome": "rule_not_met",
+  "proceed": false,
+  "statuses": {
+   "D1_m10c_fit": "pass",
+   "D2_m10b_form_fit": "pass",
+   "D3_g2_rejections": "fail",
+   "D4_ece": "pass"
+  }
+ },
+ "diagnostic_only": true,
+ "evaluation": {
+  "m10b_form": {
+   "gate": {
+    "ece": 0.016603599086505997,
+    "g1_pass": true,
+    "g2": {
+     "bins": [
+      {
+       "count": 649,
+       "expected_wins": 27.65276759470857,
+       "holm_threshold": 0.00625,
+       "interval_95": [
+        0.02773497688751926,
+        0.05855161787365177
+       ],
+       "lower": 0.0,
+       "mean_predicted": 0.04260827056195465,
+       "observed_rate": 0.02773497688751926,
+       "observed_wins": 18,
+       "p_value": 0.061056201688158854,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.1
+      },
+      {
+       "count": 469,
+       "expected_wins": 70.07626098541442,
+       "holm_threshold": 0.005555555555555556,
+       "interval_95": [
+        0.11727078891257996,
+        0.1812366737739872
+       ],
+       "lower": 0.1,
+       "mean_predicted": 0.14941633472369814,
+       "observed_rate": 0.11727078891257996,
+       "observed_wins": 55,
+       "p_value": 0.05105264294672873,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.2
+      },
+      {
+       "count": 460,
+       "expected_wins": 114.3747589097282,
+       "holm_threshold": 0.008333333333333333,
+       "interval_95": [
+        0.20869565217391303,
+        0.2891304347826087
+       ],
+       "lower": 0.2,
+       "mean_predicted": 0.24864078023853955,
+       "observed_rate": 0.22608695652173913,
+       "observed_wins": 104,
+       "p_value": 0.27971686455122136,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.3
+      },
+      {
+       "count": 443,
+       "expected_wins": 155.77077050487813,
+       "holm_threshold": 0.025,
+       "interval_95": [
+        0.30699774266365687,
+        0.3972911963882618
+       ],
+       "lower": 0.3,
+       "mean_predicted": 0.35162702145570685,
+       "observed_rate": 0.3476297968397291,
+       "observed_wins": 154,
+       "p_value": 0.8812376351635466,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.4
+      },
+      {
+       "count": 475,
+       "expected_wins": 213.3858268524882,
+       "holm_threshold": 0.016666666666666666,
+       "interval_95": [
+        0.40421052631578946,
+        0.49473684210526314
+       ],
+       "lower": 0.4,
+       "mean_predicted": 0.44923331968944885,
+       "observed_rate": 0.4589473684210526,
+       "observed_wins": 218,
+       "p_value": 0.6777402000938232,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.5
+      },
+      {
+       "count": 467,
+       "expected_wins": 255.90717554759638,
+       "holm_threshold": 0.05,
+       "interval_95": [
+        0.5032119914346895,
+        0.5931477516059958
+       ],
+       "lower": 0.5,
+       "mean_predicted": 0.5479811039563092,
+       "observed_rate": 0.550321199143469,
+       "observed_wins": 257,
+       "p_value": 0.925881283827176,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.6
+      },
+      {
+       "count": 474,
+       "expected_wins": 307.3150073246977,
+       "holm_threshold": 0.0071428571428571435,
+       "interval_95": [
+        0.6054852320675106,
+        0.689873417721519
+       ],
+       "lower": 0.6,
+       "mean_predicted": 0.6483438973094888,
+       "observed_rate": 0.6729957805907173,
+       "observed_wins": 319,
+       "p_value": 0.26800930330458195,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.7
+      },
+      {
+       "count": 424,
+       "expected_wins": 318.2585399608381,
+       "holm_threshold": 0.005,
+       "interval_95": [
+        0.7099056603773585,
+        0.7900943396226415
+       ],
+       "lower": 0.7,
+       "mean_predicted": 0.7506097640585805,
+       "observed_rate": 0.7924528301886793,
+       "observed_wins": 336,
+       "p_value": 0.04883326067523876,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.8
+      },
+      {
+       "count": 469,
+       "expected_wins": 397.8786720190009,
+       "holm_threshold": 0.01,
+       "interval_95": [
+        0.814498933901919,
+        0.8805970149253731
+       ],
+       "lower": 0.8,
+       "mean_predicted": 0.8483553774392343,
+       "observed_rate": 0.8336886993603412,
+       "observed_wins": 391,
+       "p_value": 0.3661676926565966,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.9
+      },
+      {
+       "count": 655,
+       "expected_wins": 626.8822611181228,
+       "holm_threshold": 0.0125,
+       "interval_95": [
+        0.9404580152671755,
+        0.9709923664122138
+       ],
+       "lower": 0.9,
+       "mean_predicted": 0.9570721543788133,
+       "observed_rate": 0.9511450381679389,
+       "observed_wins": 623,
+       "p_value": 0.43510374356011716,
+       "rejected": false,
+       "tested": true,
+       "upper": 1.0
+      }
+     ],
+     "eligible_bins": 10,
+     "rejected_bins": 0,
+     "status": "pass"
+    },
+    "g3_max_symmetry_error": 2.220446049250313e-16,
+    "g3_order_independent": true,
+    "g3_pass": true,
+    "g4_fit_isolated": true,
+    "passed": true
+   },
+   "metrics": {
+    "brier": 0.15021838088509937,
+    "ece": 0.016603599086505997,
+    "log_loss": 0.4563521806943219
+   },
+   "per_group_calibration": {
+    "mixed": {
+     "calibration": {
+      "intercept": -0.04850152317668865,
+      "slope": 1.4910981316916552
+     },
+     "n": 971
+    },
+    "prior": {
+     "calibration": null,
+     "n": 4
+    },
+    "same": {
+     "calibration": {
+      "intercept": -0.009903330418251774,
+      "slope": 0.9980633676988545
+     },
+     "n": 4010
+    }
+   },
+   "status": {
+    "g1": "pass",
+    "g2": "pass",
+    "g3": "pass",
+    "g4": "pass",
+    "overall": "pass"
+   }
+  },
+  "m10c": {
+   "gate": {
+    "ece": 0.014894064914754564,
+    "g1_pass": true,
+    "g2": {
+     "bins": [
+      {
+       "count": 654,
+       "expected_wins": 33.723154804371426,
+       "holm_threshold": 0.005,
+       "interval_95": [
+        0.035168195718654434,
+        0.06880733944954129
+       ],
+       "lower": 0.0,
+       "mean_predicted": 0.051564456887418085,
+       "observed_rate": 0.027522935779816515,
+       "observed_wins": 18,
+       "p_value": 0.003226470989380701,
+       "rejected": true,
+       "tested": true,
+       "upper": 0.1
+      },
+      {
+       "count": 499,
+       "expected_wins": 74.43184281153023,
+       "holm_threshold": 0.00625,
+       "interval_95": [
+        0.11823647294589178,
+        0.18036072144288579
+       ],
+       "lower": 0.1,
+       "mean_predicted": 0.14916200964234516,
+       "observed_rate": 0.13026052104208416,
+       "observed_wins": 65,
+       "p_value": 0.2563100649097852,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.2
+      },
+      {
+       "count": 445,
+       "expected_wins": 110.02239994587293,
+       "holm_threshold": 0.0071428571428571435,
+       "interval_95": [
+        0.20674157303370785,
+        0.2876404494382023
+       ],
+       "lower": 0.2,
+       "mean_predicted": 0.2472413481929729,
+       "observed_rate": 0.2247191011235955,
+       "observed_wins": 100,
+       "p_value": 0.2954283799750446,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.3
+      },
+      {
+       "count": 445,
+       "expected_wins": 155.93234613539016,
+       "holm_threshold": 0.05,
+       "interval_95": [
+        0.3056179775280899,
+        0.3955056179775281
+       ],
+       "lower": 0.3,
+       "mean_predicted": 0.3504097665963824,
+       "observed_rate": 0.350561797752809,
+       "observed_wins": 156,
+       "p_value": 0.999999999999999,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.4
+      },
+      {
+       "count": 453,
+       "expected_wins": 203.52614240743094,
+       "holm_threshold": 0.01,
+       "interval_95": [
+        0.40397350993377484,
+        0.49448123620309054
+       ],
+       "lower": 0.4,
+       "mean_predicted": 0.44928508257711025,
+       "observed_rate": 0.46357615894039733,
+       "observed_wins": 210,
+       "p_value": 0.5390072679362872,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.5
+      },
+      {
+       "count": 454,
+       "expected_wins": 249.10797969341795,
+       "holm_threshold": 0.025,
+       "interval_95": [
+        0.5022026431718062,
+        0.5947136563876652
+       ],
+       "lower": 0.5,
+       "mean_predicted": 0.5486959905141364,
+       "observed_rate": 0.552863436123348,
+       "observed_wins": 251,
+       "p_value": 0.887347065368404,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.6
+      },
+      {
+       "count": 452,
+       "expected_wins": 293.36732875960956,
+       "holm_threshold": 0.0125,
+       "interval_95": [
+        0.6039823008849557,
+        0.6924778761061947
+       ],
+       "lower": 0.6,
+       "mean_predicted": 0.6490427627424991,
+       "observed_rate": 0.6570796460176991,
+       "observed_wins": 297,
+       "p_value": 0.7671003996114502,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.7
+      },
+      {
+       "count": 429,
+       "expected_wins": 321.9321812249092,
+       "holm_threshold": 0.005555555555555556,
+       "interval_95": [
+        0.7086247086247086,
+        0.7902097902097902
+       ],
+       "lower": 0.7,
+       "mean_predicted": 0.7504246648599282,
+       "observed_rate": 0.7902097902097902,
+       "observed_wins": 339,
+       "p_value": 0.057334974663864724,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.8
+      },
+      {
+       "count": 498,
+       "expected_wins": 423.16269803072794,
+       "holm_threshold": 0.008333333333333333,
+       "interval_95": [
+        0.8172690763052208,
+        0.8795180722891566
+       ],
+       "lower": 0.8,
+       "mean_predicted": 0.8497242932343935,
+       "observed_rate": 0.8333333333333334,
+       "observed_wins": 415,
+       "p_value": 0.3139013522275649,
+       "rejected": false,
+       "tested": true,
+       "upper": 0.9
+      },
+      {
+       "count": 656,
+       "expected_wins": 622.2272037716931,
+       "holm_threshold": 0.016666666666666666,
+       "interval_95": [
+        0.9314024390243902,
+        0.9649390243902439
+       ],
+       "lower": 0.9,
+       "mean_predicted": 0.9485170789202638,
+       "observed_rate": 0.9512195121951219,
+       "observed_wins": 624,
+       "p_value": 0.8587161151794163,
+       "rejected": false,
+       "tested": true,
+       "upper": 1.0
+      }
+     ],
+     "eligible_bins": 10,
+     "rejected_bins": 1,
+     "status": "fail"
+    },
+    "g3_max_symmetry_error": 2.220446049250313e-16,
+    "g3_order_independent": true,
+    "g3_pass": true,
+    "g4_fit_isolated": true,
+    "passed": false
+   },
+   "metrics": {
+    "brier": 0.1501383317535263,
+    "ece": 0.014894064914754564,
+    "log_loss": 0.4572061982010824
+   },
+   "per_group_calibration": {
+    "mixed": {
+     "calibration": {
+      "intercept": -0.04908296397157083,
+      "slope": 1.459897654883859
+     },
+     "n": 971
+    },
+    "prior": {
+     "calibration": null,
+     "n": 4
+    },
+    "same": {
+     "calibration": {
+      "intercept": -0.00943628431344485,
+      "slope": 1.0180913437479278
+     },
+     "n": 4010
+    }
+   },
+   "status": {
+    "g1": "pass",
+    "g2": "fail",
+    "g3": "pass",
+    "g4": "pass",
+    "overall": "fail"
+   }
+  },
+  "population": {
+   "class": "E",
+   "evaluated": 4985,
+   "events": 65,
+   "excluded": {
+    "tie": 32
+   },
+   "fingerprint": "bbf2fcc289f59c08f38cbede4333ef954fe32e67a53426eb867699ce44e32a8a",
+   "groups": {
+    "mixed": 971,
+    "prior": 4,
+    "same": 4010
+   },
+   "season": 2025
+  },
+  "raw_base": {
+   "metrics": {
+    "brier": 0.1517716849460354,
+    "ece": 0.041851040490375156,
+    "log_loss": 0.4622330176226477
+   }
+  }
+ },
+ "evidence_class": "consistency evidence only, never independent acceptance evidence (\u00a74.6): 2025 C was DEV-M10b's calibration season, the M10c design came from 2026, and within-season transfer is not the cross-season transfer 2027 needs",
+ "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+ "global_fit_reading": "\u00a73: the global fit is always computed and recorded; its checks gate the result only when its slope is used (a group with n < 200). Fixed 2026-10-11, before any fit",
+ "m10b_form_fit": {
+  "base_sha256": "737b7884891e56d3acf543fb9725b1214948532e1d045dcccfb8527abba5eea9",
+  "counts": {
+   "mixed": 2931,
+   "prior": 2116,
+   "same": 1039
+  },
+  "factors": {
+   "mixed": 0.9958856407157353,
+   "prior": 0.813200150227411,
+   "same": 1.317626568509868
+  },
+  "fit_set_fingerprint": "02eef8f0d2e80cbbe1ba1af6860ed8a84b34e1bbb681608717052edcc3dcfd44",
+  "fits": {
+   "global": {
+    "a": 0.964073814906703,
+    "curvature": 0.21503995879038515,
+    "derivative": -5.861531651916472e-09,
+    "loss": 0.5231903203780055,
+    "n": 6086,
+    "nit": 15
+   },
+   "mixed": {
+    "a": 0.9958856407157353,
+    "curvature": 0.2036623329414921,
+    "derivative": 3.784114703682168e-09,
+    "loss": 0.5222156367084697,
+    "n": 2931,
+    "nit": 18
+   },
+   "prior": {
+    "a": 0.813200150227411,
+    "curvature": 0.27947039917100036,
+    "derivative": -7.575784406436731e-09,
+    "loss": 0.5466469048980896,
+    "n": 2116,
+    "nit": 23
+   },
+   "same": {
+    "a": 1.317626568509868,
+    "curvature": 0.1279431240231514,
+    "derivative": 2.3298973333466345e-09,
+    "loss": 0.4624588885934524,
+    "n": 1039,
+    "nit": 12
+   }
+  },
+  "global_factor": 0.964073814906703,
+  "model_type": "strategy_outcome_calibrator",
+  "refused": false,
+  "sha256": "2a93f4d24ab26ea4d7b17c4d88ee69c97476ecee7fb7648a38cf0ee2baac2d37",
+  "sources": {
+   "mixed": "group",
+   "prior": "group",
+   "same": "group"
+  },
+  "spec": ".agent/phase6/P6_M10B_SPEC.md",
+  "spec_blob": "d699afafc01d42904c7afc7c7e209f8007a6a207",
+  "version_tag": "p6m10b-v1"
+ },
+ "m10c_fit": {
+  "base_sha256": "737b7884891e56d3acf543fb9725b1214948532e1d045dcccfb8527abba5eea9",
+  "counts": {
+   "mixed": 2931,
+   "prior": 2116,
+   "same": 1039
+  },
+  "eps": 0.037230815911360654,
+  "fit_set_fingerprint": "02eef8f0d2e80cbbe1ba1af6860ed8a84b34e1bbb681608717052edcc3dcfd44",
+  "fits": {
+   "global": {
+    "checks": {
+     "no_floor_identified": false,
+     "not_stationary": false,
+     "not_unique": false,
+     "optimizer_failed": false,
+     "solution_at_bound": false
+    },
+    "eps": 0.057481246954741556,
+    "failed_checks": [],
+    "grad_inf": 4.2741369650468255e-11,
+    "hessian_eigenvalues": [
+     0.03826800995577008,
+     1.107071990566563
+    ],
+    "lbfgs_success": true,
+    "nit": 9,
+    "nll": 0.5224761149609617,
+    "polish_steps": 0,
+    "theta": [
+     1.1005385827138647,
+     0.057481246954741556
+    ]
+   },
+   "joint": {
+    "checks": {
+     "no_floor_identified": false,
+     "not_stationary": false,
+     "not_unique": false,
+     "optimizer_failed": false,
+     "solution_at_bound": false
+    },
+    "eps": 0.037230815911360654,
+    "failed_checks": [],
+    "free_groups": [
+     "same",
+     "mixed",
+     "prior"
+    ],
+    "grad_inf": 2.393382530904051e-17,
+    "hessian_eigenvalues": [
+     0.008481151969847521,
+     0.033459940199234886,
+     0.07049640481491617,
+     1.1135322550786886
+    ],
+    "lbfgs_success": true,
+    "nit": 19,
+    "nll": 0.5202739529350138,
+    "polish_steps": 1,
+    "theta": [
+     1.4331968720272674,
+     1.0822149749341377,
+     0.8857073768574826,
+     0.037230815911360654
+    ]
+   }
+  },
+  "model_type": "strategy_outcome_calibrator_m10c",
+  "refused": false,
+  "sha256": "a39a94489463cb372af33a3a835c3c14251c114aaf10f07f9d212b36c6657759",
+  "slopes": {
+   "mixed": 1.0822149749341377,
+   "prior": 0.8857073768574826,
+   "same": 1.4331968720272674
+  },
+  "sources": {
+   "mixed": "joint",
+   "prior": "joint",
+   "same": "joint"
+  },
+  "spec": ".agent/phase6/P6_M10C_SPEC.md",
+  "spec_blob": "f24a8d1c129bde4f43d51e43ceeca7a20c7c716a",
+  "version_tag": "p6m10c-v1"
+ },
+ "milestone": "P6-M10c DEV-c (\u00a74), diagnostic only",
+ "minutes": 0.3,
+ "over_budget": false,
+ "provenance": {
+  "commit": "c55ebedf6b05de82ba58cbdae28b0cbbc97dfb83",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-11T22:16:09.773948+00:00"
+ },
+ "provenance_inputs": {
+  "authorization": {
+   "path": ".agent\\phase6\\decisions\\p6_m10c_dev_authorization.json",
+   "sha256": "1060f2dce1a5dc140a20188752e9d64370ec8432432aada0e3562ffa542dcad6"
+  },
+  "spec": {
+   "blob": "f24a8d1c129bde4f43d51e43ceeca7a20c7c716a",
+   "path": ".agent/phase6/P6_M10C_SPEC.md"
+  }
+ },
+ "spec": {
+  "blob": "f24a8d1c129bde4f43d51e43ceeca7a20c7c716a",
+  "path": ".agent/phase6/P6_M10C_SPEC.md"
+ },
+ "temporal": {
+  "base_before_c": true,
+  "c_before_e": true,
+  "earliest_e": "2025-03-26T04:00:00-04:00",
+  "events_disjoint": true,
+  "fit_isolated": true,
+  "latest_base_fit_row": "2024-04-19T18:53:00-04:00",
+  "latest_c": "2025-03-23T17:41:00-04:00",
+  "matches_disjoint": true
+ }
+}

@@ -69,9 +69,10 @@ function ManualUpload({ season, onUploaded }: { season: number; onUploaded: () =
         </div>
       )}
       <p className="muted small">
-        Uploading keeps the original PDF unchanged, with its checksum. It does not validate anything, and nothing
-        reads the PDF automatically: the structured specification below is entered and reviewed by people. A
-        different file is stored as a new manual; an existing manual is never replaced.
+        Uploading keeps the original PDF unchanged, with its checksum. The Game manual page processes it into page
+        text and unverified suggestions with page references, as a review aid; no model reads it. The structured
+        specification below is still entered and reviewed by people. A different file is stored as a new manual; an
+        existing manual is never replaced.
       </p>
     </WriteGate>
   )

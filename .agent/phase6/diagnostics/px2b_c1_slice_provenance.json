@@ -1,0 +1,2707 @@
+{
+ "audit": "C1 / PX-2b calibration-slice provenance (read-only; 2026-10-08)",
+ "inputs": {
+  "rows_cache": "C:\\Dev\\StratAI-artifacts\\phase6\\px_rows_px1-v2.pkl.gz",
+  "rows_cache_sha256": "d7809c5fd7d245f51676b1bcef6abff153528cd581b2af1a161a1f7ffc0627cf",
+  "final_fit_record": "p6_px1b_final_fit.json",
+  "registry_manifest": "C:\\Dev\\StratAI-artifacts\\ml_registry\\playoff_px1b\\px1b-v1\\manifest.json"
+ },
+ "training_population": {
+  "rows": 6052,
+  "fingerprint": "52a4d7f0ac464886b0ea020b401b71f7f1d668c49a783bab4eb2ecf7b3f12c30",
+  "equals_final_fit_record": true,
+  "equals_registry_training_hash": true
+ },
+ "slice_rule": "PX-2b spec v1 \u00a72: eligible 2026 rows sorted by (scheduled_time, match_key), rows [int(0.8 n):]",
+ "season_2026_rows": 2626,
+ "slice_start_index": 2100,
+ "slice_rows": 526,
+ "slice_rows_in_px1b_v1_fit": 526,
+ "slice_events": [
+  "2026alhu",
+  "2026cancmp",
+  "2026cascmp",
+  "2026chcmp",
+  "2026code",
+  "2026flta",
+  "2026flwp",
+  "2026gacmp",
+  "2026incmp",
+  "2026iscmp",
+  "2026isde1",
+  "2026mibig",
+  "2026micmp1",
+  "2026micmp2",
+  "2026micmp3",
+  "2026micmp4",
+  "2026miesc",
+  "2026mifen",
+  "2026miken",
+  "2026mnmi2",
+  "2026mokc",
+  "2026mrcmp",
+  "2026nccmp",
+  "2026necmp1",
+  "2026necmp2",
+  "2026njski",
+  "2026nvlv",
+  "2026nyny",
+  "2026nytr",
+  "2026oncmp1",
+  "2026oncmp2",
+  "2026onwel",
+  "2026onwin",
+  "2026pncmp",
+  "2026qcmo",
+  "2026sccmp",
+  "2026txcmp1",
+  "2026txcmp2",
+  "2026utwv",
+  "2026wicmp"
+ ],
+ "events_straddling_cut": [
+  "2026alhu",
+  "2026flwp",
+  "2026gacmp",
+  "2026mibig",
+  "2026miesc",
+  "2026miken",
+  "2026mnmi2",
+  "2026mokc",
+  "2026onwin",
+  "2026qcmo",
+  "2026sccmp"
+ ],
+ "slice": [
+  {
+   "match_key": "2026mibig_sf8m1",
+   "event_key": "2026mibig",
+   "scheduled_time": "2026-04-11T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026miesc_sf8m1",
+   "event_key": "2026miesc",
+   "scheduled_time": "2026-04-11T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026onwin_sf8m1",
+   "event_key": "2026onwin",
+   "scheduled_time": "2026-04-11T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026qcmo_sf11m1",
+   "event_key": "2026qcmo",
+   "scheduled_time": "2026-04-11T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026sccmp_sf8m1",
+   "event_key": "2026sccmp",
+   "scheduled_time": "2026-04-11T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_sf5m1",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T15:06:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_sf5m1",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T15:06:00-04:00"
+  },
+  {
+   "match_key": "2026gacmp_sf8m1",
+   "event_key": "2026gacmp",
+   "scheduled_time": "2026-04-11T15:08:00-04:00"
+  },
+  {
+   "match_key": "2026miken_sf8m1",
+   "event_key": "2026miken",
+   "scheduled_time": "2026-04-11T15:08:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_sf5m1",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T15:11:00-04:00"
+  },
+  {
+   "match_key": "2026mibig_sf9m1",
+   "event_key": "2026mibig",
+   "scheduled_time": "2026-04-11T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026miesc_sf9m1",
+   "event_key": "2026miesc",
+   "scheduled_time": "2026-04-11T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026onwin_sf9m1",
+   "event_key": "2026onwin",
+   "scheduled_time": "2026-04-11T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026qcmo_sf12m1",
+   "event_key": "2026qcmo",
+   "scheduled_time": "2026-04-11T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026sccmp_sf9m1",
+   "event_key": "2026sccmp",
+   "scheduled_time": "2026-04-11T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_sf6m1",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T15:15:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_sf6m1",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T15:15:00-04:00"
+  },
+  {
+   "match_key": "2026gacmp_sf9m1",
+   "event_key": "2026gacmp",
+   "scheduled_time": "2026-04-11T15:17:00-04:00"
+  },
+  {
+   "match_key": "2026miken_sf9m1",
+   "event_key": "2026miken",
+   "scheduled_time": "2026-04-11T15:17:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_sf6m1",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T15:20:00-04:00"
+  },
+  {
+   "match_key": "2026mibig_sf10m1",
+   "event_key": "2026mibig",
+   "scheduled_time": "2026-04-11T15:21:00-04:00"
+  },
+  {
+   "match_key": "2026miesc_sf10m1",
+   "event_key": "2026miesc",
+   "scheduled_time": "2026-04-11T15:21:00-04:00"
+  },
+  {
+   "match_key": "2026onwin_sf10m1",
+   "event_key": "2026onwin",
+   "scheduled_time": "2026-04-11T15:21:00-04:00"
+  },
+  {
+   "match_key": "2026sccmp_sf10m1",
+   "event_key": "2026sccmp",
+   "scheduled_time": "2026-04-11T15:21:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_sf7m1",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T15:24:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_sf7m1",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T15:24:00-04:00"
+  },
+  {
+   "match_key": "2026gacmp_sf10m1",
+   "event_key": "2026gacmp",
+   "scheduled_time": "2026-04-11T15:26:00-04:00"
+  },
+  {
+   "match_key": "2026miken_sf10m1",
+   "event_key": "2026miken",
+   "scheduled_time": "2026-04-11T15:26:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_sf7m1",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T15:29:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf1m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T15:30:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_sf8m1",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026flwp_sf13m1",
+   "event_key": "2026flwp",
+   "scheduled_time": "2026-04-11T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026mibig_sf11m1",
+   "event_key": "2026mibig",
+   "scheduled_time": "2026-04-11T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026miesc_sf11m1",
+   "event_key": "2026miesc",
+   "scheduled_time": "2026-04-11T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_sf8m1",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026onwin_sf11m1",
+   "event_key": "2026onwin",
+   "scheduled_time": "2026-04-11T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026qcmo_sf13m1",
+   "event_key": "2026qcmo",
+   "scheduled_time": "2026-04-11T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026sccmp_sf11m1",
+   "event_key": "2026sccmp",
+   "scheduled_time": "2026-04-11T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026gacmp_sf11m1",
+   "event_key": "2026gacmp",
+   "scheduled_time": "2026-04-11T15:38:00-04:00"
+  },
+  {
+   "match_key": "2026miken_sf11m1",
+   "event_key": "2026miken",
+   "scheduled_time": "2026-04-11T15:38:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_sf8m1",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T15:38:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf2m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T15:39:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_sf9m1",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T15:42:00-04:00"
+  },
+  {
+   "match_key": "2026mibig_sf12m1",
+   "event_key": "2026mibig",
+   "scheduled_time": "2026-04-11T15:42:00-04:00"
+  },
+  {
+   "match_key": "2026miesc_sf12m1",
+   "event_key": "2026miesc",
+   "scheduled_time": "2026-04-11T15:42:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_sf9m1",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T15:42:00-04:00"
+  },
+  {
+   "match_key": "2026onwin_sf12m1",
+   "event_key": "2026onwin",
+   "scheduled_time": "2026-04-11T15:42:00-04:00"
+  },
+  {
+   "match_key": "2026sccmp_sf12m1",
+   "event_key": "2026sccmp",
+   "scheduled_time": "2026-04-11T15:42:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf1m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T15:45:00-04:00"
+  },
+  {
+   "match_key": "2026gacmp_sf12m1",
+   "event_key": "2026gacmp",
+   "scheduled_time": "2026-04-11T15:47:00-04:00"
+  },
+  {
+   "match_key": "2026miken_sf12m1",
+   "event_key": "2026miken",
+   "scheduled_time": "2026-04-11T15:47:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_sf9m1",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T15:47:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf3m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T15:48:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_sf10m1",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T15:51:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_sf10m1",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T15:51:00-04:00"
+  },
+  {
+   "match_key": "2026flwp_f1m1",
+   "event_key": "2026flwp",
+   "scheduled_time": "2026-04-11T15:54:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf2m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T15:54:00-04:00"
+  },
+  {
+   "match_key": "2026qcmo_f1m1",
+   "event_key": "2026qcmo",
+   "scheduled_time": "2026-04-11T15:54:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_sf10m1",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T15:56:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf4m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T15:57:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_sf11m1",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T16:03:00-04:00"
+  },
+  {
+   "match_key": "2026mibig_sf13m1",
+   "event_key": "2026mibig",
+   "scheduled_time": "2026-04-11T16:03:00-04:00"
+  },
+  {
+   "match_key": "2026miesc_sf13m1",
+   "event_key": "2026miesc",
+   "scheduled_time": "2026-04-11T16:03:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_sf11m1",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T16:03:00-04:00"
+  },
+  {
+   "match_key": "2026onwin_sf13m1",
+   "event_key": "2026onwin",
+   "scheduled_time": "2026-04-11T16:03:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf3m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T16:03:00-04:00"
+  },
+  {
+   "match_key": "2026sccmp_sf13m1",
+   "event_key": "2026sccmp",
+   "scheduled_time": "2026-04-11T16:03:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf5m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T16:06:00-04:00"
+  },
+  {
+   "match_key": "2026gacmp_sf13m1",
+   "event_key": "2026gacmp",
+   "scheduled_time": "2026-04-11T16:08:00-04:00"
+  },
+  {
+   "match_key": "2026miken_sf13m1",
+   "event_key": "2026miken",
+   "scheduled_time": "2026-04-11T16:08:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_sf11m1",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T16:08:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_sf12m1",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T16:12:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_sf12m1",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T16:12:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf4m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T16:12:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf6m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T16:15:00-04:00"
+  },
+  {
+   "match_key": "2026flwp_f1m2",
+   "event_key": "2026flwp",
+   "scheduled_time": "2026-04-11T16:15:00-04:00"
+  },
+  {
+   "match_key": "2026qcmo_f1m2",
+   "event_key": "2026qcmo",
+   "scheduled_time": "2026-04-11T16:15:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_sf12m1",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T16:17:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf5m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T16:21:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf7m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T16:24:00-04:00"
+  },
+  {
+   "match_key": "2026mibig_f1m1",
+   "event_key": "2026mibig",
+   "scheduled_time": "2026-04-11T16:24:00-04:00"
+  },
+  {
+   "match_key": "2026miesc_f1m1",
+   "event_key": "2026miesc",
+   "scheduled_time": "2026-04-11T16:24:00-04:00"
+  },
+  {
+   "match_key": "2026onwin_f1m1",
+   "event_key": "2026onwin",
+   "scheduled_time": "2026-04-11T16:24:00-04:00"
+  },
+  {
+   "match_key": "2026sccmp_f1m1",
+   "event_key": "2026sccmp",
+   "scheduled_time": "2026-04-11T16:24:00-04:00"
+  },
+  {
+   "match_key": "2026gacmp_f1m1",
+   "event_key": "2026gacmp",
+   "scheduled_time": "2026-04-11T16:29:00-04:00"
+  },
+  {
+   "match_key": "2026miken_f1m1",
+   "event_key": "2026miken",
+   "scheduled_time": "2026-04-11T16:29:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf1m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T16:30:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf6m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T16:30:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_sf13m1",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T16:33:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf8m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T16:33:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_sf13m1",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T16:33:00-04:00"
+  },
+  {
+   "match_key": "2026qcmo_f1m3",
+   "event_key": "2026qcmo",
+   "scheduled_time": "2026-04-11T16:36:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_sf13m1",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T16:38:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf2m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T16:39:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf7m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T16:39:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf9m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T16:42:00-04:00"
+  },
+  {
+   "match_key": "2026mibig_f1m2",
+   "event_key": "2026mibig",
+   "scheduled_time": "2026-04-11T16:45:00-04:00"
+  },
+  {
+   "match_key": "2026miesc_f1m2",
+   "event_key": "2026miesc",
+   "scheduled_time": "2026-04-11T16:45:00-04:00"
+  },
+  {
+   "match_key": "2026onwin_f1m2",
+   "event_key": "2026onwin",
+   "scheduled_time": "2026-04-11T16:45:00-04:00"
+  },
+  {
+   "match_key": "2026sccmp_f1m2",
+   "event_key": "2026sccmp",
+   "scheduled_time": "2026-04-11T16:45:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf3m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T16:48:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf8m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T16:48:00-04:00"
+  },
+  {
+   "match_key": "2026gacmp_f1m2",
+   "event_key": "2026gacmp",
+   "scheduled_time": "2026-04-11T16:50:00-04:00"
+  },
+  {
+   "match_key": "2026miken_f1m2",
+   "event_key": "2026miken",
+   "scheduled_time": "2026-04-11T16:50:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf10m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T16:51:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_f1m1",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T16:54:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_f1m1",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T16:54:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf4m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T16:57:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf9m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T16:57:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_f1m1",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T16:59:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf11m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T17:03:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf5m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T17:06:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf10m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T17:06:00-04:00"
+  },
+  {
+   "match_key": "2026miken_f1m3",
+   "event_key": "2026miken",
+   "scheduled_time": "2026-04-11T17:11:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf12m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T17:12:00-04:00"
+  },
+  {
+   "match_key": "2026alhu_f1m2",
+   "event_key": "2026alhu",
+   "scheduled_time": "2026-04-11T17:15:00-04:00"
+  },
+  {
+   "match_key": "2026mnmi2_f1m2",
+   "event_key": "2026mnmi2",
+   "scheduled_time": "2026-04-11T17:15:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf6m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T17:15:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf11m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T17:18:00-04:00"
+  },
+  {
+   "match_key": "2026mokc_f1m2",
+   "event_key": "2026mokc",
+   "scheduled_time": "2026-04-11T17:20:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf7m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T17:24:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf12m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T17:27:00-04:00"
+  },
+  {
+   "match_key": "2026code_sf13m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T17:33:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf8m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T17:33:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf9m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T17:42:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_sf13m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T17:48:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf10m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T17:51:00-04:00"
+  },
+  {
+   "match_key": "2026code_f1m1",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T17:54:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf11m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T18:03:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_f1m1",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T18:09:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf12m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T18:12:00-04:00"
+  },
+  {
+   "match_key": "2026code_f1m2",
+   "event_key": "2026code",
+   "scheduled_time": "2026-04-11T18:15:00-04:00"
+  },
+  {
+   "match_key": "2026pncmp_f1m2",
+   "event_key": "2026pncmp",
+   "scheduled_time": "2026-04-11T18:30:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_sf13m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T18:33:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_f1m1",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T18:54:00-04:00"
+  },
+  {
+   "match_key": "2026nvlv_f1m2",
+   "event_key": "2026nvlv",
+   "scheduled_time": "2026-04-11T19:15:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf1m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T12:45:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf2m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T12:54:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf1m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T13:00:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf1m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T13:00:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf3m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T13:03:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf2m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T13:09:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf2m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T13:09:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf4m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T13:12:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf3m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T13:18:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf3m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T13:18:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf5m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T13:21:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf4m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T13:27:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf4m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T13:27:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf1m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T13:30:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf6m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T13:30:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf5m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T13:36:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf5m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T13:36:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf2m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T13:39:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf7m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T13:39:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf6m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T13:45:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf6m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T13:45:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf3m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T13:48:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf8m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T13:48:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf7m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T13:54:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf7m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T13:54:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf4m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T13:57:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf9m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T13:57:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf1m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T14:00:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf8m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T14:03:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf8m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T14:03:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf5m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T14:06:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf10m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T14:06:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf2m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T14:09:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf9m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T14:12:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf9m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T14:12:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf1m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T14:15:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf6m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T14:15:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf3m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T14:18:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf11m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T14:18:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf10m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T14:21:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf10m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T14:21:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf2m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T14:24:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf7m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T14:24:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf4m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T14:27:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf12m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T14:27:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf11m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T14:33:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf11m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T14:33:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf3m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T14:33:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf8m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T14:33:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf5m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T14:36:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf12m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T14:42:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf12m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T14:42:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf4m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T14:42:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf9m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T14:42:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf6m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T14:45:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_sf13m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T14:48:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf5m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T14:51:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf10m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T14:51:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf7m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T14:54:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf6m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T15:00:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_sf13m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf8m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_sf13m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf11m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf7m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T15:09:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_f1m1",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T15:09:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf9m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf12m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf8m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T15:18:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf10m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T15:21:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_f1m1",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T15:24:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_f1m1",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T15:24:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf9m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T15:27:00-04:00"
+  },
+  {
+   "match_key": "2026onwel_f1m2",
+   "event_key": "2026onwel",
+   "scheduled_time": "2026-04-12T15:30:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf11m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_sf13m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf10m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T15:36:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf12m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T15:42:00-04:00"
+  },
+  {
+   "match_key": "2026chcmp_f1m2",
+   "event_key": "2026chcmp",
+   "scheduled_time": "2026-04-12T15:45:00-04:00"
+  },
+  {
+   "match_key": "2026nccmp_f1m2",
+   "event_key": "2026nccmp",
+   "scheduled_time": "2026-04-12T15:45:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf11m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T15:48:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_f1m1",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T15:54:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf12m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T15:57:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_sf13m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T16:03:00-04:00"
+  },
+  {
+   "match_key": "2026nyny_f1m2",
+   "event_key": "2026nyny",
+   "scheduled_time": "2026-04-12T16:15:00-04:00"
+  },
+  {
+   "match_key": "2026njski_sf13m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T16:18:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_f1m1",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T16:24:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf1m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T16:30:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf1m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T16:35:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf2m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T16:39:00-04:00"
+  },
+  {
+   "match_key": "2026njski_f1m1",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T16:39:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf2m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T16:44:00-04:00"
+  },
+  {
+   "match_key": "2026mifen_f1m2",
+   "event_key": "2026mifen",
+   "scheduled_time": "2026-04-12T16:45:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf3m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T16:48:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf3m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T16:53:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf4m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T16:57:00-04:00"
+  },
+  {
+   "match_key": "2026njski_f1m2",
+   "event_key": "2026njski",
+   "scheduled_time": "2026-04-12T17:00:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf4m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T17:02:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf5m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T17:06:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf5m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T17:11:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf6m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T17:15:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf6m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T17:20:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf7m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T17:24:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf7m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T17:29:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf8m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T17:33:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf8m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T17:38:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf9m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T17:42:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf9m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T17:47:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf10m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T17:51:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf10m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T17:56:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf11m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T18:03:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf11m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T18:08:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf12m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T18:12:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf12m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T18:17:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_sf13m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T18:33:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_sf13m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T18:38:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_f1m1",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T18:54:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_f1m1",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T18:59:00-04:00"
+  },
+  {
+   "match_key": "2026cascmp_f1m2",
+   "event_key": "2026cascmp",
+   "scheduled_time": "2026-04-12T19:15:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_f1m2",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T19:20:00-04:00"
+  },
+  {
+   "match_key": "2026cancmp_f1m3",
+   "event_key": "2026cancmp",
+   "scheduled_time": "2026-04-12T19:41:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf1m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T09:30:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf1m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T09:30:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf1m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T09:30:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf1m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T09:30:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf2m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T09:39:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf2m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T09:39:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf2m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T09:39:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf2m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T09:39:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf3m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T09:48:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf3m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T09:48:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf3m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T09:48:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf3m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T09:48:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf4m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T09:57:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf4m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T09:57:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf4m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T09:57:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf4m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T09:57:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf1m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T10:00:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf1m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T10:00:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf5m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T10:06:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf5m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T10:06:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf5m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T10:06:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf5m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T10:06:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf2m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T10:09:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf2m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T10:09:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf6m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T10:15:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf6m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T10:15:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf6m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T10:15:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf6m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T10:15:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf3m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T10:18:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf3m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T10:18:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf7m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T10:24:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf7m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T10:24:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf7m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T10:24:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf7m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T10:24:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf4m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T10:27:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf4m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T10:27:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf8m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T10:33:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf8m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T10:33:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf8m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T10:33:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf8m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T10:33:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf5m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T10:36:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf5m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T10:36:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf9m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T10:42:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf9m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T10:42:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf9m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T10:42:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf9m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T10:42:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf6m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T10:45:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf6m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T10:45:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf10m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T10:51:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf10m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T10:51:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf10m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T10:51:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf10m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T10:51:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf7m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T10:54:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf7m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T10:54:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf11m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T11:03:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf11m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T11:03:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf11m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T11:03:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf11m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T11:03:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf8m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T11:03:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf8m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T11:03:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf12m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T11:12:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf12m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T11:12:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf12m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T11:12:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf12m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T11:12:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf9m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T11:12:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf9m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T11:12:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf1m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T11:20:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf10m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T11:21:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf10m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T11:21:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf2m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T11:29:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf1m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T11:30:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_sf13m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T11:33:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_sf13m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T11:33:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_sf13m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T11:33:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_sf13m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T11:33:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf11m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T11:33:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf11m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T11:33:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf3m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T11:38:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf2m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T11:39:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf12m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T11:42:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf12m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T11:42:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf4m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T11:47:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf3m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T11:48:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_f1m1",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T11:54:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_f1m1",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T11:54:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_f1m1",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T11:54:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_f1m1",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T11:54:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf5m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T11:56:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf4m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T11:57:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_sf13m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T12:03:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_sf13m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T12:03:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf6m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T12:05:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf5m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T12:06:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf7m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T12:14:00-04:00"
+  },
+  {
+   "match_key": "2026micmp1_f1m2",
+   "event_key": "2026micmp1",
+   "scheduled_time": "2026-04-18T12:15:00-04:00"
+  },
+  {
+   "match_key": "2026micmp2_f1m2",
+   "event_key": "2026micmp2",
+   "scheduled_time": "2026-04-18T12:15:00-04:00"
+  },
+  {
+   "match_key": "2026micmp3_f1m2",
+   "event_key": "2026micmp3",
+   "scheduled_time": "2026-04-18T12:15:00-04:00"
+  },
+  {
+   "match_key": "2026micmp4_f1m2",
+   "event_key": "2026micmp4",
+   "scheduled_time": "2026-04-18T12:15:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf6m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T12:15:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf8m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T12:23:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_f1m1",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T12:24:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_f1m1",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T12:24:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf7m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T12:24:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf9m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T12:32:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf8m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T12:33:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf10m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T12:41:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf9m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T12:42:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_f1m2",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T12:45:00-04:00"
+  },
+  {
+   "match_key": "2026necmp2_f1m2",
+   "event_key": "2026necmp2",
+   "scheduled_time": "2026-04-18T12:45:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf10m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T12:51:00-04:00"
+  },
+  {
+   "match_key": "2026necmp1_f1m3",
+   "event_key": "2026necmp1",
+   "scheduled_time": "2026-04-18T13:06:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf1m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T13:30:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf1m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T13:30:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf2m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T13:39:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf2m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T13:39:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf3m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T13:48:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf3m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T13:48:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf4m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T13:57:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf4m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T13:57:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf1m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T14:00:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf11m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T14:00:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf11m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T14:00:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf5m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T14:06:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf5m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T14:06:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf2m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T14:09:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf12m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T14:09:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf12m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T14:09:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf6m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T14:15:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf6m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T14:15:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf3m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T14:18:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf7m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T14:24:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf7m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T14:24:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf4m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T14:27:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_sf13m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T14:30:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_sf13m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T14:30:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf8m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T14:33:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf8m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T14:33:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf5m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T14:36:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf9m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T14:42:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf9m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T14:42:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf6m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T14:45:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf10m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T14:51:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf10m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T14:51:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_f1m1",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T14:51:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_f1m1",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T14:51:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf7m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T14:54:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf11m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf8m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf11m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T15:03:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf12m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf9m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf12m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp1_f1m2",
+   "event_key": "2026txcmp1",
+   "scheduled_time": "2026-04-18T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026txcmp2_f1m2",
+   "event_key": "2026txcmp2",
+   "scheduled_time": "2026-04-18T15:12:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf10m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T15:21:00-04:00"
+  },
+  {
+   "match_key": "2026flta_sf13m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf11m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_sf13m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T15:33:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf12m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T15:42:00-04:00"
+  },
+  {
+   "match_key": "2026flta_f1m1",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T15:54:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_f1m1",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T15:54:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf1m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T16:00:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_sf13m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T16:03:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf2m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T16:09:00-04:00"
+  },
+  {
+   "match_key": "2026flta_f1m2",
+   "event_key": "2026flta",
+   "scheduled_time": "2026-04-18T16:15:00-04:00"
+  },
+  {
+   "match_key": "2026nytr_f1m2",
+   "event_key": "2026nytr",
+   "scheduled_time": "2026-04-18T16:15:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf3m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T16:18:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_f1m1",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T16:24:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf4m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T16:27:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf5m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T16:36:00-04:00"
+  },
+  {
+   "match_key": "2026mrcmp_f1m2",
+   "event_key": "2026mrcmp",
+   "scheduled_time": "2026-04-18T16:45:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf6m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T16:45:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf7m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T16:54:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf8m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T17:03:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf9m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T17:12:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf10m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T17:21:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf11m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T17:33:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf12m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T17:42:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_sf13m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T18:03:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_f1m1",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T18:24:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_f1m2",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T18:45:00-04:00"
+  },
+  {
+   "match_key": "2026utwv_f1m3",
+   "event_key": "2026utwv",
+   "scheduled_time": "2026-04-18T19:06:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf1m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T10:00:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf1m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T10:00:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf2m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T10:09:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf2m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T10:09:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf3m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T10:18:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf3m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T10:18:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf4m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T10:27:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf4m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T10:27:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf5m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T10:36:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf5m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T10:36:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf6m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T10:45:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf6m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T10:45:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf7m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T10:54:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf7m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T10:54:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf8m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T11:03:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf8m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T11:03:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf9m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T11:12:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf9m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T11:12:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf10m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T11:21:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf10m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T11:21:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf11m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T11:33:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf11m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T11:33:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf12m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T11:42:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf12m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T11:42:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_sf13m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T12:03:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_sf13m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T12:03:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_f1m1",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T12:24:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_f1m1",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T12:24:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp1_f1m2",
+   "event_key": "2026oncmp1",
+   "scheduled_time": "2026-04-19T12:45:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_f1m2",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T12:45:00-04:00"
+  },
+  {
+   "match_key": "2026oncmp2_f1m3",
+   "event_key": "2026oncmp2",
+   "scheduled_time": "2026-04-19T13:06:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf1m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T14:15:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf2m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T14:24:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf3m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T14:33:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf4m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T14:42:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf5m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T14:51:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf6m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T15:00:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf1m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T15:00:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf7m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T15:09:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf2m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T15:09:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf8m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T15:18:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf3m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T15:18:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf9m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T15:27:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf4m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T15:27:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf10m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T15:36:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf5m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T15:36:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf6m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T15:45:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf11m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T15:48:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf7m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T15:54:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf12m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T15:57:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf8m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T16:03:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf9m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T16:12:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_sf13m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T16:18:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf10m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T16:21:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf11m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T16:33:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_f1m1",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T16:39:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf12m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T16:42:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_f1m2",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T17:00:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_sf13m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T17:03:00-04:00"
+  },
+  {
+   "match_key": "2026incmp_f1m3",
+   "event_key": "2026incmp",
+   "scheduled_time": "2026-04-19T17:21:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_f1m1",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T17:24:00-04:00"
+  },
+  {
+   "match_key": "2026wicmp_f1m2",
+   "event_key": "2026wicmp",
+   "scheduled_time": "2026-04-19T17:45:00-04:00"
+  },
+  {
+   "match_key": "2026isde1_sf2m1",
+   "event_key": "2026isde1",
+   "scheduled_time": "2026-06-29T07:09:00-04:00"
+  },
+  {
+   "match_key": "2026isde1_sf3m1",
+   "event_key": "2026isde1",
+   "scheduled_time": "2026-06-29T07:18:00-04:00"
+  },
+  {
+   "match_key": "2026isde1_sf4m1",
+   "event_key": "2026isde1",
+   "scheduled_time": "2026-06-29T07:27:00-04:00"
+  },
+  {
+   "match_key": "2026isde1_sf5m1",
+   "event_key": "2026isde1",
+   "scheduled_time": "2026-06-29T07:36:00-04:00"
+  },
+  {
+   "match_key": "2026isde1_sf6m1",
+   "event_key": "2026isde1",
+   "scheduled_time": "2026-06-29T07:45:00-04:00"
+  },
+  {
+   "match_key": "2026isde1_sf8m1",
+   "event_key": "2026isde1",
+   "scheduled_time": "2026-06-29T08:03:00-04:00"
+  },
+  {
+   "match_key": "2026isde1_sf9m1",
+   "event_key": "2026isde1",
+   "scheduled_time": "2026-06-29T08:12:00-04:00"
+  },
+  {
+   "match_key": "2026isde1_sf10m1",
+   "event_key": "2026isde1",
+   "scheduled_time": "2026-06-29T08:21:00-04:00"
+  },
+  {
+   "match_key": "2026isde1_sf12m1",
+   "event_key": "2026isde1",
+   "scheduled_time": "2026-06-29T08:42:00-04:00"
+  },
+  {
+   "match_key": "2026isde1_sf13m1",
+   "event_key": "2026isde1",
+   "scheduled_time": "2026-06-29T09:03:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf1m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T04:45:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf2m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T04:54:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf3m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T05:03:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf4m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T05:12:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf5m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T05:21:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf6m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T05:30:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf7m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T05:39:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf8m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T05:48:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf9m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T05:57:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf10m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T06:06:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf11m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T06:18:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf12m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T06:27:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_sf13m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T06:48:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_f1m1",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T07:09:00-04:00"
+  },
+  {
+   "match_key": "2026iscmp_f1m2",
+   "event_key": "2026iscmp",
+   "scheduled_time": "2026-07-08T07:30:00-04:00"
+  }
+ ]
+}

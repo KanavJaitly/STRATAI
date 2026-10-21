@@ -66,6 +66,14 @@ def test_seed_only_baseline_uses_the_seed_alone():
     assert model.predict(synthetic_rows(1, 9)[0]) is not None
 
 
+def test_seed_only_baseline_is_the_seed_difference_alone():
+    """Regression (PX-1 audit 2026-10-08): spec §4 freezes the seed-only baseline as "a logistic regression on the
+    seed difference alone"; the as-built baseline also carried seed x round interactions (6 columns)."""
+    model = PlayoffLogisticModel.fit(synthetic_rows(400, 3), seed_only=True)
+    assert model.design.names() == ["seed_difference"] and model.design.rounds == []
+    assert len(model.coef) == 1
+
+
 def test_missing_used_input_is_insufficient_data(tmp_path):
     rows = synthetic_rows(300, 4)
     model = PlayoffLogisticModel.fit(rows)

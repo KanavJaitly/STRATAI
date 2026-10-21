@@ -1,0 +1,898 @@
+"""P6-M10b runs under the frozen `.agent/phase6/P6_M10B_SPEC.md` (blob d699afaf; frozen 2026-10-10 at 22e4d7b).
+Isolated `stratai_test` only.
+
+    python -m scripts.phase6_m10b dev         # §4: DEV-M10b, diagnostic only (2024 base, 2025 calibrator, 2026)
+    python -m scripts.phase6_m10b calibrate   # §3: fit and register the C-R calibrator on 2026 (needs DEV-M10b to proceed)
+    python -m scripts.phase6_m10b pins        # §3: the additive pin record (base + calibrator sha256), before 2027 data
+    python -m scripts.phase6_m10b frame-2027  # §5: build the 2027 D18 frame over the pinned 2027 EPA source, record it
+    python -m scripts.phase6_m10b final       # §6: the one-time 2027 acceptance run (fail-closed prerequisites)
+
+Implemented 2026-10-10 (`dev` added the same day). **None of these has been run.**
+- Running them needs Kanav's separate authorization: DEV-M10b first, then the calibrator, then the 2027 run.
+- `dev`, `frame-2027` and `final` also refuse without their authorization files, written by Kanav.
+- `calibrate` (2026-10-10, cc6fa93) and `pins` (713a13c) have run once; their records are write-once.
+- Every command refuses until its prerequisites exist.
+- Records are write-once.
+- P6-M10 stays `not_validated`.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import sys
+import time
+from collections import Counter, defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+from scripts import phase6_common as common
+from scripts.phase6_common import (M6M7_SHA256, P6_M10_VERSION_TAG, file_sha256, git_blob, isolated_database,
+                                   read_record, write_once)
+from scripts.phase6_playoff_track import BUDGET_SECONDS, Blocked
+
+CALIBRATION_SEASON, HOLDOUT = 2026, 2027
+DEV_RECORD, CALIBRATOR_RECORD, PINS_RECORD = "p6_m10b_dev.json", "p6_m10b_calibrator.json", "p6_m10b_pins.json"
+FRAME_RECORD, OUTCOME_RECORD = "p6_m10b_frame_2027.json", "p6_m10b_outcome_model.json"
+# Amendment A1 (frozen 2026-10-10 at 54a7ee5): §5's "official events" = TBA event_type in OFFICIAL_EVENT_TYPES (0-5),
+# read from each evaluated event's current raw TBA payload; fail-closed when it is unavailable or invalid. The
+# canonical events.event_type (NULL) is never read.
+A1_PATH = ".agent/phase6/P6_M10B_SPEC_AMENDMENT_A1.md"
+A1_BLOB = "a453eaba397d8108a8cf967c27da554021921e5f"
+EVENT_TYPE_SQL = """
+SELECT DISTINCT ON (source_object_id) source_object_id, payload_json->'event_type'
+FROM raw_source_payloads
+WHERE source = 'tba' AND source_object_type = 'event' AND is_current AND source_object_id = ANY(%s)
+ORDER BY source_object_id, id DESC
+"""
+AUTHORIZATION = Path(".agent/phase6/decisions/p6_m10b_authorization.json")
+# §5: the 2027 frame, "built by the same procedure (build_training_frame with the D18 provider over the pinned 2027 EPA
+# source), its content hash recorded". The frame holds 2027 only: §5 evaluates 2027 rows alone, and a 2027-only frame
+# never re-derives the frozen 2024-2026 rows under a different snapshot. Kanav's frame authorization must state it.
+FRAME_SEASONS = [HOLDOUT]
+FRAME_AUTHORIZATION = Path(".agent/phase6/decisions/p6_m10b_frame_2027_authorization.json")
+FRAME_OUT = Path("C:/Dev/StratAI-artifacts/phase6/m10b_frames")
+BOOTSTRAP_SEED = 20261005  # P6-Q9 / v1 §5, unchanged
+BASE_FIT_SEASONS = {2024, 2025}
+# §4 DEV-M10b: diagnostic only. Its base and calibrator are never registered, pinned or served.
+DEV_MILESTONE = "P6-M10b DEV-M10b (§4), diagnostic only"
+DEV_BASE_SEASON, DEV_CALIBRATION_SEASON, DEV_EVALUATION_SEASON = 2024, 2025, 2026
+DEV_AUTHORIZATION = Path(".agent/phase6/decisions/p6_m10b_dev_authorization.json")
+CALIBRATION_REFUSALS = ("prediction_season_absent", "epa_source_unresolvable", "epa_source_later_season",
+                        "probit_index_not_finite")  # ml.strategy.calibration's REASON_* values
+
+
+def _spec() -> dict[str, str]:
+    from ml.strategy.calibration import SPEC_BLOB, SPEC_PATH
+
+    if git_blob(SPEC_PATH) != SPEC_BLOB:
+        raise Blocked(f"{SPEC_PATH} is not the frozen P6-M10b blob {SPEC_BLOB}")
+    return {"path": SPEC_PATH, "blob": SPEC_BLOB}
+
+
+def _amendment() -> dict[str, str]:
+    if git_blob(A1_PATH) != A1_BLOB:
+        raise Blocked(f"{A1_PATH} is not the frozen amendment A1 blob {A1_BLOB}")
+    return {"path": A1_PATH, "blob": A1_BLOB}
+
+
+def official_event_types(database, event_keys) -> dict[str, int]:
+    """A1: each event's TBA event_type from its current raw TBA payload. Refuses (fail-closed) when any payload is
+    unavailable or its event_type is absent or not an integer; canonical events.event_type is never read."""
+    keys = sorted(set(event_keys))
+    with database.cursor() as cursor:
+        cursor.execute(EVENT_TYPE_SQL, (keys,))
+        found = dict(cursor.fetchall())
+    missing = [k for k in keys if k not in found]
+    invalid = [k for k in keys if k in found and (isinstance(found[k], bool) or not isinstance(found[k], int))]
+    if missing or invalid:
+        raise Blocked(f"A1: the event type cannot be established (no current raw TBA payload: {missing}; "
+                      f"absent or non-integer event_type: {invalid})")
+    return {k: found[k] for k in keys}
+
+
+def official_rows(kept, event_types: dict[str, int], excluded: Counter) -> list:
+    """A1: keep rows of official events (OFFICIAL_EVENT_TYPES); count the rest as non_official_event_type:<type>."""
+    from data.orchestrator import OFFICIAL_EVENT_TYPES
+
+    out = []
+    for row in kept:
+        event_type = event_types[row.event_key]
+        if event_type in OFFICIAL_EVENT_TYPES:
+            out.append(row)
+        else:
+            excluded[f"non_official_event_type:{event_type}"] += 1
+    return out
+
+
+def _base():
+    """The frozen p6m10-v1 base, only with the sha256 its fit record pinned."""
+    from ml.strategy.outcome import load_registered_strategy_model
+
+    fit = read_record("p6_m10_fit.json")
+    if fit is None:
+        raise Blocked("p6_m10_fit.json (the frozen base) is required")
+    return load_registered_strategy_model(common.REGISTRY_DIR, version_tag=P6_M10_VERSION_TAG,
+                                          expected_sha256=fit["registry"]["model_sha256"]), fit
+
+
+def season_resolver(database):
+    """events.season of an event key (static metadata), for §2's source seasons."""
+    from ml.features.scale import ScaleLookup
+
+    return ScaleLookup(database).event_season
+
+
+DATA_2027_SQL = {
+    "matches_season_2027": "SELECT count(*) FROM matches WHERE season = 2027",
+    "events_2027": "SELECT count(*) FROM events WHERE season = 2027 OR event_key LIKE '2027%'",
+    "tba_payloads_2027": "SELECT count(*) FROM raw_source_payloads WHERE source = 'tba' AND source_object_id LIKE '2027%'",
+    # Statbotics team_event ids are <team>_<event>: team 2027's 2024-2026 rows (2027_2024nyli2, ...) are not 2027 data
+    "statbotics_payloads_2027": "SELECT count(*) FROM raw_source_payloads WHERE source = 'statbotics' "
+                                "AND (source_object_id LIKE '%\\_2027%' OR (source_object_id LIKE '2027%' "
+                                "AND source_object_type <> 'team_event'))",
+    "team_event_stats_2027": "SELECT count(*) FROM team_event_stats WHERE event_key LIKE '2027%'",
+}
+
+
+def data_2027(database) -> dict[str, int]:
+    """Read-only counts of every kind of 2027 data; all must be 0 before the calibrator and the pins (§3)."""
+    counts = {}
+    with database.cursor() as cursor:
+        for name, sql in DATA_2027_SQL.items():
+            cursor.execute(sql)
+            counts[name] = int(cursor.fetchone()[0])
+    return counts
+
+
+def _any_2027(database) -> int:
+    return sum(data_2027(database).values())
+
+
+def _no_2027(database) -> dict[str, int]:
+    counts = data_2027(database)
+    if any(counts.values()):
+        raise Blocked(f"2027 data exists ({counts}): the calibrator and pins are taken before any 2027 data (§3)")
+    return counts
+
+
+def _epa_source_identity() -> dict[str, Any]:
+    """The D18 EPA source the frame (and so the calibration set) was built from, from the frame manifest."""
+    from scripts.run_phase4_stratai import frame_info
+
+    manifest = frame_info(common.FRAME_DIR)["manifest"]
+    provenance = manifest["epa_provenance"]
+    return {"epa_source": manifest["epa_source"], "frame_content_hash": manifest["content_hash"],
+            "snapshot": provenance.get("snapshot"), "snapshot_producing_commit": provenance.get("snapshot_producing_commit"),
+            "team_event_stats_sha256": provenance.get("team_event_stats_sha256"),
+            "freeze_commit": provenance.get("freeze_commit"),
+            "fallback_chain": [{k: s[k] for k in ("season", "input_fingerprint", "results_fingerprint")}
+                               for s in (provenance.get("fallback") or {}).get("seasons", [])],
+            "epa_provenance_sha256": hashlib.sha256(json.dumps(provenance, sort_keys=True).encode("utf-8")).hexdigest()}
+
+
+def eligible(rows, season: int) -> tuple[list, Counter]:
+    """v1 §5's population (unchanged): qualification, all six teams with epa_total; ties excluded and counted."""
+    from ml.dataset.builder import LABEL_TIE
+
+    kept, excluded = [], Counter()
+    for row in rows:
+        teams = [*row.red_teams, *row.blue_teams]
+        if row.season != season or row.comp_level != "qualification" or len(teams) != 6 \
+                or not all(t.epa_total_present for t in teams):
+            continue
+        if row.label == LABEL_TIE:
+            excluded["tie"] += 1
+            continue
+        kept.append(row)
+    return kept, excluded
+
+
+def _context(row):
+    from ml.strategy.outcome import MatchContext
+
+    return MatchContext(tuple(row.red_teams), tuple(row.blue_teams), prediction_season=row.season)
+
+
+def _baselines(row):
+    from ml.strategy.representation import Strategy
+
+    return (Strategy.baseline([t.team_number for t in row.red_teams]),
+            Strategy.baseline([t.team_number for t in row.blue_teams]))
+
+
+def dev_proceeded(dev: dict[str, Any] | None) -> bool:
+    """§4: only a DEV-M10b record of this frozen spec whose proceed rule held lets v2 continue."""
+    from ml.strategy.calibration import SPEC_BLOB
+
+    decision = (dev or {}).get("decision") or {}
+    return (dev is not None and dev.get("milestone") == DEV_MILESTONE and (dev.get("spec") or {}).get("blob") == SPEC_BLOB
+            and decision.get("proceed") is True and bool(decision.get("statuses"))
+            and all(s == PASS for s in decision["statuses"].values()))
+
+
+def calibration_set(rows, base, season_of, season: int = CALIBRATION_SEASON) -> dict[str, Any]:
+    """§3's calibration set: the `season` (2026; DEV: 2025) v1 population rows the base can score, with group, z and
+    s. Refuses any row outside that season, so no other season can reach the fit."""
+    from ml.dataset.builder import LABEL_RED_WIN
+    from ml.strategy.calibration import source_group, stable_log_odds
+
+    kept, excluded = eligible(rows, season)
+    groups, z, s, keys, latest = [], [], [], [], None
+    for row in kept:
+        if row.season != season:
+            raise Blocked(f"a non-{season} row reached the calibration set")
+        red, blue = _baselines(row)
+        evaluation = base.evaluate(_context(row), red, blue)
+        if evaluation.p_red is None:
+            excluded["model_input_absent"] += 1
+            continue
+        groups.append(source_group((*row.red_teams, *row.blue_teams), row.season, season_of))
+        z.append(stable_log_odds(evaluation.mean_difference / evaluation.sigma))
+        s.append(1 if row.label == LABEL_RED_WIN else -1)
+        keys.append(row.match_key)
+        latest = row.scheduled_time if latest is None or row.scheduled_time > latest else latest
+    lines = "\n".join(json.dumps([k, g, repr(zz), ss]) for k, g, zz, ss in sorted(zip(keys, groups, z, s)))
+    return {"groups": groups, "z": z, "s": s, "match_keys": keys, "excluded": dict(excluded),
+            "latest": latest.isoformat() if latest else None, "seasons": [season],
+            "fingerprint": hashlib.sha256(lines.encode("utf-8")).hexdigest()}
+
+
+# --- calibrate / pins -------------------------------------------------------------------------------------------
+
+
+SPEC_GROUP_COUNTS_2026 = {"same": 5439, "mixed": 4132, "prior": 2644}  # §3, as frozen
+
+
+def _dev_context() -> dict[str, Any]:
+    """Requirement of Kanav's 2026-10-10 authorization: the DEV result, stated as it is."""
+    dev = read_record(DEV_RECORD)
+    evaluation = dev["evaluation"]
+    return {"record": DEV_RECORD, "sha256": file_sha256(common.RESULTS_DIR / DEV_RECORD),
+            "proceed": dev["decision"]["proceed"], "statuses": dev["decision"]["statuses"],
+            "raw_g2_rejections": evaluation["raw"]["gate"]["g2"]["rejected_bins"],
+            "calibrated_g2_rejections": evaluation["calibrated"]["gate"]["g2"]["rejected_bins"],
+            "raw_overall": evaluation["raw"]["status"]["overall"],
+            "calibrated_overall": evaluation["calibrated"]["status"]["overall"],
+            "dev_base_sha256": dev["base"]["sha256"], "dev_calibrator_sha256": dev["calibrator"]["sha256"],
+            "statement": "DEV improved relative to raw (G2 rejections and ECE), but both raw and calibrated DEV "
+                         "predictions failed the overall G2 gate. DEV is consistency evidence only, never acceptance."}
+
+
+def run_calibrate(database, *_args) -> dict[str, Any]:
+    """§3, once: requires DEV-M10b to have proceeded (otherwise v2 stops, §4) and no 2027 data. The population must be
+    exactly the 12,215 rows v1 evaluated, with the §3 group counts; the base is v1 (never the DEV base)."""
+    from ml.registry import model_file_sha256, register_model
+    from ml.strategy.calibration import (CALIBRATOR_MODEL_TYPE, CALIBRATOR_VERSION_TAG, GROUPS,
+                                         CalibrationFitRefused, fit_calibrator)
+
+    import scripts.phase5_records as records
+
+    spec, amendment = _spec(), _amendment()
+    if read_record(CALIBRATOR_RECORD) is not None:
+        raise Blocked(f"{CALIBRATOR_RECORD} already exists: the calibrator is fit once and never overwritten")
+    try:  # the record's provenance check, before anything is registered: never an artifact without its record
+        records.provenance()
+    except records.RecordError as exc:
+        raise Blocked(str(exc)) from exc
+    if not dev_proceeded(read_record(DEV_RECORD)):
+        raise Blocked(f"{DEV_RECORD} is missing or did not proceed: the production calibrator is not fit (§4)")
+    no_2027 = _no_2027(database)
+    base, fit = _base()
+    dev = _dev_context()
+    if base.artifact_sha256 in (dev["dev_base_sha256"], None):
+        raise Blocked("the base must be the registered v1 artifact, never the DEV base")
+    rows, frame_hash = common.load_frame()
+    if frame_hash != fit["frame_content_hash"]:
+        raise Blocked("the D18 frame is not the one the base was fit and evaluated on")
+    v1_population = (read_record("p6_m10_outcome_model.json") or {}).get("population") or {}
+    cal = calibration_set(rows, base, season_resolver(database))
+    groups = dict(Counter(cal["groups"]))
+    if len(cal["z"]) != v1_population.get("evaluated") or cal["excluded"] != v1_population.get("excluded") \
+            or groups != SPEC_GROUP_COUNTS_2026:
+        raise Blocked(f"the calibration set is not §3's population: {len(cal['z'])} rows, excluded {cal['excluded']}, "
+                      f"groups {groups}; expected v1's {v1_population.get('evaluated')} rows, excluded "
+                      f"{v1_population.get('excluded')}, groups {SPEC_GROUP_COUNTS_2026}")
+    provenance = {"spec": spec, "amendment_a1": amendment, "acceptance": False,
+                  "base": {"version_tag": P6_M10_VERSION_TAG, "sha256": base.artifact_sha256,
+                           "fit_record_sha256": file_sha256(common.RESULTS_DIR / "p6_m10_fit.json")},
+                  "calibration_set": {k: cal[k] for k in ("fingerprint", "seasons", "latest", "excluded")},
+                  "rows": len(cal["z"]), "groups": groups, "frame_content_hash": frame_hash,
+                  "epa_source": _epa_source_identity(), "no_2027_data": no_2027, "dev_context": dev}
+    try:
+        calibrator = fit_calibrator(cal["groups"], cal["z"], cal["s"], base_sha256=base.artifact_sha256,
+                                    fit_set_fingerprint=cal["fingerprint"])
+    except CalibrationFitRefused as exc:  # §3: nothing registered, no retry; the write-once record names the check
+        return {"milestone": "P6-M10b calibrator (§3)", "refused": True, "check": exc.check, "details": exc.details,
+                "base_sha256": base.artifact_sha256, **provenance}
+    created = datetime.now(timezone.utc)
+    target = register_model(calibrator, registry_dir=common.REGISTRY_DIR, model_type=CALIBRATOR_MODEL_TYPE,
+                            model_version="1.0.0", version_tag=CALIBRATOR_VERSION_TAG,
+                            training_dataset_hash=cal["fingerprint"], feature_list=list(GROUPS), created_at=created)
+    artifact = model_file_sha256(common.REGISTRY_DIR, CALIBRATOR_MODEL_TYPE, CALIBRATOR_VERSION_TAG)
+    if artifact == dev["dev_calibrator_sha256"]:
+        raise Blocked("the registered calibrator is the DEV calibrator")
+    return {"milestone": "P6-M10b calibrator (§3)", "refused": False, **calibrator.to_dict(),
+            "registry": {"model_type": CALIBRATOR_MODEL_TYPE, "version_tag": CALIBRATOR_VERSION_TAG,
+                         "path": str(target), "artifact_sha256": artifact, "registered_at": created.isoformat()},
+            **provenance}
+
+
+def run_pins(database, *_args) -> dict[str, Any]:
+    """§3: the additive pin record, before any 2027 data. Every identity is re-verified against its source."""
+    import scripts.phase6_px1b_final1 as final1
+    from ml.registry import model_file_sha256
+    from ml.strategy.calibration import CALIBRATOR_MODEL_TYPE, CALIBRATOR_VERSION_TAG
+    from ml.strategy.outcome import MODEL_TYPE
+
+    spec, amendment = _spec(), _amendment()
+    if read_record(PINS_RECORD) is not None:
+        raise Blocked(f"{PINS_RECORD} already exists: the pins are taken once and never overwritten")
+    calibrator = read_record(CALIBRATOR_RECORD)
+    if calibrator is None:
+        raise Blocked(f"{CALIBRATOR_RECORD} is required")
+    if calibrator.get("refused") is not False:
+        raise Blocked(f"{CALIBRATOR_RECORD} records a refused fit ({calibrator.get('check')}): v2 stops (§3)")
+    no_2027 = _no_2027(database)
+    if (calibrator.get("spec") or {}).get("blob") != spec["blob"] or \
+            (calibrator.get("amendment_a1") or {}).get("blob") != amendment["blob"]:
+        raise Blocked(f"{CALIBRATOR_RECORD} was not fit under the frozen spec and amendment A1")
+    base_sha = model_file_sha256(common.REGISTRY_DIR, MODEL_TYPE, P6_M10_VERSION_TAG)
+    v1_sha = ((read_record("p6_m10_fit.json") or {}).get("registry") or {}).get("model_sha256")
+    if base_sha != calibrator["base_sha256"] or base_sha != v1_sha:
+        raise Blocked("the registered base is not v1, or not the one the calibrator was fit on")
+    calibrator_sha = model_file_sha256(common.REGISTRY_DIR, CALIBRATOR_MODEL_TYPE, CALIBRATOR_VERSION_TAG)
+    if calibrator_sha != (calibrator.get("registry") or {}).get("artifact_sha256"):
+        raise Blocked("the registered calibrator is not the artifact its fit record names")
+    if _epa_source_identity() != calibrator.get("epa_source"):
+        raise Blocked("the frame's EPA source is not the one the calibrator was fit on")
+    calibrator_commit = final1.adding_commit(f".agent/phase6/results/{CALIBRATOR_RECORD}")
+    if calibrator_commit is None:
+        raise Blocked(f"{CALIBRATOR_RECORD} must be committed before the pins")
+    return {"milestone": "P6-M10b pins", "acceptance": False, "spec": spec, "amendment_a1": amendment,
+            "model_identity": {"base_sha256": base_sha, "calibrator_sha256": calibrator_sha},
+            "registry": {"base": {"model_type": MODEL_TYPE, "version_tag": P6_M10_VERSION_TAG},
+                         "calibrator": {"model_type": CALIBRATOR_MODEL_TYPE, "version_tag": CALIBRATOR_VERSION_TAG}},
+            "calibrator_record": {"name": CALIBRATOR_RECORD,
+                                  "sha256": file_sha256(common.RESULTS_DIR / CALIBRATOR_RECORD),
+                                  "commit": calibrator_commit},
+            "calibration_set": calibrator["calibration_set"], "rows": calibrator["rows"],
+            "groups": calibrator["groups"], "epa_source": calibrator["epa_source"],
+            "dev_context": calibrator["dev_context"], "no_2027_data": no_2027,
+            "note": "Pins only. Not acceptance: the 2027 run, Kanav's confirmation and the parity rerun remain (§6-§7)."}
+
+
+# --- final (§6) --------------------------------------------------------------------------------------------------
+
+
+def check_authorization(value: dict[str, Any]) -> None:
+    from ml.strategy.calibration import SPEC_BLOB
+
+    if not (value.get("authorized") is True and value.get("authorized_by") and value.get("date")
+            and value.get("scope") == "P6-M10b" and value.get("season") == HOLDOUT
+            and value.get("season_complete_and_synced") is True and value.get("spec_blob") == SPEC_BLOB
+            and value.get("amendment_a1_blob") == A1_BLOB):
+        raise Blocked(f"{AUTHORIZATION} does not authorize the P6-M10b 2027 run (authorized, authorized_by, date, "
+                      "scope=P6-M10b, season=2027, season_complete_and_synced, spec_blob, amendment_a1_blob)")
+
+
+def final_prerequisites() -> dict[str, Any]:
+    """§6: every prerequisite, before any data is read. Absent ones are refused together; inconsistent ones at once."""
+    from ml.registry import model_file_sha256
+    from ml.strategy.calibration import CALIBRATOR_MODEL_TYPE, CALIBRATOR_VERSION_TAG
+    from ml.strategy.outcome import MODEL_TYPE
+    import scripts.phase6_px1b_final1 as final1
+
+    if read_record(OUTCOME_RECORD) is not None:
+        raise Blocked(f"{OUTCOME_RECORD} already exists: the P6-M10b run is once only and never overwritten")
+    provenance: dict[str, Any] = {"spec": _spec(), "amendment_a1": _amendment()}
+    missing: list[str] = []
+    if not dev_proceeded(read_record(DEV_RECORD)):
+        missing.append(f"{DEV_RECORD} with DEV-M10b proceeded")
+    pins = read_record(PINS_RECORD)
+    if pins is None:
+        missing.append(f"{PINS_RECORD} (the calibrator and base pins)")
+    else:
+        actual = {"base_sha256": model_file_sha256(common.REGISTRY_DIR, MODEL_TYPE, P6_M10_VERSION_TAG),
+                  "calibrator_sha256": model_file_sha256(common.REGISTRY_DIR, CALIBRATOR_MODEL_TYPE,
+                                                         CALIBRATOR_VERSION_TAG)}
+        v1_sha = ((read_record("p6_m10_fit.json") or {}).get("registry") or {}).get("model_sha256")
+        if actual != pins["model_identity"] or actual["base_sha256"] != v1_sha:  # §6: the base is v1 (aded2c82…)
+            raise Blocked("the registered base or calibrator does not match its pin")
+        provenance["model_identity"] = actual
+    try:
+        common.load_m6m7()  # sha-pinned
+    except (FileNotFoundError, ValueError) as exc:
+        raise Blocked(f"the M6/M7 d18 baseline does not match its pin: {exc}") from exc
+    provenance["m6m7_sha256"] = M6M7_SHA256
+    epa = read_record(final1.EPA_RECORD)
+    if epa is None:
+        missing.append(f"{final1.EPA_RECORD} (the pinned 2027 EPA source)")
+    else:
+        final1.verified_epa_source(epa)
+        provenance["epa_source"] = {"record": final1.EPA_RECORD, "sha256": file_sha256(common.RESULTS_DIR / final1.EPA_RECORD)}
+    frame = read_record(FRAME_RECORD)
+    if frame is None:
+        missing.append(f"{FRAME_RECORD} (the committed 2027 D18 frame record)")
+    else:
+        from scripts.run_phase4_stratai import frame_info
+        if HOLDOUT not in frame.get("seasons", []) or \
+                frame_info(Path(frame["frame_dir"]))["manifest"]["content_hash"] != frame.get("content_hash"):
+            raise Blocked(f"{FRAME_RECORD}: the 2027 frame does not match its recorded content hash")
+        if epa is not None and (frame.get("epa_source") or {}).get("sha256") != file_sha256(
+                common.RESULTS_DIR / final1.EPA_RECORD):
+            raise Blocked(f"{FRAME_RECORD}: the frame was not built from the pinned 2027 EPA source")
+        provenance["frame"] = {k: frame[k] for k in ("frame_dir", "content_hash")}
+    if pins is not None and frame is not None:
+        pins_commit = final1.adding_commit(f".agent/phase6/results/{PINS_RECORD}")
+        frame_commit = final1.adding_commit(f".agent/phase6/results/{FRAME_RECORD}")
+        if pins_commit is None or frame_commit is None:
+            raise Blocked(f"{PINS_RECORD} and {FRAME_RECORD} must both be committed, so their order is provable")
+        if not final1.is_strict_ancestor(pins_commit, frame_commit):
+            raise Blocked(f"the pins commit {pins_commit} is not a strict ancestor of the 2027 frame commit "
+                          f"{frame_commit}")
+        provenance["ordering"] = {"pins_commit": pins_commit, "frame_commit": frame_commit}
+    authorization = json.loads(AUTHORIZATION.read_text(encoding="utf-8")) if AUTHORIZATION.exists() else None
+    if authorization is None:
+        missing.append(f"{AUTHORIZATION} (Kanav's authorization to run P6-M10b on 2027)")
+    else:
+        check_authorization(authorization)
+        provenance["authorization"] = {"path": str(AUTHORIZATION), "sha256": file_sha256(AUTHORIZATION)}
+    if missing:
+        raise Blocked("P6-M10b cannot be evaluated yet; missing: " + "; ".join(missing))
+    return provenance
+
+
+def fit_isolation(base_fit_seasons, base_fit: dict[str, Any], calibrator_record: dict[str, Any],
+                  earliest_evaluated: datetime, *, allowed_base_seasons=frozenset(BASE_FIT_SEASONS),
+                  calibration_season: int = CALIBRATION_SEASON) -> dict[str, Any]:
+    """§5 (proposed and adopted) G4: base-fit rows only from 2024–2025 and calibrator-fit rows only from 2026; every fit
+    row strictly before every evaluated 2027 row. The base seasons come from the base model's own fit_info, as v1."""
+    base_seasons = set(base_fit_seasons)
+    calibration = calibrator_record["calibration_set"]
+    isolated = (bool(base_seasons) and base_seasons <= set(allowed_base_seasons)
+                and set(calibration["seasons"]) == {calibration_season}
+                and datetime.fromisoformat(base_fit["latest_fit_row"]) < earliest_evaluated
+                and datetime.fromisoformat(calibration["latest"]) < earliest_evaluated)
+    return {"base_fit_seasons": sorted(base_seasons), "calibration_seasons": calibration["seasons"],
+            "latest_base_fit_row": base_fit["latest_fit_row"], "latest_calibration_row": calibration["latest"],
+            "earliest_evaluated_row": earliest_evaluated.isoformat(), "fit_isolated": isolated}
+
+
+def _predictions(kept, model, excluded: Counter) -> dict[str, Any]:
+    """Each eligible row the model scores: the calibrated q and the raw base p on the same rows, both colour orders
+    (G3), the label, event and group. Rows it cannot score are counted by reason; a §2 refusal is counted apart from
+    an absent v1 input, so the claim that §2 refusals are unreachable is checked, not assumed."""
+    from ml.dataset.builder import LABEL_RED_WIN
+
+    out: dict[str, Any] = {k: [] for k in ("q", "raw", "labels", "events", "symmetry_q", "symmetry_raw", "used")}
+    groups: Counter = Counter()
+    by_group: dict[str, list[tuple[float, bool]]] = defaultdict(list)
+    for row in kept:
+        red, blue = _baselines(row)
+        forward = model.evaluate(_context(row), red, blue)
+        if forward.p_red is None:
+            reason = (forward.reasons or ("",))[0].removeprefix("missing_input:")
+            excluded[f"calibration_refused:{reason}" if reason in CALIBRATION_REFUSALS else "model_input_absent"] += 1
+            continue
+        backward = model.evaluate(_context(row).swapped(), blue, red)
+        raw_forward = model.base.evaluate(_context(row), red, blue)
+        raw_backward = model.base.evaluate(_context(row).swapped(), blue, red)
+        label = row.label == LABEL_RED_WIN
+        out["q"].append(forward.p_red)
+        out["raw"].append(raw_forward.p_red)
+        out["symmetry_q"].append(abs(forward.p_red + backward.p_red - 1.0))
+        out["symmetry_raw"].append(abs(raw_forward.p_red + raw_backward.p_red - 1.0))
+        out["labels"].append(label)
+        out["events"].append(row.event_key)
+        out["used"].append(row)
+        groups[forward.calibration["group"]] += 1
+        by_group[forward.calibration["group"]].append((forward.p_red, label))
+    if not out["used"]:
+        raise Blocked("no eligible rows")
+    reverse = list(reversed(out["used"]))
+    out["order_independent_q"] = out["q"] == list(reversed(
+        [model.evaluate(_context(r), *_baselines(r)).p_red for r in reverse]))
+    out["order_independent_raw"] = out["raw"] == list(reversed(
+        [model.base.evaluate(_context(r), *_baselines(r)).p_red for r in reverse]))
+    out["groups"], out["by_group"] = dict(groups), by_group
+    return out
+
+
+def _metrics(p, labels) -> dict[str, Any]:
+    from ml.backtest.metrics import brier_score, expected_calibration_error, log_loss
+
+    return {"ece": expected_calibration_error(p, labels), "log_loss": log_loss(p, labels),
+            "brier": brier_score(p, labels)}
+
+
+def _per_group(by_group) -> dict[str, Any]:
+    return {g: {"n": len(v), "calibration": _slope(v)} for g, v in sorted(by_group.items())}
+
+
+def _fingerprint(match_keys) -> str:
+    """sha256 of the sorted match keys: which rows a set holds, independent of order."""
+    return hashlib.sha256("\n".join(sorted(match_keys)).encode("utf-8")).hexdigest()
+
+
+def evaluate_gate(rows, model, m6m7_predict, base_fit: dict[str, Any], calibrator_record: dict[str, Any],
+                  event_types: dict[str, int]) -> dict[str, Any]:
+    """§5 on 2027: `evaluate_calibration_gate`, unchanged, on the calibrated q of the eligible rows of official events
+    (A1); v1 raw and M6/M7 are reported on the same rows, not gated."""
+    from ml.backtest.bootstrap import ci_excludes_zero, event_bootstrap_mean_ci
+    from ml.backtest.metrics import log_loss
+    from ml.calibration.gate import evaluate_calibration_gate
+
+    kept, excluded = eligible(rows, HOLDOUT)
+    scored = _predictions(official_rows(kept, event_types, excluded), model, excluded)
+    q, labels, used = scored["q"], scored["labels"], scored["used"]
+    m6 = [m6m7_predict(r) for r in used]
+    isolation = fit_isolation(model.base.fit_info["seasons"], base_fit, calibrator_record,
+                              min(r.scheduled_time for r in used))
+    gate = evaluate_calibration_gate(q, labels, symmetry_errors=scored["symmetry_q"],
+                                     order_independent=scored["order_independent_q"],
+                                     fit_isolated=isolation["fit_isolated"])
+    paired: dict[str, list[float]] = defaultdict(list)
+    for a, b, y, e in zip(q, m6, labels, scored["events"]):
+        paired[e].append(log_loss([a], [y]) - log_loss([b], [y]))
+    comparison = event_bootstrap_mean_ci(paired, seed=BOOTSTRAP_SEED)
+    return {"population": {"season": HOLDOUT, "comp_level": "qualification", "epa_complete": True,
+                           "evaluated": len(q), "excluded": dict(excluded), "groups": scored["groups"],
+                           "event_types": {str(k): v for k, v in sorted(Counter(
+                               event_types[r.event_key] for r in used).items())},
+                           "fingerprint": _fingerprint(r.match_key for r in used)},
+            "fit_isolation": isolation, "gate": gate.to_dict(), "passed": gate.passed,
+            "metrics": _metrics(q, labels), "raw_v1_same_rows": _metrics(scored["raw"], labels),
+            "m6m7_same_rows": _metrics(m6, labels),
+            "paired_log_loss_minus_m6m7": {**comparison, "ci_excludes_zero": ci_excludes_zero(comparison),
+                                           "gated": False},
+            "per_group_calibration": _per_group(scored["by_group"])}
+
+
+def _slope(pairs: list[tuple[float, bool]]) -> dict[str, float] | None:
+    """§5, reported only: v1's diagnostic recalibration y ~ a + b·logit(q), per group; None when it is undefined."""
+    import numpy as np
+
+    from scripts.phase6_m10_diagnostics import calibration_slope
+
+    p, y = [a for a, _ in pairs], [b for _, b in pairs]
+    if len(set(y)) < 2:
+        return None
+    try:
+        with np.errstate(over="ignore", invalid="ignore"):  # a separable group diverges; reported as None below
+            result = calibration_slope(p, y)
+    except np.linalg.LinAlgError:
+        return None
+    return result if all(np.isfinite(list(result.values()))) else None
+
+
+def run_final(database, *_args) -> dict[str, Any]:
+    """§6, once: the prerequisites, then the 2027 frame rows, then the unchanged gate. `main` writes the record."""
+    from ml.backtest.harness import _match_features
+    from ml.registry import load_registered_model
+    from ml.strategy.calibration import (CALIBRATOR_MODEL_TYPE, CALIBRATOR_VERSION_TAG, GROUPS, Calibrator,
+                                         CalibratedOutcomeModel)
+    from scripts.run_phase4_stratai import load_frame_rows
+
+    provenance = final_prerequisites()
+    base, fit = _base()
+    calibrator, _ = load_registered_model(Calibrator, registry_dir=common.REGISTRY_DIR, model_type=CALIBRATOR_MODEL_TYPE,
+                                          version_tag=CALIBRATOR_VERSION_TAG, current_feature_list=list(GROUPS),
+                                          expected_sha256=provenance["model_identity"]["calibrator_sha256"])
+    model = CalibratedOutcomeModel(base, calibrator, season_resolver(database))
+    m6m7 = common.load_m6m7()
+    rows = load_frame_rows(Path(provenance["frame"]["frame_dir"]))
+    event_types = official_event_types(database, (r.event_key for r in eligible(rows, HOLDOUT)[0]))
+    result = evaluate_gate(rows, model, lambda r: m6m7.predict_win_prob(_match_features(r)), fit,
+                           read_record(CALIBRATOR_RECORD), event_types)
+    return {"milestone": "P6-M10b (P6-M10 v2) 2027 acceptance", "decision": "P6-Q9 (v2)",
+            "acceptance_note": "a pass does not switch serving: Kanav's sha-matched confirmation and a passing P6-M13 "
+                               "parity rerun on this identity are also required (§7)",
+            "model_identity": provenance["model_identity"], "provenance_inputs": provenance, **result}
+
+
+# --- dev (§4): DEV-M10b, diagnostic only ---------------------------------------------------------------------
+
+
+def check_dev_authorization(value: dict[str, Any]) -> None:
+    from ml.strategy.calibration import SPEC_BLOB
+
+    if not (value.get("authorized") is True and value.get("authorized_by") and value.get("date")
+            and value.get("scope") == "DEV-M10b" and value.get("spec_blob") == SPEC_BLOB):
+        raise Blocked(f"{DEV_AUTHORIZATION} does not authorize DEV-M10b (authorized, authorized_by, date, "
+                      "scope=DEV-M10b, spec_blob)")
+
+
+def dev_prerequisites() -> dict[str, Any]:
+    """Before any data is read. DEV runs once, before the production calibrator, under the frozen spec and the
+    frozen v1 procedure; absent items are refused together, inconsistent ones at once."""
+    from ml.strategy.outcome import SPEC_PATH as V1_SPEC_PATH
+
+    if read_record(DEV_RECORD) is not None:
+        raise Blocked(f"{DEV_RECORD} already exists: DEV-M10b runs once and is never overwritten")
+    if read_record(CALIBRATOR_RECORD) is not None:
+        raise Blocked(f"{CALIBRATOR_RECORD} exists: DEV-M10b must precede the production calibrator (§4)")
+    provenance: dict[str, Any] = {"spec": _spec()}
+    missing: list[str] = []
+    fit = read_record("p6_m10_fit.json")
+    if fit is None:
+        missing.append("p6_m10_fit.json (the v1 fit record: frame, v1 spec sha256)")
+    else:
+        if file_sha256(V1_SPEC_PATH) != fit["spec_sha256"]:
+            raise Blocked(f"{V1_SPEC_PATH} is not the v1 specification the base was fit under")
+        provenance["v1_procedure"] = {"spec": V1_SPEC_PATH, "spec_sha256": fit["spec_sha256"],
+                                      "spec_blob": git_blob(V1_SPEC_PATH)}
+    authorization = (json.loads(DEV_AUTHORIZATION.read_text(encoding="utf-8")) if DEV_AUTHORIZATION.exists()
+                     else None)
+    if authorization is None:
+        missing.append(f"{DEV_AUTHORIZATION} (Kanav's authorization to run DEV-M10b)")
+    else:
+        check_dev_authorization(authorization)
+        provenance["authorization"] = {"path": str(DEV_AUTHORIZATION), "sha256": file_sha256(DEV_AUTHORIZATION)}
+    if missing:
+        raise Blocked("DEV-M10b cannot be run yet; missing: " + "; ".join(missing))
+    return provenance
+
+
+def _identified(artifact, cls):
+    """The artifact saved and loaded back, so it carries the sha256 of its serialized file. DEV artifacts live only
+    in a temporary directory: they are never registered, pinned or served."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "artifact.json"
+        artifact.save(path)
+        return cls.load(path)
+
+
+PASS, FAIL, UNEVALUABLE = "pass", "fail", "unevaluable"
+
+
+def _finite(value) -> float | None:
+    return float(value) if value is not None and math.isfinite(value) else None
+
+
+def gate_status(gate) -> dict[str, str]:
+    """Each gate component's explicit status. G1 with no ECE and a G2 the gate calls unevaluable are `unevaluable`."""
+    from ml.calibration.gate import G2_UNEVALUABLE
+
+    ece = _finite(gate.ece)
+    return {"g1": UNEVALUABLE if ece is None else PASS if gate.g1_pass else FAIL,
+            "g2": UNEVALUABLE if gate.g2.status == G2_UNEVALUABLE else gate.g2.status,
+            "g3": PASS if gate.g3_pass else FAIL, "g4": PASS if gate.g4_fit_isolated else FAIL,
+            "overall": PASS if gate.passed else FAIL}
+
+
+def dev_decision(refusal: dict[str, Any] | None, raw_gate, calibrated_gate) -> dict[str, Any]:
+    """§4's proceed rule (C5), with an explicit status for each required diagnostic:
+    - (i) the §3 fit: `pass`, or `fail` on a refusal;
+    - (ii) calibrated G2 rejections ≤ raw, strictly fewer unless raw has 0: `unevaluable` when either G2 is
+      unevaluable (the gate then reports 0 rejections, which is not a measurement) or there is no calibrator;
+    - (iii) calibrated ECE ≤ raw ECE: `unevaluable` when either ECE is absent or not finite, or there is no calibrator.
+    DEV proceeds only if all three are `pass`. Thresholds and the rule are the frozen ones."""
+    from ml.calibration.gate import G2_FAIL, G2_PASS
+
+    fit = {"status": FAIL if refusal is not None else PASS}
+    if refusal is not None:
+        fit["refusal"] = refusal
+    g2: dict[str, Any] = {"status": UNEVALUABLE,
+                          "raw_g2_status": None if raw_gate is None else raw_gate.g2.status,
+                          "calibrated_g2_status": None if calibrated_gate is None else calibrated_gate.g2.status}
+    ece: dict[str, Any] = {"status": UNEVALUABLE,
+                           "raw_ece": None if raw_gate is None else raw_gate.ece,
+                           "calibrated_ece": None if calibrated_gate is None else calibrated_gate.ece}
+    if raw_gate is None or calibrated_gate is None:
+        g2["reason"] = ece["reason"] = "no calibrated predictions: the fit was refused" if refusal else "no gate result"
+    else:
+        if {g2["raw_g2_status"], g2["calibrated_g2_status"]} <= {G2_PASS, G2_FAIL}:
+            raw_rejections, calibrated_rejections = raw_gate.g2.rejected_bins, calibrated_gate.g2.rejected_bins
+            g2.update(raw_rejections=raw_rejections, calibrated_rejections=calibrated_rejections,
+                      status=PASS if calibrated_rejections <= raw_rejections and (
+                          calibrated_rejections < raw_rejections or raw_rejections == 0) else FAIL)
+        else:
+            g2["reason"] = "a G2 result is unevaluable; its zero rejection count is not a measurement"
+        raw_ece, calibrated_ece = _finite(raw_gate.ece), _finite(calibrated_gate.ece)
+        if raw_ece is not None and calibrated_ece is not None:
+            ece["status"] = PASS if calibrated_ece <= raw_ece else FAIL
+        else:
+            ece["reason"] = "an ECE is absent or not finite"
+    diagnostics = {"i_fit": fit, "ii_g2_rejections": g2, "iii_ece": ece}
+    statuses = {name: d["status"] for name, d in diagnostics.items()}
+    proceed = all(s == PASS for s in statuses.values())
+    outcome = "proceed" if proceed else "rule_not_met" if FAIL in statuses.values() else "unevaluable"
+    return {"proceed": proceed, "outcome": outcome, "statuses": statuses, "diagnostics": diagnostics,
+            "consequence": "the production calibrator may be fit, on Kanav's separate authorization" if proceed
+            else "v2 stops at DEV: no production calibrator and no FINAL run; a further version would be needed (§4)"
+            if outcome == "rule_not_met"
+            else "blocked at DEV: a required diagnostic is unevaluable; no production calibrator is authorized"}
+
+
+def dev_evaluate(rows, model, calibration: dict[str, Any]) -> tuple[dict[str, Any], Any, Any]:
+    """§4 step 3: the raw DEV base and the calibrated DEV model, on the same 2026 rows, through the unchanged gate."""
+    from ml.calibration.gate import evaluate_calibration_gate
+
+    kept, excluded = eligible(rows, DEV_EVALUATION_SEASON)
+    scored = _predictions(kept, model, excluded)
+    labels, used = scored["labels"], scored["used"]
+    isolation = fit_isolation(model.base.fit_info["seasons"], model.base.fit_info, {"calibration_set": calibration},
+                              min(r.scheduled_time for r in used), allowed_base_seasons={DEV_BASE_SEASON},
+                              calibration_season=DEV_CALIBRATION_SEASON)
+    raw_gate = evaluate_calibration_gate(scored["raw"], labels, symmetry_errors=scored["symmetry_raw"],
+                                         order_independent=scored["order_independent_raw"],
+                                         fit_isolated=isolation["fit_isolated"])
+    calibrated_gate = evaluate_calibration_gate(scored["q"], labels, symmetry_errors=scored["symmetry_q"],
+                                                order_independent=scored["order_independent_q"],
+                                                fit_isolated=isolation["fit_isolated"])
+    result = {"population": {"season": DEV_EVALUATION_SEASON, "comp_level": "qualification", "epa_complete": True,
+                             "evaluated": len(used), "excluded": dict(excluded), "groups": scored["groups"],
+                             "fingerprint": _fingerprint(r.match_key for r in used)},
+              "fit_isolation": isolation,
+              "raw": {"gate": raw_gate.to_dict(), "status": gate_status(raw_gate),
+                      "metrics": _metrics(scored["raw"], labels)},
+              "calibrated": {"gate": calibrated_gate.to_dict(), "status": gate_status(calibrated_gate),
+                             "metrics": _metrics(scored["q"], labels)},
+              "per_group_calibration": _per_group(scored["by_group"])}
+    return result, raw_gate, calibrated_gate
+
+
+def run_dev(database, *_args) -> dict[str, Any]:
+    """§4, once: refit the v1 procedure on 2024, fit the §3 calibrator on 2025, evaluate on 2026. Diagnostic only."""
+    from ml.strategy.calibration import Calibrator, CalibratedOutcomeModel, CalibrationFitRefused, fit_calibrator
+    from ml.strategy.outcome import NOT_VALIDATED, ComponentOutcomeModel
+    from scripts.phase6_m10_fit import component_fit_set
+
+    provenance = dev_prerequisites()
+    fit = read_record("p6_m10_fit.json")
+    rows, frame_hash = common.load_frame()
+    if frame_hash != fit["frame_content_hash"]:
+        raise Blocked("the D18 frame is not the one v1 was fit and evaluated on")
+    season_of = season_resolver(database)
+
+    samples, used, base_excluded = component_fit_set(rows, (DEV_BASE_SEASON,), database)
+    if not samples or {r.season for r in used} != {DEV_BASE_SEASON}:
+        raise Blocked(f"the DEV base fit set is empty or not {DEV_BASE_SEASON}-only")
+    info = {"frame_content_hash": frame_hash, "seasons": [DEV_BASE_SEASON], "comp_level": "qualification",
+            "excluded": dict(base_excluded), "latest_fit_row": max(r.scheduled_time for r in used).isoformat(),
+            "spec_blob": provenance["v1_procedure"]["spec_blob"], "purpose": DEV_MILESTONE}
+    base = _identified(ComponentOutcomeModel.fit(samples, fit_info=info, spec_sha256=fit["spec_sha256"]),
+                       ComponentOutcomeModel)
+    base = base.with_status(version_tag="p6m10b-dev-base", baseline_status=(NOT_VALIDATED, "dev_m10b_diagnostic"))
+    record: dict[str, Any] = {
+        "milestone": DEV_MILESTONE, "diagnostic_only": True, "acceptance": False, "authorizes_serving": False,
+        "evidence_class": "consistency evidence only, never independent acceptance evidence: 2026 motivated this "
+                          "design (§4). It cannot switch serving: only the §7 guard can.",
+        "spec": provenance["spec"], "v1_procedure": provenance["v1_procedure"], "frame_content_hash": frame_hash,
+        "seasons": {"base_fit": DEV_BASE_SEASON, "calibration": DEV_CALIBRATION_SEASON,
+                    "evaluation": DEV_EVALUATION_SEASON},
+        "base": {"sha256": base.artifact_sha256, "registered": False, "beta": base.beta,
+                 "sigma_matrix": base.sigma_matrix.tolist(), "sigma": base.sigma, "fit_rows": len(samples),
+                 "excluded": dict(base_excluded), "latest_fit_row": info["latest_fit_row"],
+                 "fit_set_fingerprint": _fingerprint(r.match_key for r in used)},
+        "provenance_inputs": provenance}
+
+    cal = calibration_set(rows, base, season_of, season=DEV_CALIBRATION_SEASON)
+    record["calibration_set"] = {"fingerprint": cal["fingerprint"], "rows": len(cal["z"]), "seasons": cal["seasons"],
+                                 "latest": cal["latest"], "excluded": cal["excluded"],
+                                 "groups": dict(Counter(cal["groups"]))}
+    try:
+        calibrator = fit_calibrator(cal["groups"], cal["z"], cal["s"], base_sha256=base.artifact_sha256,
+                                    fit_set_fingerprint=cal["fingerprint"])
+    except CalibrationFitRefused as exc:
+        record["calibrator"] = {"refused": True, "check": exc.check, "details": exc.details, "registered": False}
+        record["evaluation"] = None
+        record["decision"] = dev_decision(record["calibrator"], None, None)
+        return record
+    calibrator = _identified(calibrator, Calibrator)
+    record["calibrator"] = {"refused": False, "registered": False, "sha256": calibrator.artifact_sha256,
+                            **calibrator.to_dict()}
+    model = CalibratedOutcomeModel(base, calibrator, season_of)
+    record["evaluation"], raw_gate, calibrated_gate = dev_evaluate(rows, model, record["calibration_set"])
+    record["decision"] = dev_decision(None, raw_gate, calibrated_gate)
+    return record
+
+
+# --- frame-2027 (§5): the 2027 D18 frame and its committed record ---------------------------------------------------
+
+
+def check_frame_authorization(value: dict[str, Any]) -> None:
+    from ml.strategy.calibration import SPEC_BLOB
+
+    if not (value.get("authorized") is True and value.get("authorized_by") and value.get("date")
+            and value.get("scope") == "P6-M10b-frame-2027" and value.get("season_complete_and_synced") is True
+            and value.get("seasons") == FRAME_SEASONS and value.get("spec_blob") == SPEC_BLOB
+            and value.get("amendment_a1_blob") == A1_BLOB):
+        raise Blocked(f"{FRAME_AUTHORIZATION} does not authorize building the 2027 frame (authorized, authorized_by, "
+                      f"date, scope=P6-M10b-frame-2027, season_complete_and_synced, seasons={FRAME_SEASONS}, "
+                      "spec_blob, amendment_a1_blob)")
+
+
+def frame_prerequisites(database) -> dict[str, Any]:
+    """Before anything is built: once only; the frozen spec and A1; the pins committed first (so the frame record's
+    commit can follow them, §6 ordering); the pinned 2027 EPA source verified; the authorization; 2027 data present."""
+    import scripts.phase6_px1b_final1 as final1
+
+    if read_record(FRAME_RECORD) is not None:
+        raise Blocked(f"{FRAME_RECORD} already exists: the 2027 frame is recorded once and never overwritten")
+    provenance: dict[str, Any] = {"spec": _spec(), "amendment_a1": _amendment()}
+    missing: list[str] = []
+    pins = read_record(PINS_RECORD)
+    if pins is None:
+        missing.append(f"{PINS_RECORD} (the calibrator and base pins)")
+    else:
+        pins_commit = final1.adding_commit(f".agent/phase6/results/{PINS_RECORD}")
+        if pins_commit is None:
+            raise Blocked(f"{PINS_RECORD} must be committed before the 2027 frame is built")
+        provenance["pins"] = {"sha256": file_sha256(common.RESULTS_DIR / PINS_RECORD), "commit": pins_commit,
+                              "model_identity": pins["model_identity"]}
+    epa = read_record(final1.EPA_RECORD)
+    if epa is None:
+        missing.append(f"{final1.EPA_RECORD} (the pinned 2027 EPA source)")
+    else:
+        snapshot, chain = final1.verified_epa_source(epa)
+        provenance["epa_source"] = {"record": final1.EPA_RECORD,
+                                    "sha256": file_sha256(common.RESULTS_DIR / final1.EPA_RECORD),
+                                    "snapshot": str(snapshot), "chain": str(chain)}
+    authorization = (json.loads(FRAME_AUTHORIZATION.read_text(encoding="utf-8")) if FRAME_AUTHORIZATION.exists()
+                     else None)
+    if authorization is None:
+        missing.append(f"{FRAME_AUTHORIZATION} (Kanav's authorization to build the 2027 frame)")
+    else:
+        check_frame_authorization(authorization)
+        provenance["authorization"] = {"path": str(FRAME_AUTHORIZATION), "sha256": file_sha256(FRAME_AUTHORIZATION)}
+    if missing:
+        raise Blocked("the 2027 frame cannot be built yet; missing: " + "; ".join(missing))
+    counts = data_2027(database)
+    if not counts["matches_season_2027"]:
+        raise Blocked("no 2027 matches are synced: there is nothing to build")
+    provenance["data_2027"] = counts
+    return provenance
+
+
+def run_frame_2027(database, *_args) -> dict[str, Any]:
+    """§5: the 2027 D18 frame by the frozen procedure over the pinned 2027 EPA source, persisted write-once; the
+    record pins its content hash. Nothing is evaluated."""
+    from ml.ratings.d18_source import load_d18_provider
+    from scripts.run_phase4_stratai import frame_info, persist_frame
+
+    provenance = frame_prerequisites(database)
+    provider, integrity = load_d18_provider(database, Path(provenance["epa_source"]["snapshot"]),
+                                            Path(provenance["epa_source"]["chain"]))
+    directory = persist_frame(database, provider, FRAME_OUT, seasons=FRAME_SEASONS)
+    manifest = frame_info(directory)["manifest"]
+    if manifest["season_keys"] != FRAME_SEASONS:
+        raise Blocked(f"the built frame's seasons {manifest['season_keys']} are not {FRAME_SEASONS}")
+    return {"milestone": "P6-M10b 2027 D18 frame (§5)", "acceptance": False, "frame_dir": str(directory),
+            "content_hash": manifest["content_hash"], "seasons": manifest["season_keys"],
+            "row_count": manifest["row_count"], "excluded_by_reason": manifest["excluded_by_reason"],
+            "epa_integrity": integrity, **provenance,
+            "note": "Built, not evaluated. Commit this record before the 2027 run (§6 ordering: the pins commit must "
+                    "be a strict ancestor of the commit that adds it)."}
+
+
+RUNS = {"dev": (DEV_RECORD, run_dev), "calibrate": (CALIBRATOR_RECORD, run_calibrate), "pins": (PINS_RECORD, run_pins),
+        "frame-2027": (FRAME_RECORD, run_frame_2027), "final": (OUTCOME_RECORD, run_final)}
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = argv if argv is not None else sys.argv[1:]
+    if len(args) != 1 or args[0] not in RUNS:
+        print(__doc__)
+        return 2
+    started = time.time()
+    database = isolated_database()
+    name, run = RUNS[args[0]]
+    result = run(database)
+    result["minutes"] = round((time.time() - started) / 60, 1)
+    result["over_budget"] = time.time() - started > BUDGET_SECONDS
+    path = write_once(name, result)
+    summary = {k: result.get(k) for k in ("passed", "minutes", "over_budget")}
+    summary["proceed"] = (result.get("decision") or {}).get("proceed") if isinstance(result.get("decision"), dict) \
+        else None
+    print(json.dumps(summary), "->", path)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

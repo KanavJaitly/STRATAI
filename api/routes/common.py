@@ -11,15 +11,17 @@ from http import HTTPStatus
 from typing import Any
 
 from fastapi import Depends
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from starlette.requests import Request
 
 from api.dependencies import get_settings
-from api.errors import ApiError
+from api.errors import ApiError, http_exception_handler
 from api.ml_loading import ServedEpaSource
 from data.config import Settings
 from database.connection import Database
 from ml.features.roster import list_teams_at_event
+from ml.features.score_breakdown import UnsupportedSeasonError
 from ml.ratings.statbotics_primary import SilentFallbackError
 
 CODE_EPA_SOURCE_NOT_LOADED = "epa_source_not_loaded"
@@ -100,6 +102,7 @@ def parse_as_of(value: str | None) -> datetime:
                                    "progress as a completed prior event")
         return now
     return parsed
+CODE_SEASON_NOT_SUPPORTED = "season_not_supported"  # 2026-10-12: no score_breakdown adapter for the season
 
 
 class EpaSourceInfo(BaseModel):
@@ -150,6 +153,24 @@ def epa_source_incomplete_error(exc: SilentFallbackError) -> ApiError:
         message=f"The EPA source has no valid value for a required prior event ({exc.record['candidate']}); "
                 "it does not silently substitute an older event.",
     )
+
+
+def season_not_supported_error(exc: UnsupportedSeasonError) -> ApiError:
+    return ApiError(
+        status_code=HTTPStatus.UNPROCESSABLE_ENTITY, code=CODE_SEASON_NOT_SUPPORTED,
+        message=f"Season {exc.season} has no verified score_breakdown adapter, so its features are not built "
+                "(never a guessed value).",
+    )
+
+
+async def unsupported_season_handler(request: Request, exc: Exception) -> JSONResponse:
+    """An UnsupportedSeasonError from feature assembly, as an explained 422 rather than a 500 (2026-10-12).
+
+    Any route that builds features can meet a season without an adapter (for example a 2023 event); the
+    fail-closed adapter is correct, and this only reports it in the error envelope.
+    """
+    assert isinstance(exc, UnsupportedSeasonError)
+    return await http_exception_handler(request, season_not_supported_error(exc))
 
 
 def require_epa_source(epa_source: ServedEpaSource | None) -> ServedEpaSource:
