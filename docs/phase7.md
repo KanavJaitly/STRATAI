@@ -189,6 +189,7 @@ A new code on an already-declared error status counts as a change, because clien
 | `POST /strategy/matches/{match_key}/assess`, `POST /strategy/matches/{match_key}/recommend`, `POST /strategy/matches/{match_key}/compare`, `POST /strategy/hypothetical/assess`, `POST /strategy/hypothetical/recommend`, `POST /strategy/hypothetical/compare`, `POST /strategy/coach-strategies`, `POST /strategy/coach-observations` | P7-M5 |
 | `GET /events/{event_key}/alliance-selection/candidates`, `POST /events/{event_key}/alliance-selection/pick-list` | P7-M6 |
 | `GET /matches/{match_key}/pre-match-report` | P7-M7 |
+| `GET /matches/{match_key}/briefing` | P9-M4 (P9-Q8), added 2026-10-20 with no change to any entry above; documented in `docs/phase9.md` |
 
 Recorded relocks (changes to locked entries, each with its decision): P7-D2 (`event_type` removed), P7-D3 (`epa` on the strategy responses), P7-D4 (`state_province`; non-nullable strategy model identity), P7-D5 (the pick-list status constant, comparisons, provenance and declared codes), P7-D7 (the canonical playoff label `validated_playoff_success`). The full history is the lock file's `revisions`.
 

@@ -1,0 +1,241 @@
+Timeout (0:04:00)!
+Thread 0x00007f767d7fa6c0 (most recent call first):
+  File "/usr/lib/python3.11/selectors.py", line 373 in select
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/waiting.py", line 118 in wait_conn
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py", line 109 in connect
+  File "<repo-root>/database/connection.py", line 40 in connection
+  File "/usr/lib/python3.11/contextlib.py", line 137 in __enter__
+  File "<repo-root>/database/connection.py", line 50 in cursor
+  File "/usr/lib/python3.11/contextlib.py", line 137 in __enter__
+  File "<repo-root>/ml/features/assembler.py", line 370 in _point_in_time_scores
+  File "<repo-root>/ml/features/assembler.py", line 728 in point_in_time_scores
+  File "<repo-root>/ml/views/strength.py", line 222 in build_team_strength
+  File "<repo-root>/ml/views/pre_match_report.py", line 116 in <listcomp>
+  File "<repo-root>/ml/views/pre_match_report.py", line 116 in pre_match_inputs
+  File "<repo-root>/api/routes/pre_match_report.py", line 255 in pre_match_report
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1033 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f765affd6c0 (most recent call first):
+  File "/usr/lib/python3.11/threading.py", line 320 in wait
+  File "/usr/lib/python3.11/queue.py", line 171 in get
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1022 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f765b7fe6c0 (most recent call first):
+  File "/usr/lib/python3.11/selectors.py", line 468 in select
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/waiting.py", line 112 in wait_conn
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py", line 109 in connect
+  File "<repo-root>/database/connection.py", line 40 in connection
+  File "/usr/lib/python3.11/contextlib.py", line 137 in __enter__
+  File "<repo-root>/database/connection.py", line 50 in cursor
+  File "/usr/lib/python3.11/contextlib.py", line 137 in __enter__
+  File "<repo-root>/ml/features/roster.py", line 33 in event_exists
+  File "<repo-root>/api/routes/discovery.py", line 146 in list_event_matches
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1033 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f765bfff6c0 (most recent call first):
+  File "/usr/lib/python3.11/socket.py", line 962 in getaddrinfo
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/_conninfo_attempts.py", line 102 in _resolve_hostnames
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/_conninfo_attempts.py", line 45 in conninfo_attempts
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py", line 100 in connect
+  File "<repo-root>/database/connection.py", line 40 in connection
+  File "/usr/lib/python3.11/contextlib.py", line 137 in __enter__
+  File "<repo-root>/database/connection.py", line 50 in cursor
+  File "/usr/lib/python3.11/contextlib.py", line 137 in __enter__
+  File "<repo-root>/ml/features/assembler.py", line 370 in _point_in_time_scores
+  File "<repo-root>/ml/features/assembler.py", line 728 in point_in_time_scores
+  File "<repo-root>/ml/views/strength.py", line 222 in build_team_strength
+  File "<repo-root>/ml/views/pre_match_report.py", line 116 in <listcomp>
+  File "<repo-root>/ml/views/pre_match_report.py", line 116 in pre_match_inputs
+  File "<repo-root>/api/routes/pre_match_report.py", line 255 in pre_match_report
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1033 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f767cff96c0 (most recent call first):
+  File "/usr/lib/python3.11/selectors.py", line 359 in register
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/waiting.py", line 119 in wait_conn
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py", line 109 in connect
+  File "<repo-root>/database/connection.py", line 87 in read_snapshot
+  File "/usr/lib/python3.11/contextlib.py", line 137 in __enter__
+  File "<repo-root>/ml/features/assembler.py", line 597 in build_team_features
+  File "<repo-root>/ml/views/strength.py", line 220 in build_team_strength
+  File "<repo-root>/ml/views/pre_match_report.py", line 116 in <listcomp>
+  File "<repo-root>/ml/views/pre_match_report.py", line 116 in pre_match_inputs
+  File "<repo-root>/api/routes/pre_match_report.py", line 255 in pre_match_report
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1033 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f767dffb6c0 (most recent call first):
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py", line 484 in wait
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/cursor.py", line 113 in execute
+  File "<repo-root>/ml/features/scale.py", line 63 in season_scale
+  File "<repo-root>/ml/features/scale.py", line 77 in feature_scales
+  File "<repo-root>/ml/features/assembler.py", line 620 in _build_team_features
+  File "<repo-root>/ml/features/assembler.py", line 598 in build_team_features
+  File "<repo-root>/ml/features/assembler.py", line 712 in <listcomp>
+  File "<repo-root>/ml/features/assembler.py", line 712 in build_match_feature_row
+  File "<repo-root>/ml/views/pre_match_report.py", line 115 in pre_match_inputs
+  File "<repo-root>/api/routes/pre_match_report.py", line 255 in pre_match_report
+  File "<repo-root>/api/routes/briefing.py", line 120 in briefing
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1033 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f767e7fc6c0 (most recent call first):
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/_connection_base.py", line 476 in _exec_command
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/_connection_base.py", line 546 in _start_query
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/_cursor_base.py", line 387 in _start_query
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/_cursor_base.py", line 204 in _execute_gen
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py", line 484 in wait
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/cursor.py", line 113 in execute
+  File "<repo-root>/ml/features/assembler.py", line 689 in build_match_feature_row
+  File "<repo-root>/ml/views/pre_match_report.py", line 115 in pre_match_inputs
+  File "<repo-root>/api/routes/pre_match_report.py", line 255 in pre_match_report
+  File "<repo-root>/api/routes/briefing.py", line 120 in briefing
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1033 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f767effd6c0 (most recent call first):
+  File "/usr/lib/python3.11/threading.py", line 320 in wait
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 451 in result
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py", line 338 in call
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 353 in handle_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1076 in _send_single_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1043 in _send_handling_redirects
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1008 in _send_handling_auth
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 980 in send
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 797 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 454 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1113 in get
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 482 in get
+  File "<repo-root>/scripts/phase10_live_sync_stress.py", line 123 in _run
+  File "/usr/lib/python3.11/threading.py", line 975 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f767f7fe6c0 (most recent call first):
+  File "/usr/lib/python3.11/threading.py", line 320 in wait
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 451 in result
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py", line 338 in call
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 353 in handle_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1076 in _send_single_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1043 in _send_handling_redirects
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1008 in _send_handling_auth
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 980 in send
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 797 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 454 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1113 in get
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 482 in get
+  File "<repo-root>/scripts/phase10_live_sync_stress.py", line 123 in _run
+  File "/usr/lib/python3.11/threading.py", line 975 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f767ffff6c0 (most recent call first):
+  File "/usr/lib/python3.11/threading.py", line 320 in wait
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 451 in result
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py", line 338 in call
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 353 in handle_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1076 in _send_single_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1043 in _send_handling_redirects
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1008 in _send_handling_auth
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 980 in send
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 797 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 454 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1113 in get
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 482 in get
+  File "<repo-root>/scripts/phase10_live_sync_stress.py", line 123 in _run
+  File "/usr/lib/python3.11/threading.py", line 975 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f768cb0d6c0 (most recent call first):
+  File "/usr/lib/python3.11/threading.py", line 320 in wait
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 451 in result
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py", line 338 in call
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 353 in handle_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1076 in _send_single_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1043 in _send_handling_redirects
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1008 in _send_handling_auth
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 980 in send
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 797 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 454 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1113 in get
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 482 in get
+  File "<repo-root>/scripts/phase10_live_sync_stress.py", line 123 in _run
+  File "/usr/lib/python3.11/threading.py", line 975 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f768d30e6c0 (most recent call first):
+  File "/usr/lib/python3.11/threading.py", line 320 in wait
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 451 in result
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py", line 338 in call
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 353 in handle_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1076 in _send_single_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1043 in _send_handling_redirects
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1008 in _send_handling_auth
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 980 in send
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 797 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 454 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1113 in get
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 482 in get
+  File "<repo-root>/scripts/phase10_live_sync_stress.py", line 123 in _run
+  File "/usr/lib/python3.11/threading.py", line 975 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f768db0f6c0 (most recent call first):
+  File "/usr/lib/python3.11/threading.py", line 320 in wait
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 451 in result
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py", line 338 in call
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 353 in handle_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1076 in _send_single_request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1043 in _send_handling_redirects
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1008 in _send_handling_auth
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 980 in send
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 797 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 454 in request
+  File "<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py", line 1113 in get
+  File "<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py", line 482 in get
+  File "<repo-root>/scripts/phase10_live_sync_stress.py", line 123 in _run
+  File "/usr/lib/python3.11/threading.py", line 975 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f768e4106c0 (most recent call first):
+  File "/usr/lib/python3.11/selectors.py", line 468 in select
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 1884 in _run_once
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 607 in run_forever
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 640 in run_until_complete
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118 in run
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 2481 in run
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/_core/_eventloop.py", line 83 in run
+  File "<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py", line 536 in run_blocking_portal
+  File "/usr/lib/python3.11/threading.py", line 975 in run
+  File "/usr/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/usr/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f76deff9040 (most recent call first):
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/_connection_base.py", line 480 in _exec_command
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/_connection_base.py", line 585 in _commit_gen
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py", line 484 in wait
+  File "<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py", line 305 in commit
+  File "<repo-root>/database/connection.py", line 43 in connection
+  File "/usr/lib/python3.11/contextlib.py", line 144 in __exit__
+  File "<repo-root>/database/connection.py", line 50 in cursor
+  File "/usr/lib/python3.11/contextlib.py", line 144 in __exit__
+  File "<repo-root>/data/metrics/compute.py", line 191 in _fetch_team_scouting_observations
+  File "<repo-root>/data/metrics/compute.py", line 427 in compute_event_team_metrics
+  File "<repo-root>/data/orchestrator.py", line 1145 in after_watch_sync
+  File "<repo-root>/scripts/phase10_live_sync_stress.py", line 236 in simulate
+  File "<repo-root>/scripts/phase10_live_sync_stress.py", line 277 in main
+  File "<string>", line 6 in <module>

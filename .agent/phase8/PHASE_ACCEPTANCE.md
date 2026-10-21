@@ -95,10 +95,8 @@ audit on 2026-10-19 (section 6) re-verified this record against the repository a
 - **P8-R4:** deployment is needed to share the report.
 - **P8-R5:** slow routes.
 - **P8-R6:** Phase 7 carry-overs.
-- **P8-R7:** no successful live coach submission.
-- **P8-R9:** accessibility items.
 - **P8-R10:** the smoke script's request bodies are a copy.
-- **P8-R11:** A4 print unverified.
+- **P8-R11:** A4 print; fixed and verified locally, with the model-populated sections still open (section 9).
 - **P8-R14:** test reliability under load.
 - **P8-R15:** duplicate loading and error components in the Phase 5 and dashboard areas (final audit).
 
@@ -106,6 +104,8 @@ audit on 2026-10-19 (section 6) re-verified this record against the repository a
 - **P8-R8:** deviation ratification (P8-D2).
 - **P8-R13:** the Overview fallback (D1.2 ruling).
 - **P8-R12:** local paths in the evidence. Closed 2026-10-19 after the merge (section 8).
+- **P8-R7:** live coach submission. Closed 2026-10-19 (section 9).
+- **P8-R9:** accessibility items. Closed 2026-10-19 (section 9).
 
 ---
 
@@ -273,3 +273,34 @@ Phase 9 are NOT authorized** and need separate, explicit authorization.
 2. all five sanitized copies are in `main` and labelled;
 3. each original is intact locally: its blob hash equals the hash recorded in its sanitized copy;
 4. the merged Phase 8 content contains no username, home-directory path or temporary local path.
+
+---
+
+## 9. Closeout work (2026-10-19, uncommitted)
+
+Done under Sven Morais's closeout instruction. Evidence is in `runs/closeout_2026-10-19.md`; the raw files are kept
+locally, outside the repository.
+
+**What changed:**
+
+| Item | Outcome |
+|---|---|
+| **R11** A4 print | **Fixed and verified** for all locally servable content: pagination fixed (16 → 10 pages), every page inspected. **The model-populated sections stay unverified (OPEN, depends on R1)** |
+| **R7** live coach write | **Verified and CLOSED.** On a new, empty, migrated database with synthetic data: 201/201 with exactly 2 rows persisted and matching what was sent; 403 with no token, a wrong token, and a wrong token afterwards; serving and the test database untouched; the database dropped |
+| **R9** accessibility | **Fixed, verified and CLOSED** (all five items), with tests proven against the old code and checks in real Chromium |
+| **P8-DM2** `predicted_flow` | **A decision was prepared, not implemented:** `decisions/P8_D3_PREDICTED_FLOW_PROPOSED_2026-10-19.md` (PROPOSED). Serving it changes the locked entry `not_produced.predicted_flow`, which needs Sven's approval (P7-DM2, P7-Q12). **P8-DM2 stays NOT MET and deferred** |
+
+**Checks after the changes:**
+- frontend: 165 passed, 3 of 3 runs; type check, lint (8 baseline warnings) and build pass;
+- contract and docs tests: 74 passed;
+- generated types current; contract lock unchanged; live smoke ALL OK;
+- the frozen spec hashes are unchanged.
+
+The backend suite was not re-run, because only frontend files changed. Its result stays **exit 1** (2,489 passed, 5
+known baseline failures, 5 skipped, 1 xfailed).
+
+**Status unchanged:**
+- Phase 8 is **conditionally accepted, not fully complete**, and the MASTER_BUILD gate is not satisfied on its own
+  terms.
+- There is no environment-of-record or real-model verification.
+- Alliance selection is refusal-only.

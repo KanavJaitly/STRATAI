@@ -1,0 +1,5 @@
+    269 Traceback (most recent call last):
+    265     await self.app(scope, receive_or_disconnect, send_no_error)
+    261 psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "stratai_test_p10_16201" does not exist
+      4 psycopg.OperationalError: the connection is lost
+      4 psycopg.errors.AdminShutdown: terminating connection due to administrator command

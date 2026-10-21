@@ -1,0 +1,340 @@
+{
+ "captured_at": "2026-10-21T01:38:14.061926+00:00",
+ "epa_source": "statbotics",
+ "disposable_database": "stratai_test_p10_16201",
+ "event": "2024casj",
+ "matches": 93,
+ "teams": 42,
+ "matches_per_poll": 20,
+ "readers": 6,
+ "polls": [
+  {
+   "completed": 20,
+   "poll_seconds": 9.932,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 40,
+   "poll_seconds": 11.357,
+   "error": null,
+   "problems": [],
+   "problem_count": 0
+  },
+  {
+   "completed": 60,
+   "poll_seconds": 14.476,
+   "error": null,
+   "problems": [
+    "668: metrics 500",
+    "670: metrics 500",
+    "841: metrics 500",
+    "972: metrics 500",
+    "987: metrics 500",
+    "1351: metrics 500",
+    "1678: metrics 500",
+    "1868: metrics 500",
+    "1967: metrics 500",
+    "2035: metrics 500",
+    "2073: metrics 500",
+    "2288: metrics 500",
+    "2367: metrics 500",
+    "2473: metrics 500",
+    "2813: metrics 500",
+    "3008: metrics 500",
+    "3189: metrics 500",
+    "3256: metrics 500",
+    "3309: metrics 500",
+    "3859: metrics 500"
+   ],
+   "problem_count": 37
+  }
+ ],
+ "load": {
+  "calls": 444,
+  "by_view": {
+   "metrics": {
+    "calls": 65,
+    "statuses": {
+     "200": 25,
+     "500": 40
+    },
+    "latency_s": {
+     "median": 0.072,
+     "p95": 0.121,
+     "max": 0.144
+    }
+   },
+   "event_matches": {
+    "calls": 75,
+    "statuses": {
+     "200": 32,
+     "500": 43
+    },
+    "latency_s": {
+     "median": 0.098,
+     "p95": 0.158,
+     "max": 0.27
+    }
+   },
+   "event_teams": {
+    "calls": 65,
+    "statuses": {
+     "200": 40,
+     "500": 25
+    },
+    "latency_s": {
+     "median": 0.117,
+     "p95": 0.195,
+     "max": 0.476
+    }
+   },
+   "briefing": {
+    "calls": 62,
+    "statuses": {
+     "200": 31,
+     "500": 31
+    },
+    "latency_s": {
+     "median": 0.871,
+     "p95": 2.247,
+     "max": 4.598
+    }
+   },
+   "report": {
+    "calls": 57,
+    "statuses": {
+     "200": 29,
+     "500": 28
+    },
+    "latency_s": {
+     "median": 1.839,
+     "p95": 4.44,
+     "max": 86.847
+    }
+   },
+   "strength": {
+    "calls": 64,
+    "statuses": {
+     "200": 37,
+     "500": 27
+    },
+    "latency_s": {
+     "median": 0.334,
+     "p95": 0.427,
+     "max": 84.398
+    }
+   },
+   "analysis": {
+    "calls": 56,
+    "statuses": {
+     "200": 21,
+     "404": 7,
+     "500": 28
+    },
+    "latency_s": {
+     "median": 0.115,
+     "p95": 14.917,
+     "max": 100.945
+    }
+   }
+  },
+  "crashes": [],
+  "server_errors": 222
+ },
+ "stall": {
+  "call": "analysis",
+  "seconds": 99.5,
+  "stacks": {
+   "139680738678464": [
+    "  File \"/usr/lib/python3.11/threading.py\", line 995, in _bootstrap\n    self._bootstrap_inner()\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 1038, in _bootstrap_inner\n    self.run()\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1033, in run\n    result = context.run(func, *args)\n",
+    "  File \"<repo-root>/api/routes/strength.py\", line 71, in team_strength\n    if not event_exists(database, event_key):\n",
+    "  File \"<repo-root>/ml/features/roster.py\", line 34, in event_exists\n    cursor.execute(\"SELECT 1 FROM events WHERE event_key = %s\", (event_key,))\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/cursor.py\", line 113, in execute\n    self._conn.wait(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py\", line 484, in wait\n    return waiting.wait(gen, self.pgconn.socket, interval=interval)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/_cursor_base.py\", line 206, in _execute_gen\n    yield from self._maybe_prepare_gen(pgq, prepare=prepare, binary=binary)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/_cursor_base.py\", line 286, in _maybe_prepare_gen\n    self._execute_send(pgq, binary=binary)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/_cursor_base.py\", line 449, in _execute_send\n    self._pgconn.send_query_params(\n"
+   ],
+   "139680767002304": [
+    "  File \"<repo-root>/database/connection.py\", line 87, in read_snapshot\n    with psycopg.connect(config.database_url, **config.connect_kwargs()) as conn:\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py\", line 150, in connect\n    return rv\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/waiting.py\", line 121, in wait_conn\n    except StopIteration as ex:\n",
+    "  File \"/usr/lib/python3.11/selectors.py\", line 481, in select\n    return ready\n"
+   ],
+   "139680750216896": [
+    "  File \"/usr/lib/python3.11/threading.py\", line 995, in _bootstrap\n    self._bootstrap_inner()\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 1038, in _bootstrap_inner\n    self.run()\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1033, in run\n    result = context.run(func, *args)\n",
+    "  File \"<repo-root>/api/routes/pre_match_report.py\", line 255, in pre_match_report\n    found = pre_match_inputs(database, match_key, when, epa_provider=epa_source.provider,\n",
+    "  File \"<repo-root>/ml/views/pre_match_report.py\", line 116, in pre_match_inputs\n    strengths = [(colour, build_team_strength(database, team.team_number, event_key, moment,\n",
+    "  File \"<repo-root>/ml/features/roster.py\", line 93, in get_match_competition_level\n    return None if row is None else row[0]\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/cursor.py\", line 118, in execute\n    return self\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py\", line 484, in wait\n    return waiting.wait(gen, self.pgconn.socket, interval=interval)\n"
+   ],
+   "139680758609600": [
+    "  File \"/usr/lib/python3.11/threading.py\", line 995, in _bootstrap\n    self._bootstrap_inner()\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 1038, in _bootstrap_inner\n    self.run()\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1033, in run\n    result = context.run(func, *args)\n",
+    "  File \"/usr/lib/python3.11/queue.py\", line 165, in get\n    with self.not_empty:\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 330, in wait\n    if not gotit:\n"
+   ],
+   "139680775395008": [
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/_connection_base.py\", line 441, in _connect_gen\n    pgconn = yield from generators.connect(conninfo, timeout=timeout)\n"
+   ],
+   "139680783787712": [
+    "  File \"<repo-root>/database/connection.py\", line 40, in connection\n    with psycopg.connect(self._config.database_url, **self._config.connect_kwargs()) as conn:\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/connection.py\", line 150, in connect\n    return rv\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/waiting.py\", line 121, in wait_conn\n    except StopIteration as ex:\n",
+    "  File \"/usr/lib/python3.11/selectors.py\", line 203, in __exit__\n    self.close()\n"
+   ],
+   "139680792180416": [
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/psycopg/_connection_base.py\", line 443, in _connect_gen\n    return conn\n"
+   ],
+   "139681272886976": [
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 482, in get\n    return super().get(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1113, in get\n    return self.request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 454, in request\n    return super().request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 797, in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 980, in send\n    response = self._send_handling_auth(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1008, in _send_handling_auth\n    response = self._send_handling_redirects(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1043, in _send_handling_redirects\n    response = self._send_single_request(request)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1076, in _send_single_request\n    response = transport.handle_request(request)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 353, in handle_request\n    portal.call(self.app, scope, receive, send)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py\", line 338, in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n",
+    "  File \"/usr/lib/python3.11/concurrent/futures/_base.py\", line 451, in result\n    self._condition.wait(timeout)\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 320, in wait\n    waiter.acquire()\n"
+   ],
+   "139681281279680": [
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 482, in get\n    return super().get(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1113, in get\n    return self.request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 454, in request\n    return super().request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 797, in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 990, in send\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1028, in _send_handling_auth\n    auth_flow.close()\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1050, in _send_handling_redirects\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1094, in _send_single_request\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 373, in handle_request\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py\", line 338, in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n",
+    "  File \"/usr/lib/python3.11/concurrent/futures/_base.py\", line 461, in result\n    self = None\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 330, in wait\n    if not gotit:\n"
+   ],
+   "139681289672384": [
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 482, in get\n    return super().get(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1113, in get\n    return self.request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 454, in request\n    return super().request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 797, in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 990, in send\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1028, in _send_handling_auth\n    auth_flow.close()\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1050, in _send_handling_redirects\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1094, in _send_single_request\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 373, in handle_request\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py\", line 338, in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n",
+    "  File \"/usr/lib/python3.11/concurrent/futures/_base.py\", line 461, in result\n    self = None\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 330, in wait\n    if not gotit:\n"
+   ],
+   "139681298065088": [
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 482, in get\n    return super().get(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1113, in get\n    return self.request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 454, in request\n    return super().request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 797, in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 980, in send\n    response = self._send_handling_auth(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1008, in _send_handling_auth\n    response = self._send_handling_redirects(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1043, in _send_handling_redirects\n    response = self._send_single_request(request)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1076, in _send_single_request\n    response = transport.handle_request(request)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 353, in handle_request\n    portal.call(self.app, scope, receive, send)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py\", line 338, in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n",
+    "  File \"/usr/lib/python3.11/concurrent/futures/_base.py\", line 451, in result\n    self._condition.wait(timeout)\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 320, in wait\n    waiter.acquire()\n"
+   ],
+   "139681307506368": [
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 482, in get\n    return super().get(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1113, in get\n    return self.request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 454, in request\n    return super().request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 797, in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 980, in send\n    response = self._send_handling_auth(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1008, in _send_handling_auth\n    response = self._send_handling_redirects(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1043, in _send_handling_redirects\n    response = self._send_single_request(request)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1076, in _send_single_request\n    response = transport.handle_request(request)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 353, in handle_request\n    portal.call(self.app, scope, receive, send)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py\", line 338, in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n",
+    "  File \"/usr/lib/python3.11/concurrent/futures/_base.py\", line 451, in result\n    self._condition.wait(timeout)\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 320, in wait\n    waiter.acquire()\n"
+   ],
+   "139681315899072": [
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 482, in get\n    return super().get(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1113, in get\n    return self.request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 454, in request\n    return super().request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 797, in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 990, in send\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1028, in _send_handling_auth\n    auth_flow.close()\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1050, in _send_handling_redirects\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1094, in _send_single_request\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 373, in handle_request\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py\", line 338, in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n",
+    "  File \"/usr/lib/python3.11/concurrent/futures/_base.py\", line 461, in result\n    self = None\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 330, in wait\n    if not gotit:\n"
+   ],
+   "139681324291776": [
+    "  File \"/usr/lib/python3.11/threading.py\", line 995, in _bootstrap\n    self._bootstrap_inner()\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 1038, in _bootstrap_inner\n    self.run()\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 975, in run\n    self._target(*self._args, **self._kwargs)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py\", line 536, in run_blocking_portal\n    run_eventloop(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/_core/_eventloop.py\", line 83, in run\n    return async_backend.run(func, args, {}, backend_options)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 2481, in run\n    return runner.run(wrapper())\n",
+    "  File \"/usr/lib/python3.11/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n",
+    "  File \"/usr/lib/python3.11/asyncio/base_events.py\", line 640, in run_until_complete\n    self.run_forever()\n",
+    "  File \"/usr/lib/python3.11/asyncio/base_events.py\", line 607, in run_forever\n    self._run_once()\n",
+    "  File \"/usr/lib/python3.11/asyncio/base_events.py\", line 1923, in _run_once\n    handle = None  # Needed to break cycles when an exception occurs.\n",
+    "  File \"/usr/lib/python3.11/selectors.py\", line 481, in select\n    return ready\n"
+   ],
+   "139681332684480": [
+    "  File \"/usr/lib/python3.11/threading.py\", line 995, in _bootstrap\n    self._bootstrap_inner()\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 1038, in _bootstrap_inner\n    self.run()\n",
+    "  File \"<repo-root>/scripts/phase10_live_sync_stress.py\", line 111, in run\n    self.stall = {\"call\": oldest[0], \"seconds\": round(oldest[1], 1), **stall_diagnostics(self.url)}\n",
+    "  File \"<repo-root>/scripts/phase10_live_sync_stress.py\", line 81, in stall_diagnostics\n    stacks = {str(tid): traceback.format_stack(frame)[-12:] for tid, frame in sys._current_frames().items()}\n"
+   ],
+   "139682611941440": [
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 482, in get\n    return super().get(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1113, in get\n    return self.request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 454, in request\n    return super().request(\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 797, in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 990, in send\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1028, in _send_handling_auth\n    auth_flow.close()\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1050, in _send_handling_redirects\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/httpx2/_client.py\", line 1094, in _send_single_request\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/starlette/testclient.py\", line 373, in handle_request\n    return response\n",
+    "  File \"<repo-root>/venv/lib/python3.11/site-packages/anyio/from_thread.py\", line 338, in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n",
+    "  File \"/usr/lib/python3.11/concurrent/futures/_base.py\", line 461, in result\n    self = None\n",
+    "  File \"/usr/lib/python3.11/threading.py\", line 330, in wait\n    if not gotit:\n"
+   ]
+  },
+  "database_sessions": [
+   [
+    "28149",
+    "idle in transaction",
+    "Client",
+    "ClientRead",
+    "0:00:00.042148",
+    "\n            SELECT so.match_key, so.event_key, so.team_number, so.scout_identifier,\n                   so.defense_rating, so.feeding_rating, so.notes, so.sourc"
+   ],
+   [
+    "28164",
+    "active",
+    "None",
+    "None",
+    "-1 day, 23:59:59.955986",
+    "\nSELECT m.event_key FROM match_teams mt JOIN matches m ON m.match_key = mt.match_key\nWHERE mt.team_number = $1 AND m.season = $2 AND m.scheduled_time IS NOT NUL"
+   ],
+   [
+    "ungranted locks"
+   ]
+  ]
+ },
+ "disposable_dropped": true,
+ "elapsed_seconds": 166.9,
+ "ok": false
+}

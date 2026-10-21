@@ -116,6 +116,16 @@ def _phase7_paths() -> set[str]:
     return set(re.findall(r"`(?:GET|POST|PUT|DELETE) (/[^`]+)`", section))
 
 
+def _phase9_paths() -> set[str]:
+    """Phase 9's endpoint (the readable briefing), documented in docs/phase9.md's "Endpoints owned by Phase 9"
+    section and pinned by tests/test_phase9_briefing_api.py -- out of this page's scope like the Phase 7 ones
+    (2026-10-20, P9-M4). It serves no ScoringProfile; its reliability fact states the INTERIM caveat in words
+    (tests/test_phase9_briefing.py)."""
+    text = (Path(__file__).resolve().parents[1] / "docs" / "phase9.md").read_text(encoding="utf-8")
+    section = text.split("## Endpoints owned by Phase 9", 1)[1].split("\n## ", 1)[0]
+    return set(re.findall(r"`(?:GET|POST|PUT|DELETE) (/[^`]+)`", section))
+
+
 @pytest.fixture(scope="module")
 def docs_text() -> str:
     assert DOCS_PATH.exists(), f"{DOCS_PATH} is missing"
@@ -377,7 +387,7 @@ def monkeypatch_module_env():
 
 
 def test_documented_endpoints_are_exactly_the_live_ones(docs_text: str, openapi_schema: dict):
-    live = {p for p in openapi_schema["paths"] if not p.startswith("/human-inputs")}         - PROBE_PATHS - ML_PREDICTION_PATHS - PHASE5_PATHS - _phase7_paths() - EXPLORER_PATHS
+    live = {p for p in openapi_schema["paths"] if not p.startswith("/human-inputs")}         - PROBE_PATHS - ML_PREDICTION_PATHS - PHASE5_PATHS - _phase7_paths() - EXPLORER_PATHS - _phase9_paths()
     documented = set(re.findall(r"^GET (/\S+)$", docs_text, flags=re.MULTILINE))
     assert documented, "section 8 documents no endpoint"
     assert live == documented, (
@@ -415,7 +425,7 @@ def test_reliability_score_placeholder_caveat_reaches_the_served_schema(openapi_
         operation["description"]
         for path, item in openapi_schema["paths"].items()
         if path not in PROBE_PATHS and path not in ML_PREDICTION_PATHS and path not in PHASE5_PATHS
-        and path not in _phase7_paths() and path not in EXPLORER_PATHS and not path.startswith("/human-inputs")
+        and path not in _phase7_paths() and path not in EXPLORER_PATHS and path not in _phase9_paths() and not path.startswith("/human-inputs")
         for operation in item.values()
     ]
     assert endpoints, "no non-probe endpoint to check"

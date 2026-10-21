@@ -1,0 +1,311 @@
+{
+ "captured_at": "2026-10-20T22:43:28.301854+00:00",
+ "static_violations": [],
+ "import_check": {
+  "imported": 210,
+  "failures": {},
+  "operations": 46,
+  "ok": true,
+  "modules": 210
+ },
+ "inventory": [
+  "GET /events/{event_key}/alliance-selection/candidates",
+  "GET /events/{event_key}/analysis",
+  "GET /events/{event_key}/qualification-forecast",
+  "GET /human-inputs/capability-profiles/{profile_key}/recommendation",
+  "GET /matches/{match_key}/pre-match-report",
+  "GET /predictions/events/{event_key}/ranking",
+  "GET /predictions/matches/{match_key}/win-probability",
+  "GET /teams/{team_number}/events/{event_key}/metrics",
+  "GET /teams/{team_number}/events/{event_key}/strength",
+  "POST /events/{event_key}/alliance-selection/pick-list",
+  "POST /predictions/alliance-synergy",
+  "POST /predictions/win-probability",
+  "POST /strategy/hypothetical/assess",
+  "POST /strategy/hypothetical/compare",
+  "POST /strategy/hypothetical/recommend",
+  "POST /strategy/matches/{match_key}/assess",
+  "POST /strategy/matches/{match_key}/compare",
+  "POST /strategy/matches/{match_key}/recommend"
+ ],
+ "unclassified_operations": [],
+ "disconnection_check": {
+  "ok": true,
+  "operations_compared": 18,
+  "differing": [],
+  "connected_briefing": [
+   {
+    "url": "/matches/2026mrcmp_qm1/briefing?as_of=2026-06-01T00:00:00Z",
+    "status": 200,
+    "mode": "deterministic",
+    "fallback_reason": "no_credential"
+   }
+  ],
+  "runs": {
+   "disconnected": [
+    {
+     "operation": "GET /events/{event_key}/analysis",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "2c5872e2e180bcfc33b0787840bb4b284f1c03dc20eb3b5b4543b1456d13d823"
+    },
+    {
+     "operation": "GET /events/{event_key}/qualification-forecast",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "1439d53b173c8281988304e76c335ae1a4b4c44b104ca16996c31d5b7b2aaaee"
+    },
+    {
+     "operation": "GET /events/{event_key}/alliance-selection/candidates",
+     "status": 200,
+     "code": null,
+     "ok": true,
+     "body_sha256": "afa7f916911c9c053edf5aa01506d2d9e0c6ef78cc11660b9010b871f7baa411"
+    },
+    {
+     "operation": "POST /events/{event_key}/alliance-selection/pick-list",
+     "status": 409,
+     "code": "not_approved",
+     "ok": true,
+     "body_sha256": "5b924096af90abe6cdbf3331b248175cc062471574789715ff61af803ef73ff1"
+    },
+    {
+     "operation": "GET /predictions/events/{event_key}/ranking",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "3c9bbc909b70ac8992f8a17772fe44bc735f4f2536dd9c93556eca98e0421dc5"
+    },
+    {
+     "operation": "GET /predictions/matches/{match_key}/win-probability",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "1439d53b173c8281988304e76c335ae1a4b4c44b104ca16996c31d5b7b2aaaee"
+    },
+    {
+     "operation": "POST /predictions/win-probability",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "1439d53b173c8281988304e76c335ae1a4b4c44b104ca16996c31d5b7b2aaaee"
+    },
+    {
+     "operation": "POST /predictions/alliance-synergy",
+     "status": 200,
+     "code": null,
+     "ok": true,
+     "body_sha256": "9e796154df3b7b9b14f178a1accd021ce11f5e1ec2a704b3532c45159df51b53"
+    },
+    {
+     "operation": "POST /strategy/matches/{match_key}/assess",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "POST /strategy/matches/{match_key}/recommend",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "POST /strategy/matches/{match_key}/compare",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "POST /strategy/hypothetical/assess",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "POST /strategy/hypothetical/recommend",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "POST /strategy/hypothetical/compare",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "GET /matches/{match_key}/pre-match-report",
+     "status": 200,
+     "code": null,
+     "ok": true,
+     "body_sha256": "2a53782756401a963b48dc8b032877a8c7e6d20cd6aaec2707fb2fde28ba5204"
+    },
+    {
+     "operation": "GET /teams/{team_number}/events/{event_key}/strength",
+     "status": 200,
+     "code": null,
+     "ok": true,
+     "body_sha256": "c66dcdb417d34b702da0719fcbbf248adf1b1c2044ee422ea2e88f7c79a805f8"
+    },
+    {
+     "operation": "GET /teams/{team_number}/events/{event_key}/metrics",
+     "status": 200,
+     "code": null,
+     "ok": true,
+     "body_sha256": "65d7479327ea9f7a714f797de15b0b032d1fc210328c1c73f2f1683078de4dda"
+    },
+    {
+     "operation": "GET /human-inputs/capability-profiles/{profile_key}/recommendation",
+     "status": 404,
+     "code": "not_found",
+     "ok": true,
+     "body_sha256": "06b4ee8b53d2b32fe7f9ffcfa9ebbab67377991a86d272e7be1d1d49da14f307"
+    }
+   ],
+   "connected": [
+    {
+     "operation": "GET /events/{event_key}/analysis",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "2c5872e2e180bcfc33b0787840bb4b284f1c03dc20eb3b5b4543b1456d13d823"
+    },
+    {
+     "operation": "GET /events/{event_key}/qualification-forecast",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "1439d53b173c8281988304e76c335ae1a4b4c44b104ca16996c31d5b7b2aaaee"
+    },
+    {
+     "operation": "GET /events/{event_key}/alliance-selection/candidates",
+     "status": 200,
+     "code": null,
+     "ok": true,
+     "body_sha256": "afa7f916911c9c053edf5aa01506d2d9e0c6ef78cc11660b9010b871f7baa411"
+    },
+    {
+     "operation": "POST /events/{event_key}/alliance-selection/pick-list",
+     "status": 409,
+     "code": "not_approved",
+     "ok": true,
+     "body_sha256": "5b924096af90abe6cdbf3331b248175cc062471574789715ff61af803ef73ff1"
+    },
+    {
+     "operation": "GET /predictions/events/{event_key}/ranking",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "3c9bbc909b70ac8992f8a17772fe44bc735f4f2536dd9c93556eca98e0421dc5"
+    },
+    {
+     "operation": "GET /predictions/matches/{match_key}/win-probability",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "1439d53b173c8281988304e76c335ae1a4b4c44b104ca16996c31d5b7b2aaaee"
+    },
+    {
+     "operation": "POST /predictions/win-probability",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "1439d53b173c8281988304e76c335ae1a4b4c44b104ca16996c31d5b7b2aaaee"
+    },
+    {
+     "operation": "POST /predictions/alliance-synergy",
+     "status": 200,
+     "code": null,
+     "ok": true,
+     "body_sha256": "9e796154df3b7b9b14f178a1accd021ce11f5e1ec2a704b3532c45159df51b53"
+    },
+    {
+     "operation": "POST /strategy/matches/{match_key}/assess",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "POST /strategy/matches/{match_key}/recommend",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "POST /strategy/matches/{match_key}/compare",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "POST /strategy/hypothetical/assess",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "POST /strategy/hypothetical/recommend",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "POST /strategy/hypothetical/compare",
+     "status": 404,
+     "code": "model_not_loaded",
+     "ok": true,
+     "body_sha256": "6ec3dd50dd99f9010781ea15f77f32fbfbd06dde348876f1469d95ed9e736175"
+    },
+    {
+     "operation": "GET /matches/{match_key}/pre-match-report",
+     "status": 200,
+     "code": null,
+     "ok": true,
+     "body_sha256": "2a53782756401a963b48dc8b032877a8c7e6d20cd6aaec2707fb2fde28ba5204"
+    },
+    {
+     "operation": "GET /teams/{team_number}/events/{event_key}/strength",
+     "status": 200,
+     "code": null,
+     "ok": true,
+     "body_sha256": "c66dcdb417d34b702da0719fcbbf248adf1b1c2044ee422ea2e88f7c79a805f8"
+    },
+    {
+     "operation": "GET /teams/{team_number}/events/{event_key}/metrics",
+     "status": 200,
+     "code": null,
+     "ok": true,
+     "body_sha256": "65d7479327ea9f7a714f797de15b0b032d1fc210328c1c73f2f1683078de4dda"
+    },
+    {
+     "operation": "GET /human-inputs/capability-profiles/{profile_key}/recommendation",
+     "status": 404,
+     "code": "not_found",
+     "ok": true,
+     "body_sha256": "06b4ee8b53d2b32fe7f9ffcfa9ebbab67377991a86d272e7be1d1d49da14f307"
+    },
+    {
+     "url": "/matches/2026mrcmp_qm1/briefing?as_of=2026-06-01T00:00:00Z",
+     "status": 200,
+     "mode": "deterministic",
+     "fallback_reason": "no_credential"
+    }
+   ]
+  },
+  "epa_source": "statbotics"
+ },
+ "ok": true
+}

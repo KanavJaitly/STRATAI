@@ -1,0 +1,40 @@
+{
+ "captured_at": "2026-10-20T22:41:16.436850+00:00",
+ "event": "2026mrcmp",
+ "epa_source": "statbotics",
+ "seed": 9,
+ "qualification_matches": 132,
+ "sampled": 40,
+ "built": 40,
+ "refused": {},
+ "elapsed_seconds": 37.4,
+ "stopped_by_time_budget": false,
+ "models_loaded_note": "Reports are built with whatever models the API loads. Locally none are registered (P9-R4): the forecast and strategy are absences, so real model-populated reports are somewhat larger (more facts' worth of strategy text).",
+ "sizes_bytes": {
+  "system_prompt": 1599,
+  "output_schema": 679,
+  "facts_message": {
+   "min": 10416,
+   "median": 10583.5,
+   "max": 11804
+  },
+  "reference_output": {
+   "min": 2190,
+   "median": 2211.0,
+   "max": 2292
+  }
+ },
+ "facts_per_report": {
+  "min": 55,
+  "median": 55.0,
+  "max": 58
+ },
+ "tokens": {
+  "status": "BLOCKED",
+  "reason": "no_credential (P9-R1)"
+ },
+ "cost_per_event": {
+  "status": "BLOCKED",
+  "reason": "needs measured tokens"
+ }
+}

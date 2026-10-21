@@ -1,0 +1,5 @@
+# Phase 9 (P9-Q1, P9-Q5): the optional LLM briefing formatter. Install it only where the LLM layer is used:
+#   pip install -r requirements.txt -r requirements-briefing.txt
+# requirements.txt (the core) must never list an LLM SDK; tests/test_phase9_zero_llm.py checks both files.
+# Without this package the API still serves every route; the briefing is then the deterministic one (sdk_unavailable).
+anthropic>=1.16,<2
