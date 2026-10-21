@@ -1,0 +1,6 @@
+P10-R1 regression tests against the pre-fix code paths (ad hoc, 2026-10-21)
+Command: PYTHONPATH=. venv/bin/python .agent/phase10/runs/p10_r1_prefix_check.py   (DATABASE_URL=<stratai_test>; no DB access)
+body limit: FAILS against pre-fix as expected: AssertionError()
+epa burst: FAILS against pre-fix as expected: AssertionError()
+Pre-fix chunked oversized upload (minimal app reproducing the route): status 500, code internal_error (ClientDisconnect)
+With the fix: 413 payload_too_large (tests/test_phase10_hardening.py)

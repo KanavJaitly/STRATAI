@@ -32,3 +32,7 @@ branch: phase8/build, uncommitted
 ## Gaps
 - No real strategy model is available, so the AI recommendation, compare and odds were never seen on real data.
 - A live successful coach write was not run.
+
+## Closeout 2026-10-19
+- **P8-R7 closed:** a live coach write was verified on a disposable, empty, migrated database with synthetic data (201/201, exactly 2 rows, matching what was sent, refusals stored nothing, the database dropped). See `runs/closeout_2026-10-19.md`.
+- **Busy actions:** "Evaluate side by side" is `aria-disabled` with a guard while busy, and its result is announced in a persistent status line (P8-R9).

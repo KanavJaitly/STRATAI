@@ -304,6 +304,9 @@ PHASE7_PATHS: frozenset[str] = frozenset({
     # P7-M7 (P7-Q12): pre-match report data.
     "/matches/{match_key}/pre-match-report",
 })
+# Phase 9 adds its one endpoint the same way (P9-M4, 2026-10-20): the readable briefing. It is optional: an app
+# built without the `briefing` package serves PRE_PHASE7_PATHS | PHASE7_PATHS only (tests/test_phase9_zero_llm.py).
+PHASE9_PATHS: frozenset[str] = frozenset({"/matches/{match_key}/briefing"})
 
 
 def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
@@ -317,13 +320,14 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     adds its endpoints the same way (P5-M3: the strength view; P5-M4: event
     analysis; P5-M5: qualification forecasts; the human-input workflows under
     /human-inputs). Phase 7 keeps the pre-Phase 7 list as PRE_PHASE7_PATHS and adds
-    its own endpoints to PHASE7_PATHS, family by family, the same way. It still
+    its own endpoints to PHASE7_PATHS, family by family, the same way, and Phase 9 its
+    briefing to PHASE9_PATHS. It still
     guards the other direction, which has not changed: a test-only
     forced-error route (/_test_boom and friends, registered on locally built
     apps in this module) must never reach the shipped application.
     """
     app = create_app(settings)
-    assert sorted(app.openapi()["paths"]) == sorted(PRE_PHASE7_PATHS | PHASE7_PATHS)
+    assert sorted(app.openapi()["paths"]) == sorted(PRE_PHASE7_PATHS | PHASE7_PATHS | PHASE9_PATHS)
 
 
 # ===========================================================================

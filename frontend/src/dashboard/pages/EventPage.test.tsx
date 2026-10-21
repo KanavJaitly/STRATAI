@@ -49,14 +49,28 @@ describe('EventPage (P8-M2 b)', () => {
     expect(api.calls.filter((c) => c.path.endsWith('/analysis'))).toHaveLength(1)
   })
 
-  it('supports arrow-key navigation between tabs', async () => {
-    mockApi({ 'GET /events': EVENTS, [`GET /events/${EVENT}/analysis`]: ANALYSIS, [`GET /events/${EVENT}/teams`]: TEAMS })
+  it('moves focus with the arrow keys and opens a tab only on Enter or Space (manual activation, P8-R9)', async () => {
+    const api = mockApi({ 'GET /events': EVENTS, [`GET /events/${EVENT}/analysis`]: ANALYSIS, [`GET /events/${EVENT}/teams`]: TEAMS,
+      [`GET /events/${EVENT}/matches`]: MATCHES })
     renderAt(PATTERN, `/events/${EVENT}`, <EventPage />)
+    await screen.findByRole('table', { name: /Predicted ranking/ })
     const first = screen.getByRole('tab', { name: 'Rankings & contenders' })
     first.focus()
-    await userEvent.keyboard('{ArrowRight}')
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}') // past Teams to Matches: focus only
+    expect(screen.getByRole('tab', { name: 'Matches' })).toHaveFocus()
+    expect(screen.getByRole('tab', { name: 'Matches' })).toHaveAttribute('aria-selected', 'false')
+    expect(first).toHaveAttribute('aria-selected', 'true')
+    expect(currentUrl()).toBe(`/events/${EVENT}`) // nothing opened
+    expect(api.calls.filter((c) => c.path.endsWith('/teams') || c.path.endsWith('/matches'))).toHaveLength(0) // no fetch
+    await userEvent.keyboard('{Enter}')
+    expect(screen.getByRole('tab', { name: 'Matches' })).toHaveAttribute('aria-selected', 'true')
+    expect(currentUrl()).toBe(`/events/${EVENT}?tab=matches`)
+    await userEvent.keyboard('{End}') // Home/End also move focus only
+    expect(screen.getByRole('tab', { name: 'Qualification forecast' })).toHaveFocus()
+    await userEvent.keyboard('{Home}{ArrowRight}[Space]')
     expect(screen.getByRole('tab', { name: 'Teams' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tab', { name: 'Teams' })).toHaveFocus()
+    expect(api.calls.filter((c) => c.path.endsWith('/teams'))).toHaveLength(1) // fetched once, on activation
+    expect(api.calls.filter((c) => c.path.endsWith('/qualification-forecast'))).toHaveLength(0) // never opened
   })
 
   it('passes the moment to the time-dependent routes', async () => {

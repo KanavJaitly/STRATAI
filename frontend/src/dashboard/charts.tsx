@@ -17,7 +17,9 @@ export interface ChartPoint {
 const WIDTH = 640
 const BAR_GAP = 6
 const MAX_BAR = 48 // a chart with few points keeps narrow, centred bars instead of one bar across the plot
-const PAD = { top: 12, right: 12, bottom: 54, left: 52 }
+// Margins fit the tick text at its phone size too (18 viewBox units, P8-R9): rotated x labels of up to about 12
+// characters below the axis, and four-digit y ticks clear of the rotated unit title.
+const PAD = { top: 22, right: 12, bottom: 96, left: 80 }
 
 function niceMax(max: number): number {
   if (max <= 0) return 1
@@ -60,7 +62,7 @@ export function BarChart({ title, points, unit, height = 220, digits = 1 }: { ti
             </g>
           ))}
           <line x1={PAD.left} x2={WIDTH - PAD.right} y1={y(0)} y2={y(0)} className="chart-axis" />
-          <text x={14} y={PAD.top + plotH / 2} transform={`rotate(-90 14 ${PAD.top + plotH / 2})`} textAnchor="middle"
+          <text x={22} y={PAD.top + plotH / 2} transform={`rotate(-90 22 ${PAD.top + plotH / 2})`} textAnchor="middle"
             className="chart-tick">{unit}</text>
           {points.map((p, i) => {
             const x = PAD.left + i * slot + (slot - barW) / 2

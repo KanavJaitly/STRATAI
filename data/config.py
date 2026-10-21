@@ -134,6 +134,27 @@ class Settings(BaseSettings):
     # - artifact_store_dir: where uploaded game-manual PDFs are kept write-once, named by sha256.
     human_inputs_write_token: str | None = None
     artifact_store_dir: str = str(PROJECT_ROOT.parent / "StratAI-artifacts" / "uploads")
+    # Phase 9 briefing layer (briefing/, api/routes/briefing.py). Fail closed: the LLM formatter runs only when it is
+    # enabled AND the data egress to the LLM provider is approved (P9-Q3, a human decision) AND a credential resolves;
+    # otherwise the deterministic briefing is served. The credential is never a setting: the Anthropic SDK reads it
+    # from its own chain (ANTHROPIC_API_KEY, ...), so it can never appear in a Settings dump (P9-Q11).
+    briefing_llm_enabled: bool = False
+    briefing_data_egress_approved: bool = False
+    briefing_model: str = "claude-opus-5-5"
+    briefing_max_tokens: int = Field(default=16000, gt=0)
+    briefing_timeout_seconds: float = Field(default=30.0, gt=0)
+
+    # P10-M1 (Phase 7 R6, R7): platform hardening. All have safe defaults.
+    # The largest request body any route but the manual upload accepts (the upload has its own cap).
+    max_request_body_bytes: int = Field(default=1024 * 1024, gt=0)
+    # Every database connection gives up after this many seconds instead of hanging.
+    db_connect_timeout_seconds: int = Field(default=10, gt=0)
+    # The API's statements are cancelled after this many milliseconds (0 = no limit). Long batch jobs build their own
+    # Database without it.
+    api_db_statement_timeout_ms: int = Field(default=60000, ge=0)
+    # After a failed EPA-source load, the API waits this long before trying again, instead of retrying (under a lock)
+    # on every request.
+    epa_source_retry_seconds: float = Field(default=30.0, ge=0)
 
     model_config = ConfigDict(
         case_sensitive=False,

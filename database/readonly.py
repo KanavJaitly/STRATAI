@@ -24,7 +24,7 @@ from database.connection import Database, DatabaseConfig
 class ReadOnlySessionDatabase(Database):
     def __init__(self, config: DatabaseConfig) -> None:
         super().__init__(config)
-        self._conn = psycopg.connect(config.database_url, autocommit=True)
+        self._conn = psycopg.connect(config.database_url, autocommit=True, **config.connect_kwargs())
         with self._conn.cursor() as cursor:
             cursor.execute("SET default_transaction_read_only = on")
 

@@ -134,3 +134,15 @@ Still OPEN, unchanged (P8-R9):
   - Phase 5 write-safety evidence was completed (every write tested).
   - A non-GET `network_error` now warns that the request may have been stored.
   - P8-R15 (duplicated loading and error components) was recorded.
+
+## Closeout (2026-10-19)
+
+The R2 items left open are now **FIXED**, each with a test that fails against the old code and a real-browser check
+(`runs/closeout_2026-10-19.md` §R9):
+- **R2-6 (rest):** persistent status regions for loading, compare, pick list and synergy; `aria-disabled` plus a guard
+  on Evaluate, Rank picks and Score synergy.
+- **R2-7 (rest):** chart ticks render at 11.8 px on phones, and no chart text falls outside its chart.
+- **R2-10:** a sticky first column.
+- **R2-11:** manual tab activation.
+
+R3-6 is unchanged: the write-access check is still not debounced, which is documented as safe.

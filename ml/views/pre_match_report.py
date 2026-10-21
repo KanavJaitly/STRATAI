@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from database.connection import Database
+from database.connection import Database, consistent_reads
 from ml.features.assembler import MatchFeatureRow, build_match_feature_row
 from ml.features.roster import get_match_competition_level, get_match_event_and_scheduled_time
 from ml.features.scale import ScaleLookup
@@ -95,6 +95,7 @@ class PreMatchInputs:
     strategy_absent: Absence | None
 
 
+@consistent_reads
 def pre_match_inputs(database: Database, match_key: str, as_of: datetime, *, epa_provider: Any,
                      strategy_model: Any | None) -> PreMatchInputs:
     """Assemble every engine output for one scheduled match at `min(as_of, scheduled_time)`.

@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -47,6 +48,8 @@ from data.design_reference import (
 )
 from data.game_spec import GameSpec
 from database.connection import Database
+
+logger = logging.getLogger(__name__)
 
 MAX_MANUAL_BYTES = 100 * 1024 * 1024
 PDF_MAGIC = b"%PDF-"
@@ -119,7 +122,9 @@ def store_manual(database: Database, store_dir: Path, *, season: int, game_name:
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         if hashlib.sha256(path.read_bytes()).hexdigest() != sha:
-            raise HumanInputError("storage_integrity", f"{path} exists with different content")
+            # P10-M1 (Phase 7 R11 F7): the message reaches the client, so it names no server path (the log does).
+            logger.error("storage_integrity: %s exists with different content", path)
+            raise HumanInputError("storage_integrity", "a stored manual file with this checksum has different content")
     else:
         temporary = path.with_suffix(".tmp")
         temporary.write_bytes(content)

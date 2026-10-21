@@ -26,3 +26,7 @@ branch: phase8/build, uncommitted
 ## Gaps
 - The report needs a deployment before an alliance partner can open it.
 - Printing to A4 was not verified with a PDF renderer.
+
+## Closeout 2026-10-19
+- **Print pagination fixed and verified on A4** for locally servable content (P8-R11; 16 → 10 pages, every page inspected). The model-populated sections are not printed (depends on P8-R1).
+- **`predicted_flow`:** a decision is PROPOSED (`decisions/P8_D3_…`) and not implemented. **P8-DM2 stays NOT MET.**

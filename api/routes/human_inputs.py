@@ -24,10 +24,12 @@ import hmac
 from http import HTTPStatus
 from pathlib import Path as FsPath
 from typing import Any
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Path, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 from starlette.requests import Request
 
 from api.contract import error_responses
@@ -155,9 +157,12 @@ async def upload_manual(request: Request, season: int = Query(ge=1992), game_nam
     if request.headers.get("content-type", "").split(";")[0].strip() != "application/pdf":
         raise ApiError(status_code=HTTPStatus.UNSUPPORTED_MEDIA_TYPE, code=CODE_UNSUPPORTED_MEDIA_TYPE,
                        message="Upload the manual as the request body with Content-Type: application/pdf.")
-    content = await request.body()
-    row, created = _call(hi.store_manual, database, FsPath(settings.artifact_store_dir), season=season,
-                         game_name=game_name, filename=filename, content=content, uploaded_by=uploaded_by)
+    content = await request.body()  # bounded by api.body_limit (P10-M1, Phase 7 R6)
+    # P10-M1 (Phase 7 R11 F2): hashing, the file write and the database work block, so they run in the threadpool,
+    # never on the event loop.
+    row, created = await run_in_threadpool(_call, hi.store_manual, database, FsPath(settings.artifact_store_dir),
+                                           season=season, game_name=game_name, filename=filename, content=content,
+                                           uploaded_by=uploaded_by)
     body = {"manual": {k: v for k, v in row.items() if k != "storage_path"}, "created": created}
     return body if created else Response(content=_json(body), status_code=HTTPStatus.OK, media_type="application/json")
 
@@ -181,8 +186,16 @@ def get_manuals(season: int | None = Query(default=None), database: Database = D
 def download_manual(manual_id: int = Path(ge=1), database: Database = Depends(get_database)) -> Response:
     row, data = _call(hi.manual_file, database, manual_id)
     return Response(content=data, media_type="application/pdf",
-                    headers={"Content-Disposition": f'attachment; filename="{row["filename"]}"',
+                    headers={"Content-Disposition": content_disposition(row["filename"]),
                              "X-Content-SHA256": row["content_sha256"]})
+
+
+def content_disposition(filename: str) -> str:
+    """P10-M1 (Phase 7 R11 F1): an attachment header that is valid for any stored filename. A raw
+    `filename="..."` with a quote, a backslash or a non-latin-1 character made the download a 500. RFC 6266: an
+    ASCII fallback with every unsafe character replaced, plus the exact name in RFC 5987 `filename*` encoding."""
+    fallback = "".join(c if 32 <= ord(c) < 127 and c not in '"\\' else "_" for c in filename) or "manual.pdf"
+    return f"attachment; filename=\"{fallback}\"; filename*=UTF-8''{quote(filename, safe='')}"
 
 
 @router.get("/seasons/{season}/workflow", responses=_READ_ERRORS, summary="The season's game-manual and spec workflow state")
