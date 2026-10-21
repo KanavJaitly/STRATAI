@@ -22,11 +22,14 @@ model pinned yet" must never be confused with "the process failed to boot".
 
 from __future__ import annotations
 
+import time
+from typing import Generator
+
 from starlette.requests import Request
 
 from api.ml_loading import ServedEpaSource, ServedModel, live_log_stamp, load_epa_source
 from data.config import Settings
-from database.connection import Database
+from database.connection import Database, RequestDatabase
 
 
 def get_settings(request: Request) -> Settings:
@@ -34,14 +37,16 @@ def get_settings(request: Request) -> Settings:
     return request.app.state.settings
 
 
-def get_database(request: Request) -> Database:
-    """Return the shared Database helper.
-
-    Note this is a connection *factory*, not a connection: Database opens and
-    closes a psycopg connection per Database.connection() call. Nothing is held
-    open between requests.
-    """
-    return request.app.state.database
+def get_database(request: Request) -> Generator[Database, None, None]:
+    """This request's Database (P10-D1 option B, Sven Morais 2026-10-21): it holds at most one connection, opened on
+    first use and closed when the request ends (`database.connection.RequestDatabase`). It is never shared with
+    another request, so nothing is held open between requests. Before B, each Database.connection() call opened its
+    own connection."""
+    database = RequestDatabase(request.app.state.database._config)
+    try:
+        yield database
+    finally:
+        database.close()
 
 
 def get_ranking_model(request: Request) -> ServedModel | None:
@@ -68,23 +73,40 @@ def get_playoff_models(request: Request):  # -> ml.playoffs.service.PlayoffModel
     return request.app.state.playoff_models
 
 
+def _recently_failed(state, attribute: str) -> bool:
+    failed_at = getattr(state, attribute, None)
+    return failed_at is not None and time.monotonic() - failed_at < state.settings.epa_source_retry_seconds
+
+
 def get_epa_source(request: Request) -> ServedEpaSource | None:
     """The configured EPA source, loaded on first use and then reused; None (served as
-    epa_source_not_loaded) if it is unconfigured or fails its integrity checks. A
-    failure is not cached, so a later request retries (e.g. once PostgreSQL is up)."""
+    epa_source_not_loaded) if it is unconfigured or fails its integrity checks.
+
+    A failure is not cached: a later request retries (e.g. once PostgreSQL is up), but no sooner than
+    `Settings.epa_source_retry_seconds` after the last failed attempt (P10-M1, Phase 7 R7). The backoff is checked
+    again inside the lock, so a burst of requests that queued behind one failing attempt does not retry it one by
+    one (review P10-R1). The same backoff applies to a failed reload after a live refresh: the loaded source keeps
+    being served meanwhile."""
     state = request.app.state
     if state.epa_source is None:
+        if _recently_failed(state, "epa_source_failed_at"):
+            return None
         with state.epa_source_lock:
-            if state.epa_source is None:
+            if state.epa_source is None and not _recently_failed(state, "epa_source_failed_at"):
                 state.epa_source = load_epa_source(state.settings, state.database)
+                state.epa_source_failed_at = None if state.epa_source is not None else time.monotonic()
     served = state.epa_source
-    if served is not None and served.log_stamp is not None and live_log_stamp(state.settings) != served.log_stamp:
+    if served is not None and served.log_stamp is not None and live_log_stamp(state.settings) != served.log_stamp \
+            and not _recently_failed(state, "epa_source_reload_failed_at"):
         # P5-M2 §4: a refresh appended to the snapshot log, so canonical facts and snapshots are re-read and the
         # provider is swapped atomically. In-flight requests keep the instance they already hold.
         with state.epa_source_lock:
-            if state.epa_source is served:
+            if state.epa_source is served and not _recently_failed(state, "epa_source_reload_failed_at"):
                 reloaded = load_epa_source(state.settings, state.database)
                 if reloaded is not None:
                     state.epa_source = reloaded
+                    state.epa_source_reload_failed_at = None
+                else:
+                    state.epa_source_reload_failed_at = time.monotonic()
         served = state.epa_source
     return served

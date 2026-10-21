@@ -653,6 +653,80 @@
     }
    }
   },
+  "GET /matches/{match_key}/briefing": {
+   "deprecated": false,
+   "operation_id": "briefing_matches__match_key__briefing_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "match_key",
+     "required": true,
+     "schema": {
+      "minLength": 1,
+      "type": "string"
+     }
+    },
+    {
+     "in": "query",
+     "name": "as_of",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/BriefingResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "epa_source_not_loaded",
+      "match_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "epa_source_incomplete",
+      "epa_source_pending",
+      "invalid_as_of",
+      "match_not_scheduled"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
   "GET /matches/{match_key}/pre-match-report": {
    "deprecated": false,
    "operation_id": "pre_match_report_matches__match_key__pre_match_report_get",
@@ -1094,6 +1168,16 @@
       }
      }
     },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
     "422": {
      "codes": [
       "epa_source_incomplete",
@@ -1159,6 +1243,16 @@
       "epa_source_not_loaded",
       "event_not_found",
       "team_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
      ],
      "content": {
       "application/json": {
@@ -1240,6 +1334,16 @@
       }
      }
     },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
     "422": {
      "codes": [
       "epa_source_incomplete",
@@ -1298,6 +1402,16 @@
       }
      }
     },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
     "422": {
      "codes": [
       "invalid_coach_input",
@@ -1346,6 +1460,16 @@
      "codes": [
       "write_not_authorized",
       "writes_disabled"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
      ],
      "content": {
       "application/json": {
@@ -1428,6 +1552,16 @@
     "409": {
      "codes": [
       "mixed_season_scale"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
      ],
      "content": {
       "application/json": {
@@ -1520,6 +1654,16 @@
       }
      }
     },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
     "422": {
      "codes": [
       "epa_source_incomplete",
@@ -1605,6 +1749,16 @@
       }
      }
     },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
     "422": {
      "codes": [
       "epa_source_incomplete",
@@ -1677,6 +1831,16 @@
      "codes": [
       "alliance_incomplete",
       "mixed_season_scale"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
      ],
      "content": {
       "application/json": {
@@ -1764,6 +1928,16 @@
       }
      }
     },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
     "422": {
      "codes": [
       "epa_source_incomplete",
@@ -1837,6 +2011,16 @@
      "codes": [
       "alliance_incomplete",
       "mixed_season_scale"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
      ],
      "content": {
       "application/json": {
@@ -2054,6 +2238,28 @@
    "operations_added": [],
    "operations_removed": [],
    "reason": "P7-D7 (approved by Sven Morais 2026-10-18): canonical playoff label validated_playoff_success for the pick list's event-level values"
+  },
+  {
+   "added_leaves": 51,
+   "changed": [],
+   "command": "lock",
+   "date": "2026-10-20",
+   "decision": null,
+   "operations_added": [
+    "GET /matches/{match_key}/briefing"
+   ],
+   "operations_removed": [],
+   "reason": "P9-M4 (P9-Q8): the Phase 9 briefing operation, added (no locked entry changes); 2026-10-20"
+  },
+  {
+   "added_leaves": 22,
+   "changed": [],
+   "command": "relock",
+   "date": "2026-10-21",
+   "decision": ".agent/phase10/decisions/P10_HUMAN_DECISIONS_2026-10-21.md (P10-Q9 approved by Sven Morais) 2026-10-21",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P10-Q9: declare the body-limit 413 (payload_too_large) on the 11 locked operations that take a request body; additive (no existing leaf changed)"
   }
  ],
  "schemas": {
@@ -2416,6 +2622,209 @@
     "season_by_event",
     "this_event"
    ],
+   "type": "object"
+  },
+  "BriefingFactOut": {
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "kind": {
+     "enum": [
+      "absence",
+      "context",
+      "label",
+      "not_produced",
+      "value"
+     ],
+     "type": "string"
+    },
+    "section": {
+     "type": "string"
+    },
+    "source": {
+     "type": "string"
+    },
+    "statement": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "id",
+    "kind",
+    "section",
+    "source",
+    "statement"
+   ],
+   "type": "object"
+  },
+  "BriefingResponse": {
+   "properties": {
+    "as_of": {
+     "type": "string"
+    },
+    "disclaimer": {
+     "default": "A readable summary of the pre-match report. Every number, label and absence comes from the engines' report; nothing here is a new prediction. Each fact is printed in its fixed wording. In 'llm' mode a language model chose the grouping, the order and the short lead-ins; in 'deterministic' mode the layout is fixed.",
+     "type": "string"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "facts": {
+     "items": {
+      "$ref": "#/components/schemas/BriefingFactOut"
+     },
+     "type": "array"
+    },
+    "fallback_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "match_key": {
+     "type": "string"
+    },
+    "mode": {
+     "enum": [
+      "deterministic",
+      "llm"
+     ],
+     "type": "string"
+    },
+    "model": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "sections": {
+     "items": {
+      "$ref": "#/components/schemas/BriefingSectionOut"
+     },
+     "type": "array"
+    },
+    "usage": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/BriefingUsageOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "as_of",
+    "event_key",
+    "facts",
+    "fallback_reason",
+    "match_key",
+    "mode",
+    "model",
+    "sections",
+    "usage"
+   ],
+   "type": "object"
+  },
+  "BriefingSectionOut": {
+   "properties": {
+    "heading": {
+     "type": "string"
+    },
+    "sentences": {
+     "items": {
+      "$ref": "#/components/schemas/BriefingSentenceOut"
+     },
+     "type": "array"
+    }
+   },
+   "required": [
+    "heading",
+    "sentences"
+   ],
+   "type": "object"
+  },
+  "BriefingSentenceOut": {
+   "properties": {
+    "fact_ids": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "text": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "fact_ids",
+    "text"
+   ],
+   "type": "object"
+  },
+  "BriefingUsageOut": {
+   "properties": {
+    "attempts": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "cache_creation_input_tokens": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "cache_read_input_tokens": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "input_tokens": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "output_tokens": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
    "type": "object"
   },
   "CalibratedWinProbability": {

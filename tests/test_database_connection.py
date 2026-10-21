@@ -52,7 +52,9 @@ def test_database_connection_context_manager(monkeypatch):
     monkeypatch.setenv("STATBOTICS_API_KEY", "test-key")
     monkeypatch.setenv("ENV", "development")
 
-    monkeypatch.setattr("database.connection.psycopg.connect", lambda _: DummyConnection())
+    calls: list[dict] = []
+    monkeypatch.setattr("database.connection.psycopg.connect",
+                        lambda _url, **kwargs: calls.append(kwargs) or DummyConnection())
 
     settings = Settings()
     config = DatabaseConfig(settings.database_url)
@@ -65,6 +67,7 @@ def test_database_connection_context_manager(monkeypatch):
 
     assert conn.committed is True
     assert conn.rolled_back is False
+    assert calls == [{"connect_timeout": 10}]  # P10-M1 (Phase 7 R7): every connection has a connect timeout
 
 
 def test_database_connection_rolls_back_on_exception(monkeypatch):
@@ -76,7 +79,7 @@ def test_database_connection_rolls_back_on_exception(monkeypatch):
 
     created: list[DummyConnection] = []
 
-    def fake_connect(_url):
+    def fake_connect(_url, **_kwargs):  # connect_timeout (P10-M1) and any options are accepted
         conn = DummyConnection()
         created.append(conn)
         return conn

@@ -176,6 +176,33 @@ observations gets no rating, never one synthesized from its scoring.
 
 ## Current Development Phase
 
+**Phase 10 (Polish, Backtesting, Hardening): IN PROGRESS (2026-10-21)** (`.agent/phase10/PHASE_STATUS.md`). Spec:
+`docs/P10Milestones.md`, an agent working freeze pending ratification. Not committed.
+- **M1 (hardening):** implemented. The failing-first evidence is partial; declaring 413 on locked operations is
+  decision P10-Q9.
+- **M2 (simulated live event):** a real live-sync race was fixed (`read_snapshot` / `consistent_reads`); 5 of 5
+  prescribed runs pass. P10-DM3 is met for the local configuration only. Earlier "stalls" were VM suspends: the H4
+  heartbeat now marks such runs `environment_invalid`.
+- **M3:** connection cost measured; pooling or reuse is proposal P10-D1, awaiting Sven.
+- **M4–M6** (three-season backtest, calibration, alliance selection, defense/feeding): BLOCKED on data, models and
+  human reviewers.
+- **Last full suite (2026-10-21):** exit 1, 2,750 passed, 4 baseline failures (R16 fixed), 0 regressions.
+
+**Phase 9 (LLM Report Layer): CONDITIONALLY ACCEPTED, NOT COMPLETE (Sven Morais, 2026-10-20)**
+(`.agent/phase9/PHASE_ACCEPTANCE.md` §10; the MASTER_BUILD gate is not satisfied on its own terms). P9-DM2 and the live
+LLM verification are deferred to final remediation. The spec and P9-D1 rev. 2 are ratified. Not committed.
+- **Built:** the optional, fail-closed briefing layer (`briefing/`, `GET /matches/{match_key}/briefing`, the dashboard's
+  "Readable briefing" panel). Under decision P9-D1 rev. 2 the LLM only groups and orders facts and picks fixed labels;
+  every fact is printed verbatim. The LLM is off, and data egress unapproved, by default.
+- **Done-means:** P9-DM1 (disconnecting the LLM changes only readability) is MET locally. P9-DM2 (cost per event known
+  and minimal) is NOT MET: there is no credential to count tokens.
+- **Zero-LLM checks:** `scripts/phase9_zero_llm_audit.py`. Every served operation must be classified; the core may not
+  import an LLM SDK, the `briefing` package or its route (only `api/app.py` may import the route).
+- **Last checks (2026-10-20):**
+  - backend exit 1: 2,697 passed, exactly the 5 baseline failures;
+  - frontend: 173 passed, tsc 0, oxlint 8 baseline warnings, build 0.
+- **Phase 10 is authorised** (2026-10-20). Data egress and the credential are kept off (deferred).
+
 **Phase 8 (Frontend / Dashboard): CONDITIONALLY ACCEPTED, NOT FULLY COMPLETE, confirmed by Sven Morais on 2026-10-19**
 (`.agent/phase8/PHASE_ACCEPTANCE.md` §7; the MASTER_BUILD gate is not satisfied on its own terms).
 - **Committed and merged:** commit `a5bc422` on `phase8/build`, merged into `main` via PR #33 on 2026-10-19 (merge
@@ -207,7 +234,7 @@ observations gets no rating, never one synthesized from its scoring.
     The suite does NOT pass.
 - **Final audit (2026-10-19):** the MASTER_BUILD Phase Acceptance Gate is NOT satisfied on its own terms; the phase
   is accepted conditionally by the human decision (`PHASE_ACCEPTANCE.md` §6).
-- **Records:** `.agent/phase8/PHASE_STATUS.md`, `PHASE_ACCEPTANCE.md`, `RISK_REGISTER.md` (P8-R1–R15), `decisions/`,
+- **Records:** `.agent/phase8/PHASE_STATUS.md`, `PHASE_ACCEPTANCE.md`, `RISK_REGISTER.md` (P8-R1–R15; R7 and R9 closed 2026-10-19; R11 open only for model-populated print), `decisions/`,
   `reviews/` (R1–R4, verbatim, with dispositions), and `docs/phase8.md`.
 - **Do not start Phase 9** without explicit instruction.
 

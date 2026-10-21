@@ -12,9 +12,10 @@ from __future__ import annotations
 import logging
 import threading
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
+from api.body_limit import UPLOAD_MARGIN_BYTES, BodySizeLimitMiddleware, declare_body_limit
 from api.errors import register_exception_handlers
 from api.examples import install_examples
 from api.middleware import RequestLoggingMiddleware
@@ -37,6 +38,7 @@ from api.routes.qualification_forecast import router as qualification_forecast_r
 from api.routes.strategy import router as strategy_router
 from api.routes.strength import router as strength_router
 from data.config import Settings
+from data.human_inputs import MAX_MANUAL_BYTES
 from database.connection import Database, DatabaseConfig
 
 
@@ -53,6 +55,23 @@ API_VERSION = "0.1.0"
 CORS_ALLOW_CREDENTIALS = False
 CORS_ALLOW_METHODS = ("GET", "POST", "OPTIONS")
 CORS_ALLOW_HEADERS = ("Content-Type", REQUEST_ID_HEADER)
+
+
+def _briefing_router() -> APIRouter | None:
+    """The Phase 9 briefing route, if the briefing layer is installed. It is optional and downstream only (P9-Q1):
+    without it every other route is unchanged, which is what "disconnecting the LLM changes nothing" means.
+
+    Only a missing `briefing` package is tolerated, and that is logged. (The SDK itself is imported lazily, only when
+    a briefing calls the model.) Any other import error propagates,
+    so a real bug in the layer is never hidden."""
+    try:
+        from api.routes.briefing import router
+    except ModuleNotFoundError as exc:
+        if exc.name is None or not (exc.name == "briefing" or exc.name.startswith("briefing.")):
+            raise
+        logger.warning("briefing layer not installed (%s); /matches/{match_key}/briefing is not served", exc.name)
+        return None
+    return router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -87,7 +106,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     app.state.settings = settings
-    app.state.database = Database(DatabaseConfig(settings.database_url))
+    app.state.database = Database(DatabaseConfig(
+        settings.database_url, connect_timeout=settings.db_connect_timeout_seconds,
+        statement_timeout_ms=settings.api_db_statement_timeout_ms or None))  # P10-M1 (Phase 7 R7)
 
     # ML models (Phase 4 Milestone 12; aligned with D18 on 2026-10-02): loaded once here
     # from the registry pins in Settings (type, version tag, sha256) -- small local
@@ -102,11 +123,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # the API still boots with PostgreSQL down.
     app.state.epa_source = None
     app.state.epa_source_lock = threading.Lock()
+    app.state.epa_source_failed_at = None  # P10-M1 (Phase 7 R7): the monotonic time of the last failed load
+    app.state.epa_source_reload_failed_at = None  # likewise for a failed reload after a live refresh
 
     # add_middleware inserts at the front of the stack, so the last one added is
     # the outermost. CORS must be outermost: RequestLoggingMiddleware catches
     # unhandled exceptions and returns the 500 itself, and that response has to
     # pass back out through CORS to pick up its headers.
+    # P10-M1 (Phase 7 R6): innermost of the three, so a 413 is logged and carries the request id and CORS headers.
+    app.add_middleware(BodySizeLimitMiddleware, default_limit=settings.max_request_body_bytes,
+                       upload_limit=MAX_MANUAL_BYTES + UPLOAD_MARGIN_BYTES)
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(
         CORSMiddleware,
@@ -136,9 +162,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(strategy_router, prefix=settings.api_prefix)  # Phase 7 (P7-M5)
     app.include_router(alliance_selection_router, prefix=settings.api_prefix)  # Phase 7 (P7-M6)
     app.include_router(pre_match_report_router, prefix=settings.api_prefix)  # Phase 7 (P7-M7)
+    briefing_router = _briefing_router()
+    if briefing_router is not None:  # Phase 9 (P9-M4): optional and downstream only (P9-Q1)
+        app.include_router(briefing_router, prefix=settings.api_prefix)
 
     # Captured request/response examples (docs/api_examples/, P7-Q4) appear in the OpenAPI document. They are
     # documentation only: the locked response shapes ignore them.
+    declare_body_limit(app)  # P10-Q9: the 413 the body-limit middleware serves, declared where a body is sent
     install_examples(app, prefix=settings.api_prefix)
 
     logger.info(
