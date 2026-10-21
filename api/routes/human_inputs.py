@@ -187,15 +187,17 @@ def download_manual(manual_id: int = Path(ge=1), database: Database = Depends(ge
     row, data = _call(hi.manual_file, database, manual_id)
     return Response(content=data, media_type="application/pdf",
                     headers={"Content-Disposition": content_disposition(row["filename"]),
+                             "X-Content-Type-Options": "nosniff",
                              "X-Content-SHA256": row["content_sha256"]})
 
 
 def content_disposition(filename: str) -> str:
-    """P10-M1 (Phase 7 R11 F1): an attachment header that is valid for any stored filename. A raw
+    """P10-M1 (Phase 7 R11 F1): a header that is valid for any stored filename. A raw
     `filename="..."` with a quote, a backslash or a non-latin-1 character made the download a 500. RFC 6266: an
-    ASCII fallback with every unsafe character replaced, plus the exact name in RFC 5987 `filename*` encoding."""
+    ASCII fallback with every unsafe character replaced, plus the exact name in RFC 5987 `filename*` encoding.
+    Served inline (2026-10-12), so the browser's PDF viewer opens a cited page (`#page=N`) instead of downloading."""
     fallback = "".join(c if 32 <= ord(c) < 127 and c not in '"\\' else "_" for c in filename) or "manual.pdf"
-    return f"attachment; filename=\"{fallback}\"; filename*=UTF-8''{quote(filename, safe='')}"
+    return f"inline; filename=\"{fallback}\"; filename*=UTF-8''{quote(filename, safe='')}"
 
 
 @router.get("/seasons/{season}/workflow", responses=_READ_ERRORS, summary="The season's game-manual and spec workflow state")

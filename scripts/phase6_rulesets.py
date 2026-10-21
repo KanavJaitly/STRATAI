@@ -132,32 +132,15 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _record_path(database, ruleset_id: int, record_dir: Path) -> Path:
-    """Where the approval record goes; refuses (before approving) if it already exists: records are write-once."""
-    from data.rulesets import RulesetError
+    from data.rulesets import approval_record_path
 
-    with database.cursor() as cursor:
-        cursor.execute("SELECT season, version FROM season_rulesets WHERE id = %s", (ruleset_id,))
-        found = cursor.fetchone()
-    if found is None:
-        raise RulesetError("not_found", f"no ruleset version {ruleset_id}")
-    path = record_dir / f"P6_M1_APPROVAL_{found[0]}_v{found[1]}.json"
-    if path.exists():
-        raise RulesetError("invalid_state", f"{path} exists: approval records are write-once")
-    return path
+    return approval_record_path(database, ruleset_id, record_dir)
 
 
 def _write_approval_record(path: Path, row: dict) -> None:
-    """The approval record: reviewer, qualification, date, checklist result and the full approved sha256."""
-    review = json.loads(row["review_note"])
-    record = {"season": row["season"], "ruleset_id": row["id"], "version": row["version"], "status": row["status"],
-              "author": row["created_by"], "reviewer_name": row["reviewed_by"],
-              "reviewer_qualification": review["reviewer_qualification"],
-              "review_date": row["reviewed_at"].isoformat(), "checklist_result": review["checklist"],
-              "approved_ruleset_sha256": row["ruleset_sha256"], "note": review["note"],
-              "R15": "this write-once file, written at approval; the reviewer commits it",
-              "control": ".agent/phase6/decisions/P6_M1_REVIEW_CONTROL.md"}
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    from data.rulesets import write_approval_record
+
+    write_approval_record(path, row)
     print(f"approval record written: {path} (commit it)")
 
 

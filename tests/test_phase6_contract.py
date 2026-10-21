@@ -66,7 +66,25 @@ def test_done_means_match_the_records():
 
     assert dm2()["met"] is True and dm2()["record"] == "p6_m13_parity_audit_rerun1.json"
     one = dm1()
-    assert one["met"] is False and any("P6-M1 season rulesets" in b for b in one["blocked_on"])
+    # 2026-10-08: the P6-M1 rulesets are approved and checked; PX-1 then failed its P6-Q3 gate (D9), and Kanav
+    # accepted it as not_validated (decisions/P6_PX1_NOT_VALIDATED_2026-10-08.md). The D9 stop remains.
+    assert one["met"] is False
+    assert any("PX-1 failed its gate and stands as not_validated" in b and "D9 stop" in b and "remains in effect" in b
+               for b in one["blocked_on"])
+    assert not any("until Kanav decides" in b for b in one["blocked_on"])
+    assert not any("P6-M1 season rulesets" in b for b in one["blocked_on"])
+
+
+def test_failed_px1_record_blocks_dependent_runs_under_d9(capsys):
+    """The recorded PX-1 gate failure still stops PX-2 (and so PX-4 and P6-M8) under the frozen D9 rule."""
+    from scripts.phase6_playoff_track import Blocked, _require
+
+    with pytest.raises(Blocked) as blocked:
+        _require("p6_m2_px1.json", passed_key="passed")
+    assert blocked.value.code == 2
+    message = capsys.readouterr().err
+    assert "the prerequisite gate failed, so dependent runs remain blocked under the frozen D9 rule" in message
+    assert "until Kanav decides" not in message
 
 
 def test_every_phase6_record_carries_commit_provenance():

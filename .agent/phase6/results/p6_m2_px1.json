@@ -1,0 +1,258 @@
+{
+ "columns": [
+  "seed_difference",
+  "d_epa_total",
+  "d_epa_auto",
+  "d_epa_teleop",
+  "d_epa_endgame",
+  "d_average_score",
+  "d_score_stddev",
+  "d_consistency_rating",
+  "d_average_auto_points",
+  "d_matches_considered",
+  "d_matches_used",
+  "seed_difference*round2",
+  "d_epa_total*round2",
+  "d_epa_auto*round2",
+  "d_epa_teleop*round2",
+  "d_epa_endgame*round2",
+  "d_average_score*round2",
+  "d_score_stddev*round2",
+  "d_consistency_rating*round2",
+  "d_average_auto_points*round2",
+  "d_matches_considered*round2",
+  "d_matches_used*round2",
+  "seed_difference*round3",
+  "d_epa_total*round3",
+  "d_epa_auto*round3",
+  "d_epa_teleop*round3",
+  "d_epa_endgame*round3",
+  "d_average_score*round3",
+  "d_score_stddev*round3",
+  "d_consistency_rating*round3",
+  "d_average_auto_points*round3",
+  "d_matches_considered*round3",
+  "d_matches_used*round3",
+  "seed_difference*round4",
+  "d_epa_total*round4",
+  "d_epa_auto*round4",
+  "d_epa_teleop*round4",
+  "d_epa_endgame*round4",
+  "d_average_score*round4",
+  "d_score_stddev*round4",
+  "d_consistency_rating*round4",
+  "d_average_auto_points*round4",
+  "d_matches_considered*round4",
+  "d_matches_used*round4",
+  "seed_difference*round5",
+  "d_epa_total*round5",
+  "d_epa_auto*round5",
+  "d_epa_teleop*round5",
+  "d_epa_endgame*round5",
+  "d_average_score*round5",
+  "d_score_stddev*round5",
+  "d_consistency_rating*round5",
+  "d_average_auto_points*round5",
+  "d_matches_considered*round5",
+  "d_matches_used*round5",
+  "seed_difference*round6",
+  "d_epa_total*round6",
+  "d_epa_auto*round6",
+  "d_epa_teleop*round6",
+  "d_epa_endgame*round6",
+  "d_average_score*round6",
+  "d_score_stddev*round6",
+  "d_consistency_rating*round6",
+  "d_average_auto_points*round6",
+  "d_matches_considered*round6",
+  "d_matches_used*round6"
+ ],
+ "composition_decisions_blob": "119b25ffa64fc66b667502b02e7301eaaa888b05",
+ "decision": "P6-Q3",
+ "dropped": {
+  "defense_agreement": "no data",
+  "defense_observation_count": "no variation",
+  "defense_score": "no data",
+  "feeding_agreement": "no data",
+  "feeding_observation_count": "no variation",
+  "feeding_score": "no data",
+  "reliability_score": "no variation"
+ },
+ "epa_integrity": {
+  "a1_team_events": 331,
+  "invalid_team_events": 143,
+  "ok": true,
+  "raw_equals_table_epa_total": 24022,
+  "raw_files_verified": 608,
+  "raw_records": 24022,
+  "table_rows": 24022,
+  "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5"
+ },
+ "milestone": "P6-M2",
+ "minutes": 0.8,
+ "over_budget": false,
+ "passed": false,
+ "provenance": {
+  "commit": "7574d502a8026005a8e5cd3127948b3c7d6f2266",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-09T00:26:58.808733+00:00"
+ },
+ "rows": {
+  "excluded": {
+   "epa_incomplete": 2392,
+   "event_not_reproduced_or_excluded": 24,
+   "four_member_alliance": 364,
+   "tie_or_unplayed": 10
+  },
+  "excluded_by_event": {
+   "2024arc": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2024cur": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2024dal": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2024gal": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2024hop": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2024joh": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2024mil": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2024new": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2025arc": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2025cur": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2025dal": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2025gal": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2025hop": {
+    "reason": "four_member_alliance",
+    "rows": 16,
+    "selection_variant": "first_championship_division"
+   },
+   "2025joh": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2025mil": {
+    "reason": "four_member_alliance",
+    "rows": 16,
+    "selection_variant": "first_championship_division"
+   },
+   "2025new": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2026arc": {
+    "reason": "four_member_alliance",
+    "rows": 16,
+    "selection_variant": "first_championship_division"
+   },
+   "2026cur": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2026dal": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2026gal": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2026hop": {
+    "reason": "four_member_alliance",
+    "rows": 16,
+    "selection_variant": "first_championship_division"
+   },
+   "2026joh": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2026mil": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   },
+   "2026new": {
+    "reason": "four_member_alliance",
+    "rows": 15,
+    "selection_variant": "first_championship_division"
+   }
+  },
+  "test": 2632,
+  "test_insufficient_data": 0,
+  "train": 3465
+ },
+ "spec_blob": "24b427f27266b4a7ed5555faa60ba96f44c2b3b2",
+ "vs_m6m7": {
+  "baseline_log_loss": 0.5598528591176941,
+  "candidate_log_loss": 0.641875575267254,
+  "ci_high": 0.14806000262722951,
+  "ci_low": 0.02336886366401494,
+  "events": 194,
+  "mean": 0.08202271614956823,
+  "passed": false,
+  "resamples": 2000,
+  "seed": 20261010,
+  "units": 2632
+ },
+ "vs_seed_only": {
+  "baseline_log_loss": 0.518456328592921,
+  "candidate_log_loss": 0.641875575267254,
+  "ci_high": 0.1890674647215562,
+  "ci_low": 0.06343138675776398,
+  "events": 194,
+  "mean": 0.12341924667432892,
+  "passed": false,
+  "resamples": 2000,
+  "seed": 20261010,
+  "units": 2632
+ }
+}
