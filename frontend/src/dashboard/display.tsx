@@ -150,22 +150,44 @@ export function RefusalNotice({ error, what }: { error: unknown; what?: string }
 }
 
 /** Loading → refusal/error → content, for one resource. */
+/**
+ * A resource's loading, refusal or data. The status line is always rendered, in the same place, and only its text
+ * changes, so screen readers announce "Loading…" (a live region inserted together with its text is often missed;
+ * P8-R9).
+ */
 export function ResourceView<T>({ resource, what, children, loadingText }: { resource: Resource<T>; what?: string;
   loadingText?: string; children: (data: T) => ReactNode }) {
-  if (resource.loading && resource.data === null) {
-    return <p className="loading" role="status" aria-live="polite">{loadingText ?? `Loading${what ? ` ${what}` : ''}…`}</p>
-  }
+  const loading = resource.loading && resource.data === null
+  const status = (
+    <p className={loading ? 'loading' : 'visually-hidden'} role="status" aria-live="polite">
+      {loading ? loadingText ?? `Loading${what ? ` ${what}` : ''}…` : ''}
+    </p>
+  )
+  if (loading) return status
   if (resource.error) {
     const failure = resource.error instanceof ApiRequestError && refusalInfo(resource.error.code, '').kind === 'failure'
     return (
-      <div>
-        <RefusalNotice error={resource.error} what={what} />
-        {failure && <button type="button" className="secondary" onClick={resource.reload}>Retry</button>}
-      </div>
+      <>
+        {status}
+        <div>
+          <RefusalNotice error={resource.error} what={what} />
+          {failure && <button type="button" className="secondary" onClick={resource.reload}>Retry</button>}
+        </div>
+      </>
     )
   }
-  if (resource.data === null) return null
-  return <>{children(resource.data)}</>
+  if (resource.data === null) return status
+  return <>{status}{children(resource.data)}</>
+}
+
+/** The persistent status line of an on-demand action: always rendered, so its short announcement is read. */
+export function ActionStatus({ busy, done, failed, busyText, doneText, failedText }: { busy: boolean; done: boolean;
+  failed: boolean; busyText: string; doneText: string; failedText: string }) {
+  return (
+    <p role="status" aria-live="polite" className="visually-hidden">
+      {busy ? busyText : failed ? failedText : done ? doneText : ''}
+    </p>
+  )
 }
 
 export function When({ value }: { value: string | null | undefined }) {

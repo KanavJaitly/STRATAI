@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react'
 import type { Side } from '../api/dashboard'
 import type { AssessmentOut, CompareResponse, RecommendResponse, RobotPlan, Strategy, StrategyContextOut, StrategyModelInfo } from '../api/generated'
 import type { Resource } from '../components/useResource'
-import { Absent, EpaSourceNote, OddsView, RefusalNotice, ResourceView, When } from './display'
+import { Absent, ActionStatus, EpaSourceNote, OddsView, RefusalNotice, ResourceView, When } from './display'
 import { useOnDemand } from '../components/useOnDemand'
 import { baselineStrategy, COMPONENTS, strategyProblems } from './strategyModel'
 
@@ -197,9 +197,10 @@ export function StrategyWorkbench({ side, recommendation, ours, theirs, ops, coa
           <StrategyEditor value={coach} onChange={(next) => { setCoach(next); comparison.reset() }} allies={ours} opponents={theirs}
             label={`Coach strategy for ${side}`} />
           {problems.length > 0 && <ul className="notice notice-warn">{problems.map((p) => <li key={p}>{p}</li>)}</ul>}
-          <button type="button" disabled={!aiStrategy || problems.length > 0 || comparison.busy}
+          {/* busy: aria-disabled (focus stays on the button) and a guard; invalid input: disabled */}
+          <button type="button" disabled={!aiStrategy || problems.length > 0} aria-disabled={comparison.busy || undefined}
             onClick={() => {
-              if (!aiStrategy) return
+              if (!aiStrategy || comparison.busy) return
               setComparedTitle(rec?.recommended ? 'AI recommendation' : 'Baseline')
               comparison.run((signal) => ops.compare({ side, first: aiStrategy, second: coach }, signal))
             }}>
@@ -209,6 +210,8 @@ export function StrategyWorkbench({ side, recommendation, ours, theirs, ops, coa
           {coachActions?.(coach, problems.length === 0)}
         </div>
       </div>
+      <ActionStatus busy={comparison.busy} done={comparison.result !== null} failed={comparison.error != null}
+        busyText="Evaluating both strategies…" doneText="Comparison ready." failedText="The comparison was refused or failed." />
       {comparison.error != null && <RefusalNotice error={comparison.error} what="Comparison" />}
       {comparison.result && <ComparisonResult result={comparison.result} firstTitle={comparedTitle} />}
     </section>
@@ -217,7 +220,7 @@ export function StrategyWorkbench({ side, recommendation, ours, theirs, ops, coa
 
 function ComparisonResult({ result, firstTitle }: { result: CompareResponse; firstTitle: string }) {
   return (
-    <div className="comparison" aria-live="polite">
+    <div className="comparison">
       <h3>Same model, same inputs</h3>
       <p className="compare-label"><strong>{result.label}</strong></p>
       <div className="side-by-side">

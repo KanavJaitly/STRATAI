@@ -35,13 +35,14 @@ export function PageHeader({ title, subtitle, actions, crumbs }: { title: ReactN
 export function Tabs({ tabs, active, onSelect, label }: { tabs: TabDef[]; active: string; onSelect: (id: string) => void;
   label: string }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([])
+  // Manual activation (ARIA tabs): arrow keys, Home and End only move focus; Enter or Space (the button's click) opens
+  // the tab. Arrowing past a tab therefore never starts that tab's (possibly slow) fetch (P8-R9).
   const onKey = (event: KeyboardEvent, index: number) => {
     const delta = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0
     const jump = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null
     if (!delta && jump === null) return
     event.preventDefault()
     const next = jump ?? (index + delta + tabs.length) % tabs.length
-    onSelect(tabs[next].id)
     refs.current[next]?.focus()
   }
   return (

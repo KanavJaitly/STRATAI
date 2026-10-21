@@ -1,0 +1,293 @@
+{
+ "captured_at": "2026-10-21T20:31:15.737820+00:00",
+ "epa_source": "statbotics",
+ "harness_version": "H4.1",
+ "code_sha256": "c5686c343de25e938d238e2a9986bc164696d01b1d41e1b6f9e0990679a92f5d",
+ "config": {
+  "matches_per_poll": 6,
+  "readers": 6,
+  "budget_s": 1200,
+  "stall_s": 120
+ },
+ "disposable_database": "stratai_test_p10_13669",
+ "event": "2024casj",
+ "matches": 93,
+ "teams": 42,
+ "matches_per_poll": 6,
+ "readers": 6,
+ "polls": [
+  {
+   "completed": 6,
+   "poll_seconds": 11.707,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:31:47.427068+00:00"
+  },
+  {
+   "completed": 12,
+   "poll_seconds": 11.638,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:32:10.742632+00:00"
+  },
+  {
+   "completed": 18,
+   "poll_seconds": 11.776,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:32:34.772143+00:00"
+  },
+  {
+   "completed": 24,
+   "poll_seconds": 11.977,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:33:00.121751+00:00"
+  },
+  {
+   "completed": 30,
+   "poll_seconds": 12.823,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:33:24.896137+00:00"
+  },
+  {
+   "completed": 36,
+   "poll_seconds": 11.325,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:33:47.547609+00:00"
+  },
+  {
+   "completed": 42,
+   "poll_seconds": 12.098,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:34:12.802997+00:00"
+  },
+  {
+   "completed": 48,
+   "poll_seconds": 12.419,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:34:39.763344+00:00"
+  },
+  {
+   "completed": 54,
+   "poll_seconds": 12.425,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:35:04.433310+00:00"
+  },
+  {
+   "completed": 60,
+   "poll_seconds": 11.998,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:35:28.051518+00:00"
+  },
+  {
+   "completed": 66,
+   "poll_seconds": 12.567,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:35:52.873280+00:00"
+  },
+  {
+   "completed": 72,
+   "poll_seconds": 12.75,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:36:17.946239+00:00"
+  },
+  {
+   "completed": 78,
+   "poll_seconds": 12.627,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:36:42.675269+00:00"
+  },
+  {
+   "completed": 84,
+   "poll_seconds": 12.941,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:37:07.961532+00:00"
+  },
+  {
+   "completed": 90,
+   "poll_seconds": 13.645,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:37:34.060591+00:00"
+  },
+  {
+   "completed": 93,
+   "poll_seconds": 13.774,
+   "error": null,
+   "problems": [],
+   "problem_count": 0,
+   "ended_utc": "2026-10-21T20:38:00.377181+00:00"
+  }
+ ],
+ "idle_repoll_records_loaded": 0,
+ "load": {
+  "calls": 5487,
+  "by_view": {
+   "metrics": {
+    "calls": 782,
+    "statuses": {
+     "200": 782
+    },
+    "latency_s": {
+     "n": 782,
+     "median": 0.061,
+     "p95": 0.084,
+     "max": 0.186
+    },
+    "latency_s_200_only": {
+     "n": 782,
+     "median": 0.061,
+     "p95": 0.084,
+     "max": 0.186
+    }
+   },
+   "event_matches": {
+    "calls": 815,
+    "statuses": {
+     "200": 815
+    },
+    "latency_s": {
+     "n": 815,
+     "median": 0.113,
+     "p95": 0.155,
+     "max": 0.578
+    },
+    "latency_s_200_only": {
+     "n": 815,
+     "median": 0.113,
+     "p95": 0.155,
+     "max": 0.578
+    }
+   },
+   "event_teams": {
+    "calls": 763,
+    "statuses": {
+     "200": 763
+    },
+    "latency_s": {
+     "n": 763,
+     "median": 0.145,
+     "p95": 0.188,
+     "max": 0.6
+    },
+    "latency_s_200_only": {
+     "n": 763,
+     "median": 0.145,
+     "p95": 0.188,
+     "max": 0.6
+    }
+   },
+   "report": {
+    "calls": 780,
+    "statuses": {
+     "200": 708,
+     "404 match_not_found": 72
+    },
+    "latency_s": {
+     "n": 780,
+     "median": 0.866,
+     "p95": 1.039,
+     "max": 1.628
+    },
+    "latency_s_200_only": {
+     "n": 708,
+     "median": 0.875,
+     "p95": 1.049,
+     "max": 1.628
+    }
+   },
+   "briefing": {
+    "calls": 766,
+    "statuses": {
+     "200": 718,
+     "404 match_not_found": 48
+    },
+    "latency_s": {
+     "n": 766,
+     "median": 0.878,
+     "p95": 1.052,
+     "max": 1.609
+    },
+    "latency_s_200_only": {
+     "n": 718,
+     "median": 0.883,
+     "p95": 1.063,
+     "max": 1.609
+    }
+   },
+   "strength": {
+    "calls": 769,
+    "statuses": {
+     "200": 769
+    },
+    "latency_s": {
+     "n": 769,
+     "median": 0.224,
+     "p95": 0.288,
+     "max": 0.485
+    },
+    "latency_s_200_only": {
+     "n": 769,
+     "median": 0.224,
+     "p95": 0.288,
+     "max": 0.485
+    }
+   },
+   "analysis": {
+    "calls": 812,
+    "statuses": {
+     "200": 114,
+     "404 model_not_loaded": 698
+    },
+    "latency_s": {
+     "n": 812,
+     "median": 0.113,
+     "p95": 5.159,
+     "max": 6.382
+    },
+    "latency_s_200_only": {
+     "n": 114,
+     "median": 5.078,
+     "p95": 5.761,
+     "max": 6.382
+    }
+   }
+  },
+  "crashes": [],
+  "server_errors": 0,
+  "reader_threads_still_alive": 0
+ },
+ "stall": null,
+ "disposable_dropped": true,
+ "elapsed_seconds": 402.5,
+ "pauses": [],
+ "outcome": "pass",
+ "failures": [],
+ "ok": true
+}

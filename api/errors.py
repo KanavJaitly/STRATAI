@@ -73,14 +73,17 @@ SERVICE_UNAVAILABLE_MESSAGE = "The service is not ready to handle requests."
 
 INTERNAL_ERROR_CODE = "internal_error"
 VALIDATION_ERROR_CODE = "validation_error"
+PAYLOAD_TOO_LARGE_CODE = "payload_too_large"  # P10-M1 / P10-Q9: the request-body limit (api/body_limit.py)
 
 # Codes are derived from the HTTP status phrase (404 -> "not_found",
 # 503 -> "service_unavailable") so any status gets a stable machine-readable
 # code with no lookup table to maintain. These two read better than their
-# derived form ("unprocessable_content", "internal_server_error").
+# derived form ("unprocessable_content", "internal_server_error"). 413 is pinned too (P10-Q9): its phrase differs
+# between Python versions ("Request Entity Too Large", later "Content Too Large"), and a code must not.
 _ERROR_CODE_OVERRIDES = {
     HTTPStatus.UNPROCESSABLE_ENTITY: VALIDATION_ERROR_CODE,
     HTTPStatus.INTERNAL_SERVER_ERROR: INTERNAL_ERROR_CODE,
+    HTTPStatus.REQUEST_ENTITY_TOO_LARGE: PAYLOAD_TOO_LARGE_CODE,
 }
 
 # Used when a status carries no developer-authored detail. Starlette raises its
