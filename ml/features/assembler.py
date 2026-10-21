@@ -63,6 +63,7 @@ from data.metrics.statistics import (
     score_stddev,
 )
 from database.connection import Database
+from ml.features.score_breakdown import auto_points
 
 __all__ = [
     "EPA_WITHHELD_NO_PRIOR_EVENT",
@@ -79,6 +80,30 @@ __all__ = [
 # "nothing qualified" result; see _point_in_time_epa's own docstring for why
 # splitting them further isn't worth the complexity it would add.
 EPA_WITHHELD_NO_PRIOR_EVENT = "no_prior_concluded_event_epa"
+
+# The point-in-time EPA source rule; see _point_in_time_epa for the reasoning.
+# "Completed" = the team's own alliance score is recorded, the same played
+# test data.metrics.history applies.
+EPA_SOURCE_SQL = """
+SELECT tes.event_key, tes.epa_total, tes.epa_auto, tes.epa_teleop, tes.epa_endgame
+FROM team_event_stats tes
+JOIN events e ON e.event_key = tes.event_key
+JOIN LATERAL (
+    SELECT MAX(m.scheduled_time) AS last_completed_match
+    FROM match_teams mt
+    JOIN matches m ON m.match_key = mt.match_key
+    WHERE mt.team_number = tes.team_number
+      AND m.event_key = tes.event_key
+      AND m.scheduled_time IS NOT NULL
+      AND (CASE WHEN mt.alliance_color = 'red' THEN m.score_red ELSE m.score_blue END) IS NOT NULL
+) lm ON lm.last_completed_match < %(as_of)s
+WHERE tes.team_number = %(team)s
+  AND tes.event_key != %(target)s
+  AND e.end_date IS NOT NULL
+  AND e.end_date::timestamptz < %(as_of)s
+ORDER BY e.end_date DESC, lm.last_completed_match DESC, tes.event_key ASC
+LIMIT 1
+"""
 
 
 class TeamFeatures(BaseModel):
@@ -157,6 +182,13 @@ class TeamFeatures(BaseModel):
     matches_considered: int = Field(ge=0)
     matches_used: int = Field(ge=0)
 
+    # Milestone 11: see _point_in_time_auto_points. auto_points_matches_used can
+    # be below matches_used only when TBA published no score_breakdown for a
+    # played match.
+    average_auto_points: float | None = Field(default=None, ge=0)
+    average_auto_points_present: bool
+    auto_points_matches_used: int = Field(ge=0)
+
     defense_score: float | None = Field(default=None, ge=0, le=5)
     defense_score_present: bool
     defense_agreement: float | None = Field(default=None, ge=0, le=1)
@@ -180,6 +212,7 @@ class TeamFeatures(BaseModel):
             ("score_stddev", "score_stddev_present"),
             ("consistency_rating", "consistency_rating_present"),
             ("reliability_score", "reliability_score_present"),
+            ("average_auto_points", "average_auto_points_present"),
             ("defense_score", "defense_score_present"),
             ("defense_agreement", "defense_agreement_present"),
             ("feeding_score", "feeding_score_present"),
@@ -196,6 +229,11 @@ class TeamFeatures(BaseModel):
         if self.matches_used > self.matches_considered:
             raise ValueError(
                 f"matches_used ({self.matches_used}) cannot exceed matches_considered ({self.matches_considered})"
+            )
+        if self.auto_points_matches_used > self.matches_used:
+            raise ValueError(
+                f"auto_points_matches_used ({self.auto_points_matches_used}) cannot exceed "
+                f"matches_used ({self.matches_used})"
             )
 
         any_epa_present = self.epa_total_present or self.epa_auto_present or self.epa_teleop_present or (
@@ -324,6 +362,54 @@ def _point_in_time_scores(
     return scores, len(rows)
 
 
+def _point_in_time_auto_points(
+    database: Database, team_number: int, event_key: str, as_of: datetime,
+) -> tuple[float | None, int]:
+    """Milestone 11's cross-season feature: the mean auto-period points of this
+    team's own alliance over its completed matches at this event strictly
+    before as_of -- the same matches, and the same point-in-time boundary, as
+    _point_in_time_scores. Returns (mean or None, matches that contributed).
+
+    Each value comes from the match's untouched raw TBA payload
+    (raw_source_payloads), read through ml.features.score_breakdown's
+    season-aware adapter: nothing about any season's schema lives here, and
+    no canonical column was added. Like average_score it is alliance-level
+    (three robots' auto), and it is in each game's own points -- deliberately
+    not rescaled per season, since any season-level normalizer fit on the
+    held-out season would leak it.
+
+    Null semantics: a completed match whose payload has no breakdown for this
+    alliance (TBA did not publish one) contributes nothing and is not
+    counted; if none contributes, the feature is absent. An unsupported
+    season or a malformed breakdown raises -- it never becomes a 0.
+    """
+    with database.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT m.season, raw.breakdown
+            FROM match_teams mt
+            JOIN matches m ON m.match_key = mt.match_key
+            LEFT JOIN LATERAL (
+                SELECT r.payload_json->'score_breakdown'->mt.alliance_color AS breakdown
+                FROM raw_source_payloads r
+                WHERE r.source = 'tba' AND r.source_object_type = 'match'
+                  AND r.source_object_id = m.match_key AND r.is_current
+                ORDER BY r.id DESC
+                LIMIT 1
+            ) raw ON TRUE
+            WHERE mt.team_number = %s AND m.event_key = %s
+              AND m.scheduled_time IS NOT NULL AND m.scheduled_time < %s
+              AND (CASE WHEN mt.alliance_color = 'red' THEN m.score_red ELSE m.score_blue END) IS NOT NULL
+            ORDER BY m.scheduled_time, m.match_key
+            """,
+            (team_number, event_key, as_of),
+        )
+        rows = cursor.fetchall()
+
+    values = [auto_points(season, breakdown) for season, breakdown in rows if breakdown is not None]
+    return average_score(values), len(values)
+
+
 def _point_in_time_observations(
     database: Database, team_number: int, event_key: str, as_of: datetime,
 ) -> list[ScoutingObservation]:
@@ -408,29 +494,35 @@ def _point_in_time_epa(
     the boundary -- acceptable for event-to-event carryover, which operates
     on a scale of weeks, not hours.
 
-    Returns the most recent (by end_date) qualifying event's EPA if one
-    exists, else every field None with EPA_WITHHELD_NO_PRIOR_EVENT as the
-    reason. That single reason deliberately does not distinguish "team has
-    never attended another event" from "team's other events haven't
-    concluded before as_of": both mean the same thing to a caller ("no
-    trustworthy prior EPA exists"), and splitting them would need a second
-    query to explain a case this one already resolves correctly.
+    A candidate must also show the team actually finished it before as_of:
+    at least one completed match (own alliance score recorded) for this team
+    at that event, the latest of them strictly before as_of. end_date alone
+    is not enough, because divisions and their finals share an end_date: a
+    Saturday-morning Championship-division or DCMP-division match would
+    otherwise see Einstein's / the DCMP finals' EPA, which reflects matches
+    played later that same day (902 appearances in the 2024-2026 data,
+    measured 2026-09-29). It also means an event the team never played at (a
+    registered no-show, whose Statbotics row carries no measurement from that
+    event) is never offered as the EPA source.
+
+    Selection among the remaining candidates is deterministic -- never
+    database row order (decided 2026-09-29):
+        1. latest end_date;
+        2. then the latest completed match involving this team at that
+           event (Einstein after its division, DCMP finals after theirs);
+        3. then event_key ascending, as the final tie-break.
+    automation/data_readiness.py reproduces exactly this rule independently.
+
+    Returns the selected event's EPA if one exists, else every field None
+    with EPA_WITHHELD_NO_PRIOR_EVENT as the reason. That single reason
+    deliberately does not distinguish "team has never attended another
+    event" from "team's other events haven't concluded before as_of": both
+    mean the same thing to a caller ("no trustworthy prior EPA exists"), and
+    splitting them would need a second query to explain a case this one
+    already resolves correctly.
     """
     with database.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT tes.event_key, tes.epa_total, tes.epa_auto, tes.epa_teleop, tes.epa_endgame
-            FROM team_event_stats tes
-            JOIN events e ON e.event_key = tes.event_key
-            WHERE tes.team_number = %s
-              AND tes.event_key != %s
-              AND e.end_date IS NOT NULL
-              AND e.end_date::timestamptz < %s
-            ORDER BY e.end_date DESC
-            LIMIT 1
-            """,
-            (team_number, target_event_key, as_of),
-        )
+        cursor.execute(EPA_SOURCE_SQL, {"team": team_number, "target": target_event_key, "as_of": as_of})
         row = cursor.fetchone()
 
     if row is None:
@@ -469,6 +561,7 @@ def build_team_features(
     profile = aggregate_defense_feeding(observations)
 
     epa = _point_in_time_epa(database, team_number, event_key, as_of)
+    average_auto, auto_matches = _point_in_time_auto_points(database, team_number, event_key, as_of)
 
     return TeamFeatures(
         team_number=team_number,
@@ -482,6 +575,8 @@ def build_team_features(
         consistency_rating=consistency, consistency_rating_present=consistency is not None,
         reliability_score=reliability, reliability_score_present=reliability is not None,
         matches_considered=matches_considered, matches_used=matches_used,
+        average_auto_points=average_auto, average_auto_points_present=average_auto is not None,
+        auto_points_matches_used=auto_matches,
         defense_score=profile.defense_score, defense_score_present=profile.defense_score is not None,
         defense_agreement=profile.defense_agreement, defense_agreement_present=profile.defense_agreement is not None,
         defense_observation_count=profile.defense_observation_count,
