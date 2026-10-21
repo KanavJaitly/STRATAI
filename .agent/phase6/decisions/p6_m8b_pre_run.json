@@ -1,0 +1,103 @@
+{
+ "milestone": "P6-M8b",
+ "recorded": "2026-10-11",
+ "status": "ADOPTED: the dated pre-run record of P6_M8B_SPEC.md §1.3, committed before any M8b run and before any 2027 data",
+ "prepared_by": "Claude Code, on Kanav Jaitly's instructions of 2026-10-11 (from the draft p6_m8b_pre_run_draft.json)",
+ "sampling_approval": {
+  "approved_by": "Kanav Jaitly",
+  "date": "2026-10-11",
+  "statement": "Approved: freeze the M8b sampling plan with seed 20271012 and one event per stratum, subject to the frozen specification and the safeguards.",
+  "scope": "freezes the sampling plan only; does not authorize the M8b evaluation before the 2027 ruleset, the pinned 2027 EPA source and the upstream PX-1b/PX-4b prerequisites are satisfied"
+ },
+ "frozen_basis": [
+  "P6_M8B_SPEC.md §1.3 (pre-run record), §2 (population and sample), §3 (P6-DM1)",
+  "P6-Q1",
+  "P6-Q13"
+ ],
+ "spec": {
+  "path": ".agent/phase6/P6_M8B_SPEC.md",
+  "blob": "63d37a95a4b7b3b35973fcb5bf211c13e8fc0868"
+ },
+ "population": "2027 events whose bracket P6-M1 (C0, results/p6_m1_ruleset_check_2027.json) reproduces, minus the C2 four-member exclusion and the playoff_before_selection_moment leakage exclusion, each counted",
+ "strata": "TBA event week (payload 'week'; missing -> -1) x qualification-roster size tercile (cuts at the sorted 1/3 and 2/3 positions of the population's team counts), as implemented by _m8_sample",
+ "seed": 20271012,
+ "per_stratum": 1,
+ "sample_rule": "scripts.phase6_playoff_track._m8_sample: per stratum (sorted), all members if at most per_stratum, otherwise random.Random(seed + 100*week + size_tercile).sample(members, per_stratum); members sorted by event key. Fixed here; never changed after a result",
+ "recorded_at_run_time": "the sampled event keys, the population fingerprint (sha256 of sorted (event key, team count, week)), the eligible-event count and the runtime projection, in results/p6_m8b_dm1_run.json (write-once)",
+ "pass_criterion": "P6-Q1, P6_M8B_SPEC.md §3 and §6, unchanged: the POINT ESTIMATE of the pooled share of strong alliances (winner and finalist) identified, or missed with a mentor-accepted reason category, must be > 0.5, AND no miss may be unreviewed. The event-bootstrap 95% CI (2,000 resamples, seed 20261010) is REPORTED ONLY: it is not a pass/fail gate, and a wide interval is never presented as proof that performance exceeds 50%",
+ "runtime_budget_minutes": 45,
+ "runtime_projection": {
+  "seconds_by_team_count": [
+   [
+    30,
+    27
+   ],
+   [
+    45,
+    112
+   ],
+   [
+    60,
+    247
+   ]
+  ],
+  "source": "the P6-M8 pre-run record's synthetic engine timing (2026-10-08): 27 s per event at 30 teams, 112 s at 45, 247 s at 60",
+  "interpolation": "piecewise linear between the points; linear extrapolation from the nearest segment; at least 1 s per event",
+  "worst_case_factor": 1.5,
+  "worst_case_basis": "the P6-M8 projection's worst case (37.5 min) over its expected (25 min)",
+  "rule": "before anything runs, the actual sampled 2027 events' projected worst case must be <= 45 minutes; otherwise M8b stops with nothing run or recorded, and a compliant redesign is proposed (P6-Q13). The seed, strata, count and criteria are never changed silently. The in-run 45-minute abort also stays"
+ },
+ "sentinel_event_rule": "the sampled event with the fewest qualification teams (ties: event key); a far-future playoff result with scouting rows is inserted into the isolated copy, the event is re-run, and every output must be unchanged",
+ "sentinel_time": "2027-12-31T00:00:00+00:00",
+ "reason_categories": [
+  {
+   "code": "post_selection_event",
+   "definition": "The result turned on something that happened after the selection moment, which the frozen leakage rule keeps out of every input: a robot failure, a backup recruited, a lineup change, a card or DQ in the playoffs.",
+   "evidence_required": "the playoff match records (lineups, a listed backup, cards or DQ) for the alliance"
+  },
+  {
+   "code": "unmeasured_role",
+   "definition": "The actual alliance was built around a role Phase 6 cannot measure, such as defense or feeding (P6-Q11/Q12: insufficient_data, zero assumed effect).",
+   "evidence_required": "a specific, citable account of the role at this event (scouting record, match video), not general belief"
+  },
+  {
+   "code": "insufficient_preselection_data",
+   "definition": "A member of the actual alliance had absent or thin selection-moment data (EPA absent, few matches used), so its strength was not observable to any data-driven method.",
+   "evidence_required": "the record's facts: ordering positions, reliability and presence at the selection moment"
+  },
+  {
+   "code": "procedural_selection_event",
+   "definition": "The actual alliance resulted from a selection-procedure event the draft model does not simulate: an absent team (T601), a pick-timer skip or automatic assignment (T605; HD-5), or a decline.",
+   "evidence_required": "the event's selection record or video showing the procedural event"
+  },
+  {
+   "code": "outcome_variance",
+   "definition": "The actual winner or finalist was not a strong alliance by any pre-selection measure: neither baseline identified it either.",
+   "evidence_required": "raw_epa_draft_hit and actual_seed_order_hit both false in the record's facts for that miss"
+  },
+  {
+   "code": "data_error",
+   "definition": "The event's input data (TBA alliances or matches, EPA) is wrong in a way that changes the outcome.",
+   "evidence_required": "the specific record and the corrected fact, from an official source"
+  }
+ ],
+ "review_rule": "Each miss is reviewed by the named mentor, who accepts or rejects exactly one category with its evidence. A miss without an accepted category counts as a miss (P6-Q1). Nothing is accepted by default.",
+ "mentor": "Mr. Biery",
+ "mentor_agreement": {
+  "confirmed": true,
+  "date": "2026-10-08",
+  "evidence": {
+   "record": ".agent/phase6/decisions/P6_M8B_MENTOR_AGREEMENT_2026-10-08.md",
+   "reply_verbatim": "Yes I'll do that",
+   "request": "Kanav Jaitly's attestation (2026-10-11): his request that Mr. Biery review every required miss for M8b; the original request text is not in the repository and was not recovered",
+   "time_and_channel": "not recorded"
+  },
+  "scope": "review every miss of the M8b run",
+  "limitation": "scope established by Kanav's attestation of the request, not by the request's own text"
+ },
+ "not_authorized_by_this_record": [
+  "the M8b run",
+  "any 2027-dependent evaluation",
+  "any change to the frozen criteria"
+ ]
+}

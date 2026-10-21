@@ -1,0 +1,4250 @@
+{
+ "escalate": false,
+ "events": {
+  "2024alhu": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024arc": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024arli": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ausc": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024azgl": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024azva": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024bcvi": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024brbr": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024caav": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024cabe": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024cada": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024cafr": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024cala": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024camb": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024caoc": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024caph": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024casd": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024casf": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024casj": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024cave": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024chcmp": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024cmptx": {
+   "status": "excluded:division_champion"
+  },
+  "2024code": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024cthar": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2024ctwat": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024cur": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 8
+  },
+  "2024dal": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024flor": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024flta": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024flwp": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024gaalb": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024gacar": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024gacmp": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024gadal": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024gagwi": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024gal": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024hiho": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024hop": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024iacf": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024idbo": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 7
+  },
+  "2024ilch": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ilpe": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024incmp": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 5
+  },
+  "2024incol": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ineva": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024inmis": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2024inpla": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 5
+  },
+  "2024iscmp": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024isde1": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024isde2": {
+   "problems": [
+    "2024isde2 is excluded (backup_before_first_match): Seed 7 lists 5554, 4590, 2212, 4416: 4416 (listed 4th) played both of the alliance's playoff matches and 2212 (a round-2 pick) none. 2024 T604 forbids a BACKUP TEAM before the alliance's first playoff match; no FIRST document explains it. Unresolved (D-PX1-3)."
+   ],
+   "status": "excluded:ruleset_exclusion:backup_before_first_match"
+  },
+  "2024isde3": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024isde4": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024joh": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 8
+  },
+  "2024ksla": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024lake": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mabos": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mabri": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024marea": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mawne": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mawor": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mdowi": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mdsev": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024melew": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024miann": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mibat": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mibel": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 7
+  },
+  "2024miber": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024mibkn": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mibro": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024micmp": {
+   "status": "excluded:division_champion"
+  },
+  "2024micmp1": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024micmp2": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024micmp3": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024micmp4": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 7
+  },
+  "2024midet": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024midtr": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024miesc": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mike2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024miken": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024miket": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 6
+  },
+  "2024mil": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024milac": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2024milan": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024miliv": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024milsu": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mimcc": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2024mimid": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mimil": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024mimtp": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mimus": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024misjo": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mitr2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mitry": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mitvc": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024miwmi": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2024mndu": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mndu2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024mnmi": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mnmi2": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mokc": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024mose": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mosl": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mrcmp": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024mslr": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024mxmo": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024mxpu": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024mxto": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ncash": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024nccmp": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ncmec": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ncpem": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024ncwa2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ncwak": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ndgf": {
+   "finalist_seed": 8,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024necmp": {
+   "status": "excluded:division_champion"
+  },
+  "2024necmp1": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024necmp2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024new": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024nhdur": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2024nhgrs": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024njall": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024njfla": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024njski": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 6
+  },
+  "2024njtab": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024njwas": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024nvlv": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024nyli2": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024nyny": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024nyro": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024nysu": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024nytr": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ohcl": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ohmv": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024okok": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024oktu": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024onbar": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024oncmp": {
+   "status": "excluded:division_champion"
+  },
+  "2024oncmp1": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024oncmp2": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024onham": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024onnew": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024onnob": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024onosh": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024onsca": {
+   "finalist_seed": 8,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024ontor": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024onwat": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024onwin": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024orore": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024orsal": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024orwil": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024paben": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024paca": {
+   "finalist_seed": 8,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024pahat": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024paphi": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024pncmp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 6
+  },
+  "2024qcmo": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024rikin": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024scand": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024sccha": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024tnkn": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024tuhc": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024tuis": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024tuis2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024tuis3": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024txama": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024txbel": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024txcle": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024txcmp": {
+   "status": "excluded:division_champion"
+  },
+  "2024txcmp1": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024txcmp2": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024txdal": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024txfor": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024txhou": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024txkat": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2024txpla": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024txsan": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024txwac": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024utwv": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2024vaash": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024vabla": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024vafal": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024vagle": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024vapor": {
+   "problems": [
+    "2024vapor is excluded (small_event_byes_not_represented): 23 qualification teams: \u00a710.6.6 gives 7 ALLIANCES with byes; TBA records 8 alliances, alliance 8 made of placeholder teams 9990-9992 with recorded 'bye' results. Byes/placeholder alliances are not representable in the bracket schema (mismatch M3)."
+   ],
+   "status": "excluded:ruleset_exclusion:small_event_byes_not_represented"
+  },
+  "2024waahs": {
+   "finalist_seed": 8,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024wabon": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024wasam": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2024wasno": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024wayak": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024wila": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2024wimi": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2025alhu": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025arc": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025arli": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ausc": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025azfg": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025azgl": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025bcvi": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025brba": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025brsp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025caav": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025cabe": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025cada": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025cafr": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025cala": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025camb": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025caoc": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025caph": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025capt": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025casd": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025casf": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025casj": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025cave": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025chcmp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025cmptx": {
+   "status": "excluded:division_champion"
+  },
+  "2025cnsh": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025code": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025cthar": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ctwat": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025cur": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 5
+  },
+  "2025dal": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 6
+  },
+  "2025flor": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025flta": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025flwp": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025gaalb": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025gacmp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025gadal": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025gagai": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025gagwi": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025gal": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025gasta": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025hiho": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025hop": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025iacf": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025idbo": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ilch": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ilpe": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025incmp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025inkok": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025inlaf": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025inmis": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025inwas": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025iscmp": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025isde1": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025isde2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025isde3": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025isde4": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025joh": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ksla": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2025lake": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mabos": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mawne": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mawor": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mdbet": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2025mdpas": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mdsev": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mefal": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025melew": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mibat": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mibel": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025miber": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mibig": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mibkn": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2025mibro": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025micmp": {
+   "status": "excluded:division_champion"
+  },
+  "2025micmp1": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2025micmp2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025micmp3": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025micmp4": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025midet": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025midtr": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2025miesc": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mifer": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mike2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025miken": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025miket": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mil": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025milac": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025miliv": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025milsu": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mimas": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025mimcc": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025mimid": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025mimil": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mimtp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mimus": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025misal": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025misjo": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mitry": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mitvc": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025miwmi": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mndu": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025mndu2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025mnmi": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025mnmi2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mnum": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mokc": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mose": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mosl": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mrcmp": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025mslr": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025mxle": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mxmo": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025mxto": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ncash": {
+   "problems": [
+    "2025ncash is excluded (small_event_byes_not_represented): 22 qualification teams: \u00a710.6.6 gives 7 ALLIANCES with byes; TBA records 8 alliances, alliance 8 made of placeholder teams 9991-9993 with recorded 'bye' results (mismatch M3)."
+   ],
+   "status": "excluded:ruleset_exclusion:small_event_byes_not_represented"
+  },
+  "2025nccat": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025nccmp": {
+   "finalist_seed": 8,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ncgre": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ncmec": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ncpem": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ncwak": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2025ndgf": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025necmp": {
+   "status": "excluded:division_champion"
+  },
+  "2025necmp1": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025necmp2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 4
+  },
+  "2025new": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025nhdur": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025nhsal": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025njfla": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025njrob": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025njski": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025njtab": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025njwas": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ntwc": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2025nvlv": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025nyli2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025nyny": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025nyro": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025nysu": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025nytr": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ohcl": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2025ohmv": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025okok": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025oktu": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025oncmp": {
+   "status": "excluded:division_champion"
+  },
+  "2025oncmp1": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2025oncmp2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025onham": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025onnew": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025onnob": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025onosh": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025onsca": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025ontor": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025onwat": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025onwel": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025onwin": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025orore": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025orsal": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025orwil": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025paben": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025paca": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025pahat": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025paphi": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025pawar": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025pncmp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2025qcmo": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025rikin": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025sccha": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025sccmp": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025schar": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025tnkn": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025tuak": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025tuhc": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025tuis": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025tuis2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025tuis3": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txama": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025txbel": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txcle": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txcmp": {
+   "status": "excluded:division_champion"
+  },
+  "2025txcmp1": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txcmp2": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txfor": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txhou": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txman": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txpla": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2025txsan": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txtom": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txvic": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025txwac": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025utwv": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025vaale": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2025vabla": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025vagle": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025vapor": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025vtbur": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025waahs": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025wabon": {
+   "finalist_seed": 8,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025wasam": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025wasno": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025wayak": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025wila": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025wimi": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2025wimu": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026alhu": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026arc": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026arli": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026ausc": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026azfg": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026bcvi": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026brba": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026brsp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026caasv": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026cacac": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026caclv": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026caetb": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026cagle": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026cahal": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026calas": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026cancmp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026caoec": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026capin": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026capoh": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026casac": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026cascmp": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026casgv": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026casnd": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026casnf": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026casnv": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026caven": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026chcmp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026cmptx": {
+   "status": "excluded:division_champion"
+  },
+  "2026cnsh": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026code": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026cosp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026cthar": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026ctwat": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026cur": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026dal": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026flor": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026flta": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026flwp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026gaalb": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026gacmp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026gacol": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026gadal": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026gagai": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026gagwi": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026gal": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026hiho": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026hop": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026iacf": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026idbo": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026ilch": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2026ilpe": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026incmp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026incol": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026inlaf": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026inmis": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026inwas": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026iscmp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026isde1": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026isde2": {
+   "problems": [
+    "2026isde2 is excluded (alliance_count_contrary_to_10_6_6): 24 qualification teams but 8 real alliances (no placeholders), contrary to \u00a710.6.6's 7; no FIRST document explains it (event held 2026-06-30 to 07-01, after TU22)."
+   ],
+   "status": "excluded:ruleset_exclusion:alliance_count_contrary_to_10_6_6"
+  },
+  "2026joh": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2026ksla": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026lake": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mabil": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mabos": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026marea": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mawne": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mawor": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mdbet": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mdpas": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mdsev": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mefal": {
+   "problems": [
+    "2026mefal is excluded (small_event_byes_not_represented): 20 qualification teams: \u00a710.6.6 gives 6 ALLIANCES; TBA records 8, alliances 7-8 placeholders 9990-9995 (mismatch M3)."
+   ],
+   "status": "excluded:ruleset_exclusion:small_event_byes_not_represented"
+  },
+  "2026mibat": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mibel": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026miber": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mibig": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mibkn": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mibro": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026miche": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026micmp": {
+   "status": "excluded:division_champion"
+  },
+  "2026micmp1": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026micmp2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026micmp3": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026micmp4": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026midtr": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026miesc": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mifen": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026mifli": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026miken": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026mil": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026milac": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026milak": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026miliv": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026milsu": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 5
+  },
+  "2026mimar": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mimas": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026mimid": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mimil": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mimtp": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mimus": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2026misal": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mitr2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mitry": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mitvc": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2026miwmi": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mndu": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mndu2": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026mnmi": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mnmi2": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026mnum": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mnwi": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mokc": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mose": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mosl": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mrcmp": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mslr": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mxmo": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026mxto": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026ncash": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026nccab": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026nccmp": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026ncelo": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026ncpem": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026ncwak": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026ncwk2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026ndgf": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026necmp": {
+   "status": "excluded:division_champion"
+  },
+  "2026necmp1": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026necmp2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026new": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": "first_championship_division",
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026nhbed": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026nhdur": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026njfla": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026njrob": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026njski": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026njtab": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026njwas": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026nvlv": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026nyli2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026nyn2": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026nyny": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026nyro": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2026nysu": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026nytr": {
+   "finalist_seed": 7,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026ohcl": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026ohmv": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026okok": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026oktu": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026onbar": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026oncmp": {
+   "status": "excluded:division_champion"
+  },
+  "2026oncmp1": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026oncmp2": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026onham": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026onnob": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026onosh": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026ontor": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026onwat": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026onwel": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026onwin": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026orore": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026orsal": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026orwil": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026paben": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026paca": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026pahat": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026paphi": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026pawar": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026pncmp": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026qcmo": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2026rikin": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026sccha": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026sccmp": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026schar": {
+   "finalist_seed": 6,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026schop": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026tnkn": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026tuak": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026tuak2": {
+   "problems": [
+    "2026tuak2 is excluded (backup_before_first_match): Seed 8 lists 9583, 10940, 9247, 10998: 10998 (listed 4th) played sf1 and sf7 in place of 10940 (the round-1 pick). 2026 T608 forbids a BACKUP TEAM before the first playoff match. Unresolved (D-PX1-3)."
+   ],
+   "status": "excluded:ruleset_exclusion:backup_before_first_match"
+  },
+  "2026tuhc": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026tuis": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026tuis2": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026tuis3": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026tuis4": {
+   "problems": [
+    "2026tuis4 is excluded (backup_never_played): Seed 4 lists 9427, 9519, 8151, 8042: 8042 (listed 4th) played none of the alliance's 4 matches. 2026 T609 requires a recruited BACKUP TEAM in the next LINEUP. Unresolved (D-PX1-3)."
+   ],
+   "status": "excluded:ruleset_exclusion:backup_never_played"
+  },
+  "2026tuis5": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txama": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txbel": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txcl2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txcle": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txcmp": {
+   "status": "excluded:division_champion"
+  },
+  "2026txcmp1": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txcmp2": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txdri": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txfar": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txfor": {
+   "problems": [
+    "2026txfor is excluded (small_event_byes_not_represented): 24 qualification teams: \u00a710.6.6 gives 7 ALLIANCES; TBA records 8, alliance 8 placeholders 9990-9992 (mismatch M3)."
+   ],
+   "status": "excluded:ruleset_exclusion:small_event_byes_not_represented"
+  },
+  "2026txhou": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txman": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txmca": {
+   "problems": [
+    "2026txmca is excluded (small_event_byes_not_represented): 18 qualification teams: \u00a710.6.6 gives 5 ALLIANCES; TBA records 8, alliances 6-8 placeholders 9991-9999 (mismatch M3)."
+   ],
+   "status": "excluded:ruleset_exclusion:small_event_byes_not_represented"
+  },
+  "2026txsan": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026txwac": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026utwv": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026vaale": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026vabla": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026vache": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026vagle": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026vtbur": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 2
+  },
+  "2026waahs": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026wabon": {
+   "finalist_seed": 1,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 3
+  },
+  "2026wasam": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026wasno": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026wayak": {
+   "finalist_seed": 4,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026wiapp": {
+   "finalist_seed": 5,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026wicmp": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026wilax": {
+   "finalist_seed": 3,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026wimuk": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  },
+  "2026wiply": {
+   "finalist_seed": 2,
+   "problems": [],
+   "selection_variant": null,
+   "status": "reproduced",
+   "winner_seed": 1
+  }
+ },
+ "milestone": "P6-M1",
+ "minutes": 0.0,
+ "over_budget": false,
+ "provenance": {
+  "commit": "7574d502a8026005a8e5cd3127948b3c7d6f2266",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-09T00:25:45.990022+00:00"
+ },
+ "seasons": {
+  "2024": {
+   "counts": {
+    "division_champion": 5,
+    "reproduced": 183,
+    "ruleset_exclusion:backup_before_first_match": 1,
+    "ruleset_exclusion:small_event_byes_not_represented": 1
+   },
+   "escalate": false,
+   "events": 190,
+   "excluded_share": 0.03684210526315789,
+   "ruleset_sha256": "6b3d221227090d4378ef6a6778de70ced410822412a35daa72bcf0c590902971",
+   "selection_rule_examples": [],
+   "selection_rule_not_established": {},
+   "selection_rule_violations": 0,
+   "selection_variants": {
+    "first_championship_division": 8,
+    "season_default": 175
+   }
+  },
+  "2025": {
+   "counts": {
+    "division_champion": 5,
+    "reproduced": 197,
+    "ruleset_exclusion:small_event_byes_not_represented": 1
+   },
+   "escalate": false,
+   "events": 203,
+   "excluded_share": 0.029556650246305417,
+   "ruleset_sha256": "0ad72856f82dd1abe9d149d27a76124cbec7916d4e97a30645a772b5020f8d7e",
+   "selection_rule_examples": [],
+   "selection_rule_not_established": {
+    "captain_rule_not_established": 1576
+   },
+   "selection_rule_violations": 0,
+   "selection_variants": {
+    "first_championship_division": 8,
+    "season_default": 189
+   }
+  },
+  "2026": {
+   "counts": {
+    "division_champion": 5,
+    "reproduced": 202,
+    "ruleset_exclusion:alliance_count_contrary_to_10_6_6": 1,
+    "ruleset_exclusion:backup_before_first_match": 1,
+    "ruleset_exclusion:backup_never_played": 1,
+    "ruleset_exclusion:small_event_byes_not_represented": 3
+   },
+   "escalate": false,
+   "events": 213,
+   "excluded_share": 0.051643192488262914,
+   "ruleset_sha256": "7695b4a9f0058a0aff3007ac35939bbb075f5afa2757b4635ce3284a6d66a930",
+   "selection_rule_examples": [
+    "2026milac seed 8: captain 7768 (rank 14) while 6087 (rank 13) was available"
+   ],
+   "selection_rule_not_established": {},
+   "selection_rule_violations": 1,
+   "selection_variants": {
+    "first_championship_division": 8,
+    "season_default": 194
+   }
+  }
+ }
+}

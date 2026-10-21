@@ -1,0 +1,106 @@
+{
+ "acceptance": false,
+ "amendment_a1": {
+  "blob": "a453eaba397d8108a8cf967c27da554021921e5f",
+  "path": ".agent/phase6/P6_M10B_SPEC_AMENDMENT_A1.md"
+ },
+ "calibration_set": {
+  "excluded": {
+   "model_input_absent": 30,
+   "tie": 33
+  },
+  "fingerprint": "cf205ad69ace9fdbe26c1a7e4751cae2a1d75e2b1ea82a225abde7c9d6ffba22",
+  "latest": "2026-07-08T02:52:00-04:00",
+  "seasons": [
+   2026
+  ]
+ },
+ "calibrator_record": {
+  "commit": "cc6fa93767e237694fa6400ff84c31b23234f869",
+  "name": "p6_m10b_calibrator.json",
+  "sha256": "ab18394145d799516e43e0d7c8510c0cf6e553e2a95ba75af49b5997d1bd7d7d"
+ },
+ "dev_context": {
+  "calibrated_g2_rejections": 2,
+  "calibrated_overall": "fail",
+  "dev_base_sha256": "24b02b6549d62c5205be101d16ca85b11c37c1afc9f63d776ce34c799003bcfb",
+  "dev_calibrator_sha256": "7ea970b0595b869f4e090e59a2778fad7274547d38670e9cdd15a6a47e4d27e2",
+  "proceed": true,
+  "raw_g2_rejections": 3,
+  "raw_overall": "fail",
+  "record": "p6_m10b_dev.json",
+  "sha256": "94d6b88562da0b1fd859fb1125bd2012220d915e9c2f74f6ed81314170205c59",
+  "statement": "DEV improved relative to raw (G2 rejections and ECE), but both raw and calibrated DEV predictions failed the overall G2 gate. DEV is consistency evidence only, never acceptance.",
+  "statuses": {
+   "i_fit": "pass",
+   "ii_g2_rejections": "pass",
+   "iii_ece": "pass"
+  }
+ },
+ "epa_source": {
+  "epa_provenance_sha256": "60dc91b3b47d994e0d9036d8cf31f612ce0a33eb910120783f8fbd0a52e04bf6",
+  "epa_source": "d18_statbotics_primary",
+  "fallback_chain": [
+   {
+    "input_fingerprint": "774a4aea5da9b80c2e1819287be6faed6360963d2625b994d5e229040c43f460",
+    "results_fingerprint": "6be8896b675b110d0caaa817e04e19f7aededc54c2c951b8054f906f050c24c7",
+    "season": 2024
+   },
+   {
+    "input_fingerprint": "95c6bfc2eb30677a43c120fef3a7545fbcbbd13ed4349573278bd99f8b8490b5",
+    "results_fingerprint": "4d9de7a447dda88b28d6e05f47cb71ca9030a202f66d4db26c530f822aa5a551",
+    "season": 2025
+   },
+   {
+    "input_fingerprint": "29357e19e2fc7b12f71efb6ad22d9dcdea9cecad903019c863c8104857349aff",
+    "results_fingerprint": "8fa397b25c6f5ff926aef47499fde818746732375245c5f0d0b3a74c5569a9e7",
+    "season": 2026
+   }
+  ],
+  "frame_content_hash": "ab1adbf38b43c2f3ca3c1e92a0df263c8414053edef3715601cadc7724ba4e25",
+  "freeze_commit": "ec1b0af",
+  "snapshot": "statbotics_snapshot_20261001T220423Z",
+  "snapshot_producing_commit": "575cc4fe76f4d2e3a4adc68c165f4d1cb5abfa1b",
+  "team_event_stats_sha256": "c73775c66063a36a01079e98fb189940d324b17c3e546df2b418ec49f10adfe5"
+ },
+ "groups": {
+  "mixed": 4132,
+  "prior": 2644,
+  "same": 5439
+ },
+ "milestone": "P6-M10b pins",
+ "minutes": 0.0,
+ "model_identity": {
+  "base_sha256": "aded2c829a1f2edbd1ddb50e099b0e88df8a5cc4033efe0fa7270dae235fbf5f",
+  "calibrator_sha256": "26661227863f988c9f9251e939f59c2e4507e890b5eed8fe9a979d14bc6f6f41"
+ },
+ "no_2027_data": {
+  "events_2027": 0,
+  "matches_season_2027": 0,
+  "statbotics_payloads_2027": 0,
+  "tba_payloads_2027": 0,
+  "team_event_stats_2027": 0
+ },
+ "note": "Pins only. Not acceptance: the 2027 run, Kanav's confirmation and the parity rerun remain (\u00a76-\u00a77).",
+ "over_budget": false,
+ "provenance": {
+  "commit": "1f5ba725893454573c36068905a74e595e559e14",
+  "python": "3.14.7",
+  "recorded_at": "2026-10-10T22:14:57.737629+00:00"
+ },
+ "registry": {
+  "base": {
+   "model_type": "strategy_outcome_component",
+   "version_tag": "p6m10-v1"
+  },
+  "calibrator": {
+   "model_type": "strategy_outcome_calibrator",
+   "version_tag": "p6m10b-v1"
+  }
+ },
+ "rows": 12215,
+ "spec": {
+  "blob": "d699afafc01d42904c7afc7c7e209f8007a6a207",
+  "path": ".agent/phase6/P6_M10B_SPEC.md"
+ }
+}

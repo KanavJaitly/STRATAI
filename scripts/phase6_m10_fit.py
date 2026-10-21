@@ -27,19 +27,17 @@ WHERE r.source = 'tba' AND r.source_object_type = 'match' AND r.is_current AND r
 """
 
 
-def main() -> int:
+def component_fit_set(rows, seasons, database) -> tuple[list, list, Counter]:
+    """`P6_M10_MODEL_SPEC.md` §4's fit set for `seasons`: (fit samples, the rows used, exclusions by reason). Shared by
+    the v1 fit (2024–2025) and the P6-M10b DEV refit (2024 only), so the procedure is one code path."""
     from ml.features.score_breakdown import ScoreBreakdownSchemaError, UnsupportedSeasonError
     from ml.features.score_components import score_components
-    from ml.registry import register_model
-    from ml.strategy.outcome import (FEATURE_LIST, MODEL_TYPE, MODEL_VERSION, SPEC_PATH, ComponentOutcomeModel,
-                                     MatchContext, fit_sample, missing_inputs)
+    from ml.strategy.outcome import MatchContext, fit_sample, missing_inputs
 
-    started = time.time()
-    rows, frame_hash = load_frame()
     excluded: Counter[str] = Counter()
     candidates = []
     for row in rows:
-        if row.season not in TRAIN_SEASONS or row.comp_level != "qualification":
+        if row.season not in seasons or row.comp_level != "qualification":
             continue
         teams = [*row.red_teams, *row.blue_teams]
         if len(teams) != 6 or not all(t.epa_total_present for t in teams):
@@ -50,7 +48,6 @@ def main() -> int:
             continue
         candidates.append(row)
 
-    database = isolated_database()
     breakdowns: dict[str, dict] = {}
     keys = [r.match_key for r in candidates]
     with database.cursor() as cursor:
@@ -75,6 +72,16 @@ def main() -> int:
             continue
         samples.append(fit_sample(row.red_teams, row.blue_teams, red, blue))
         used_rows.append(row)
+    return samples, used_rows, excluded
+
+
+def main() -> int:
+    from ml.registry import register_model
+    from ml.strategy.outcome import FEATURE_LIST, MODEL_TYPE, MODEL_VERSION, SPEC_PATH, ComponentOutcomeModel
+
+    started = time.time()
+    rows, frame_hash = load_frame()
+    samples, used_rows, excluded = component_fit_set(rows, TRAIN_SEASONS, isolated_database())
 
     spec_sha = file_sha256(SPEC_PATH)
     info = {"frame_content_hash": frame_hash, "seasons": list(TRAIN_SEASONS), "comp_level": "qualification",

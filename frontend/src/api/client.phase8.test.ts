@@ -87,6 +87,13 @@ describe('Phase 5 client on the shared core', () => {
     archiveProfile: () => api.archiveProfile('k', { archived_by: 'x' }),
     submitArtifact: () => api.submitArtifact(2099, { kind: 'codebook' as never, author: 'x', payload: {} }),
     establishArtifact: () => api.establishArtifact(1, { established_by: 'x', note: '' }),
+    // The game manual manager and season rulesets (2026-10-11), merged after Phase 8: the same guarantees.
+    startProcessing: () => api.startProcessing(1, 'x'),
+    resolveIdentity: () => api.resolveIdentity(1, { season: 2099, resolved_by: 'x', note: 'n' }),
+    saveRuleset: () => api.saveRuleset({ ruleset_json: {}, created_by: 'x' }),
+    submitRuleset: () => api.submitRuleset(1),
+    reviewRuleset: () => api.reviewRuleset(1, { reviewer: 'r', approve: false, note: 'n', reviewer_qualification: '',
+      checklist: null, verified_sha256: '' }),
   }
 
   it('covers every Phase 5 write operation', () => {

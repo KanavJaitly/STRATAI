@@ -30,3 +30,7 @@ xgboost>=2.0
 # principle applied to not reinventing a numerically subtle algorithm from
 # scratch. Already listed in CLAUDE.md's own tech stack.
 scikit-learn>=1.5
+
+# Game Manual Manager (2026-10-11): deterministic text and page extraction from uploaded official game-manual
+# PDFs (data/manual_processing.py). Pure Python; no LLM ever reads the manual.
+pypdf>=5,<7

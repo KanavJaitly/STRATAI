@@ -1,0 +1,30 @@
+{
+ "R15": "this write-once file, written at approval; the reviewer commits it",
+ "approved_ruleset_sha256": "7695b4a9f0058a0aff3007ac35939bbb075f5afa2757b4635ce3284a6d66a930",
+ "author": "Claude (AI author; v2 prepared to Kanav's decisions HD-1..HD-5, 2026-10-08)",
+ "checklist_result": {
+  "R1": true,
+  "R10": true,
+  "R11": true,
+  "R12": true,
+  "R13": true,
+  "R14": true,
+  "R2": true,
+  "R3": true,
+  "R4": true,
+  "R5": true,
+  "R6": true,
+  "R7": true,
+  "R8": true,
+  "R9": true
+ },
+ "control": ".agent/phase6/decisions/P6_M1_REVIEW_CONTROL.md",
+ "note": null,
+ "review_date": "2026-10-08T20:22:27.025508-04:00",
+ "reviewer_name": "Kanav Jaitly",
+ "reviewer_qualification": "FRC strategy team member for four years; head of strategy; current-season strategy lead",
+ "ruleset_id": 6,
+ "season": 2026,
+ "status": "approved",
+ "version": 2
+}

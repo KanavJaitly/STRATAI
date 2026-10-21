@@ -10,7 +10,7 @@ SYNTHETIC events, teams and rulesets: test fixtures, not evidence.
 from __future__ import annotations
 
 import copy
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from pydantic import ValidationError
@@ -27,6 +27,7 @@ from tests.phase6_fixtures import team
 SEASON = 2099
 STANDARD, CHAMPIONSHIP = "2099std", "2099div"
 WHEN = datetime(2099, 3, 1, 12, tzinfo=timezone.utc)
+LAST_QUALIFICATION = WHEN - timedelta(hours=2)  # playoffs follow the selection moment
 
 
 def _rules() -> SeasonRuleset:
@@ -44,7 +45,7 @@ def _standard_event() -> EventPlayoffs:
     alliances[0] = _alliance(1, (101, 102, 103, 104))
     matches = (RawPlayoffMatch(f"{STANDARD}_sf1m1", "semifinal", 1, 1, WHEN, "red", (101, 102, 104), (801, 802, 803)),
                RawPlayoffMatch(f"{STANDARD}_sf2m1", "semifinal", 2, 1, WHEN, "blue", (401, 402, 403), (501, 502, 503)))
-    return EventPlayoffs(STANDARD, SEASON, tuple(alliances), matches, WHEN, 40)
+    return EventPlayoffs(STANDARD, SEASON, tuple(alliances), matches, LAST_QUALIFICATION, 40)
 
 
 def _championship_event() -> EventPlayoffs:
@@ -53,7 +54,7 @@ def _championship_event() -> EventPlayoffs:
                                (801, 802, 804)),
                RawPlayoffMatch(f"{CHAMPIONSHIP}_sf2m1", "semifinal", 2, 1, WHEN, "red", (401, 402, 404),
                                (501, 503, 504)))
-    return EventPlayoffs(CHAMPIONSHIP, SEASON, tuple(alliances), matches, WHEN, 70)
+    return EventPlayoffs(CHAMPIONSHIP, SEASON, tuple(alliances), matches, LAST_QUALIFICATION, 70)
 
 
 def _features(event: EventPlayoffs, *, without_epa: set[int] = frozenset()):
@@ -99,6 +100,28 @@ def test_a_backup_without_epa_no_longer_excludes_the_row():
     rows, excluded = playoff_rows(event, rules.bracket(8), _features(event, without_epa={104}),
                                   rules.for_event(STANDARD))
     assert len(rows) == 2 and not excluded.get("epa_incomplete")
+
+
+def test_an_event_whose_playoffs_precede_its_selection_moment_is_excluded_and_counted():
+    """Regression (PX-1 audit 2026-10-08): 2024micmp2 and 2025alhu have playoff matches scheduled before their last
+    qualification match, so the frozen selection moment follows those playoff results and the point-in-time history
+    (scheduled_time < as_of) would feed the predicted outcomes into the features. P6-Q2: no in-playoff result is
+    ever a feature, so such an event yields no rows."""
+    from dataclasses import replace
+
+    event, rules = replace(_standard_event(), latest_qualification=WHEN + timedelta(hours=5)), _rules()
+    rows, excluded = playoff_rows(event, rules.bracket(8), _features(event), rules.for_event(STANDARD))
+    assert rows == []
+    assert excluded == {"playoff_before_selection_moment": 2}
+
+
+def test_a_playoff_without_a_scheduled_time_cannot_leak_and_is_kept():
+    from dataclasses import replace
+
+    base = _standard_event()
+    event = replace(base, matches=tuple(replace(m, scheduled_time=None) for m in base.matches))
+    rows, excluded = playoff_rows(event, _rules().bracket(8), _features(event), _rules().for_event(STANDARD))
+    assert len(rows) == 2 and not excluded
 
 
 # --- D-PX1-2: four-member rows excluded and counted --------------------------------------------------------------
