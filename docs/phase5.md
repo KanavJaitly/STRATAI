@@ -308,11 +308,25 @@ levels (0–3), and notes for constraints.
 - `GET /human-inputs/reference/design-examples`, `GET /human-inputs/seasons/{season}/artifacts`,
   `POST /human-inputs/seasons/{season}/artifacts`, `POST /human-inputs/artifacts/{artifact_id}/establish`,
   `GET /human-inputs/seasons/{season}/kappa`, `GET /human-inputs/seasons/{season}/dm1-status`
+- Game Manual Manager, season rulesets and readiness (2026-10-12; `docs/game_manual_manager.md`):
+  - processing: `GET /human-inputs/game-manuals/{manual_id}/processing`,
+    `POST /human-inputs/game-manuals/{manual_id}/processing` (automatic, unverified extraction; writes no canonical
+    table);
+  - identity: `POST /human-inputs/game-manuals/{manual_id}/identity-resolution`;
+  - reading the extraction: `GET /human-inputs/game-manuals/{manual_id}/extraction`,
+    `GET /human-inputs/game-manuals/{manual_id}/pages?first=&last=`;
+  - rulesets: `GET /human-inputs/rulesets`, `POST /human-inputs/rulesets`, `GET /human-inputs/rulesets/{ruleset_id}`,
+    `POST /human-inputs/rulesets/{ruleset_id}/submit`, `POST /human-inputs/rulesets/{ruleset_id}/review` (P6-M1: a
+    named, qualified reviewer, R1-R14, the full sha256, then the write-once R15 record);
+  - review aids: `GET /human-inputs/ruleset-review-checklist`, `GET /human-inputs/seasons/{season}/ruleset-worksheet`;
+  - `GET /human-inputs/seasons/{season}/readiness`.
 
 **Error codes:** `invalid_input`, `not_found`, `invalid_state`, `conflict`, `prerequisite_missing`,
 `spec_incomplete`, `storage_integrity`, `writes_disabled`, `write_not_authorized`, `unsupported_media_type`.
 
-**The web app** (`frontend/`, React and TypeScript, Vite; see `frontend/README.md`) has four pages:
+**The web app** (`frontend/`, React and TypeScript, Vite; see `frontend/README.md`) has four Phase 5 pages. The
+Manuals, Rulesets, Readiness and Explorer pages were added on 2026-10-12 (`docs/game_manual_manager.md`).
+The Phase 5 pages are:
 - **Overview:** each DM1 input's state, and DM1 as the records report it;
 - **Game manual & spec:** upload with a browser-side checksum comparison, the structured-spec editor (every save a
   version), submit, and review (approve, or return with a note);

@@ -67,13 +67,17 @@ class MatchContext:
     blue_teams: tuple[TeamFeatures, ...]
     comp_level: str = QUALIFICATION
     observations: tuple[CoachObservation, ...] = ()
+    # P6-M10b (frozen spec P6_M10B_SPEC.md §2): the season of the event the teams' features were assembled for.
+    # v1 ignores it; the v2 calibration stage refuses without it. Never inferred.
+    prediction_season: int | None = None
 
     def __post_init__(self) -> None:
         if len(self.red_teams) != 3 or len(self.blue_teams) != 3:
             raise ValueError("a match context needs three teams per alliance")
 
     def swapped(self) -> MatchContext:
-        return MatchContext(self.blue_teams, self.red_teams, self.comp_level, self.observations)
+        return MatchContext(self.blue_teams, self.red_teams, self.comp_level, self.observations,
+                            self.prediction_season)
 
 
 @dataclass(frozen=True)
@@ -89,6 +93,7 @@ class OutcomeEvaluation:
     component_means: dict[str, dict[str, float]] = field(default_factory=dict)
     model_version_tag: str | None = None
     model_sha256: str | None = None
+    calibration: dict[str, Any] | None = None  # P6-M10b only: group, factor, probit index, calibrator sha256
 
 
 @dataclass(frozen=True)

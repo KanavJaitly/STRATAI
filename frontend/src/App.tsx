@@ -15,13 +15,24 @@ import { ReportPage } from './dashboard/pages/ReportPage'
 import { StatusPage } from './dashboard/pages/StatusPage'
 import { StrategyLabPage } from './dashboard/pages/StrategyLabPage'
 import { TeamPage } from './dashboard/pages/TeamPage'
+import { ManualsPage } from './pages/ManualsPage'
+import { RulesetsPage } from './pages/RulesetsPage'
+import { ReadinessPage } from './pages/ReadinessPage'
+import { ExplorerPage } from './pages/ExplorerPage'
+import { EventPage as ExplorerEventPage } from './pages/EventPage'
+import { TeamPage as ExplorerTeamPage } from './pages/TeamPage'
+import { SUPPORTED_SEASONS } from './lib/format'
 
-// Two areas share one shell: the dashboard (Phase 8) and the human-input pages (Phase 5, unchanged apart from
-// living under /inputs; the old paths redirect).
+// Three areas share one shell: the dashboard (Phase 8); the human-input pages (Phase 5, under /inputs; the old paths
+// redirect); and the season pages (game manuals, rulesets, readiness, the historical explorer), each read for one
+// selected season.
+const SEASON_AREA = /^\/(manuals|rulesets|readiness|explorer)(\/|$)/
 
 function SessionBar() {
   const { actor, setActor, token, setToken, access, season, setSeason } = useSession()
-  const inInputs = useLocation().pathname.startsWith('/inputs')
+  const { pathname } = useLocation()
+  const inInputs = pathname.startsWith('/inputs')
+  const inSeasonArea = SEASON_AREA.test(pathname)
   let accessText = 'API unreachable'
   if (access) {
     if (!access.writes_enabled) accessText = 'writes disabled on server'
@@ -40,6 +51,16 @@ function SessionBar() {
           Season
           <input type="number" min={1992} value={season} aria-label="Season"
             onChange={(e) => { const v = Number(e.target.value); if (v >= 1992) setSeason(v) }} />
+        </label>
+      )}
+      {inSeasonArea && (
+        <label>
+          Season
+          <select value={season} aria-label="Season" onChange={(e) => setSeason(Number(e.target.value))}>
+            {[...new Set<number>([...SUPPORTED_SEASONS, season])].sort((a, b) => b - a).map((s) => (
+              <option key={s} value={s}>{s}{s === 2027 ? ' (preparing)' : ''}</option>
+            ))}
+          </select>
         </label>
       )}
       <label>
@@ -77,8 +98,10 @@ const EVENTS_AREA = /^\/($|events\/|matches\/|report\/)/
 
 export function Shell() {
   const { pathname } = useLocation()
+  const { season } = useSession()
   const inInputs = pathname.startsWith('/inputs')
   const inEvents = EVENTS_AREA.test(pathname)
+  const inSeasonArea = SEASON_AREA.test(pathname)
   useFocusMainOnNavigation(pathname)
   return (
     <div className="app">
@@ -86,21 +109,27 @@ export function Shell() {
       <header className="top no-print">
         <div className="brand">
           <strong>STRATAI</strong>
-          <span>{inInputs ? 'Human inputs · P5-M8 / P5-M9 / DM1' : 'Strategy dashboard'}</span>
+          <span>{inInputs ? 'Human inputs · P5-M8 / P5-M9 / DM1'
+            : inSeasonArea ? 'Game manuals, season rulesets, readiness and historical seasons' : 'Strategy dashboard'}</span>
         </div>
         <nav aria-label="Main">
           <Link to="/" className={inEvents ? 'active' : undefined} aria-current={inEvents ? 'page' : undefined}>
             Events</Link>
           <NavLink to="/status">System status</NavLink>
+          <NavLink to="/explorer">Historical seasons</NavLink>
           <span className="nav-sep" aria-hidden="true" />
           <NavLink to="/inputs" end>Inputs overview</NavLink>
+          <NavLink to="/readiness">Readiness &amp; tasks</NavLink>
+          <NavLink to="/manuals">Game manual</NavLink>
+          <NavLink to="/rulesets">Season ruleset</NavLink>
           <NavLink to="/inputs/game">Game manual &amp; spec</NavLink>
           <NavLink to="/inputs/profiles">Team profiles</NavLink>
           <NavLink to="/inputs/review">Human review</NavLink>
         </nav>
         <SessionBar />
       </header>
-      <main id="main" tabIndex={-1}>
+      {/* A season change remounts the page: no state from another season survives. */}
+      <main id="main" tabIndex={-1} key={season}>
         <Routes>
           <Route path="/" element={<EventsPage />} />
           <Route path="/events/:eventKey" element={<EventPage />} />
@@ -114,6 +143,12 @@ export function Shell() {
           <Route path="/inputs/game" element={<GameSpecPage />} />
           <Route path="/inputs/profiles" element={<ProfilesPage />} />
           <Route path="/inputs/review" element={<ReviewPage />} />
+          <Route path="/readiness" element={<ReadinessPage />} />
+          <Route path="/manuals" element={<ManualsPage />} />
+          <Route path="/rulesets" element={<RulesetsPage />} />
+          <Route path="/explorer" element={<ExplorerPage />} />
+          <Route path="/explorer/events/:eventKey" element={<ExplorerEventPage />} />
+          <Route path="/explorer/teams/:teamNumber" element={<ExplorerTeamPage />} />
           <Route path="/game" element={<Navigate to="/inputs/game" replace />} />
           <Route path="/profiles" element={<Navigate to="/inputs/profiles" replace />} />
           <Route path="/review" element={<Navigate to="/inputs/review" replace />} />

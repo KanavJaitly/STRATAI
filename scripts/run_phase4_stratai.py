@@ -95,13 +95,14 @@ def build_frame(chain: Path | None, out: Path, statbotics_snapshot: Path | None 
     return persist_frame(database, provider, out)
 
 
-def persist_frame(database, provider, out: Path, extra_info: Any = None) -> Path:
-    """Build the M2 frame for SEASONS with ``provider`` and persist it write-once.
+def persist_frame(database, provider, out: Path, extra_info: Any = None, seasons: list[int] | None = None) -> Path:
+    """Build the M2 frame for ``seasons`` (default SEASONS, unchanged) with ``provider`` and persist it write-once.
     ``extra_info(rows)`` may add fields to frame_info.json (computed from the built rows)."""
     from ml.dataset.builder import _compute_content_hash, build_training_frame, persist_training_frame
 
+    seasons = list(SEASONS if seasons is None else seasons)
     started = time.time()
-    result = build_training_frame(database, SEASONS, epa_provider=provider)
+    result = build_training_frame(database, seasons, epa_provider=provider)
     elapsed = time.time() - started
     directory = out / f"frame_{result.manifest.content_hash[:16]}"
     if directory.exists():
@@ -111,7 +112,7 @@ def persist_frame(database, provider, out: Path, extra_info: Any = None) -> Path
     cache = [row.model_dump(mode="json") for row in result.rows]
     (directory / FRAME_CACHE).write_bytes(gzip.compress(json.dumps(cache).encode("utf-8"), mtime=0))
     reloaded = load_frame_rows(directory)
-    exact = _compute_content_hash(SEASONS, False, reloaded) == result.manifest.content_hash
+    exact = _compute_content_hash(seasons, False, reloaded) == result.manifest.content_hash
     _write_once(directory / FRAME_INFO, {
         "built_at": datetime.now(timezone.utc).isoformat(),
         "build_seconds": round(elapsed, 1),

@@ -26,10 +26,13 @@ from api.ml_loading import (
 )
 from api.request_id import REQUEST_ID_HEADER
 from api.routes.alliance_selection import router as alliance_selection_router
+from api.routes.common import unsupported_season_handler
 from api.routes.discovery import router as discovery_router
 from api.routes.event_analysis import router as event_analysis_router
+from api.routes.explorer import router as explorer_router
 from api.routes.health import router as health_router
 from api.routes.human_inputs import router as human_inputs_router
+from api.routes.manual_manager import router as manual_manager_router
 from api.routes.metrics import router as metrics_router
 from api.routes.predictions import router as predictions_router
 from api.routes.pre_match_report import router as pre_match_report_router
@@ -38,6 +41,7 @@ from api.routes.strategy import router as strategy_router
 from api.routes.strength import router as strength_router
 from data.config import Settings
 from database.connection import Database, DatabaseConfig
+from ml.features.score_breakdown import UnsupportedSeasonError
 
 
 logger = logging.getLogger(__name__)
@@ -118,6 +122,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     register_exception_handlers(app)
+    app.add_exception_handler(UnsupportedSeasonError, unsupported_season_handler)
 
     # Health and readiness are mounted at the application root, deliberately
     # outside api_prefix, so probes do not move when the API is re-mounted.
@@ -136,9 +141,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(strategy_router, prefix=settings.api_prefix)  # Phase 7 (P7-M5)
     app.include_router(alliance_selection_router, prefix=settings.api_prefix)  # Phase 7 (P7-M6)
     app.include_router(pre_match_report_router, prefix=settings.api_prefix)  # Phase 7 (P7-M7)
+    app.include_router(manual_manager_router, prefix=settings.api_prefix)  # game manuals, rulesets, readiness
+    app.include_router(explorer_router, prefix=settings.api_prefix)  # historical season explorer (read-only)
 
     # Captured request/response examples (docs/api_examples/, P7-Q4) appear in the OpenAPI document. They are
-    # documentation only: the locked response shapes ignore them.
+    # documentation only: the locked response shapes ignore them. Installed after every router is included.
     install_examples(app, prefix=settings.api_prefix)
 
     logger.info(

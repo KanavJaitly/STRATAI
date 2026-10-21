@@ -24,6 +24,7 @@ import hmac
 from http import HTTPStatus
 from pathlib import Path as FsPath
 from typing import Any
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Path, Query
 from fastapi.responses import Response
@@ -181,8 +182,16 @@ def get_manuals(season: int | None = Query(default=None), database: Database = D
 def download_manual(manual_id: int = Path(ge=1), database: Database = Depends(get_database)) -> Response:
     row, data = _call(hi.manual_file, database, manual_id)
     return Response(content=data, media_type="application/pdf",
-                    headers={"Content-Disposition": f'attachment; filename="{row["filename"]}"',
+                    headers={"Content-Disposition": _inline_disposition(row["filename"]),
+                             "X-Content-Type-Options": "nosniff",
                              "X-Content-SHA256": row["content_sha256"]})
+
+
+def _inline_disposition(filename: str) -> str:
+    """Inline, so the browser's PDF viewer opens a cited page (`#page=N`); RFC 6266 with an ASCII fallback and
+    the UTF-8 name, so a real manual's filename (an en dash, a quote) cannot break the header (2026-10-12)."""
+    fallback = "".join(c if 32 <= ord(c) < 127 and c not in '"\\' else "_" for c in filename) or "manual.pdf"
+    return f"inline; filename=\"{fallback}\"; filename*=UTF-8''{quote(filename, safe='')}"
 
 
 @router.get("/seasons/{season}/workflow", responses=_READ_ERRORS, summary="The season's game-manual and spec workflow state")
