@@ -82,6 +82,11 @@ _QM2 = f"{_EVENT_TARGET}_qm2"
 _QM3 = f"{_EVENT_TARGET}_qm3"  # the target match
 _QM4 = f"{_EVENT_TARGET}_qm4"
 _QM_IRREGULAR = f"{_EVENT_TARGET}_qm5"
+# The EPA source rule (ml.features.assembler.EPA_SOURCE_SQL) only offers an event
+# the team completed a match at, finished before as_of -- a Statbotics row alone
+# is not evidence the team played there. These give teams A and C that evidence.
+_QM_CONCLUDED = f"{_EVENT_CONCLUDED}_qm1"
+_QM_ONGOING = f"{_EVENT_ONGOING}_qm1"
 
 
 def _database_available() -> bool:
@@ -103,10 +108,12 @@ def _cleanup(database: Database) -> None:
             "DELETE FROM scouting_observations WHERE event_key = %s", (_EVENT_TARGET,),
         )
         cursor.execute(
-            "DELETE FROM match_teams WHERE match_key IN (%s, %s, %s, %s, %s)",
-            (_QM1, _QM2, _QM3, _QM4, _QM_IRREGULAR),
+            "DELETE FROM match_teams WHERE match_key IN (%s, %s, %s, %s, %s, %s, %s)",
+            (_QM1, _QM2, _QM3, _QM4, _QM_IRREGULAR, _QM_CONCLUDED, _QM_ONGOING),
         )
-        cursor.execute("DELETE FROM matches WHERE event_key = %s", (_EVENT_TARGET,))
+        cursor.execute(
+            "DELETE FROM matches WHERE event_key IN (%s, %s, %s)", (_EVENT_TARGET, _EVENT_CONCLUDED, _EVENT_ONGOING),
+        )
         cursor.execute(
             "DELETE FROM team_event_stats WHERE event_key IN (%s, %s, %s)",
             (_EVENT_CONCLUDED, _EVENT_ONGOING, _EVENT_TARGET),
@@ -199,6 +206,21 @@ def database() -> Database:
             "INSERT INTO team_event_stats (team_number, event_key, season, epa_total) VALUES (%s, %s, %s, %s)",
             (_TEAM_C, _EVENT_ONGOING, 9987, 55.0),
         )
+        # Completed matches: A finished the concluded event; C has played at the
+        # ongoing one, before as_of, but that event's end_date is still ahead.
+        for match_key, event_key, season, when, team in (
+            (_QM_CONCLUDED, _EVENT_CONCLUDED, 9988, datetime(2026, 1, 31, 12, tzinfo=timezone.utc), _TEAM_A),
+            (_QM_ONGOING, _EVENT_ONGOING, 9987, datetime(2026, 3, 1, 12, tzinfo=timezone.utc), _TEAM_C),
+        ):
+            cursor.execute(
+                "INSERT INTO matches (match_key, event_key, season, competition_level, match_number, "
+                "scheduled_time, score_red, score_blue) VALUES (%s, %s, %s, 'qualification', 1, %s, 50, 40)",
+                (match_key, event_key, season, when),
+            )
+            cursor.execute(
+                "INSERT INTO match_teams (match_key, team_number, alliance_color, station_position) "
+                "VALUES (%s, %s, 'red', 1)", (match_key, team),
+            )
 
     _insert_match(
         db, _QM1, match_number=1, scheduled_time=_T0,
@@ -468,6 +490,7 @@ def _make_team_features(**overrides: Any) -> TeamFeatures:
         consistency_rating=None, consistency_rating_present=False,
         reliability_score=None, reliability_score_present=False,
         matches_considered=0, matches_used=0,
+        average_auto_points_present=False, auto_points_matches_used=0,
         defense_score=None, defense_score_present=False,
         defense_agreement=None, defense_agreement_present=False,
         defense_observation_count=0,

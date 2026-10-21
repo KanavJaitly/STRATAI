@@ -39,6 +39,7 @@ def _team_features(team_number: int, *, average_score: float | None = None) -> T
         average_score=average_score, average_score_present=average_score is not None,
         score_stddev_present=False, consistency_rating_present=False, reliability_score_present=False,
         matches_considered=5, matches_used=5,
+        average_auto_points_present=False, auto_points_matches_used=0,
         defense_score_present=False, defense_agreement_present=False, defense_observation_count=0,
         feeding_score_present=False, feeding_agreement_present=False, feeding_observation_count=0,
     )

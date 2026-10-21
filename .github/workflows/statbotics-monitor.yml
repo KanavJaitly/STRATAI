@@ -1,5 +1,7 @@
 # Daily Statbotics readiness monitor for the blocked Phase 4 milestones (M4-M7).
 # Monitor only: it records state and notifies; it cannot start Phase 4.
+# It is also the shutdown mechanism: once Phase 4 is genuinely complete on
+# origin/main it disables itself and the Phase 4 workflows (history is kept).
 # Operating guide and cost notes: docs/phase4_automation.md.
 
 name: Statbotics monitor (Phase 4)
@@ -13,15 +15,19 @@ on:
       mode:
         description: >-
           check = run a readiness check now; status = print state only;
-          clear-escalation = human reset of a tripped circuit breaker (returns
-          to WAITING, never skips the two-day debounce)
+          clear-escalation = human reset of the monitor's circuit breaker (returns
+          to WAITING, never skips the two-day debounce);
+          clear-execution-escalation = human reset of a stopped Phase 4 build or
+          attempt (returns to READY; every preflight gate still applies)
         type: choice
-        options: [check, status, clear-escalation]
+        options: [check, status, clear-escalation, clear-execution-escalation]
         default: check
 
 permissions:
-  contents: write  # push state to the automation/phase4-state branch only
-  issues: write    # comment on the tracking issue, only on transitions
+  contents: write        # push state to the automation/phase4-state branch only
+  issues: write          # comment on the tracking issue, only on transitions
+  pull-requests: read    # completion check: no automation PR may be open
+  actions: write         # shutdown: disable (never delete) the Phase 4 workflows
 
 concurrency:
   group: statbotics-monitor
@@ -30,6 +36,7 @@ concurrency:
 env:
   TRACKING_ISSUE: "27"
   STATE_BRANCH: automation/phase4-state
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   monitor:
@@ -38,8 +45,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Refuse untrusted refs
+        # A scheduled run is always main; a manual dispatch must be too, since
+        # this job can write state and disable workflows.
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Dispatched from $GITHUB_REF. The monitor runs only main's reviewed code: dispatch from main."
+            exit 1
+          fi
+
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -47,13 +65,32 @@ jobs:
           python-version: "3.14"
 
       - name: Install monitor dependencies
-        # Only what automation.monitor imports, with specifiers read from
+        # Only what the monitor imports, with specifiers read from
         # requirements.txt so versions stay single-sourced. No ML stack.
         run: |
           grep -E '^(pydantic|python-dotenv|httpx|psycopg)' requirements.txt > "$RUNNER_TEMP/monitor-requirements.txt"
           python -m pip install --disable-pip-version-check --quiet -r "$RUNNER_TEMP/monitor-requirements.txt"
 
+      - name: Check Phase 4 completion
+        id: completion
+        env:
+          OWNER: ${{ github.repository_owner }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          git fetch --quiet --depth=1 origin main
+          python -m automation.ops completion --repo . --notify-out "$RUNNER_TEMP/complete.md" \
+            --owner "$OWNER" --run-url "$RUN_URL"
+
+      - name: Disable automation (Phase 4 complete)
+        if: steps.completion.outputs.complete == 'true'
+        run: |
+          gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/complete.md"
+          gh workflow disable phase4-execute.yml
+          gh workflow disable phase4-data-build.yml
+          gh workflow disable statbotics-monitor.yml
+
       - name: Load monitor state
+        if: steps.completion.outputs.complete != 'true'
         run: |
           if git ls-remote --exit-code --heads origin "$STATE_BRANCH" > /dev/null; then
             git fetch --quiet --depth=1 origin "$STATE_BRANCH"
@@ -65,35 +102,36 @@ jobs:
           fi
 
       - name: Run monitor
+        if: steps.completion.outputs.complete != 'true'
         env:
           MODE: ${{ inputs.mode || 'check' }}
           OWNER: ${{ github.repository_owner }}
+          ACTOR: ${{ github.actor }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: >-
-          python -m automation.monitor
-          --state-dir "$RUNNER_TEMP/state"
-          --mode "$MODE"
-          --notify-out "$RUNNER_TEMP/notify.md"
-          --owner "$OWNER"
-          --run-url "$RUN_URL"
+        run: |
+          if [ "$MODE" = "clear-execution-escalation" ]; then
+            python -m automation.ops clear --state-dir "$RUNNER_TEMP/state" --repo . \
+              --note "workflow_dispatch by ${ACTOR}" --notify-out "$RUNNER_TEMP/notify.md"
+          else
+            python -m automation.monitor --state-dir "$RUNNER_TEMP/state" --mode "$MODE" \
+              --notify-out "$RUNNER_TEMP/notify.md" --owner "$OWNER" --run-url "$RUN_URL"
+          fi
 
       - name: Persist monitor state
-        if: inputs.mode != 'status'
-        working-directory: ${{ runner.temp }}/state
+        # Reconciles with any heavy workflow's concurrent state change; never forces.
+        if: steps.completion.outputs.complete != 'true' && inputs.mode != 'status'
         env:
           MODE: ${{ inputs.mode || 'check' }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add monitor_state.json monitor_log.jsonl
-          git commit --quiet -m "monitor: ${MODE} at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git push --quiet origin "HEAD:refs/heads/${STATE_BRANCH}"
+          git -C "$RUNNER_TEMP/state" config user.name "github-actions[bot]"
+          git -C "$RUNNER_TEMP/state" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python -m automation.state_push --state-dir "$RUNNER_TEMP/state" --branch "$STATE_BRANCH" \
+            --message "monitor: ${MODE} at $(date -u +%Y-%m-%dT%H:%M:%SZ)" .
 
       - name: Notify tracking issue
         # State is pushed first: a failed comment fails the run (GitHub emails
         # the failure) instead of silently losing the transition.
-        env:
-          GH_TOKEN: ${{ github.token }}
+        if: steps.completion.outputs.complete != 'true'
         run: |
           if [ -f "$RUNNER_TEMP/notify.md" ]; then
             gh issue comment "$TRACKING_ISSUE" --body-file "$RUNNER_TEMP/notify.md"
