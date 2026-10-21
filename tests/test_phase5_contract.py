@@ -138,6 +138,13 @@ def test_real_done_means_status_matches_the_records():
     assert two["replay_passed"] is True and two["p5_m2_adopted"] is True and two["met"] is True
 
 
+def evidence_sha256(content: bytes) -> str:
+    """sha256 of a text evidence file with its line endings normalized to CRLF (the form the hashes were taken in)."""
+    import hashlib
+
+    return hashlib.sha256(content.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")).hexdigest()
+
+
 def test_p5_d3_adoption_record_matches_the_served_status_and_its_evidence():
     """The adoption record is Kanav's decision, states that prospective validation is pending, and cites the
     exact bytes of the records it rests on."""
@@ -149,6 +156,9 @@ def test_p5_d3_adoption_record_matches_the_served_status_and_its_evidence():
     assert record["decision"] == ADOPTION["decision"] == "P5-D3" and record["adopted"] is True
     assert record["decided_by"] == "Kanav" and record["statement"] == ADOPTION["statement"]
     assert "prospective 2027 validation remains pending" in record["statement"]
+    # The record's hashes were taken over a Windows checkout (CRLF). The content is compared with line endings
+    # normalized to CRLF, so the check holds on any checkout and still fails on any change to the content
+    # (P10-M1, Phase 7 R16; tests/test_phase10_hardening.py proves a one-byte change is caught).
     for name, sha in record["evidence_sha256"].items():
-        assert hashlib.sha256((RESULTS / name).read_bytes()).hexdigest() == sha, name
+        assert evidence_sha256((RESULTS / name).read_bytes()) == sha, name
     assert all(_record(name)["passed"] for name in record["evidence_sha256"])

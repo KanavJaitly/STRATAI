@@ -31,7 +31,7 @@ from pydantic import BaseModel, model_validator
 from data.metrics.aggregation import MIN_OBSERVATIONS_FOR_SCORE
 from data.metrics.schemas import MIN_MATCHES_FOR_STDDEV, TeamMetrics
 from data.metrics.statistics import classify_match_days
-from database.connection import Database
+from database.connection import Database, consistent_reads
 from ml.features.assembler import (
     TeamFeatures,
     build_team_features,
@@ -211,6 +211,7 @@ def _scouting_view(score: float | None, agreement: float | None, count: int, sou
         contributing_sources=sources, validation_status=status)
 
 
+@consistent_reads
 def build_team_strength(
     database: Database, team_number: int, event_key: str, as_of: datetime,
     *, epa_provider: PointInTimeEpaProvider, scale_lookup: ScaleLookup | None = None,

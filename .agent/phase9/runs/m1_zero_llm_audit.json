@@ -1,0 +1,140 @@
+{
+ "captured_at": "2026-10-20T21:59:18.666479+00:00",
+ "static_violations": [],
+ "import_check": {
+  "imported": 211,
+  "failures": {},
+  "operations": 46,
+  "ok": true,
+  "modules": 211
+ },
+ "inventory": [
+  "GET /events/{event_key}/alliance-selection/candidates",
+  "GET /events/{event_key}/analysis",
+  "GET /events/{event_key}/qualification-forecast",
+  "GET /matches/{match_key}/pre-match-report",
+  "GET /predictions/events/{event_key}/ranking",
+  "GET /predictions/matches/{match_key}/win-probability",
+  "GET /teams/{team_number}/events/{event_key}/metrics",
+  "GET /teams/{team_number}/events/{event_key}/strength",
+  "POST /events/{event_key}/alliance-selection/pick-list",
+  "POST /predictions/alliance-synergy",
+  "POST /predictions/win-probability",
+  "POST /strategy/hypothetical/assess",
+  "POST /strategy/hypothetical/compare",
+  "POST /strategy/hypothetical/recommend",
+  "POST /strategy/matches/{match_key}/assess",
+  "POST /strategy/matches/{match_key}/compare",
+  "POST /strategy/matches/{match_key}/recommend"
+ ],
+ "route_check": {
+  "ok": true,
+  "results": [
+   {
+    "operation": "GET /events/{event_key}/analysis",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "GET /events/{event_key}/qualification-forecast",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "GET /events/{event_key}/alliance-selection/candidates",
+    "status": 200,
+    "code": null,
+    "ok": true
+   },
+   {
+    "operation": "POST /events/{event_key}/alliance-selection/pick-list",
+    "status": 409,
+    "code": "not_approved",
+    "ok": true
+   },
+   {
+    "operation": "GET /predictions/events/{event_key}/ranking",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "GET /predictions/matches/{match_key}/win-probability",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "POST /predictions/win-probability",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "POST /predictions/alliance-synergy",
+    "status": 200,
+    "code": null,
+    "ok": true
+   },
+   {
+    "operation": "POST /strategy/matches/{match_key}/assess",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "POST /strategy/matches/{match_key}/recommend",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "POST /strategy/matches/{match_key}/compare",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "POST /strategy/hypothetical/assess",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "POST /strategy/hypothetical/recommend",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "POST /strategy/hypothetical/compare",
+    "status": 404,
+    "code": "model_not_loaded",
+    "ok": true
+   },
+   {
+    "operation": "GET /matches/{match_key}/pre-match-report",
+    "status": 200,
+    "code": null,
+    "ok": true
+   },
+   {
+    "operation": "GET /teams/{team_number}/events/{event_key}/strength",
+    "status": 200,
+    "code": null,
+    "ok": true
+   },
+   {
+    "operation": "GET /teams/{team_number}/events/{event_key}/metrics",
+    "status": 200,
+    "code": null,
+    "ok": true
+   }
+  ],
+  "inventory_missing_from_calls": [],
+  "epa_source": "statbotics"
+ },
+ "ok": true
+}

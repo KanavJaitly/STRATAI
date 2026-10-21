@@ -42,7 +42,8 @@ value, servable only after the season ends.
 
 from __future__ import annotations
 
-from collections import Counter
+import threading
+from collections import Counter, OrderedDict
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from typing import Any, Callable, Literal, Protocol
@@ -63,6 +64,8 @@ from ml.ratings.statbotics_primary import (
     VALUE_SOURCE_STATBOTICS,
     SilentFallbackError,
 )
+
+MAX_CACHED_SNAPSHOTS = 8  # P10-M1 (Phase 7 R10): a bounded LRU of snapshot record sets
 
 LIVE_EPA_SOURCE = "p5_live_statbotics"
 DESIGN = ".agent/phase5/LIVE_EPA_REFRESH_DESIGN.md"
@@ -125,12 +128,24 @@ class LiveRetrieval:
         self._root = self._snapshots[0][1] if self._snapshots else None
         self._refreshes = [(datetime.fromisoformat(e["started_at"]), bool(e["ok"]))
                            for e in entries if e["kind"] == "refresh"]
-        self._records: dict[str, dict[tuple[int, str], LiveRecord]] = {}
+        self._records: OrderedDict[str, dict[tuple[int, str], LiveRecord]] = OrderedDict()
+        self._records_lock = threading.Lock()
 
     def _records_of(self, snapshot_id: str) -> dict[tuple[int, str], LiveRecord]:
-        if snapshot_id not in self._records:
-            self._records[snapshot_id] = self.log.records(snapshot_id)
-        return self._records[snapshot_id]
+        """A snapshot's records, cached for the most recently used MAX_CACHED_SNAPSHOTS snapshots only (P10-M1,
+        Phase 7 R10: the cache grew without bound as live refreshes appended snapshots)."""
+        with self._records_lock:  # requests run in threads: an eviction must never race a lookup (review P10-R1)
+            records = self._records.get(snapshot_id)
+            if records is not None:
+                self._records.move_to_end(snapshot_id)
+                return records
+        records = self.log.records(snapshot_id)  # read outside the lock; a concurrent duplicate read is harmless
+        with self._records_lock:
+            self._records[snapshot_id] = records
+            self._records.move_to_end(snapshot_id)
+            while len(self._records) > MAX_CACHED_SNAPSHOTS:
+                self._records.popitem(last=False)
+        return records
 
     def view(self, as_of: datetime) -> SnapshotView:
         eligible = [(created, sid) for created, sid in self._snapshots if created < as_of]

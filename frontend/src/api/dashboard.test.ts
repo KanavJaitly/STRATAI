@@ -68,6 +68,7 @@ describe('dashboard client', () => {
       hypotheticalRecommend: () => dashboardApi.hypotheticalRecommend({ ...pairing, side: 'red' }, null),
       hypotheticalCompare: () => dashboardApi.hypotheticalCompare({ ...pairing, side: 'red', first: strategy, second: strategy }, null),
       preMatchReport: () => dashboardApi.preMatchReport('m', null),
+      briefing: () => dashboardApi.briefing('m', null),
     }
     // every method is covered: a new one must be added here (or is a write)
     expect(Object.keys(reads).sort()).toEqual(Object.keys(dashboardApi).filter((k) => !k.startsWith('coach')).sort())

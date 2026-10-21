@@ -64,7 +64,7 @@ from data.metrics.statistics import (
     reliability_score,
     score_stddev,
 )
-from database.connection import Database
+from database.connection import Database, read_snapshot
 from ml.features.scale import ScaleLookup
 from ml.ratings.epa_states import (
     FALLBACK_STRATAI,
@@ -590,7 +590,19 @@ def build_team_features(
     stratai_epa_chain); see ml.ratings.provider.default_point_in_time_provider.
     scale_lookup (ml.features.scale) supplies D16's causal season scales; a fresh
     one is made per call when not given, so it never outlives the data it read.
+
+    All of this team's reads come from one consistent database snapshot (`read_snapshot`), so a sync committing
+    mid-build can never make its counts disagree (P10-M2).
     """
+    with read_snapshot(database) as snapshot:
+        return _build_team_features(snapshot, team_number, event_key, as_of, epa_provider=epa_provider,
+                                    scale_lookup=scale_lookup)
+
+
+def _build_team_features(
+    database: Database, team_number: int, event_key: str, as_of: datetime,
+    *, epa_provider: PointInTimeEpaProvider | None, scale_lookup: ScaleLookup | None,
+) -> TeamFeatures:
     scores, matches_considered = _point_in_time_scores(database, team_number, event_key, as_of)
     matches_used = len(scores)
 

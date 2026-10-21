@@ -132,6 +132,9 @@ table.candidates td { white-space: nowrap; }
 .chart-grid { stroke: var(--border); stroke-width: 1; }
 .chart-axis { stroke: var(--muted); stroke-width: 1.5; }
 .chart-tick { fill: var(--muted); font-size: 11px; }
+/* On a phone the chart is drawn at its 420 px minimum (a 640-unit viewBox), so 11 units render at about 7 px. These
+   sizes render at about 11-12 px there (P8-R9). */
+@media (max-width: 600px) { .chart-tick { font-size: 18px; } .chart-missing { font-size: 18px; } }
 .chart-missing { fill: var(--muted); font-size: 12px; }
 .chart-bar.tone-neutral { fill: var(--chart-neutral); }
 .chart-bar.tone-red { fill: var(--red); }
@@ -161,6 +164,9 @@ button[aria-disabled='true'] { opacity: 0.6; cursor: progress; }
 .reason-code { font-size: 0.8em; color: var(--muted); background: none; overflow-wrap: anywhere; }
 .label-explain { display: block; font-size: 0.85rem; color: var(--muted); margin: 2px 0 4px; }
 .table-scroll > table.grid { display: table; }
+/* The first column (each row's name) stays in view while a wide table scrolls sideways (P8-R9). */
+.table-scroll > table.grid tr > :first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+.table-scroll > table.grid tr.selected > :first-child { background: var(--selected); }
 /* scroll shadows: an edge shadow appears where more of a table is scrolled out of view (covers stay with the content,
    shadows stay with the box) */
 .table-scroll {
@@ -199,10 +205,16 @@ table.grid th[scope='row'] { white-space: nowrap; }
   .no-print, .top, .skip-link, .share-bar, .as-of, .tabs { display: none !important; }
   body { background: #fff; color: #000; }
   .app { max-width: none; padding: 0; }
-  .card { border: 1px solid #999; break-inside: avoid; }
+  /* Pagination (R11, verified on A4): a section may break across pages, because forcing a whole card onto one page
+     left near-empty pages wherever a card was taller than the space left. Rows, small items and headings stay whole,
+     and a heading stays with the content that follows it. */
+  .card { border: 1px solid #999; break-inside: auto; }
+  tr, .not-produced, .notice, .absent-part, .facts dt, .facts dd, .card-head, .report-footer { break-inside: avoid; }
+  h1, h2, h3, h4, .report details > summary, .card-head { break-after: avoid; }
   .report details { display: block; }
   .label-explain, .badge-icon { display: none !important; }
   .table-scroll { background: none; overflow: visible; }
+  .table-scroll > table.grid tr > :first-child { position: static; }
   .report details > summary { list-style: none; font-weight: 600; }
   a { color: #000; text-decoration: none; }
   .badge, .chip, .unvalidated-tag { border: 1px solid #555; background: #fff !important; color: #000 !important; }

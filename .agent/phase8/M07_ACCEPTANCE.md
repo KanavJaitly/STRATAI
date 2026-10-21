@@ -49,3 +49,9 @@ branch: phase8/build, uncommitted
 - Bundle: JS 418.74 kB (gzip 120.83 kB), CSS 16.07 kB, no source maps (`runs/frontend_build.txt`).
 - Test reliability: with `maxWorkers: '50%'` (2026-10-19), 6 of 6 full runs passed (145 tests). Before it, there were intermittent failures under oversubscription (P8-R14).
 - Slow routes live: candidates 3.74 s; analysis (raw EPA path) 8.24 s.
+
+## Closeout 2026-10-19
+- **The "Not done" items above are now fixed** (P8-R9 closed): manual tab activation, persistent status regions, `aria-disabled` plus a guard, a sticky first column, readable chart ticks.
+- **Checks:** each has a test proven against the old code and was checked in real Chromium.
+- **A4 print:** fixed and verified locally (P8-R11 open only for the model-populated content).
+- **Frontend:** 165 passed, 3 of 3 runs.

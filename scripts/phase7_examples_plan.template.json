@@ -393,6 +393,33 @@
    }
   },
   {
+   "operation": "GET /matches/{match_key}/briefing",
+   "name": "qualification",
+   "kind": "real",
+   "summary": "Readable briefing (Phase 9)",
+   "expect_status": 200,
+   "request": {
+    "path_params": {
+     "match_key": "<<QUAL_MATCH>>"
+    },
+    "query": {
+     "as_of": "{as_of}"
+    }
+   }
+  },
+  {
+   "operation": "GET /matches/{match_key}/briefing",
+   "name": "unknown_match",
+   "kind": "real",
+   "summary": "An unknown match",
+   "expect_status": 404,
+   "request": {
+    "path_params": {
+     "match_key": "<<UNKNOWN_MATCH>>"
+    }
+   }
+  },
+  {
    "operation": "POST /strategy/matches/{match_key}/assess",
    "name": "qualification",
    "kind": "real",
