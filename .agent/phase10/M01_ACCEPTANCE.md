@@ -2,7 +2,7 @@
 
 **status:** IMPLEMENTED and verified locally (2026-10-21). **Not fully accepted on its own terms:**
 - the failing-first evidence is partial (below);
-- the 413 declaration on locked operations needs a decision (P10-Q9).
+- the 413 on locked operations is now declared (P10-Q9, approved 2026-10-21).
 
 | Verification state | Result |
 |---|---|
@@ -36,8 +36,13 @@ recorded failing first. A failure against the pre-fix code is demonstrated for:
 Each of these tests asserts behaviour that the old code lacked (for example, the old cache dict was unbounded). But
 there is no pre-fix run on record, so the criterion is not claimed as met.
 
-**2. "No locked-contract changes": MET for the lock** (the check is clean). **However, a 413 is now served on
-locked operations without being declared in OpenAPI** (review F12). Declaring it is a relock: DECISION P10-Q9.
+**2. "No locked-contract changes": MET.** M1 changed no locked entry. The 413 that M1's body limit serves was then
+**declared**, as Sven Morais approved on 2026-10-21 (P10-Q9):
+- an additive relock: 0 changed and 22 added leaves, on the 11 locked body-taking operations, with a dated revision
+  citing the decision;
+- 9 unlocked operations declare it too;
+- the code is pinned to `payload_too_large`;
+- a test checks that declaration and served code agree.
 
 **3. "Full suites show no new failure": MET.** 0 regressions; one baseline failure fixed.
 

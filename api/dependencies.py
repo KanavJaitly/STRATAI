@@ -23,13 +23,12 @@ model pinned yet" must never be confused with "the process failed to boot".
 from __future__ import annotations
 
 import time
-from typing import Generator
 
 from starlette.requests import Request
 
 from api.ml_loading import ServedEpaSource, ServedModel, live_log_stamp, load_epa_source
 from data.config import Settings
-from database.connection import Database, RequestDatabase
+from database.connection import Database
 
 
 def get_settings(request: Request) -> Settings:
@@ -37,16 +36,14 @@ def get_settings(request: Request) -> Settings:
     return request.app.state.settings
 
 
-def get_database(request: Request) -> Generator[Database, None, None]:
-    """This request's Database (P10-D1 option B, Sven Morais 2026-10-21): it holds at most one connection, opened on
-    first use and closed when the request ends (`database.connection.RequestDatabase`). It is never shared with
-    another request, so nothing is held open between requests. Before B, each Database.connection() call opened its
-    own connection."""
-    database = RequestDatabase(request.app.state.database._config)
-    try:
-        yield database
-    finally:
-        database.close()
+def get_database(request: Request) -> Database:
+    """Return the shared Database helper.
+
+    Note this is a connection *factory*, not a connection: Database opens and
+    closes a psycopg connection per Database.connection() call. Nothing is held
+    open between requests.
+    """
+    return request.app.state.database
 
 
 def get_ranking_model(request: Request) -> ServedModel | None:

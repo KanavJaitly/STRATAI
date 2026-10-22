@@ -183,10 +183,12 @@ observations gets no rating, never one synthesized from its scoring.
 - **M2 (simulated live event):** a real live-sync race was fixed (`read_snapshot` / `consistent_reads`); 5 of 5
   prescribed runs pass. P10-DM3 is met for the local configuration only. Earlier "stalls" were VM suspends: the H4
   heartbeat now marks such runs `environment_invalid`.
-- **M3:** connection cost measured; pooling or reuse is proposal P10-D1, awaiting Sven.
+- **M3:** connection cost measured. P10-D1 option B (one connection per request) was tried on Sven's decision and
+  REJECTED on its criteria (no latency gain), so option A is retained. The 413 is declared in the contract (P10-Q9).
+  The spec is ratified (2026-10-21).
 - **M4–M6** (three-season backtest, calibration, alliance selection, defense/feeding): BLOCKED on data, models and
   human reviewers.
-- **Last full suite (2026-10-21):** exit 1, 2,750 passed, 4 baseline failures (R16 fixed), 0 regressions.
+- **Last full suite (2026-10-21):** exit 1, 2,751 passed, 4 baseline failures (R16 fixed), 0 regressions. Not passing.
 
 **Phase 9 (LLM Report Layer): CONDITIONALLY ACCEPTED, NOT COMPLETE (Sven Morais, 2026-10-20)**
 (`.agent/phase9/PHASE_ACCEPTANCE.md` §10; the MASTER_BUILD gate is not satisfied on its own terms). P9-DM2 and the live
