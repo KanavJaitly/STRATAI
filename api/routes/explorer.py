@@ -20,13 +20,17 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Path, Query
 
+from api.contract import error_responses
 from api.dependencies import get_database
-from api.errors import ApiError, ErrorResponse
+from api.errors import ApiError
 from data.readiness import SUPPORTED_SEASONS, data_coverage
 from database.connection import Database
 
 router = APIRouter(prefix="/explorer", tags=["historical season explorer (read-only)"])
-_ERRORS = {HTTPStatus.NOT_FOUND: {"model": ErrorResponse}, HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse}}
+# Declared error responses (the P7-M1 (f) contract every route keeps), with the codes each route raises.
+_EVENT_ERRORS = error_responses({HTTPStatus.NOT_FOUND: ["event_not_found"],
+                                 HTTPStatus.UNPROCESSABLE_ENTITY: ["invalid_input"]})
+_TEAM_ERRORS = error_responses({HTTPStatus.NOT_FOUND: ["team_not_found"]})
 EVENT_KEY = re.compile(r"^(\d{4})[a-z0-9]+$")
 
 
@@ -47,12 +51,12 @@ def _event(database: Database, event_key: str) -> dict[str, Any]:
     return rows[0]
 
 
-@router.get("/seasons", summary="The supported seasons and the real data each has")
+@router.get("/seasons", responses=error_responses({}, validates_input=False), summary="The supported seasons and the real data each has")
 def get_seasons(database: Database = Depends(get_database)) -> Any:
     return [{"season": s, "coverage": data_coverage(database, s)} for s in SUPPORTED_SEASONS]
 
 
-@router.get("/seasons/{season}/events", summary="A season's events, with team and match counts")
+@router.get("/seasons/{season}/events", responses=error_responses({}), summary="A season's events, with team and match counts")
 def get_season_events(season: int = Path(ge=1992, le=2100), database: Database = Depends(get_database)) -> Any:
     with database.cursor() as c:
         c.execute(
@@ -65,7 +69,7 @@ def get_season_events(season: int = Path(ge=1992, le=2100), database: Database =
         return _rows(c)
 
 
-@router.get("/events/{event_key}/teams", responses=_ERRORS,
+@router.get("/events/{event_key}/teams", responses=_EVENT_ERRORS,
             summary="An event's teams with their synced EPA and record (absent values stay null)")
 def get_event_teams(event_key: str = Path(min_length=5, max_length=32), database: Database = Depends(get_database)
                     ) -> Any:
@@ -86,7 +90,7 @@ def get_event_teams(event_key: str = Path(min_length=5, max_length=32), database
             "epa_source": "Statbotics team_event_stats as synced (end-of-event values, not point-in-time)"}
 
 
-@router.get("/events/{event_key}/matches", responses=_ERRORS, summary="An event's matches, alliances and scores")
+@router.get("/events/{event_key}/matches", responses=_EVENT_ERRORS, summary="An event's matches, alliances and scores")
 def get_event_matches(event_key: str = Path(min_length=5, max_length=32), database: Database = Depends(get_database)
                       ) -> Any:
     event = _event(database, event_key)
@@ -101,7 +105,7 @@ def get_event_matches(event_key: str = Path(min_length=5, max_length=32), databa
         return {"event": event, "matches": _rows(c)}
 
 
-@router.get("/teams/{team_number}/seasons/{season}", responses=_ERRORS,
+@router.get("/teams/{team_number}/seasons/{season}", responses=_TEAM_ERRORS,
             summary="A team's events in a season, with synced EPA and record")
 def get_team_season(team_number: int = Path(ge=1), season: int = Path(ge=1992, le=2100),
                     database: Database = Depends(get_database)) -> Any:

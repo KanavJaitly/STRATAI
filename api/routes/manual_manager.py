@@ -24,9 +24,10 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query
 from pydantic import BaseModel, Field
 from starlette.requests import Request
 
+from api.contract import error_responses
 from api.dependencies import get_database, get_settings
-from api.errors import ApiError, ErrorResponse
-from api.routes.common import require_writer  # moved to common by P7-M5
+from api.errors import ApiError
+from api.routes.common import CODE_WRITE_NOT_AUTHORIZED, CODE_WRITES_DISABLED, require_writer  # P7-M5
 from data import manual_processing as mp
 from data import readiness as rd
 from data import rulesets as rs
@@ -40,8 +41,18 @@ _STATUS = {"invalid_input": HTTPStatus.UNPROCESSABLE_ENTITY, "not_found": HTTPSt
            "wrong_season": HTTPStatus.CONFLICT, "hash_mismatch": HTTPStatus.CONFLICT,
            "review_incomplete": HTTPStatus.CONFLICT, "invalid_stored_ruleset": HTTPStatus.CONFLICT,
            "unverified_content": HTTPStatus.CONFLICT, "not_approved": HTTPStatus.NOT_FOUND}
-_ERRORS = {HTTPStatus.NOT_FOUND: {"model": ErrorResponse}, HTTPStatus.CONFLICT: {"model": ErrorResponse},
-           HTTPStatus.UNPROCESSABLE_ENTITY: {"model": ErrorResponse}, HTTPStatus.FORBIDDEN: {"model": ErrorResponse}}
+
+
+def _errors(*codes: str, write: bool = False, validates_input: bool = True) -> dict[int | str, Any]:
+    """Declared error responses (the P7-M1 (f) contract every route keeps): the codes the route's own calls can
+    raise, mapped through _STATUS exactly as _call maps them, plus the write-token refusals on a write route. The
+    codes per route were derived from the data functions each route calls (2026-10-21, while integrating PR #37)."""
+    declared: dict[int, list[str]] = {}
+    for code in codes:
+        declared.setdefault(int(_STATUS.get(code, HTTPStatus.UNPROCESSABLE_ENTITY)), []).append(code)
+    if write:
+        declared.setdefault(int(HTTPStatus.FORBIDDEN), []).extend([CODE_WRITES_DISABLED, CODE_WRITE_NOT_AUTHORIZED])
+    return error_responses(declared, validates_input=validates_input)
 MAX_PAGES_PER_REQUEST = 25
 # P6_M1_HUMAN_INPUT_GUIDE.md §5: what each pre-approval checklist item attests (the guide has the full text).
 CHECKLIST_TITLES = {
@@ -90,13 +101,14 @@ class ResolveBody(BaseModel):
     note: str = ""
 
 
-@router.get("/game-manuals/{manual_id}/processing", responses=_ERRORS, summary="A manual's processing status")
+@router.get("/game-manuals/{manual_id}/processing", responses=_errors("not_found"), summary="A manual's processing status")
 def get_processing(manual_id: int = Path(ge=1), database: Database = Depends(get_database),
                    settings: Settings = Depends(get_settings)) -> Any:
     return mp.status(_store(settings), _manual(database, manual_id))
 
 
-@router.post("/game-manuals/{manual_id}/processing", status_code=HTTPStatus.ACCEPTED, responses=_ERRORS,
+@router.post("/game-manuals/{manual_id}/processing", status_code=HTTPStatus.ACCEPTED,
+             responses=_errors("invalid_input", "not_found", write=True),
              summary="Process a stored manual (idempotent; runs after the response; poll the status)")
 def start_processing(body: ProcessBody, background: BackgroundTasks, manual_id: int = Path(ge=1),
                      database: Database = Depends(get_database), settings: Settings = Depends(get_settings),
@@ -108,7 +120,9 @@ def start_processing(body: ProcessBody, background: BackgroundTasks, manual_id: 
     return state
 
 
-@router.post("/game-manuals/{manual_id}/identity-resolution", responses=_ERRORS,
+@router.post("/game-manuals/{manual_id}/identity-resolution",
+             responses=_errors("invalid_input", "invalid_state", "not_found", "storage_integrity", "wrong_season",
+                               write=True),
              summary="A named person confirms an ambiguous manual's season (write-once)")
 def resolve_identity(body: ResolveBody, manual_id: int = Path(ge=1), database: Database = Depends(get_database),
                      settings: Settings = Depends(get_settings), _: None = Depends(require_writer)) -> Any:
@@ -116,7 +130,7 @@ def resolve_identity(body: ResolveBody, manual_id: int = Path(ge=1), database: D
                  resolved_by=body.resolved_by, note=body.note)
 
 
-@router.get("/game-manuals/{manual_id}/extraction", responses=_ERRORS,
+@router.get("/game-manuals/{manual_id}/extraction", responses=_errors("not_found"),
             summary="Identity, sections, topics and unverified suggestions (page text via /pages)")
 def get_extraction(manual_id: int = Path(ge=1), database: Database = Depends(get_database),
                    settings: Settings = Depends(get_settings)) -> Any:
@@ -128,7 +142,7 @@ def get_extraction(manual_id: int = Path(ge=1), database: Database = Depends(get
             "pages": [{k: p[k] for k in ("page", "chars", "text_sha256", "error")} for p in data["pages"]]}
 
 
-@router.get("/game-manuals/{manual_id}/pages", responses=_ERRORS, summary="Extracted page text (at most 25 pages)")
+@router.get("/game-manuals/{manual_id}/pages", responses=_errors("invalid_input", "not_found"), summary="Extracted page text (at most 25 pages)")
 def get_pages(manual_id: int = Path(ge=1), first: int = Query(ge=1), last: int = Query(ge=1),
               database: Database = Depends(get_database), settings: Settings = Depends(get_settings)) -> Any:
     if last < first or last - first + 1 > MAX_PAGES_PER_REQUEST:
@@ -154,12 +168,12 @@ class RulesetReviewBody(BaseModel):
     verified_sha256: str = ""
 
 
-@router.get("/rulesets", summary="Season ruleset versions (every version is kept)")
+@router.get("/rulesets", responses=_errors(), summary="Season ruleset versions (every version is kept)")
 def get_rulesets(season: int | None = Query(default=None), database: Database = Depends(get_database)) -> Any:
     return rs.list_rulesets(database, season)
 
 
-@router.get("/ruleset-review-checklist", summary="The P6-M1 pre-approval checklist items (R1-R14)")
+@router.get("/ruleset-review-checklist", responses=_errors(validates_input=False), summary="The P6-M1 pre-approval checklist items (R1-R14)")
 def get_checklist() -> Any:
     return {"items": [{"id": i, "title": CHECKLIST_TITLES[i]} for i in rs.REVIEW_CHECKLIST],
             "guide": ".agent/phase6/P6_M1_HUMAN_INPUT_GUIDE.md §5",
@@ -167,7 +181,7 @@ def get_checklist() -> Any:
             "r15": "written by the approval itself: the write-once approval record, committed afterwards"}
 
 
-@router.get("/rulesets/{ruleset_id}", responses=_ERRORS, summary="One ruleset version")
+@router.get("/rulesets/{ruleset_id}", responses=_errors("not_found"), summary="One ruleset version")
 def get_ruleset(ruleset_id: int = Path(ge=1), database: Database = Depends(get_database)) -> Any:
     found = [r for r in rs.list_rulesets(database) if r["id"] == ruleset_id]
     if not found:
@@ -175,20 +189,22 @@ def get_ruleset(ruleset_id: int = Path(ge=1), database: Database = Depends(get_d
     return found[0]
 
 
-@router.post("/rulesets", status_code=HTTPStatus.CREATED, responses=_ERRORS,
+@router.post("/rulesets", status_code=HTTPStatus.CREATED, responses=_errors("invalid_input", write=True),
              summary="Save a ruleset draft (a new immutable version; schema-validated)")
 def post_ruleset(body: RulesetDraftBody, database: Database = Depends(get_database),
                  _: None = Depends(require_writer)) -> Any:
     return _call(rs.save_ruleset_draft, database, body.ruleset_json, created_by=body.created_by)
 
 
-@router.post("/rulesets/{ruleset_id}/submit", responses=_ERRORS, summary="Submit a draft for review")
+@router.post("/rulesets/{ruleset_id}/submit", responses=_errors("invalid_state", "not_found", write=True), summary="Submit a draft for review")
 def submit_ruleset(ruleset_id: int = Path(ge=1), database: Database = Depends(get_database),
                    _: None = Depends(require_writer)) -> Any:
     return _call(rs.submit_ruleset, database, ruleset_id)
 
 
-@router.post("/rulesets/{ruleset_id}/review", responses=_ERRORS,
+@router.post("/rulesets/{ruleset_id}/review",
+             responses=_errors("hash_mismatch", "invalid_input", "invalid_state", "invalid_stored_ruleset", "not_found",
+                               "review_incomplete", "unverified_content", write=True),
              summary="Approve (named, qualified reviewer; R1-R14; full sha256) or return with a note")
 def review_ruleset(body: RulesetReviewBody, ruleset_id: int = Path(ge=1), database: Database = Depends(get_database),
                    settings: Settings = Depends(get_settings), _: None = Depends(require_writer)) -> Any:
@@ -203,7 +219,7 @@ def review_ruleset(body: RulesetReviewBody, ruleset_id: int = Path(ge=1), databa
             {"path": str(record_path), "record": record, "next_step": "commit the approval record (R15)"}}
 
 
-@router.get("/seasons/{season}/ruleset-worksheet", responses=_ERRORS,
+@router.get("/seasons/{season}/ruleset-worksheet", responses=_errors("invalid_input", "not_found"),
             summary="A reviewable draft proposal for a new season's ruleset (never saved or approved)")
 def get_worksheet(season: int = Path(ge=1992), database: Database = Depends(get_database),
                   settings: Settings = Depends(get_settings)) -> Any:
@@ -215,7 +231,7 @@ def get_worksheet(season: int = Path(ge=1992), database: Database = Depends(get_
 # --- readiness ---------------------------------------------------------------------------------------------------
 
 
-@router.get("/seasons/{season}/readiness", summary="Data coverage, human inputs, the feature map and the task queue")
+@router.get("/seasons/{season}/readiness", responses=_errors(), summary="Data coverage, human inputs, the feature map and the task queue")
 def get_readiness(request: Request, season: int = Path(ge=1992), database: Database = Depends(get_database),
                   settings: Settings = Depends(get_settings)) -> Any:
     state = request.app.state

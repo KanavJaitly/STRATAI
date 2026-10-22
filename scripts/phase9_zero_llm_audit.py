@@ -118,6 +118,24 @@ OPERATION_CLASSES = {
     "GET /human-inputs/seasons/{season}/workflow": NOT_OUTPUT,
     "POST /human-inputs/specs/{spec_id}/review": NOT_OUTPUT, "POST /human-inputs/specs/{spec_id}/submit": NOT_OUTPUT,
     "GET /human-inputs/write-access": NOT_OUTPUT,
+    # Merged from phase6/build via PR #37 (classified 2026-10-21): the read-only historical explorer and the game
+    # manual / season-ruleset human-input workflow. They read stored data or record human inputs; none produces an
+    # engine output (the manual extraction is deterministic and LLM-free, data/manual_processing.py).
+    "GET /explorer/seasons": NOT_OUTPUT, "GET /explorer/seasons/{season}/events": NOT_OUTPUT,
+    "GET /explorer/events/{event_key}/teams": NOT_OUTPUT, "GET /explorer/events/{event_key}/matches": NOT_OUTPUT,
+    "GET /explorer/teams/{team_number}/seasons/{season}": NOT_OUTPUT,
+    "GET /human-inputs/game-manuals/{manual_id}/processing": NOT_OUTPUT,
+    "POST /human-inputs/game-manuals/{manual_id}/processing": NOT_OUTPUT,
+    "POST /human-inputs/game-manuals/{manual_id}/identity-resolution": NOT_OUTPUT,
+    "GET /human-inputs/game-manuals/{manual_id}/extraction": NOT_OUTPUT,
+    "GET /human-inputs/game-manuals/{manual_id}/pages": NOT_OUTPUT,
+    "GET /human-inputs/rulesets": NOT_OUTPUT, "POST /human-inputs/rulesets": NOT_OUTPUT,
+    "GET /human-inputs/rulesets/{ruleset_id}": NOT_OUTPUT,
+    "POST /human-inputs/rulesets/{ruleset_id}/submit": NOT_OUTPUT,
+    "POST /human-inputs/rulesets/{ruleset_id}/review": NOT_OUTPUT,
+    "GET /human-inputs/ruleset-review-checklist": NOT_OUTPUT,
+    "GET /human-inputs/seasons/{season}/ruleset-worksheet": NOT_OUTPUT,
+    "GET /human-inputs/seasons/{season}/readiness": NOT_OUTPUT,
 }
 
 

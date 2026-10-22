@@ -64,20 +64,19 @@ A run with any heartbeat gap (the VM or process was not running) is `environment
 pass or as an application failure. A stall over `--stall-seconds` records every thread's stack and the database's
 sessions and locks, then force-drops the database so the run ends.
 
-## One connection per request (P10-D1 option B: a controlled experiment)
+## One connection per request (P10-D1 option B): tried and rejected
 
-Sven Morais selected option B on 2026-10-21 as a **controlled experiment**. It is kept only if it meets the P10-D1 §5
-criteria (`.agent/phase10/decisions/P10_D1_EXPERIMENT_RESULT_2026-10-21.md`).
+Sven Morais selected option B on 2026-10-21 as a controlled experiment. It was implemented, tested (10 tests, all
+passing) and measured against option A under equivalent conditions.
 
-`api.dependencies.get_database` gives each request a `database.connection.RequestDatabase`:
-- **One connection per request:** opened on first use, closed when the request ends, never shared.
-- **Transactions unchanged:** each top-level `connection()` / `cursor()` call is still its own transaction.
-- **Nested calls:** a call while the connection is in use (nested, or another thread) gets a fresh connection, so
-  transactions never merge.
-- **Failures:** a broken connection is replaced on the next call.
-- **Snapshots:** `read_snapshot` uses the idle request connection.
+**It failed its acceptance criteria:**
+- report latency did not fall: it was 8.6 % slower alone, and its p99 at 6 readers was higher;
+- throughput did not improve.
 
-Tests: `tests/test_phase10_request_connection.py`.
+The report still opened 13 connections per call, because most of its reads go through the app-level EPA provider
+and helpers, which request-scoped reuse does not reach. **Option A is retained.**
+
+Details: `.agent/phase10/decisions/P10_D1_EXPERIMENT_RESULT_2026-10-21.md`.
 
 ## Connection profile (P10-M3)
 

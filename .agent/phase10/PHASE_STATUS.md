@@ -4,14 +4,20 @@ status: IN PROGRESS (2026-10-21). Phase 9 is conditionally accepted (Sven Morais
 spec: docs/P10Milestones.md revision 1, RATIFIED by Sven Morais 2026-10-21 (criteria unchanged; decisions/P10_HUMAN_DECISIONS_2026-10-21.md). Blobs in P10_M0_FREEZE.md, rechecked 2026-10-21: unchanged
 decisions:
   - P10_M0_DECISIONS.md (P10-Q1..Q8)
-  - decisions/P10_D1_CONNECTION_POOLING_PROPOSAL_2026-10-21.md (PROPOSAL: needs Sven's decision)
-  - P10-Q9 (RISK_REGISTER.md): declare 413 on locked operations? (DECISION: a relock)
+  - decisions/P10_D1_CONNECTION_POOLING_PROPOSAL_2026-10-21.md (the proposal)
+  - decisions/P10_HUMAN_DECISIONS_2026-10-21.md (Sven: B as an experiment; P10-Q9 approved; spec ratified)
+  - decisions/P10_D1_EXPERIMENT_RESULT_2026-10-21.md (B REJECTED on criteria 1a/1b/2; option A retained)
 milestones:
   - P10-M0: spec, decisions and baseline recorded (working freeze)
-  - P10-M1: IMPLEMENTED and verified locally. Failing-first evidence PARTIAL; 413 declaration DECISION P10-Q9 (M01_ACCEPTANCE.md)
+  - P10-M1: IMPLEMENTED and verified locally; NOT fully accepted (failing-first evidence only partly recorded). 413 declared (P10-Q9, relocked additively) (M01_ACCEPTANCE.md)
   - P10-M2: criteria MET on local evidence (5 of 5 H4.1 runs pass) with recorded limitations (M02_ACCEPTANCE.md)
-  - P10-M3: measurements RECORDED; pooling and reuse AWAITS a decision (P10-D1) (M03_STATUS.md)
-  - P10-M4 (three-season backtest, calibration), M5 (alliance selection vs playoffs), M6 (defense/feeding spot checks): BLOCKED (P10-Q2..Q4); not started
+  - P10-M3: profiling COMPLETE; option-B experiment REJECTED, option A retained (M03_STATUS.md)
+  - P10-M4 (three-season backtest, calibration), M5 (alliance selection vs playoffs), M6 (defense/feeding spot checks): BLOCKED; not started.
+    Correction after PR #37 (2026-10-21): the 2024-2026 P6-M1 rulesets were approved on 2026-10-08 (serving DB, ids
+    4-6), so M5 is no longer waiting on a ruleset reviewer. It is blocked because PX-1 FAILED its P6-Q3 gate (also on
+    the frozen rerun), and the replacement PX-1b can only be accepted on an untouched 2027 holdout (Phase 6 D9). The
+    isolated stratai_test has no season_rulesets rows and no 2025 events, so none of this can be exercised locally.
+    P10_M0_DECISIONS.md (frozen) still says P10-Q4 'a ruleset reviewer'; this note supersedes that for M5
   - P10-M7: docs/phase10.md started; audit and acceptance not yet done
 done_means:
   - P10-DM1 (three seasons backtest cleanly): NOT MET, BLOCKED (no 2022/2023 data or support, no models)
@@ -20,9 +26,19 @@ done_means:
 reviews: reviews/R1_M1_M2_ADVERSARIAL_2026-10-21.md (13 findings + the suspend finding; all accepted)
 trials: runs/m2_trials/TRIAL_INVENTORY.md (every run; 4 VM-suspended runs are environment-invalid), runs/m2_h4/, runs/m2_h41/
 final_checks (2026-10-21):
-  backend: exit 1; 2750 passed, 4 failed (all from the original baseline 5; R16 fixed), 5 skipped, 1 xfailed (runs/backend_final_p10_m1m2.txt)
+  backend (latest, option A restored, P10-Q9 applied): exit 1; 2751 passed, 4 failed (the 4 identified baseline failures; 0 regressions), 5 skipped, 1 xfailed (runs/backend_final_p10_d1_restored.txt). NOT passing
+  backend (previous): exit 1; 2750 passed, the same 4 failed (runs/backend_final_p10_m1m2.txt)
   focused: test_phase10_hardening 23, test_phase10_snapshot 12, test_phase10_stress_harness 17, test_database_connection 2 (all pass)
   frontend: vitest 173 passed exit 0, tsc 0, oxlint 8 baseline warnings, build 0 (no frontend change in Phase 10)
-  contract: lock check 0 (changed [], added []); types --check 0; zero-LLM static scan []
+  contract: lock relocked for P10-Q9 (25 operations, 0 changed / 22 added leaves); check 0; types --check 0; zero-LLM static scan []
 risks: RISK_REGISTER.md (P10-R1..R7, P10-Q9, the carried items)
 environment_note: the ChromeOS VM suspends when the host sleeps; keep it awake for long runs (P10-R1)
+integration_2026-10-21: PR #36 (555162c) and PR #37 (phase6/build, 75 commits) were merged into main by the maintainers.
+  phase8/build merged origin/main (02736e6) cleanly. Integration fixes:
+  - the 18 new operations from #37 (explorer, game-manual and ruleset routes) were classified in the zero-LLM audit
+    (all not_output);
+  - they now declare the standard error responses (500, the 422 envelope, their codes; a declaration-only change);
+  - the frontend types were regenerated.
+  Pre-existing on main (identical on a pristine origin/main worktree), environment-dependent: 6 tests in
+  test_manual_manager.py, which need approved season_rulesets and 2025 events that stratai_test lacks.
+  Record: runs/INTEGRATION_PR37_2026-10-21.md
