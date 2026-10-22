@@ -16,6 +16,22 @@ import type {
   SpecVersion,
   WriteAccess,
 } from './types'
+import type {
+  AnalysisBody,
+  ChecklistInfo,
+  EventInfo,
+  EventMatch,
+  EventSummary,
+  EventTeam,
+  Extraction,
+  PageText,
+  ProcessingState,
+  Readiness,
+  RulesetVersion,
+  SeasonSummary,
+  TeamSeason,
+  Worksheet,
+} from './managerTypes'
 
 import { ApiRequestError, requestJson } from './http'
 
@@ -48,9 +64,39 @@ export const ENDPOINTS = {
   establishArtifact: ['POST', '/human-inputs/artifacts/{artifact_id}/establish'],
   kappa: ['GET', '/human-inputs/seasons/{season}/kappa'],
   dm1Status: ['GET', '/human-inputs/seasons/{season}/dm1-status'],
+  processingStatus: ['GET', '/human-inputs/game-manuals/{manual_id}/processing'],
+  startProcessing: ['POST', '/human-inputs/game-manuals/{manual_id}/processing'],
+  resolveIdentity: ['POST', '/human-inputs/game-manuals/{manual_id}/identity-resolution'],
+  extraction: ['GET', '/human-inputs/game-manuals/{manual_id}/extraction'],
+  pages: ['GET', '/human-inputs/game-manuals/{manual_id}/pages'],
+  listRulesets: ['GET', '/human-inputs/rulesets'],
+  getRuleset: ['GET', '/human-inputs/rulesets/{ruleset_id}'],
+  saveRuleset: ['POST', '/human-inputs/rulesets'],
+  submitRuleset: ['POST', '/human-inputs/rulesets/{ruleset_id}/submit'],
+  reviewRuleset: ['POST', '/human-inputs/rulesets/{ruleset_id}/review'],
+  rulesetChecklist: ['GET', '/human-inputs/ruleset-review-checklist'],
+  rulesetWorksheet: ['GET', '/human-inputs/seasons/{season}/ruleset-worksheet'],
+  readiness: ['GET', '/human-inputs/seasons/{season}/readiness'],
 } as const satisfies Record<string, readonly [Method, string]>
 
-type EndpointName = keyof typeof ENDPOINTS
+// The historical explorer (Kanav, 2026-10-11): read-only GETs of season data and the existing analysis endpoints,
+// kept apart from the human-input routes above. tests/test_frontend_api_contract.py checks both lists.
+export const EXPLORER_ENDPOINTS = {
+  seasons: ['GET', '/explorer/seasons'],
+  seasonEvents: ['GET', '/explorer/seasons/{season}/events'],
+  eventTeams: ['GET', '/explorer/events/{event_key}/teams'],
+  eventMatches: ['GET', '/explorer/events/{event_key}/matches'],
+  teamSeason: ['GET', '/explorer/teams/{team_number}/seasons/{season}'],
+  teamMetrics: ['GET', '/teams/{team_number}/events/{event_key}/metrics'],
+  teamStrength: ['GET', '/teams/{team_number}/events/{event_key}/strength'],
+  eventAnalysis: ['GET', '/events/{event_key}/analysis'],
+  qualificationForecast: ['GET', '/events/{event_key}/qualification-forecast'],
+  eventRanking: ['GET', '/predictions/events/{event_key}/ranking'],
+  matchWinProbability: ['GET', '/predictions/matches/{match_key}/win-probability'],
+} as const satisfies Record<string, readonly ['GET', string]>
+
+const ALL_ENDPOINTS = { ...ENDPOINTS, ...EXPLORER_ENDPOINTS }
+type EndpointName = keyof typeof ALL_ENDPOINTS
 
 let writeToken = ''
 
@@ -65,7 +111,7 @@ export function getWriteToken(): string {
 }
 
 export function buildPath(name: EndpointName, params: Record<string, string | number> = {}): string {
-  return ENDPOINTS[name][1].replace(/\{(\w+)\}/g, (_, key: string) => {
+  return ALL_ENDPOINTS[name][1].replace(/\{(\w+)\}/g, (_, key: string) => {
     if (!(key in params)) throw new Error(`missing path parameter ${key}`)
     return encodeURIComponent(String(params[key]))
   })
@@ -81,7 +127,7 @@ interface CallOptions {
 }
 
 async function call<T>(name: EndpointName, options: CallOptions = {}): Promise<T> {
-  const [method] = ENDPOINTS[name]
+  const [method] = ALL_ENDPOINTS[name]
   let url = API_BASE + buildPath(name, options.params)
   const query = Object.entries(options.query ?? {}).filter(([, v]) => v !== undefined)
   if (query.length) url += '?' + new URLSearchParams(query.map(([k, v]) => [k, String(v)])).toString()
@@ -145,4 +191,54 @@ export const api = {
     call<Artifact>('establishArtifact', { params: { artifact_id: artifactId }, body }),
   kappa: (season: number) => call<KappaStatus>('kappa', { params: { season } }),
   dm1Status: (season: number) => call<Dm1Status>('dm1Status', { params: { season } }),
+
+  processingStatus: (manualId: number) => call<ProcessingState>('processingStatus', { params: { manual_id: manualId } }),
+  startProcessing: (manualId: number, requestedBy: string) =>
+    call<ProcessingState>('startProcessing', { params: { manual_id: manualId }, body: { requested_by: requestedBy } }),
+  resolveIdentity: (manualId: number, body: { season: number; resolved_by: string; note: string }) =>
+    call<ProcessingState>('resolveIdentity', { params: { manual_id: manualId }, body }),
+  extraction: (manualId: number) => call<Extraction>('extraction', { params: { manual_id: manualId } }),
+  pages: (manualId: number, first: number, last: number) =>
+    call<PageText[]>('pages', { params: { manual_id: manualId }, query: { first, last } }),
+  listRulesets: (season?: number) => call<RulesetVersion[]>('listRulesets', { query: { season } }),
+  getRuleset: (rulesetId: number) => call<RulesetVersion>('getRuleset', { params: { ruleset_id: rulesetId } }),
+  saveRuleset: (body: { ruleset_json: Record<string, unknown>; created_by: string }) =>
+    call<RulesetVersion>('saveRuleset', { body }),
+  submitRuleset: (rulesetId: number) => call<RulesetVersion>('submitRuleset', { params: { ruleset_id: rulesetId } }),
+  reviewRuleset: (rulesetId: number, body: { reviewer: string; approve: boolean; note: string;
+    reviewer_qualification: string; checklist: Record<string, boolean> | null; verified_sha256: string }) =>
+    call<{ ruleset: RulesetVersion; approval_record: { path: string; next_step: string } | null }>(
+      'reviewRuleset', { params: { ruleset_id: rulesetId }, body }),
+  rulesetChecklist: () => call<ChecklistInfo>('rulesetChecklist'),
+  rulesetWorksheet: (season: number) => call<Worksheet>('rulesetWorksheet', { params: { season } }),
+  readiness: (season: number) => call<Readiness>('readiness', { params: { season } }),
+}
+
+/** Read-only historical season data and the existing analysis endpoints (never writes). */
+export const explorer = {
+  seasons: () => call<SeasonSummary[]>('seasons'),
+  seasonEvents: (season: number) => call<EventSummary[]>('seasonEvents', { params: { season } }),
+  eventTeams: (eventKey: string) =>
+    call<{ event: EventInfo; teams: EventTeam[]; epa_source: string }>('eventTeams', { params: { event_key: eventKey } }),
+  eventMatches: (eventKey: string) =>
+    call<{ event: EventInfo; matches: EventMatch[] }>('eventMatches', { params: { event_key: eventKey } }),
+  teamSeason: (teamNumber: number, season: number) =>
+    call<TeamSeason>('teamSeason', { params: { team_number: teamNumber, season } }),
+  teamMetrics: (teamNumber: number, eventKey: string) =>
+    call<AnalysisBody>('teamMetrics', { params: { team_number: teamNumber, event_key: eventKey } }),
+  teamStrength: (teamNumber: number, eventKey: string, asOf?: string) =>
+    call<AnalysisBody>('teamStrength', { params: { team_number: teamNumber, event_key: eventKey }, query: { as_of: asOf } }),
+  eventAnalysis: (eventKey: string, asOf?: string) =>
+    call<AnalysisBody>('eventAnalysis', { params: { event_key: eventKey }, query: { as_of: asOf } }),
+  qualificationForecast: (eventKey: string, asOf?: string) =>
+    call<AnalysisBody>('qualificationForecast', { params: { event_key: eventKey }, query: { as_of: asOf } }),
+  eventRanking: (eventKey: string) => call<AnalysisBody>('eventRanking', { params: { event_key: eventKey } }),
+  matchWinProbability: (matchKey: string) =>
+    call<AnalysisBody>('matchWinProbability', { params: { match_key: matchKey } }),
+}
+
+/** The season an event key belongs to (its first four digits), or null. */
+export function seasonOfEvent(eventKey: string): number | null {
+  const match = /^(\d{4})[a-z0-9]+$/.exec(eventKey)
+  return match ? Number(match[1]) : null
 }

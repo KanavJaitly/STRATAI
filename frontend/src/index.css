@@ -81,7 +81,10 @@ legend { font-weight: 600; padding: 0 4px; }
 button { background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); border-radius: 6px; padding: 6px 14px; cursor: pointer; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 button.secondary { background: transparent; color: var(--accent); }
-button.link { background: none; border: none; color: var(--accent); padding: 0 4px; text-decoration: underline; }
+/* At least 24 px high and spaced apart, so table-row actions are tappable on a phone (WCAG 2.2 target size; D4). */
+button.link { background: none; border: none; color: var(--accent); padding: 3px 6px; min-height: 24px;
+  text-decoration: underline; }
+button.link + button.link { margin-left: 4px; }
 button.danger, button.link.danger { color: var(--bad-fg); border-color: var(--bad-fg); }
 
 .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0 12px; }
@@ -132,3 +135,20 @@ th.rot { font-size: 0.75rem; white-space: nowrap; }
 .review-box { border: 1px dashed var(--border); border-radius: 8px; padding: 10px 12px; margin-top: 8px; }
 .map-row input[list] { min-width: 12rem; margin-right: 12px; margin-bottom: 6px; }
 .sha { color: var(--muted); }
+
+/* Game Manual Manager and historical explorer (2026-10-11) */
+.session-bar select { width: 7rem; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 8px 0; }
+.tile { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; }
+.tile-value { font-size: 1.25rem; font-weight: 700; }
+.tile-label { font-size: 0.8rem; color: var(--muted); }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--border); margin: 8px 0 12px; }
+.tabs button { background: none; color: var(--text); border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 6px 12px; }
+.tabs button[aria-selected='true'] { border-bottom-color: var(--accent); color: var(--accent); font-weight: 600; }
+details.raw { margin: 8px 0; }
+details.raw pre, pre.page-text { max-height: 50vh; overflow: auto; background: var(--old-bg); padding: 8px; border-radius: 6px; font-size: 0.8rem; white-space: pre-wrap; }
+.progress { height: 6px; background: var(--old-bg); border-radius: 3px; overflow: hidden; margin: 6px 0; }
+.progress span { display: block; height: 100%; background: var(--accent); animation: progress 1.2s ease-in-out infinite; width: 40%; }
+@keyframes progress { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+.mismatch { border-left: 4px solid var(--warn-fg); }
+.task-list td:first-child { white-space: nowrap; font-weight: 600; }

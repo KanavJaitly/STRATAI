@@ -668,14 +668,41 @@ docs/metrics_pipeline.md section 9.1.
 Phase 6 – Strategy & Alliance Selection Engines (merged to main in PR #30): **COMPLETE, accepted by Kanav
 2026-10-17 with P6-DM1 deferred** (`.agent/phase6/decisions/P6_PHASE_ACCEPTANCE_2026-10-17.md`).
 - **P6-DM2 MET:** the parity audit (`.agent/phase6/results/p6_m13_parity_audit_rerun1.json`).
-- **P6-DM1 NOT MET (deferred):** it is blocked by required human input. The 2024–2026 season rulesets must be entered from
-  the manuals and approved by a named, qualified human FRC-domain reviewer (`scripts/phase6_rulesets.py`; review
-  control of 2026-10-07). Migration 0011 is applied to serving (2026-10-06, Kanav's approval); the three rulesets
-  are stored `awaiting_review` and need that review
-  (`.agent/phase6/decisions/P6_M1_ENTRY_STATUS.md`).
+- **P6-DM1 NOT MET (deferred by the 2026-10-17 acceptance):** the 2024–2026 P6-M1 rulesets are approved (ids 4–6, 2026-10-08) and the M1 check is
+  recorded, but **PX-1 FAILED its P6-Q3 gate** (worse than M6/M7 and seed-only; `.agent/phase6/P6_M2_PX1_FAILURE.md`).
+  Kanav accepted PX-1 as `not_validated` (2026-10-08). A root-cause audit fixed two confirmed defects; the frozen-protocol
+  rerun (`p6_m2_px1_rerun1.json`) also FAILED, because of a 2026 scale shift in the frozen raw-unit design
+  (`.agent/phase6/decisions/P6_PX1_AUDIT_DEFECTS_2026-10-08.md`). PX-1b (normalized composition) has a frozen spec
+  (`.agent/phase6/P6_M2_PX1B_SPEC.md`). Its DEV-1 (2024 → 2025, development only) met DV1/DV2, and the final candidate `px1b-v1` is frozen. Its acceptance gate
+  needs an untouched 2027 holdout and cannot be evaluated yet. D9 record v1
+  (`.agent/phase6/decisions/P6_D9_PX1B_REPLACEMENT_V1.md`; confirmed by Kanav Jaitly on 2026-10-11, `decisions/p6_d9_v1_confirmation.json`; this does not validate PX-1) makes PX-1b the
+  candidate replacement, NOT accepted. Kanav approved its C0-C4 preparation: a 2027 P6-M1 check, versioned
+  PX-2b/PX-4b/M8b specs on 2027, and harness pointers. All of it is prepared; nothing has run. PX-2b spec v1
+  calibrated in-sample and is superseded by v2 (out-of-sample calibration base, fit before any 2027 data).
+  Under D9, PX-2, PX-4 and P6-M8 do not run, and P6-DM1 stays deferred. A redesign would be a separate,
+  pre-registered effort that 2026 cannot validate.
 - **P6-M10 FAILED** its gate (D9). Strategy odds are served `not_validated`.
+  - **P6-M10b** (spec blob `d699afaf`, amendment A1 `a453eaba`) is prepared.
+    - DEV-M10b met its proceed rule, but both its gates failed G2.
+    - The production calibrator (`26661227…`, `cc6fa93`) and the pins (`713a13c`) were recorded before any 2027 data.
+      The integrity audit passed (`.agent/phase6/decisions/P6_M10B_PREPARATION_CLOSEOUT_2026-10-11.md`).
+  - Acceptance needs 2027 and Kanav's authorizations (`.agent/phase6/P6_M10B_2027_CHECKLIST.md`).
+  - **P6-M10c** (upset-floor link, spec blob `f24a8d1c`) did not meet its predeclared DEV-c rule (2026-10-11), so it
+    stops. M10b remains the frozen candidate.
+  - `p6m10-v1` stays served. The serving guard refuses v2.
 - **Records:** `docs/phase6.md`, `.agent/phase6/PHASE_STATUS.md`, `.agent/phase6/PHASE_ACCEPTANCE.md`.
 - **Spec:** frozen at P6-M0, in `docs/P6Milestones.md` and `.agent/phase6/P6_M0_DECISIONS.md`.
+- **Usability and 2027 manual readiness (2026-10-12):** `docs/game_manual_manager.md`. Pages:
+  - `/manuals`: upload and automatic, unverified extraction;
+  - `/rulesets`: worksheet, draft and R1-R14 review;
+  - `/readiness`: the 2027 tasks R1-R10 and M1-M4;
+  - `/explorer`: 2023-2026, real data.
+
+  `scripts/phase6_resume.py` runs only R3, and only when it is ready. None of it authorizes a Phase 6 run or a serving
+  change.
+
+  2023 lives in `stratai_test_2023`, not `stratai_test`: D13 prior-event facts are not season-bounded, so 2023 rows
+  change the frozen 2024+ D18 lookups (`.agent/stratai_test/2023_reversal_2026-10-12.json`).
 
 ---
 

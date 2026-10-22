@@ -134,6 +134,13 @@ class Settings(BaseSettings):
     # - artifact_store_dir: where uploaded game-manual PDFs are kept write-once, named by sha256.
     human_inputs_write_token: str | None = None
     artifact_store_dir: str = str(PROJECT_ROOT.parent / "StratAI-artifacts" / "uploads")
+    # Game Manual Manager (2026-10-11):
+    # - phase6_dir: where the Phase 6 write-once records are read for the readiness report (read-only);
+    # - ruleset_approval_record_dir: where a web-approved P6-M1 ruleset's write-once approval record (R15) is
+    #   written, the same place the CLI writes it (scripts/phase6_rulesets.py). The reviewer commits it.
+    phase6_dir: str = str(PROJECT_ROOT / ".agent" / "phase6")
+    ruleset_approval_record_dir: str = str(PROJECT_ROOT / ".agent" / "phase6" / "decisions")
+
     # Phase 9 briefing layer (briefing/, api/routes/briefing.py). Fail closed: the LLM formatter runs only when it is
     # enabled AND the data egress to the LLM provider is approved (P9-Q3, a human decision) AND a credential resolves;
     # otherwise the deterministic briefing is served. The credential is never a setting: the Anthropic SDK reads it
