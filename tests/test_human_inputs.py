@@ -97,6 +97,23 @@ def test_upload_stores_metadata_and_is_idempotent(client, tmp_path):
     assert workflow["source_uploaded"] and workflow["spec_state"] == "no_structured_spec"  # upload validates nothing
 
 
+def test_the_pdf_opens_inline_so_page_links_work_and_any_filename_is_served(client):
+    """A manual is reviewed in the browser's PDF viewer at a cited page (`#page=N`), so it is served inline; a real
+    manual's filename (an en dash, a quote) must not break the header (2026-10-12)."""
+    from urllib.parse import quote
+
+    name = '2099 Game Manual – "Rev 1".pdf'
+    params = {"season": SEASON, "game_name": "SYNTHETIC", "filename": name, "uploaded_by": "tester"}
+    manual = client.post("/human-inputs/game-manuals", params=params, content=PDF + b"inline",
+                         headers=_w(**{"Content-Type": "application/pdf"})).json()["manual"]
+    download = client.get(f"/human-inputs/game-manuals/{manual['id']}/file")
+    assert download.status_code == 200 and download.content == PDF + b"inline"
+    disposition = download.headers["Content-Disposition"]
+    assert disposition.startswith("inline;")
+    assert f"filename*=UTF-8''{quote(name, safe='')}" in disposition
+    assert download.headers["X-Content-Type-Options"] == "nosniff"
+
+
 @pytest.mark.parametrize(("content", "media", "status", "code"), [
     (b"not a pdf", "application/pdf", 422, "invalid_input"),
     (PDF, "text/plain", 415, "unsupported_media_type"),

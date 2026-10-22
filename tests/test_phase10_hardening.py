@@ -386,7 +386,9 @@ def test_the_413_is_declared_on_exactly_the_operations_that_take_a_body_and_matc
             if "413" in operation["responses"]:
                 declared.add(key)
                 assert "`payload_too_large`" in operation["responses"]["413"]["description"], key
-    assert declared == with_body and len(declared) == 20
+    # 20 at P10-Q9, plus 4 from the game manual manager and season rulesets (merged 2026-10-21): processing start,
+    # identity resolution, ruleset save and ruleset review.
+    assert declared == with_body and len(declared) == 24
     served = client.post("/predictions/win-probability", content=b"{" + b" " * (65 * 1024) + b"}",
                          headers={"content-type": "application/json"})
     assert served.status_code == 413 and served.json()["error"]["code"] == "payload_too_large"

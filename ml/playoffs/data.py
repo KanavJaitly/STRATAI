@@ -16,6 +16,11 @@
 - **Four members (D-PX1-2):** a row with a side that is not three members (FIRST Championship divisions, 4-ROBOT
   ALLIANCES) is outside PX-1's frozen three-team representation. It is excluded as `four_member_alliance` and
   counted.
+
+**Playoffs before the selection moment.** Where an event's data schedules a playoff match before the selection moment
+(after its last qualification match: 2024micmp2, 2025alhu), the point-in-time history would contain that playoff
+result. P6-Q2 forbids any in-playoff result as a feature, so the event yields no rows, counted per match as
+`playoff_before_selection_moment` (PX-1 audit, 2026-10-08).
 """
 
 from __future__ import annotations
@@ -75,6 +80,11 @@ class EventPlayoffs:
     @property
     def division_champion(self) -> bool:
         return any(a.seed is None for a in self.alliances)
+
+    def playoffs_precede_selection(self) -> bool:
+        """A playoff match scheduled before the selection moment, so inside its point-in-time history."""
+        as_of = self.selection_as_of()
+        return any(m.scheduled_time is not None and m.scheduled_time < as_of for m in self.matches)
 
     def selection_as_of(self) -> datetime:
         if self.latest_qualification is None:
@@ -163,6 +173,9 @@ def playoff_rows(event: EventPlayoffs, bracket: BracketFormat, features: Mapping
     The composition is the selection-time members (D-PX1-1). A side that is not three members is excluded as
     `four_member_alliance` before the EPA check (D-PX1-2). Raises `RulesetError` when a listing is unexplained."""
     excluded: Counter[str] = Counter()
+    if event.playoffs_precede_selection():
+        excluded["playoff_before_selection_moment"] += len(event.matches)
+        return [], excluded
     members = event_members(event, event_rules)
     slot_round = {(s.competition_level, s.set_number): s.round for s in bracket.slots}
     finals_key = (bracket.finals.competition_level, bracket.finals.set_number)

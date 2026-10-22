@@ -308,6 +308,28 @@ PHASE7_PATHS: frozenset[str] = frozenset({
 # built without the `briefing` package serves PRE_PHASE7_PATHS | PHASE7_PATHS only (tests/test_phase9_zero_llm.py).
 PHASE9_PATHS: frozenset[str] = frozenset({"/matches/{match_key}/briefing"})
 
+# The game manual manager, season rulesets, readiness and the read-only historical explorer (2026-10-11), merged
+# after Phase 7. The explorer's reads live under /explorer so that they never shadow P7-M4's
+# /events/{event_key}/teams and /events/{event_key}/matches, which have their own locked shapes.
+SEASON_PAGES_PATHS: frozenset[str] = frozenset({
+    "/human-inputs/game-manuals/{manual_id}/processing",
+    "/human-inputs/game-manuals/{manual_id}/identity-resolution",
+    "/human-inputs/game-manuals/{manual_id}/extraction",
+    "/human-inputs/game-manuals/{manual_id}/pages",
+    "/human-inputs/rulesets",
+    "/human-inputs/rulesets/{ruleset_id}",
+    "/human-inputs/rulesets/{ruleset_id}/submit",
+    "/human-inputs/rulesets/{ruleset_id}/review",
+    "/human-inputs/ruleset-review-checklist",
+    "/human-inputs/seasons/{season}/ruleset-worksheet",
+    "/human-inputs/seasons/{season}/readiness",
+    "/explorer/seasons",
+    "/explorer/seasons/{season}/events",
+    "/explorer/events/{event_key}/teams",
+    "/explorer/events/{event_key}/matches",
+    "/explorer/teams/{team_number}/seasons/{season}",
+})
+
 
 def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     """The shipped application exposes these paths and nothing else.
@@ -321,13 +343,15 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     analysis; P5-M5: qualification forecasts; the human-input workflows under
     /human-inputs). Phase 7 keeps the pre-Phase 7 list as PRE_PHASE7_PATHS and adds
     its own endpoints to PHASE7_PATHS, family by family, the same way, and Phase 9 its
-    briefing to PHASE9_PATHS. It still
+    briefing to PHASE9_PATHS. The game manual manager, season readiness and the
+    read-only historical explorer (2026-10-11, merged after Phase 7) are
+    SEASON_PAGES_PATHS. It still
     guards the other direction, which has not changed: a test-only
     forced-error route (/_test_boom and friends, registered on locally built
     apps in this module) must never reach the shipped application.
     """
     app = create_app(settings)
-    assert sorted(app.openapi()["paths"]) == sorted(PRE_PHASE7_PATHS | PHASE7_PATHS | PHASE9_PATHS)
+    assert sorted(app.openapi()["paths"]) == sorted(PRE_PHASE7_PATHS | PHASE7_PATHS | PHASE9_PATHS | SEASON_PAGES_PATHS)
 
 
 # ===========================================================================

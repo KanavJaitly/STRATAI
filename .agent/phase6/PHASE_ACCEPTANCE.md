@@ -40,3 +40,18 @@
 2. Migration 0011 on serving (approval).
 3. The P6-M8 pre-run record and the named mentor's review.
 4. Any P6-M10 redesign (Kanav's dated decision).
+
+## Addendum (2026-10-11): what has changed since this review
+
+The review above is kept as written. Its "Remaining" list is out of date.
+
+| Item | Status now |
+|---|---|
+| 1. P6-M1 rulesets | **Approved** 2026-10-08 (ids 4–6). PX-1 then **failed** its gate (D9), and so did its rerun. PX-1b, the candidate replacement, needs 2027 |
+| 2. Migration 0011 on serving | **Applied** 2026-10-06 |
+| 3. P6-M8 pre-run record and mentor review | Still open. The frozen P6-M8 is blocked by D9. M8b: Mr. Biery confirmed as mentor by Kanav (2026-10-11); the date and written evidence of his agreement are not yet on file, so its pre-run record is a draft |
+| 4. P6-M10 redesign | **P6-M10b** frozen, DEV run, production calibrator and pins recorded; acceptance needs 2027 |
+
+**Verdict unchanged:** Phase 6 is NOT complete. P6-DM2 is met. P6-DM1 is not met.
+
+Current status: `PHASE_STATUS.md`.

@@ -1,0 +1,10 @@
+{
+ "authorized": true,
+ "authorized_by": "Kanav",
+ "date": "2026-10-10",
+ "scope": "DEV-M10b",
+ "spec_blob": "d699afafc01d42904c7afc7c7e209f8007a6a207",
+ "runs": "once",
+ "source": "Kanav's chat instruction of 2026-10-10: 'run the already-approved diagnostic-only DEV-M10b procedure once, using the existing v1 artifacts and the frozen M10b spec', after freezing amendment A1 and passing the focused tests. Transcribed into this file by Claude Code; Kanav did not write the file himself.",
+ "not_authorized": ["registering the DEV base or calibrator", "fitting or registering the production calibrator", "production pins", "the 2027 acceptance run", "the P6-M13 parity rerun", "any serving switch"]
+}

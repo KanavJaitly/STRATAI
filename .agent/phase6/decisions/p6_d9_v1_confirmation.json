@@ -1,0 +1,9 @@
+{
+ "confirmed": true,
+ "confirmed_by": "Kanav Jaitly",
+ "date": "2026-10-11",
+ "record": ".agent/phase6/decisions/P6_D9_PX1B_REPLACEMENT_V1.md",
+ "record_blob": "147463ecf103e3995d3cb5ccdaf6a289c2495738",
+ "source": "Kanav Jaitly's instruction of 2026-10-11: 'My D9 decision v1 confirmation is authorized for recording against the exact frozen blob 147463ecf103e3995d3cb5ccdaf6a289c2495738. Record the actual confirmation date and my identity, Kanav Jaitly. This does not validate PX-1.' Transcribed into this file by Claude Code.",
+ "scope_note": "Confirms D9 decision v1 (PX-1b as the candidate replacement under its stated conditions). It does NOT validate PX-1 (which stays not_validated) and does NOT accept PX-1b, whose acceptance remains a FINAL-1 pass on 2027 plus Kanav's sha-matched confirmation."
+}

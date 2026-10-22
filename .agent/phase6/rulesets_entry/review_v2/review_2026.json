@@ -1,5 +1,5 @@
 {
- "R1": false,
+ "R1": true,
  "R2": true,
  "R3": true,
  "R4": true,
@@ -8,7 +8,7 @@
  "R7": true,
  "R8": true,
  "R9": true,
- "R10": false,
+ "R10": true,
  "R11": true,
  "R12": true,
  "R13": true,
