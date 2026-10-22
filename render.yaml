@@ -1,0 +1,30 @@
+# Render Blueprint for the STRATAI API and its PostgreSQL database (docs/DEPLOYMENT.md).
+# The web app is hosted on Vercel and reaches this API through a same-origin /api rewrite (frontend/vercel.json),
+# so CORS is not widened. Writes stay disabled: HUMAN_INPUTS_WRITE_TOKEN is deliberately not set.
+databases:
+  - name: stratai-db
+    plan: free
+    databaseName: stratai
+    postgresMajorVersion: "17"
+
+services:
+  - type: web
+    name: stratai-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: API_HOST=0.0.0.0 API_PORT=$PORT python -m api
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.2"
+      - key: ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stratai-db
+          property: connectionString
+      - key: EPA_SOURCE
+        value: statbotics
+      - key: BRIEFING_LLM_ENABLED
+        value: "false"
