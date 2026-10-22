@@ -1,0 +1,165 @@
+........................................................................ [  2%]
+........................................................................ [  5%]
+........................................................................ [  7%]
+........................................................................ [ 10%]
+........................................................................ [ 13%]
+........................................................................ [ 15%]
+..ss.................................................................... [ 18%]
+........................................................................ [ 20%]
+........................................................................ [ 23%]
+...................................s.................................... [ 26%]
+.....................s.................................................. [ 28%]
+........................................................................ [ 31%]
+........................................................................ [ 33%]
+........................................................................ [ 36%]
+........................................................................ [ 39%]
+........................................................................ [ 41%]
+.......................................F................................ [ 44%]
+........................................................................ [ 46%]
+........................................................................ [ 49%]
+........................................................................ [ 52%]
+..........................s............................................. [ 54%]
+....................................................................FFF. [ 57%]
+........................................................................ [ 59%]
+........................................................................ [ 62%]
+............................x........................................... [ 65%]
+........................................................................ [ 67%]
+........................................................................ [ 70%]
+........................................................................ [ 73%]
+........................................................................ [ 75%]
+........................................................................ [ 78%]
+........................................................................ [ 80%]
+........................................................................ [ 83%]
+........................................................................ [ 86%]
+........................................................................ [ 88%]
+........................................................................ [ 91%]
+........................................................................ [ 93%]
+........................................................................ [ 96%]
+........................................................................ [ 99%]
+.........................                                                [100%]
+=================================== FAILURES ===================================
+_ test_adapter_resolves_every_real_alliance_breakdown_and_matches_the_official_score _
+
+    @pytest.mark.skipif(not _database_available(), reason="Requires a reachable PostgreSQL database")
+    def test_adapter_resolves_every_real_alliance_breakdown_and_matches_the_official_score():
+        checked = {2024: 0, 2025: 0, 2026: 0}
+        with psycopg.connect(str(Settings().database_url)) as connection:
+            with connection.cursor(name="m11_parity") as cursor:
+                cursor.itersize = 2000
+                cursor.execute("""
+                    SELECT substr(source_object_id, 1, 4)::int, payload_json->'score_breakdown', payload_json->'alliances'
+                    FROM raw_source_payloads
+                    WHERE source = 'tba' AND source_object_type = 'match' AND is_current
+                      AND substr(source_object_id, 1, 4) IN ('2024', '2025', '2026')
+                      AND jsonb_typeof(payload_json->'score_breakdown') = 'object'
+                """)
+                for season, sb, alliances in cursor:
+                    for color in ("red", "blue"):
+                        b = sb[color]
+                        value = auto_points(season, b)
+                        assert value == AUTO_COMPONENTS[season](b)
+                        assert b["totalPoints"] == alliances[color]["score"]
+                        checked[season] += 1
+        if sum(checked.values()) == 0:
+            pytest.skip("no TBA match payloads synced")
+>       assert all(count > 0 for count in checked.values()), checked
+E       AssertionError: {2024: 33954, 2025: 0, 2026: 294}
+E       assert False
+E        +  where False = all(<generator object test_adapter_resolves_every_real_alliance_breakdown_and_matches_the_official_score.<locals>.<genexpr> at 0x7fddf28f7e00>)
+
+tests/test_ml_features_score_breakdown.py:143: AssertionError
+_____ test_m1_reproduction_path_runs_on_real_events_with_injected_rulesets _____
+
+database = <database.connection.Database object at 0x7fddf27b7350>
+
+    def test_m1_reproduction_path_runs_on_real_events_with_injected_rulesets(database):
+        """Smoke test of the data path only: SYNTHETIC rulesets, two events per season, nothing recorded."""
+        from data.rulesets import SeasonRuleset
+        from scripts.phase6_playoff_track import run_m1
+    
+        synthetic = {s: SeasonRuleset.model_validate(ruleset(s)) for s in (2024, 2025, 2026)}
+        result = run_m1(database, synthetic, limit=2)
+        assert set(result["seasons"]) == {2024, 2025, 2026}
+>       assert all(s["events"] == 2 for s in result["seasons"].values())
+E       assert False
+E        +  where False = all(<generator object test_m1_reproduction_path_runs_on_real_events_with_injected_rulesets.<locals>.<genexpr> at 0x7fddf25b2810>)
+
+tests/test_phase6_rulesets.py:256: AssertionError
+______ test_m1_counts_ruleset_exclusions_and_records_the_variant_applied _______
+
+database = <database.connection.Database object at 0x7fdddc6529d0>
+
+    def test_m1_counts_ruleset_exclusions_and_records_the_variant_applied(database):
+        """Schema v2: an excluded event is excluded and counted under its reason, never evaluated, and an evaluated
+        event records which selection variant governed it. SYNTHETIC rulesets on real event keys; nothing recorded."""
+        from data.rulesets import SeasonRuleset
+        from ml.playoffs.data import read_event_playoffs
+        from scripts.phase6_playoff_track import run_m1
+        from tests.phase6_bracket_fixtures import with_three_pick_variant
+    
+        limit = 8
+        seeded = [e.event_key for e in read_event_playoffs(database, 2024)[:limit]
+                  if e.alliances and not e.division_champion]
+>       assert len(seeded) >= 2
+E       assert 0 >= 2
+E        +  where 0 = len([])
+
+tests/test_phase6_rulesets.py:270: AssertionError
+_ test_m8_future_playoff_sentinel_changes_no_selection_moment_input_and_is_removed _
+
+database = <database.connection.Database object at 0x7fdd7fdbc1d0>
+
+    def test_m8_future_playoff_sentinel_changes_no_selection_moment_input_and_is_removed(database):
+        """The frozen P6-M8 leakage sentinel: a far-future playoff result (with scouting rows) inserted into the isolated
+        copy must not change any selection-moment feature, and must be gone afterwards."""
+        from ml.features.assembler import build_team_features
+        from ml.playoffs.data import read_event_playoffs
+        from ml.features.scale import ScaleLookup
+        from ml.ratings.d18_source import load_d18_provider
+        from scripts.phase6_playoff_track import CHAIN, SNAPSHOT, future_playoff_sentinel
+    
+>       provider, _ = load_d18_provider(database, SNAPSHOT, CHAIN)  # the EPA source M8 uses
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_phase6_rulesets.py:295: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ml/ratings/d18_source.py:73: in load_d18_provider
+    manifest = json.loads((snapshot / "manifest.json").read_text(encoding="utf-8"))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.11/pathlib.py:1059: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('C:/Dev/StratAI-artifacts/statbotics/statbotics_snapshot_20261001T220423Z/manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:/Dev/StratAI-artifacts/statbotics/statbotics_snapshot_20261001T220423Z/manifest.json'
+
+/usr/lib/python3.11/pathlib.py:1045: FileNotFoundError
+=============================== warnings summary ===============================
+tests/test_phase6_px1.py::test_model_is_antisymmetric_and_deterministic
+tests/test_phase6_px1.py::test_model_is_antisymmetric_and_deterministic
+tests/test_phase6_px1.py::test_seed_only_baseline_uses_the_seed_alone
+tests/test_phase6_px1.py::test_missing_used_input_is_insufficient_data
+  <repo-root>/venv/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:1381: FutureWarning: 'penalty' was deprecated in version 1.8 and will be removed in 1.10. To avoid this warning, leave 'penalty' set to its default value and use 'l1_ratio' or 'C' instead. Use l1_ratio=0 instead of penalty='l2', l1_ratio=1 instead of penalty='l1', l1_ratio set to a float between 0 and 1 instead of penalty='elasticnet', and C=np.inf instead of penalty=None.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_ml_features_score_breakdown.py::test_adapter_resolves_every_real_alliance_breakdown_and_matches_the_official_score
+FAILED tests/test_phase6_rulesets.py::test_m1_reproduction_path_runs_on_real_events_with_injected_rulesets
+FAILED tests/test_phase6_rulesets.py::test_m1_counts_ruleset_exclusions_and_records_the_variant_applied
+FAILED tests/test_phase6_rulesets.py::test_m8_future_playoff_sentinel_changes_no_selection_moment_input_and_is_removed
+4 failed, 2751 passed, 5 skipped, 1 xfailed, 4 warnings in 681.62s (0:11:21)
+pytest exit 1

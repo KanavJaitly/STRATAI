@@ -1,7 +1,8 @@
 # P10-M3 — Performance measurement: status (2026-10-21)
 
-**status:** measurements RECORDED; no code change made; the pooling and reuse proposal AWAITS Sven Morais's decision
-(P10-D1).
+**status:** profiling COMPLETE. Sven Morais selected P10-D1 option B on 2026-10-21 as a controlled experiment. **B was
+implemented, measured and REJECTED** (criteria 1a, 1b and 2 not met), and **option A is retained**
+(`decisions/P10_D1_EXPERIMENT_RESULT_2026-10-21.md`). No performance change is in the code.
 
 | Item | Result |
 |---|---|
@@ -13,3 +14,16 @@
 | On the stall | **These measurements do not explain any stall:** the stalls were VM suspends (review R1, verified). Connection churn is a latency cost, not a demonstrated reliability defect. Correlation is not claimed as causation |
 | Hot spots fixed | None. The dominant cost is the connection lifecycle, an architectural change that needs a decision (P10-D1). The per-response snapshots of P10-M2 already reuse one connection for the strength, analysis and report builds |
 | Limits | One machine and one event. In-process client. No models: analysis's compute path was measured only in the stress runs (5.1 s median per build). The throughput ceiling's split between connection work and the GIL is not separated |
+
+## The P10-D1 option B experiment (2026-10-21)
+
+| Item | Result |
+|---|---|
+| Runs | 3 option-A baselines and 3 option-B profiles (profiler P2, frozen), all valid (no pause). 5 option-B stress runs: 4 pass, 1 environment-invalid; 0 server errors and 0 stale values in all |
+| Report alone, median | 0.2105 s (A) → 0.2286 s (B), +8.6 %. **Still 13 connections per call** |
+| Strength alone | 4 → 2 connections per call |
+| Report p99 at 6 readers | 1.016 s → 1.503 s (noisy in both arms) |
+| Throughput at 6 vs 3 readers | not improved; failed in 1 of 3 B runs |
+| Session leak | none, in either arm |
+| Verdict | **REJECTED; A restored.** The code fingerprint equals the A baseline's |
+| What it shows | The report's connection cost comes mainly from the app-level EPA provider and helpers, not the request's `Database`. A wider variant (B′) would be a new decision |
