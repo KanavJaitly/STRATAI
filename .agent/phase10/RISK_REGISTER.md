@@ -34,3 +34,4 @@
 | P8-R4 deployment | DECISION / infrastructure: CARRIED to final remediation |
 | P8-R5 slow routes, P9-R7 briefing latency | Measured in P10-M3 (P10-R3) |
 | Phase 10 M4–M6 prerequisites (P10-Q2, Q3, Q4) | BLOCKED: see `P10_M0_DECISIONS.md` |
+| M5 prerequisite, corrected after PR #37 (2026-10-21) | The P6-M1 rulesets are APPROVED (2026-10-08). M5 is blocked by PX-1 failing its gate and PX-1b needing a 2027 holdout (Phase 6 D9). The test DB has no rulesets or 2025 events |

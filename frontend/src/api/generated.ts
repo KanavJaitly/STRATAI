@@ -545,6 +545,10 @@ export interface PreMatchTeam {
   validation: Validation
 }
 
+export interface ProcessBody {
+  requested_by: string
+}
+
 export interface ProfileBody {
   created_by: string
   payload: Record<string, unknown>
@@ -628,6 +632,12 @@ export interface RecommendResponse {
   vs_baseline_label: string | null
 }
 
+export interface ResolveBody {
+  note?: string
+  resolved_by: string
+  season: number
+}
+
 export interface ReviewBody {
   approve: boolean
   note?: string
@@ -650,6 +660,20 @@ export interface RosterTeamOut {
   rookie_year: number | null
   state_province: string | null
   team_number: number
+}
+
+export interface RulesetDraftBody {
+  created_by: string
+  ruleset_json: Record<string, unknown>
+}
+
+export interface RulesetReviewBody {
+  approve: boolean
+  checklist?: Record<string, boolean> | null
+  note?: string
+  reviewer: string
+  reviewer_qualification?: string
+  verified_sha256?: string
 }
 
 export interface ScheduledMatchOut {
