@@ -1,0 +1,421 @@
+{
+ "captured_at": "2026-10-21T22:00:23.535554+00:00",
+ "epa_source": "statbotics",
+ "cpus": 8,
+ "profile_version": "P2",
+ "code_sha256": "66ed585bfd6cffae0fa3d0fa9b82bdd8ed74774f6c45d4851f9f3aacb65ecaf1",
+ "disposable_database": "stratai_test_p10_15221",
+ "event": "2024casj",
+ "teams": 42,
+ "microbench": {
+  "connect_close_s": {
+   "n": 200,
+   "median": 0.0086,
+   "p95": 0.014,
+   "p99": 0.0157,
+   "max": 0.0172
+  },
+  "connect_select1_close_s": {
+   "n": 200,
+   "median": 0.0096,
+   "p95": 0.0152,
+   "p99": 0.017,
+   "max": 0.0175
+  },
+  "select1_on_open_connection_s": {
+   "n": 200,
+   "median": 0.0,
+   "p95": 0.0,
+   "p99": 0.0001,
+   "max": 0.0004
+  }
+ },
+ "per_route_alone": {
+  "metrics": {
+   "statuses": [
+    200
+   ],
+   "total_s": {
+    "n": 10,
+    "median": 0.0157,
+    "p95": 0.0186,
+    "p99": 0.0186,
+    "max": 0.0186
+   },
+   "connects_per_call": 1.0,
+   "statements_per_call": 1.0,
+   "connect_s_per_call": 0.0107,
+   "statement_s_per_call": 0.0018,
+   "other_s_per_call": 0.0029
+  },
+  "strength": {
+   "statuses": [
+    200
+   ],
+   "total_s": {
+    "n": 10,
+    "median": 0.0581,
+    "p95": 0.0725,
+    "p99": 0.0725,
+    "max": 0.0725
+   },
+   "connects_per_call": 4.0,
+   "statements_per_call": 11.0,
+   "connect_s_per_call": 0.0375,
+   "statement_s_per_call": 0.0158,
+   "other_s_per_call": 0.0052
+  },
+  "event_matches": {
+   "statuses": [
+    200
+   ],
+   "total_s": {
+    "n": 10,
+    "median": 0.027,
+    "p95": 0.0435,
+    "p99": 0.0435,
+    "max": 0.0435
+   },
+   "connects_per_call": 2.0,
+   "statements_per_call": 3.0,
+   "connect_s_per_call": 0.0178,
+   "statement_s_per_call": 0.0051,
+   "other_s_per_call": 0.0041
+  },
+  "event_teams": {
+   "statuses": [
+    200
+   ],
+   "total_s": {
+    "n": 10,
+    "median": 0.0401,
+    "p95": 0.0605,
+    "p99": 0.0605,
+    "max": 0.0605
+   },
+   "connects_per_call": 3.0,
+   "statements_per_call": 3.0,
+   "connect_s_per_call": 0.0302,
+   "statement_s_per_call": 0.0062,
+   "other_s_per_call": 0.004
+  },
+  "analysis": {
+   "statuses": [
+    404
+   ],
+   "total_s": {
+    "n": 10,
+    "median": 0.0257,
+    "p95": 0.0384,
+    "p99": 0.0384,
+    "max": 0.0384
+   },
+   "connects_per_call": 2.0,
+   "statements_per_call": 2.0,
+   "connect_s_per_call": 0.0169,
+   "statement_s_per_call": 0.0044,
+   "other_s_per_call": 0.0039
+  },
+  "report": {
+   "statuses": [
+    200
+   ],
+   "total_s": {
+    "n": 10,
+    "median": 0.1972,
+    "p95": 0.2304,
+    "p99": 0.2304,
+    "max": 0.2304
+   },
+   "connects_per_call": 13.0,
+   "statements_per_call": 72.0,
+   "connect_s_per_call": 0.1115,
+   "statement_s_per_call": 0.0688,
+   "other_s_per_call": 0.0152
+  },
+  "briefing": {
+   "statuses": [
+    200
+   ],
+   "total_s": {
+    "n": 10,
+    "median": 0.2402,
+    "p95": 0.2919,
+    "p99": 0.2919,
+    "max": 0.2919
+   },
+   "connects_per_call": 13.0,
+   "statements_per_call": 72.0,
+   "connect_s_per_call": 0.1332,
+   "statement_s_per_call": 0.0878,
+   "other_s_per_call": 0.0183
+  }
+ },
+ "under_load": [
+  {
+   "readers": 1,
+   "wall_s": 45.1,
+   "requests": 456,
+   "latency_s": {
+    "metrics": {
+     "n": 74,
+     "median": 0.0138,
+     "p95": 0.0197,
+     "p99": 0.0241,
+     "max": 0.0262
+    },
+    "strength": {
+     "n": 56,
+     "median": 0.0623,
+     "p95": 0.0823,
+     "p99": 0.0893,
+     "max": 0.0951
+    },
+    "event_matches": {
+     "n": 60,
+     "median": 0.0293,
+     "p95": 0.0408,
+     "p99": 0.0445,
+     "max": 0.1851
+    },
+    "event_teams": {
+     "n": 56,
+     "median": 0.0397,
+     "p95": 0.0581,
+     "p99": 0.074,
+     "max": 0.1144
+    },
+    "analysis": {
+     "n": 65,
+     "median": 0.0287,
+     "p95": 0.0415,
+     "p99": 0.0448,
+     "max": 0.0456
+    },
+    "report": {
+     "n": 74,
+     "median": 0.2319,
+     "p95": 0.2879,
+     "p99": 0.3323,
+     "max": 0.4242
+    },
+    "briefing": {
+     "n": 71,
+     "median": 0.2254,
+     "p95": 0.2915,
+     "p99": 0.3322,
+     "max": 0.4198
+    }
+   },
+   "statuses": {
+    "metrics": {
+     "200": 74
+    },
+    "strength": {
+     "200": 56
+    },
+    "event_matches": {
+     "200": 60
+    },
+    "event_teams": {
+     "200": 56
+    },
+    "analysis": {
+     "404": 65
+    },
+    "report": {
+     "200": 74
+    },
+    "briefing": {
+     "200": 71
+    }
+   },
+   "connections_per_s": 57.7,
+   "process_cpu_over_wall": 0.39,
+   "pg_sessions_sampled": {
+    "max": 3,
+    "median": 2.0
+   },
+   "pg_sessions_after_load_excluding_probe": 0,
+   "threads_still_alive": 0
+  },
+  {
+   "readers": 3,
+   "wall_s": 45.2,
+   "requests": 1137,
+   "latency_s": {
+    "metrics": {
+     "n": 176,
+     "median": 0.02,
+     "p95": 0.0267,
+     "p99": 0.0325,
+     "max": 0.0394
+    },
+    "strength": {
+     "n": 150,
+     "median": 0.0799,
+     "p95": 0.1036,
+     "p99": 0.1267,
+     "max": 0.1679
+    },
+    "event_matches": {
+     "n": 152,
+     "median": 0.0392,
+     "p95": 0.05,
+     "p99": 0.0923,
+     "max": 0.2631
+    },
+    "event_teams": {
+     "n": 154,
+     "median": 0.0511,
+     "p95": 0.0632,
+     "p99": 0.0703,
+     "max": 0.106
+    },
+    "analysis": {
+     "n": 178,
+     "median": 0.0347,
+     "p95": 0.0462,
+     "p99": 0.05,
+     "max": 0.052
+    },
+    "report": {
+     "n": 160,
+     "median": 0.2943,
+     "p95": 0.352,
+     "p99": 0.4065,
+     "max": 0.5539
+    },
+    "briefing": {
+     "n": 167,
+     "median": 0.2925,
+     "p95": 0.371,
+     "p99": 0.4572,
+     "max": 0.5598
+    }
+   },
+   "statuses": {
+    "metrics": {
+     "200": 176
+    },
+    "strength": {
+     "200": 150
+    },
+    "event_matches": {
+     "200": 152
+    },
+    "event_teams": {
+     "200": 154
+    },
+    "analysis": {
+     "404": 178
+    },
+    "report": {
+     "200": 160
+    },
+    "briefing": {
+     "200": 167
+    }
+   },
+   "connections_per_s": 135.9,
+   "process_cpu_over_wall": 1.1,
+   "pg_sessions_sampled": {
+    "max": 6,
+    "median": 4.0
+   },
+   "pg_sessions_after_load_excluding_probe": 0,
+   "threads_still_alive": 0
+  },
+  {
+   "readers": 6,
+   "wall_s": 45.3,
+   "requests": 1158,
+   "latency_s": {
+    "metrics": {
+     "n": 158,
+     "median": 0.0402,
+     "p95": 0.0571,
+     "p99": 0.0922,
+     "max": 0.0945
+    },
+    "strength": {
+     "n": 156,
+     "median": 0.1599,
+     "p95": 0.2024,
+     "p99": 0.2653,
+     "max": 0.2968
+    },
+    "event_matches": {
+     "n": 180,
+     "median": 0.079,
+     "p95": 0.1057,
+     "p99": 0.1551,
+     "max": 0.166
+    },
+    "event_teams": {
+     "n": 153,
+     "median": 0.0983,
+     "p95": 0.1329,
+     "p99": 0.1444,
+     "max": 0.1966
+    },
+    "analysis": {
+     "n": 181,
+     "median": 0.0734,
+     "p95": 0.101,
+     "p99": 0.1112,
+     "max": 0.1614
+    },
+    "report": {
+     "n": 153,
+     "median": 0.592,
+     "p95": 0.6709,
+     "p99": 0.729,
+     "max": 0.7682
+    },
+    "briefing": {
+     "n": 177,
+     "median": 0.5829,
+     "p95": 0.6972,
+     "p99": 0.7755,
+     "max": 0.7768
+    }
+   },
+   "statuses": {
+    "metrics": {
+     "200": 158
+    },
+    "strength": {
+     "200": 156
+    },
+    "event_matches": {
+     "200": 180
+    },
+    "event_teams": {
+     "200": 153
+    },
+    "analysis": {
+     "404": 181
+    },
+    "report": {
+     "200": 153
+    },
+    "briefing": {
+     "200": 177
+    }
+   },
+   "connections_per_s": 138.0,
+   "process_cpu_over_wall": 1.39,
+   "pg_sessions_sampled": {
+    "max": 10,
+    "median": 7.0
+   },
+   "pg_sessions_after_load_excluding_probe": 0,
+   "threads_still_alive": 0
+  }
+ ],
+ "disposable_dropped": true,
+ "pauses": [],
+ "environment_invalid": false,
+ "elapsed_s": 162.1
+}

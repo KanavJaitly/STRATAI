@@ -1,0 +1,403 @@
+{
+ "experiment": "P10-D1 option B vs A",
+ "date": "2026-10-21",
+ "event": "2024casj",
+ "profile": "scripts.phase10_connection_profile P2, --repeats 10 --load-seconds 45 --readers 1,3,6",
+ "stress": "scripts.phase10_live_sync_stress H4.1, --matches-per-poll 6 --readers 6",
+ "arms": {
+  "before_A": {
+   "code_sha256": "66ed585bfd6cffae0fa3d0fa9b82bdd8ed74774f6c45d4851f9f3aacb65ecaf1",
+   "environment_invalid": [
+    false,
+    false,
+    false
+   ],
+   "report_alone_median_s": [
+    0.2578,
+    0.1972,
+    0.2105
+   ],
+   "report_alone_connects": [
+    13.0,
+    13.0,
+    13.0
+   ],
+   "strength_alone_median_s": [
+    0.0701,
+    0.0581,
+    0.062
+   ],
+   "strength_alone_connects": [
+    4.0,
+    4.0,
+    4.0
+   ],
+   "metrics_alone_median_s": [
+    0.0158,
+    0.0157,
+    0.0177
+   ],
+   "report_6_readers": [
+    {
+     "n": 134,
+     "median": 0.6433,
+     "p95": 0.9098,
+     "p99": 2.0122,
+     "max": 2.0751
+    },
+    {
+     "n": 153,
+     "median": 0.592,
+     "p95": 0.6709,
+     "p99": 0.729,
+     "max": 0.7682
+    },
+    {
+     "n": 135,
+     "median": 0.6389,
+     "p95": 0.8855,
+     "p99": 1.0162,
+     "max": 1.1394
+    }
+   ],
+   "requests_45s": {
+    "1": [
+     345,
+     456,
+     378
+    ],
+    "3": [
+     921,
+     1137,
+     916
+    ],
+    "6": [
+     1002,
+     1158,
+     1006
+    ]
+   },
+   "connections_per_s": {
+    "1": [
+     42.6,
+     57.7,
+     46.9
+    ],
+    "3": [
+     111.5,
+     135.9,
+     111.0
+    ],
+    "6": [
+     121.4,
+     138.0,
+     122.1
+    ]
+   },
+   "pg_sessions_after_load": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0
+    ]
+   ],
+   "server_errors_6": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "after_B": {
+   "code_sha256": "26d577c3123055814df32307da171aef674d46f7aaac9f22ed2974cf7c60619a",
+   "environment_invalid": [
+    false,
+    false,
+    false
+   ],
+   "report_alone_median_s": [
+    0.2286,
+    0.2372,
+    0.2185
+   ],
+   "report_alone_connects": [
+    13.0,
+    13.0,
+    13.0
+   ],
+   "strength_alone_median_s": [
+    0.0416,
+    0.044,
+    0.193
+   ],
+   "strength_alone_connects": [
+    2.0,
+    2.0,
+    2.0
+   ],
+   "metrics_alone_median_s": [
+    0.021,
+    0.018,
+    0.0274
+   ],
+   "report_6_readers": [
+    {
+     "n": 126,
+     "median": 0.6626,
+     "p95": 0.9469,
+     "p99": 1.5034,
+     "max": 1.7171
+    },
+    {
+     "n": 148,
+     "median": 0.6233,
+     "p95": 0.8504,
+     "p99": 1.1184,
+     "max": 1.2406
+    },
+    {
+     "n": 132,
+     "median": 0.6733,
+     "p95": 1.4183,
+     "p99": 1.9791,
+     "max": 2.0547
+    }
+   ],
+   "requests_45s": {
+    "1": [
+     495,
+     389,
+     442
+    ],
+    "3": [
+     930,
+     1072,
+     1034
+    ],
+    "6": [
+     949,
+     1122,
+     983
+    ]
+   },
+   "connections_per_s": {
+    "1": [
+     52.5,
+     41.4,
+     47.5
+    ],
+    "3": [
+     96.0,
+     109.8,
+     105.7
+    ],
+    "6": [
+     94.9,
+     110.8,
+     100.5
+    ]
+   },
+   "pg_sessions_after_load": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0
+    ]
+   ],
+   "server_errors_6": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "after_B_stress": [
+  {
+   "run": 1,
+   "outcome": "pass",
+   "failures": [],
+   "pauses": [],
+   "server_errors": 0,
+   "stale_or_lookahead": 0,
+   "elapsed_s": 415.2,
+   "code_sha256": "26d577c3123055814df32307da171aef674d46f7aaac9f22ed2974cf7c60619a"
+  },
+  {
+   "run": 2,
+   "outcome": "pass",
+   "failures": [],
+   "pauses": [],
+   "server_errors": 0,
+   "stale_or_lookahead": 0,
+   "elapsed_s": 387.7,
+   "code_sha256": "26d577c3123055814df32307da171aef674d46f7aaac9f22ed2974cf7c60619a"
+  },
+  {
+   "run": 3,
+   "outcome": "environment_invalid",
+   "failures": [],
+   "pauses": [
+    {
+     "from_utc": "2026-10-21T22:35:43.117953+00:00",
+     "to_utc": "2026-10-21T22:35:56.948687+00:00",
+     "wall_gap_s": 13.8,
+     "monotonic_gap_s": 13.8
+    }
+   ],
+   "server_errors": 0,
+   "stale_or_lookahead": 0,
+   "elapsed_s": 406.3,
+   "code_sha256": "26d577c3123055814df32307da171aef674d46f7aaac9f22ed2974cf7c60619a"
+  },
+  {
+   "run": 4,
+   "outcome": "pass",
+   "failures": [],
+   "pauses": [],
+   "server_errors": 0,
+   "stale_or_lookahead": 0,
+   "elapsed_s": 327.8,
+   "code_sha256": "26d577c3123055814df32307da171aef674d46f7aaac9f22ed2974cf7c60619a"
+  },
+  {
+   "run": 5,
+   "outcome": "pass",
+   "failures": [],
+   "pauses": [],
+   "server_errors": 0,
+   "stale_or_lookahead": 0,
+   "elapsed_s": 323.7,
+   "code_sha256": "26d577c3123055814df32307da171aef674d46f7aaac9f22ed2974cf7c60619a"
+  }
+ ],
+ "criteria": {
+  "1a_report_alone_median_fall_at_least_30pct": {
+   "A_median_s": 0.2105,
+   "B_median_s": 0.2286,
+   "change_pct": 8.6,
+   "met": false
+  },
+  "1b_report_p99_6_readers_fall_at_least_30pct": {
+   "A_median_of_p99_s": 1.0162,
+   "B_median_of_p99_s": 1.5034,
+   "change_pct": 47.9,
+   "met": false
+  },
+  "2_throughput_6_at_least_3_in_every_B_run": {
+   "B_6": [
+    949,
+    1122,
+    983
+   ],
+   "B_3": [
+    930,
+    1072,
+    1034
+   ],
+   "per_run": [
+    true,
+    true,
+    false
+   ],
+   "met": false
+  },
+  "3_no_new_failure": {
+   "stress": "4 pass, 1 environment_invalid (13.8 s heartbeat pause, not a kernel suspend), 0 server errors, 0 stale in all 5",
+   "suite_and_snapshot_tests": "option B tests passed (65 focused incl. snapshot); full suite not run on B because criteria 1-2 already failed",
+   "met_for_correctness": true
+  },
+  "4_no_session_leak": {
+   "A": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0
+    ]
+   ],
+   "B": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0
+    ]
+   ],
+   "met": true
+  }
+ },
+ "verdict": "REJECTED: criteria 1a, 1b and 2 not met. Option A restored (code fingerprint equals the before_A baseline)."
+}
