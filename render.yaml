@@ -28,3 +28,7 @@ services:
         value: statbotics
       - key: BRIEFING_LLM_ENABLED
         value: "false"
+      # Settings requires TBA_API_KEY, but only the sync pipeline (data/clients/tba.py) uses it. The API never calls
+      # TBA, and this deployment runs no sync, so a non-secret placeholder is enough.
+      - key: TBA_API_KEY
+        value: unused-by-api
