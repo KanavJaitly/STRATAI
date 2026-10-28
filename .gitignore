@@ -7,3 +7,6 @@ venv/
 
 # Generated M14 validation artifacts: reproducible from a sync + recompute.
 m14_*_app_metrics.csv
+
+# Deployment dump built by scripts/deploy_public_dump.py (docs/DEPLOYMENT.md): data, never committed.
+.deploy/
