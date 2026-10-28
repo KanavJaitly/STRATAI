@@ -141,7 +141,7 @@ function AllianceSection({ data, side, title, perRobotItem, allianceItems }: { d
       {sharedEpaReason && <p className="small">No EPA for these robots: <Absent reason={sharedEpaReason} /></p>}
       {!plan && <p className="small">No roles: <Absent reason={data.strategy.absent_code ?? 'no strategy'} /></p>}
       <p className="small muted">Expected scoring contribution: each robot's EPA by phase (points), with its n; strategy roles are the
-        engine's (P6-M10 model); its odds carry their served validation status.</p>
+        strategy model's; its odds carry their served validation status.</p>
       {plan && strategySide && <p className="small">Odds for this alliance under its {label}: <OddsView odds={plan.odds} /></p>}
       {strategySide && strategySide.unavailable_reasons.length > 0 && (
         <p className="small muted">The engine gives no probability: {strategySide.unavailable_reasons.join(', ')}.</p>
@@ -194,7 +194,7 @@ function Report({ data, ours, setOurs, asOf }: { data: PreMatchReportResponse; o
         allianceItems={[{ title: 'Key risks', item: np.key_risks }]} />
       <section className="card" aria-labelledby="forecast-heading">
         <h2 id="forecast-heading">Match forecast</h2>
-        <h3>Win probability (M6/M7 statistical model)</h3>
+        <h3>Win probability (statistical model)</h3>
         {win.value ? <CalibratedProbabilityView value={win.value} /> : <AbsentPart code={win.absent_code} reason={win.absent_reason} />}
         <p className="small muted">Scope: {win.probability_scope}. A separate model from the strategy odds; the two are never combined.</p>
         <h3>Not produced by any engine</h3>
@@ -222,7 +222,7 @@ function Report({ data, ours, setOurs, asOf }: { data: PreMatchReportResponse; o
       <section className="card" aria-labelledby="evidence-heading">
         <h2 id="evidence-heading">Evidence per robot</h2>
         <p className="small muted">Each robot's full point-in-time strength view at the report's moment (defense and feeding are
-          scouting-only; reliability is an INTERIM attendance ratio).</p>
+          scouting-only; reliability is an estimate from recorded results).</p>
         {data.teams.map((t) => (
           <details key={t.team_number}>
             <summary>Team {t.team_number} ({t.alliance}) <ValidationBadge validation={t.validation} compact
