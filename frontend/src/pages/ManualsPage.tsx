@@ -53,22 +53,26 @@ function Upload({ season, onUploaded }: { season: number; onUploaded: (manual: M
     <WriteGate>
       <form className="form-row" onSubmit={(e) => { e.preventDefault(); void upload() }}>
         <label>
-          Official manual (PDF, up to 100 MB)
+          1. Choose the official manual PDF (up to 100 MB)
           <input type="file" accept="application/pdf,.pdf" aria-label="Manual PDF"
             onChange={(e) => void choose(e.target.files?.[0] ?? null)} />
         </label>
         <label>
-          Game name
-          <input value={gameName} onChange={(e) => setGameName(e.target.value)} aria-label="Game name" required />
+          2. Type the game's name, as on the manual's cover
+          <input value={gameName} placeholder="e.g. REEFSCAPE" onChange={(e) => setGameName(e.target.value)} aria-label="Game name" required />
         </label>
         <button type="submit" disabled={action.busy || !file || Boolean(problem) || !gameName.trim()}>
           Upload and process
         </button>
       </form>
+      {!file && <p className="small muted">Then press <strong>Upload and process</strong>. Processing runs by itself and
+        takes about a minute.</p>}
       {problem && <div className="notice notice-error" role="alert">{problem}</div>}
       {localSha && <p className="small">This file's sha256: <code>{localSha}</code></p>}
       <ErrorNotice error={action.error} />
-      {outcome && <div className="notice notice-ok" role="status">{outcome}</div>}
+      {outcome && <div className="notice notice-ok" role="status">{outcome} Next: when processing shows
+        “succeeded”, enter the <Link to="/game">game spec</Link> and the <Link to="/rulesets">season ruleset</Link> from
+        the manual.</div>}
     </WriteGate>
   )
 }
@@ -284,11 +288,18 @@ export function ManualsPage() {
   return (
     <>
       <Section title={`Game manual — ${season}`}>
-        <p className="lede">Upload the season's official game manual. STRATAI keeps the original unchanged with its
-          checksum, then processes it automatically: integrity checks, page text, the season and revision on its title
-          pages, a section and topic index, and unverified suggestions with page references. People then enter the
-          game spec and the season ruleset from it, and a named reviewer approves them. No step here approves
-          anything or runs a model.</p>
+        <ol className="steps">
+          <li>Download the season's official game manual (PDF) from{' '}
+            <a href="https://www.firstinspires.org/resource-library/frc/competition-manual-qa-system" target="_blank"
+              rel="noreferrer">FIRST's game manual page</a>.</li>
+          <li>Enter your name and the write token at the top of the page (uploading is off without them).</li>
+          <li>Choose the PDF, type the game's name and press <strong>Upload and process</strong>.</li>
+          <li>Wait for processing to show “succeeded”, then use the extracted sections and page references below to
+            fill in the <Link to="/game">game spec</Link> and the <Link to="/rulesets">season ruleset</Link>.</li>
+        </ol>
+        <p className="small muted">STRATAI keeps the original file unchanged. Processing reads the page text, the
+          season and revision, and builds a section index with suggestions; the suggestions are unverified, and
+          nothing is approved until a named reviewer approves the game spec and ruleset.</p>
         <Upload season={season} onUploaded={(m) => { setSelected(m.id); void manuals.reload() }} />
       </Section>
       <Section title="Uploaded versions">
