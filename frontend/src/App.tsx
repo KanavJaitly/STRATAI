@@ -109,7 +109,7 @@ export function Shell() {
       <header className="top no-print">
         <div className="brand">
           <strong>STRATAI</strong>
-          <span>{inInputs ? 'Human inputs · P5-M8 / P5-M9 / DM1'
+          <span>{inInputs ? 'Human inputs'
             : inSeasonArea ? 'Game manuals, season rulesets, readiness and historical seasons' : 'Strategy dashboard'}</span>
         </div>
         <nav aria-label="Main">

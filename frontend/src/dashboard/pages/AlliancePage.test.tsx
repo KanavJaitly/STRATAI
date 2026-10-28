@@ -37,7 +37,7 @@ describe('AlliancePage (P8-M5)', () => {
     await userEvent.type(screen.getByRole('textbox', { name: 'Alliance 1' }), `${RED[0]}`)
     await userEvent.click(screen.getByRole('button', { name: 'Rank picks' }))
     const notice = (await screen.findByText(/No approved ruleset/)).closest('.refusal') as HTMLElement
-    expect(notice).toHaveTextContent('P6-DM1 deferred')
+    expect(notice).toHaveTextContent('pick list is not available')
     expect(notice).toHaveTextContent('not_approved')
     const body = api.calls.find((c) => c.path.endsWith('/pick-list'))?.body as { alliances: number[][]; seed: number; turns_taken: number }
     expect(body).toMatchObject({ seed: 1, turns_taken: 0 })

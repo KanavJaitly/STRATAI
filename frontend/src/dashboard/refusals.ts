@@ -40,9 +40,9 @@ export const REFUSALS: Record<string, RefusalInfo> = {
 
   not_approved: { kind: 'blocked', title: 'No approved ruleset',
     explanation: 'Alliance selection needs the season\'s game rules entered from the manual and approved by a '
-      + 'named, qualified reviewer (P6-M1). Until then the pick list is refusal-only (P6-DM1 deferred).' },
+      + 'named, qualified reviewer. Until then the pick list is not available.' },
   playoff_models_not_accepted: { kind: 'blocked', title: 'Playoff models not accepted',
-    explanation: 'The playoff model gates (PX-1, PX-2, PX-4) have not passed, or their records do not name the '
+    explanation: 'The playoff models have not passed their accuracy checks, or their records do not name the '
       + 'served model files.' },
   storage_integrity: { kind: 'blocked', title: 'Stored record failed its integrity check',
     explanation: 'A stored record does not match its recorded hash or schema, so it is not used.' },

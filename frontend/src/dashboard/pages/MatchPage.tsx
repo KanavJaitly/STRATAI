@@ -62,7 +62,7 @@ export function MatchPage() {
           : <p className="notice notice-warn">This match does not have three teams per alliance at this moment, so no strategy can be built.</p>}
       <section className="card" aria-labelledby="winprob-heading">
         <h2 id="winprob-heading">Match win probability (statistical model, no strategy)</h2>
-        <p className="small muted">The M6/M7 model's P(red wins) from both alliances' features. It is a separate model from
+        <p className="small muted">The statistical model's chance of each alliance winning, from both alliances' data. It is a separate model from
           the strategy odds above and is never combined with them.</p>
         <ResourceView resource={winProbability} what="win probability">
           {(data) => <WinProbabilityView data={data} />}

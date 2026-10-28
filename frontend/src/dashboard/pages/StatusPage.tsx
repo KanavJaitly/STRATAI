@@ -40,7 +40,7 @@ export function StatusPage() {
         <h2 id="about">What the dashboard can show here</h2>
         <p>Readiness checks only the database. Each view reports separately whether its model or data source is loaded:
           a result that needs a model that is not pinned on this server shows <code>model_not_loaded</code>, and the
-          alliance-selection pick list shows <code>not_approved</code> until the season rules are approved (P6-DM1).
+          alliance-selection pick list shows <code>not_approved</code> until the season rules are approved.
           Nothing is substituted for a missing result.</p>
       </section>
     </>

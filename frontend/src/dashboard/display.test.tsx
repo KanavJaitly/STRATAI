@@ -46,8 +46,8 @@ describe('probability display (P8-Q4)', () => {
     </>)
     const success = screen.getByText('validated_playoff_success') // shown verbatim, as served
     const match = screen.getByText('validated_playoff')
-    expect(success.getAttribute('title')).toMatch(/PX-4/)
-    expect(match.getAttribute('title')).toMatch(/PX-2/)
+    expect(success.getAttribute('title')).toMatch(/event outcomes passed/)
+    expect(match.getAttribute('title')).toMatch(/single playoff-match probabilities passed/)
   })
 
   it('shows an unknown label verbatim rather than mapping it to a known one', () => {
