@@ -13,7 +13,7 @@ import { ApiRequestError } from '../api/client'
 import type { CalibratedWinProbability, EpaSourceInfo, Measure, StrategyOdds, Validation } from '../api/generated'
 import type { Resource } from '../components/useResource'
 import { refusalInfo } from './refusals'
-import { formatNumber, reasonText, VALIDATION_LABELS } from './labels'
+import { epaText, formatNumber, reasonText, statusName, VALIDATION_LABELS } from './labels'
 
 /**
  * A validation label, shown verbatim as served. The badge is a toggle that reveals the plain explanation inline
@@ -33,13 +33,13 @@ export function ValidationBadge({ validation, compact = false, interactive = tru
     <span className="validation">
       {interactive ? (
         <button type="button" className={`${tone} badge-button`} aria-expanded={open} aria-describedby={`${id}-x`}
-          title={explanation} onClick={() => setOpen(!open)}>{validation.status}<span className="badge-icon"
+          title={explanation} data-status={validation.status} onClick={() => setOpen(!open)}>{statusName(validation.status)}<span className="badge-icon"
             aria-hidden="true"> ⓘ</span></button>
-      ) : <span className={tone} title={explanation} aria-describedby={`${id}-x`}>{validation.status}</span>}
+      ) : <span className={tone} title={explanation} data-status={validation.status} aria-describedby={`${id}-x`}>{statusName(validation.status)}</span>}
       <span id={`${id}-x`} className={open ? 'label-explain' : 'visually-hidden'}>{explanation}</span>
       {!compact && reasons.length > 0 && (
         <ul className="reasons" aria-label="Qualifiers">
-          {reasons.map((reason) => <li key={reason}>{reason}</li>)}
+          {reasons.map((reason) => <li key={reason} data-reason={reason}>{reasonText(reason)}</li>)}
         </ul>
       )}
     </span>
@@ -59,8 +59,7 @@ export function Absent({ reason }: { reason?: string | null }) {
       <span aria-hidden="true">—</span>
       <span className="visually-hidden">not available</span>
       {reason && text ? (
-        <span className="absent-reason"> <span className="absent-text">{text}</span>
-          {text !== reason && <> <code className="reason-code">({reason})</code></>}</span>
+        <span className="absent-reason"> <span className="absent-text">{text}</span></span>
       ) : null}
     </span>
   )
@@ -116,7 +115,7 @@ export function CalibratedProbabilityView({ value }: { value: CalibratedWinProba
         <span className="unvalidated-tag">Unvalidated model output</span>{' '}
         <span className="unvalidated-value">{value.unvalidated_value !== null
           ? favoured(value.unvalidated_value) : '—'}</span>{' '}
-        <span className="muted">chance to win, not a validated probability ({value.unvalidated_reason ?? 'no reason given'})</span>
+        <span className="muted">chance to win, not a validated probability ({value.unvalidated_reason ? reasonText(value.unvalidated_reason) : 'no reason given'})</span>
       </div>
       <ValidationBadge validation={value.validation} />
     </div>
@@ -128,9 +127,9 @@ export function EpaSourceNote({ epa }: { epa: EpaSourceInfo }) {
   const flags = epa.validation_flags ?? []
   return (
     <p className="epa-note small muted">
-      EPA source <code>{epa.epa_source}</code>
+      EPA source: {epaText(epa.epa_source)}
       {epa.evaluated_configuration ? ' (the evaluated configuration)' : ' (not the configuration the models were evaluated on)'}
-      {flags.length > 0 && <> · {flags.join(', ')}</>}
+      {flags.length > 0 && <> · {flags.map(reasonText).join(', ')}</>}
     </p>
   )
 }

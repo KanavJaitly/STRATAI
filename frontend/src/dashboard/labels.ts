@@ -2,23 +2,53 @@
 
 import type { CandidateOut, Measure } from '../api/generated'
 
-/** Plain explanations of the validation labels the API serves (unknown labels are shown as-is). */
-export const VALIDATION_LABELS: Record<string, { text: string; tone: 'ok' | 'wait' | 'warn' | 'bad' | 'old' }> = {
-  approximately_calibrated_qualification: { tone: 'ok',
+/** Plain names and explanations of the validation labels the API serves. The badge shows the name; the served label
+ * stays on the element (data-status). An unknown label is shown with its underscores as spaces. */
+export const VALIDATION_LABELS: Record<string, { name: string; text: string; tone: 'ok' | 'wait' | 'warn' | 'bad' | 'old' }> = {
+  approximately_calibrated_qualification: { tone: 'ok', name: 'Validated (qualification)',
     text: 'Validated: approximately calibrated for qualification matches with full EPA (not validated for other matches).' },
-  validated_playoff_success: { tone: 'ok',
+  validated_playoff_success: { tone: 'ok', name: 'Validated (playoff event outcomes)',
     text: 'Validated playoff success: the bracket simulator\'s event outcomes passed their accuracy check, in the scope stated.' },
-  validated_playoff: { tone: 'ok',
+  validated_playoff: { tone: 'ok', name: 'Validated (single playoff match)',
     text: 'Validated playoff match probability: single playoff-match probabilities passed their accuracy check.' },
-  moderate_held_out: { tone: 'wait', text: 'An ordering with moderate held-out accuracy; only the order is meaningful.' },
-  descriptive: { tone: 'old', text: 'Descriptive: a recorded or computed fact, not a prediction.' },
-  descriptive_definition_pending: { tone: 'warn',
-    text: 'Descriptive, but the metric\'s definition is still an open decision.' },
-  not_validated: { tone: 'warn', text: 'Not validated: a model output that has not passed its validation gate.' },
-  not_validated_against_outcomes: { tone: 'warn', text: 'A documented heuristic, not validated against match outcomes.' },
-  heuristic_not_validated_against_outcomes: { tone: 'warn',
-    text: 'A documented heuristic, not validated against match outcomes.' },
-  insufficient_data: { tone: 'bad', text: 'Insufficient data: too few observations to report a value.' },
+  validated: { tone: 'ok', name: 'Validated', text: 'Validated against real results.' },
+  validated_as_measured: { tone: 'ok', name: 'Validated (as measured)',
+    text: 'Validated: its accuracy was measured against real results, as the note describes.' },
+  moderate_held_out: { tone: 'wait', name: 'Moderately accurate order',
+    text: 'An ordering with moderate accuracy on held-out data; only the order is meaningful.' },
+  descriptive: { tone: 'old', name: 'Recorded fact', text: 'A recorded or computed fact, not a prediction.' },
+  descriptive_definition_pending: { tone: 'warn', name: 'Definition pending',
+    text: 'A recorded fact, but how this metric is defined is still an open decision.' },
+  not_validated: { tone: 'warn', name: 'Not validated', text: 'A model output that has not passed its accuracy check.' },
+  not_validated_against_outcomes: { tone: 'warn', name: 'Rule of thumb',
+    text: 'A documented rule of thumb, not checked against match outcomes.' },
+  heuristic_not_validated_against_outcomes: { tone: 'warn', name: 'Rule of thumb',
+    text: 'A documented rule of thumb, not checked against match outcomes.' },
+  insufficient_data: { tone: 'bad', name: 'Too little data', text: 'Too few observations to report a value.' },
+}
+
+/** A served code with no plain text: underscores become spaces, so no raw identifier is shown. */
+export function plainCode(code: string): string {
+  return code.replaceAll('_', ' ')
+}
+
+export function statusName(status: string): string {
+  return Object.hasOwn(VALIDATION_LABELS, status) ? VALIDATION_LABELS[status].name : plainCode(status)
+}
+
+/** Plain names for the EPA sources and per-team EPA states the API serves. */
+const EPA_TEXT: Record<string, string> = {
+  d18_statbotics_primary: 'Statbotics season snapshot',
+  p5_live_statbotics: 'live Statbotics',
+  statbotics: 'Statbotics',
+  fallback_stratai: 'StratAI estimate',
+  current: 'current',
+  stale: 'out of date',
+  withheld: 'withheld',
+}
+
+export function epaText(code: string): string {
+  return Object.hasOwn(EPA_TEXT, code) ? EPA_TEXT[code] : plainCode(code)
 }
 
 export function formatNumber(value: number, digits = 1): string {
@@ -54,6 +84,35 @@ const REASON_TEXT: Record<string, string> = {
   alliance_incomplete: 'needs a full three-team alliance',
   'alliance incomplete': 'needs a full three-team alliance',
   insufficient_data: 'too few observations',
+  // validation qualifiers and refusal codes
+  m7_gate_failed: 'calibrated only for qualification matches with full EPA; it did not pass the overall check',
+  p6_m10_gate_failed: 'the strategy model did not pass its accuracy check',
+  p6_m10b_not_accepted: 'the newer strategy model is not accepted yet',
+  p6_m10_evaluation_not_recorded: 'the strategy model\'s evaluation is not recorded',
+  playoff_scope: 'a playoff match; the model is validated for qualification matches only',
+  playoff_model_unavailable: 'the playoff model is not available',
+  range_coverage_not_measured: 'how often the real result falls inside this range has not been measured',
+  canonical_tba_record: 'the official result from The Blue Alliance',
+  epa_incomplete: 'some teams have no EPA',
+  schedule_includes_epa_incomplete_match: 'the schedule includes a match where a team has no EPA',
+  epa_source_incomplete: 'EPA data is incomplete for this event',
+  epa_source_not_loaded: 'EPA data is not loaded',
+  epa_source_pending: 'EPA data is still loading',
+  epa_source_later_season: 'the EPA comes from a later season',
+  epa_source_unresolvable: 'the EPA source could not be found',
+  live_refresh_not_yet_validated: 'live EPA refresh not yet validated',
+  statbotics_unprocessed_72h: 'Statbotics has not processed this event for 72 hours, so StratAI\'s own estimate is used',
+  strategy_effect_unmeasured: 'the effect of the chosen strategy is not measured',
+  coach_observation_effect_unmeasured: 'the effect of coach observations is not measured',
+  defense_effect_insufficient_data: 'too little scouting data to measure defense',
+  feeding_effect_insufficient_data: 'too little scouting data to measure feeding',
+  unspecified_context: 'the match context is not specified',
+  prediction_season_absent: 'no data for this season',
+  probit_index_not_finite: 'the model could not produce a number',
+  not_produced_by_any_engine: 'not produced yet',
+  not_approved: 'the season rules are not approved',
+  refusal_only: 'not available yet',
+  writes_disabled: 'saving is turned off on this site',
 }
 
 export function reasonText(reason: string): string {
@@ -64,7 +123,7 @@ export function reasonText(reason: string): string {
   }
   const fewer = /^fewer_than_(\d+)_completed_matches_before_as_of$/.exec(reason)
   if (fewer) return `fewer than ${fewer[1]} completed matches before this moment`
-  return reason // an unknown reason is shown exactly as served
+  return plainCode(reason) // an unknown reason: underscores as spaces, otherwise as served
 }
 
 /** The one reason every measure in a group is absent for, or null when any is present or the reasons differ. A view
