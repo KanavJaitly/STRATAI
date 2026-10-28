@@ -49,12 +49,12 @@ describe('AlliancePage (P8-M5)', () => {
 describe('PickListView (synthetic success, labelled synthetic)', () => {
   it('renders ranked picks with served odds, the validated_playoff_success scope, labels and provenance', async () => {
     const { container } = render(<MemoryRouter><PickListView data={PICK_LIST} /></MemoryRouter>)
-    expect(screen.getAllByText('validated_playoff_success').length).toBeGreaterThan(1)
+    expect(screen.getAllByText('Validated (playoff event outcomes)').length).toBeGreaterThan(1)
     expect(screen.getByText('35%')).toBeInTheDocument()
-    expect(screen.getAllByText(/px4_scope/).length).toBeGreaterThan(0)
-    expect(screen.getByText(/last_candidate/)).toBeInTheDocument()
+    expect(screen.getAllByText(/px4 scope/).length).toBeGreaterThan(0)
+    expect(screen.getByText(/last candidate/)).toBeInTheDocument()
     expect(screen.getByText(/only 1 distinct feasible alternative/)).toBeInTheDocument()
-    expect(screen.queryByText('validated_playoff')).toBeNull() // never relabelled
+    expect(screen.queryByText('Validated (single playoff match)')).toBeNull() // never relabelled
     expect(await axeViolations(container)).toEqual([])
   })
 })

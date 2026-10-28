@@ -9,7 +9,7 @@ import { AllianceTeams, PageHeader, TabPanel, Tabs, TeamChip } from '../common'
 import { Absent, CalibratedProbabilityView, EpaSourceNote, MeasureValue, ResourceView, ValidationBadge, When } from '../display'
 import { useAsOf } from '../asOfParams'
 import { ResultCell } from '../common'
-import { formatNumber, sharedAbsence } from '../labels'
+import { epaText, formatNumber, sharedAbsence } from '../labels'
 import { matchLabel, matchPath, reportPath, seasonOf, teamPath } from '../routing'
 import { useTab } from '../useTab'
 
@@ -132,8 +132,8 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
                   <td>{t.rank}</td>
                   <th scope="row"><Link to={teamPath(eventKey, t.team_number)}>{t.team_number}</Link></th>
                   <td>{t.score === null ? <Absent reason="no score (no EPA)" /> : formatNumber(t.score, 2)}</td>
-                  <td className="small">{t.epa_value_source ?? <Absent />}{t.epa_source_event_key ? ` · ${t.epa_source_event_key}` : ''}
-                    {t.epa_source_state ? ` · ${t.epa_source_state}` : ''}</td>
+                  <td className="small">{t.epa_value_source ? epaText(t.epa_value_source) : <Absent />}{t.epa_source_event_key ? ` · ${t.epa_source_event_key}` : ''}
+                    {t.epa_source_state ? ` · ${epaText(t.epa_source_state)}` : ''}</td>
                 </tr>
               ))}
             </tbody>
