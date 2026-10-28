@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { dashboardApi } from '../../api/dashboard'
@@ -94,6 +94,21 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
     { name: 'Defense', of: (v) => v.defense.score, digits: 2 },
   ]
   const shared = Object.fromEntries(columns.map((c) => [c.name, sharedAbsence(data.team_comparison.teams.map(c.of))]))
+  const [sortKey, setSortKey] = useState('team_number')
+  const [descending, setDescending] = useState(false)
+  const sorted = useMemo(() => {
+    const column = columns.find((c) => c.name === sortKey)
+    const sign = descending ? -1 : 1
+    return [...data.team_comparison.teams].sort((a, b) => {
+      if (!column) return sign * (a.team_number - b.team_number)
+      const av = column.of(a).value
+      const bv = column.of(b).value
+      if (av === null && bv === null) return a.team_number - b.team_number
+      if (av === null) return 1 // absent values sort last in either direction, never as zero
+      if (bv === null) return -1
+      return sign * (av - bv) || a.team_number - b.team_number
+    })
+  }, [data.team_comparison.teams, sortKey, descending]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <>
       <section className="card" aria-labelledby="ordering-heading">
@@ -138,13 +153,27 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
           <h2 id="comparison-heading">Team comparison</h2>
           <ValidationBadge validation={{ status: data.team_comparison.validation_status }} compact />
         </div>
+        <div className="sort-controls">
+          <label className="inline">Sort by
+            <select value={sortKey} onChange={(e) => setSortKey(e.target.value)}>
+              <option value="team_number">Team number</option>
+              {columns.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+            </select>
+          </label>{' '}
+          <label className="inline">Order
+            <select value={descending ? 'desc' : 'asc'} onChange={(e) => setDescending(e.target.value === 'desc')}>
+              <option value="asc">Lowest to highest</option>
+              <option value="desc">Highest to lowest</option>
+            </select>
+          </label>
+        </div>
         <div className="table-scroll">
           <table className="grid compact">
             <caption className="visually-hidden">Strength of every attending team</caption>
             <thead><tr><th scope="col">Team</th><th scope="col">EPA total</th><th scope="col">Average score</th>
               <th scope="col">Consistency</th><th scope="col">Reliability (INTERIM)</th><th scope="col">Defense</th></tr></thead>
             <tbody>
-              {data.team_comparison.teams.map((v) => (
+              {sorted.map((v) => (
                 <tr key={v.team_number}>
                   <th scope="row"><Link to={teamPath(eventKey, v.team_number)}>{v.team_number}</Link></th>
                   {columns.map((c) => <td key={c.name}><MeasureValue measure={c.of(v)} digits={c.digits} hideReason={!!shared[c.name]} /></td>)}

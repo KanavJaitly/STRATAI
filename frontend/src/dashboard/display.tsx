@@ -93,14 +93,19 @@ export function OddsView({ odds }: { odds: StrategyOdds }) {
   )
 }
 
+/** The favoured alliance and its chance, from the served P(red wins). Blue's chance is 1 − P(red): the one
+ * deliberate exception to "never computes" above (Sven and Kanav, 2026-10-28), so a reader sees who is favoured. */
+function favoured(pRed: number): string {
+  return pRed >= 0.5 ? `Red ${Math.round(pRed * 100)}%` : `Blue ${Math.round((1 - pRed) * 100)}%`
+}
+
 /** The M6/M7 win probability (P7-Q3): a validated value is a probability; an unvalidated value is not. */
-export function CalibratedProbabilityView({ value, side = 'red' }: { value: CalibratedWinProbability;
-  side?: 'red' }) {
+export function CalibratedProbabilityView({ value }: { value: CalibratedWinProbability }) {
   if (value.validated_value !== null) {
     return (
       <div className="calibrated">
-        <div><strong className="prob-value">{Math.round(value.validated_value * 100)}%</strong>{' '}
-          <span className="muted">P({side} wins)</span></div>
+        <div><strong className="prob-value">{favoured(value.validated_value)}</strong>{' '}
+          <span className="muted">chance to win</span></div>
         <ValidationBadge validation={value.validation} />
       </div>
     )
@@ -110,8 +115,8 @@ export function CalibratedProbabilityView({ value, side = 'red' }: { value: Cali
       <div>
         <span className="unvalidated-tag">Unvalidated model output</span>{' '}
         <span className="unvalidated-value">{value.unvalidated_value !== null
-          ? `${Math.round(value.unvalidated_value * 100)}%` : '—'}</span>{' '}
-        <span className="muted">for {side}, not a validated probability ({value.unvalidated_reason ?? 'no reason given'})</span>
+          ? favoured(value.unvalidated_value) : '—'}</span>{' '}
+        <span className="muted">chance to win, not a validated probability ({value.unvalidated_reason ?? 'no reason given'})</span>
       </div>
       <ValidationBadge validation={value.validation} />
     </div>
