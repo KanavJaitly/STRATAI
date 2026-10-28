@@ -34,7 +34,7 @@ describe('MatchPage (P8-M4)', () => {
     expect(within(ai).getByText(/Defense on 9904/)).toBeInTheDocument()
     expect(within(ai).getByText(/maximum of many model estimates/)).toBeInTheDocument()
     const panel = screen.getByRole('heading', { name: /Match win probability/ }).closest('section') as HTMLElement
-    expect(within(panel).getByText('60%')).toBeInTheDocument()
+    expect(within(panel).getByText('Red 60%')).toBeInTheDocument()
     expect(within(panel).queryByText('65%')).toBeNull() // the two models never share a field
     expect(api.calls.find((c) => c.path.endsWith('/recommend'))?.body).toEqual({ side: 'red' })
     expect(await axeViolations(container)).toEqual([])
@@ -72,7 +72,7 @@ describe('MatchPage (P8-M4)', () => {
     renderAt(PATTERN, `/matches/${MATCH}`, <MatchPage />)
     expect(await screen.findByText(/AI recommendation: Model not loaded/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Evaluate side by side' })).toBeDisabled()
-    expect(await screen.findByText('60%')).toBeInTheDocument()
+    expect(await screen.findByText('Red 60%')).toBeInTheDocument()
     expect(screen.getAllByText(String(BLUE[0])).length).toBeGreaterThan(0)
   })
 

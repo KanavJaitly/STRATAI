@@ -12,9 +12,14 @@ import { Absent, CalibratedProbabilityView, MeasureValue, OddsView, RefusalNotic
 describe('probability display (P8-Q4)', () => {
   it('shows a validated M6/M7 value as a probability with its label', () => {
     render(<CalibratedProbabilityView value={validatedWin(0.6)} />)
-    expect(screen.getByText('60%')).toBeInTheDocument()
+    expect(screen.getByText('Red 60%')).toBeInTheDocument()
     expect(screen.getByText('approximately_calibrated_qualification')).toBeInTheDocument()
     expect(screen.queryByText(/unvalidated model output/i)).not.toBeInTheDocument()
+  })
+
+  it('names the favoured alliance, so a blue favourite reads as blue', () => {
+    render(<CalibratedProbabilityView value={validatedWin(0.16)} />)
+    expect(screen.getByText('Blue 84%')).toBeInTheDocument()
   })
 
   it('never shows an unvalidated M6/M7 value as a probability', () => {
