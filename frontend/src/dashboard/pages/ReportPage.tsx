@@ -11,6 +11,7 @@ import { StrategyTable } from '../strategy'
 import { SynergyView } from './AlliancePage'
 import { StrengthView } from './TeamPage'
 import { useAsOf } from '../asOfParams'
+import { reasonText } from '../labels'
 import { eventOfMatch, matchPath } from '../routing'
 
 /**
@@ -68,7 +69,7 @@ function NotProducedItem({ title, item }: { title: string; item: NotProduced }) 
 }
 
 function AbsentPart({ code, reason }: { code: string | null; reason: string | null }) {
-  return <p className="notice notice-info absent-part"><strong>Not available</strong>{code && <> (<code>{code}</code>)</>}{reason ? `: ${reason}` : ''}</p>
+  return <p className="notice notice-info absent-part"><strong>Not available</strong>{code && <> ({reasonText(code)})</>}{reason ? `: ${reason}` : ''}</p>
 }
 
 /** Printing shows every collapsed section: each closed <details> in the report opens for the print and closes after. */

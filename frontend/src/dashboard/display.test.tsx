@@ -13,7 +13,7 @@ describe('probability display (P8-Q4)', () => {
   it('shows a validated M6/M7 value as a probability with its label', () => {
     render(<CalibratedProbabilityView value={validatedWin(0.6)} />)
     expect(screen.getByText('Red 60%')).toBeInTheDocument()
-    expect(screen.getByText('approximately_calibrated_qualification')).toBeInTheDocument()
+    expect(screen.getByText('Validated (qualification)')).toHaveAttribute('data-status', 'approximately_calibrated_qualification')
     expect(screen.queryByText(/unvalidated model output/i)).not.toBeInTheDocument()
   })
 
@@ -25,18 +25,18 @@ describe('probability display (P8-Q4)', () => {
   it('never shows an unvalidated M6/M7 value as a probability', () => {
     const { container } = render(<CalibratedProbabilityView value={unvalidatedWin(0.7, 'playoff_scope')} />)
     expect(screen.getByText(/unvalidated model output/i)).toBeInTheDocument()
-    expect(screen.getByText(/not a validated probability \(playoff_scope\)/)).toBeInTheDocument()
+    expect(screen.getByText(/not a validated probability \(a playoff match; the model is validated for qualification matches only\)/)).toBeInTheDocument()
     expect(container.querySelector('.prob-value')).toBeNull() // the validated-probability style is not used
-    expect(screen.getByText('not_validated')).toBeInTheDocument()
+    expect(screen.getByText('Not validated')).toBeInTheDocument()
   })
 
   it('shows strategy odds as the served display string, and none as "No probability" with the reason', () => {
     const { rerender } = render(<OddsView odds={{ display: '<5%', validation: { status: 'not_validated', reasons: ['p6_m10_gate_failed'] } }} />)
     expect(screen.getByText('<5%')).toBeInTheDocument()
-    expect(screen.getByText('p6_m10_gate_failed')).toBeInTheDocument()
+    expect(screen.getByText('the strategy model did not pass its accuracy check')).toHaveAttribute('data-reason', 'p6_m10_gate_failed')
     rerender(<OddsView odds={{ display: null, validation: { status: 'not_validated', reasons: ['playoff_model_unavailable'] } }} />)
     expect(screen.getByText('No probability')).toBeInTheDocument()
-    expect(screen.getByText('playoff_model_unavailable')).toBeInTheDocument()
+    expect(screen.getByText('the playoff model is not available')).toBeInTheDocument()
   })
 
   it('keeps validated_playoff_success and validated_playoff distinct (P7-D7)', () => {
@@ -44,15 +44,17 @@ describe('probability display (P8-Q4)', () => {
       <ValidationBadge validation={{ status: 'validated_playoff_success' }} />
       <ValidationBadge validation={{ status: 'validated_playoff' }} />
     </>)
-    const success = screen.getByText('validated_playoff_success') // shown verbatim, as served
-    const match = screen.getByText('validated_playoff')
+    const success = screen.getByText('Validated (playoff event outcomes)') // distinct plain names, served label kept
+    const match = screen.getByText('Validated (single playoff match)')
+    expect(success).toHaveAttribute('data-status', 'validated_playoff_success')
+    expect(match).toHaveAttribute('data-status', 'validated_playoff')
     expect(success.getAttribute('title')).toMatch(/event outcomes passed/)
     expect(match.getAttribute('title')).toMatch(/single playoff-match probabilities passed/)
   })
 
-  it('shows an unknown label verbatim rather than mapping it to a known one', () => {
+  it('shows an unknown label as plain words rather than mapping it to a known one', () => {
     render(<ValidationBadge validation={{ status: 'some_new_label' }} />)
-    expect(screen.getByText('some_new_label')).toHaveAttribute('title', expect.stringMatching(/shown as served/))
+    expect(screen.getByText('some new label')).toHaveAttribute('title', expect.stringMatching(/shown as served/))
   })
 })
 
@@ -118,7 +120,7 @@ describe('charts', () => {
 describe('label explanations', () => {
   it('reveal the plain explanation inline on activation, not only as a tooltip', async () => {
     render(<ValidationBadge validation={{ status: 'validated_playoff_success' }} />)
-    const badge = screen.getByRole('button', { name: 'validated_playoff_success' })
+    const badge = screen.getByRole('button', { name: 'Validated (playoff event outcomes)' })
     expect(badge).toHaveAttribute('aria-expanded', 'false')
     expect(badge).toHaveAccessibleDescription(/.+/)
     await userEvent.click(badge)
@@ -133,25 +135,23 @@ describe('absence reasons in plain words', () => {
     expect(reasonText('fewer_than_3_completed_matches_before_as_of')).toBe('fewer than 3 completed matches before this moment')
     expect(reasonText('insufficient_data: fewer than 2 scouting observations')).toBe('too few observations: fewer than 2 scouting observations')
     expect(reasonText('constructor')).toBe('constructor')
-    expect(reasonText('some_new_reason')).toBe('some_new_reason')
+    expect(reasonText('m7_gate_failed')).toMatch(/qualification matches with full EPA/)
+    expect(reasonText('some_new_reason')).toBe('some new reason') // unknown: underscores as spaces
   })
 
-  it('shows the plain explanation first and the raw served code as visible text (D1.7 ruling, no hover needed)', () => {
+  it('shows the plain explanation only, keeping the raw served code on the element (supersedes D1.7, 2026-10-28)', () => {
     const { container } = render(<Absent reason="no_prior_concluded_event_epa" />)
     const plain = screen.getByText('no EPA: no qualifying earlier event with an EPA')
-    const code = screen.getByText('(no_prior_concluded_event_epa)')
     expect(plain).toBeVisible()
-    expect(code).toBeVisible()
-    expect(code.tagName).toBe('CODE')
-    expect(code.closest('.visually-hidden')).toBeNull() // visible text, not a screen-reader-only or hover-only copy
-    expect(plain.compareDocumentPosition(code) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy() // plain words first
+    expect(container.textContent).not.toContain('no_prior_concluded_event_epa')
+    expect(container.querySelector('[data-reason="no_prior_concluded_event_epa"]')).not.toBeNull()
     expect(container.querySelector('[title]')).toBeNull() // nothing depends on a tooltip
     expect(container.textContent).toContain('not available') // the absence itself is announced
   })
 
-  it('does not repeat a reason that has no plain-word mapping (it is already shown verbatim)', () => {
+  it('shows a reason with no plain-word mapping as plain words, once', () => {
     const { container } = render(<Absent reason="some_new_reason" />)
-    expect(screen.getByText('some_new_reason')).toBeVisible()
+    expect(screen.getByText('some new reason')).toBeVisible()
     expect(container.querySelector('code.reason-code')).toBeNull()
   })
 })

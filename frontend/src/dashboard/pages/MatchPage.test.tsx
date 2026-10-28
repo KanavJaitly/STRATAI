@@ -30,7 +30,7 @@ describe('MatchPage (P8-M4)', () => {
     const { container } = renderAt(PATTERN, `/matches/${MATCH}`, <MatchPage />)
     const ai = (await screen.findByRole('heading', { name: 'AI recommendation' })).closest('.assessed') as HTMLElement
     expect(within(ai).getByText('65%')).toBeInTheDocument()
-    expect(within(ai).getByText('strategy_effect_unmeasured')).toBeInTheDocument()
+    expect(within(ai).getByText('the effect of the chosen strategy is not measured')).toBeInTheDocument()
     expect(within(ai).getByText(/Defense on 9904/)).toBeInTheDocument()
     expect(within(ai).getByText(/maximum of many model estimates/)).toBeInTheDocument()
     const panel = screen.getByRole('heading', { name: /Match win probability/ }).closest('section') as HTMLElement

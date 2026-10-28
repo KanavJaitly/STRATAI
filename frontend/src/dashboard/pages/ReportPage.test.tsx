@@ -39,12 +39,12 @@ describe('ReportPage (P8-M6)', () => {
     mockApi({ [`GET /matches/${MATCH}/pre-match-report`]: REPORT })
     renderAt(PATTERN, `/report/${MATCH}`, <ReportPage />)
     const forecast = (await screen.findByRole('heading', { name: 'Match forecast' })).closest('section') as HTMLElement
-    expect(within(forecast).getByText('model_not_loaded')).toBeInTheDocument()
+    expect(within(forecast).getByText(/model not loaded/)).toBeInTheDocument()
     expect(within(forecast).queryByText(/%/)).toBeNull() // no probability without the model
     const ours = screen.getByRole('heading', { name: /Our alliance/ }).closest('section') as HTMLElement
     expect(within(ours).getByText('0.42')).toBeInTheDocument() // red synergy, served
     const theirs = screen.getByRole('heading', { name: /Opposing alliance/ }).closest('section') as HTMLElement
-    expect(within(theirs).getByText('alliance_incomplete')).toBeInTheDocument()
+    expect(within(theirs).getByText(/needs a full three-team alliance/)).toBeInTheDocument()
     expect(ours.querySelectorAll('[data-reason="model_not_loaded"]')).toHaveLength(1) // roles absent, stated once
     expect(within(ours).getByText('model not loaded')).toBeInTheDocument()
   })
