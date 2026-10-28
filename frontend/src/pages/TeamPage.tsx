@@ -72,7 +72,7 @@ function EventRow({ team, event }: { team: number; event: TeamSeason['events'][n
         <tr><td colSpan={4}>
           {metrics.loading && <span className="muted">Loading metrics…</span>}
           {metrics.error ? <Unavailable error={metrics.error} /> : null}
-          {metrics.data && <RawJson value={metrics.data} label="Team metrics (Phase 3)" />}
+          {metrics.data && <RawJson value={metrics.data} label="Team metrics" />}
         </td></tr>
       )}
     </>

@@ -20,7 +20,7 @@ describe('EventPage (P8-M2 b)', () => {
     expect(screen.getByText('raw EPA')).toBeInTheDocument()
     expect(screen.getByText(/Likely alliance captains/)).toBeInTheDocument()
     expect(screen.getByText('synthetic captains')).toBeInTheDocument()
-    expect(screen.getByText(/INTERIM placeholder/)).toBeInTheDocument()
+    expect(screen.getByText(/share of scheduled matches with a recorded result/)).toBeInTheDocument()
     expect(api.calls.filter((c) => c.path.endsWith('/analysis'))).toHaveLength(1)
     expect(await axeViolations(container)).toEqual([])
   })

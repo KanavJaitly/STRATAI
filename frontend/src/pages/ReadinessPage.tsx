@@ -66,9 +66,9 @@ export function ReadinessPage() {
           <dt>Game manual</dt>
           <dd>{manual ? <>#{manual.id} {manual.filename} · <StateBadge state={manual.processing.status === 'succeeded' ? 'approved' : 'draft'}
             label={manual.processing.status.replaceAll('_', ' ')} /></> : 'none uploaded'} · <Link to="/manuals">manage</Link></dd>
-          <dt>Game spec (P5-M8)</dt>
+          <dt>Game spec</dt>
           <dd>{inputs.game_spec ? <StateBadge state={inputs.game_spec.status} /> : 'none'} · <Link to="/game">open</Link></dd>
-          <dt>Season ruleset (P6-M1)</dt>
+          <dt>Season ruleset</dt>
           <dd>{inputs.ruleset.approved ? <>approved v{inputs.ruleset.approved.version} by {inputs.ruleset.approved.reviewed_by}</>
             : inputs.ruleset.latest ? <StateBadge state={inputs.ruleset.latest.status} /> : 'none'} · <Link to="/rulesets">open</Link></dd>
         </dl>
@@ -79,7 +79,7 @@ export function ReadinessPage() {
             reasons: (r) => [...(r.reasons as string[]), ...((r.limitations as string[] | undefined) ?? [])].join('; ') || '—', consumes: (r) => (r.consumes as string[]).join(', ') }} />
       </Section>
       {data.phase6 && (
-        <Section title="Phase 6: 2027 tasks and authorizations">
+        <Section title="2027 season tasks and approvals">
           <p><strong>{data.phase6.status}</strong></p>
           <ul>{data.phase6.done_means.map((d) => (
             <li key={d.done_means}>{d.done_means}: <StateBadge state={d.met ? 'met' : 'not_met'} label={d.met ? 'met' : 'not met'} /></li>

@@ -109,7 +109,7 @@ function CandidatesTable({ data }: { data: CandidatesResponse }) {
         </table>
       </div>
       <p className="small muted">Values without a status badge are descriptive; any other status is shown in the cell. Values are as the engine reports them: absent values are never imputed. Reliability is an
-        INTERIM attendance ratio. Synergy and role compatibility apply only to a three-team configuration.</p>
+        estimate: the share of scheduled matches with a recorded result. Synergy and role compatibility apply only to a three-team configuration.</p>
       <EpaSourceNote epa={data.epa} />
     </>
   )
@@ -209,7 +209,7 @@ export function PickListView({ data }: { data: PickListResponse }) {
           {data.provenance.ruleset_variant && ` (variant ${data.provenance.ruleset_variant})`}</dd>
         <dt>Ordering</dt><dd>{data.provenance.ordering_policy}</dd>
         <dt>Fields evaluated</dt><dd>{data.evaluated_fields}</dd>
-        <dt>Playoff models</dt><dd>PX-1 <code>{data.models.px1_sha256.slice(0, 12)}…</code>, PX-2 <code>{data.models.px2_calibrator_sha256.slice(0, 12)}…</code></dd>
+        <dt>Playoff models</dt><dd>Selection model <code>{data.models.px1_sha256.slice(0, 12)}…</code>, playoff calibrator <code>{data.models.px2_calibrator_sha256.slice(0, 12)}…</code></dd>
       </dl>
       <EpaSourceNote epa={data.epa} />
     </div>

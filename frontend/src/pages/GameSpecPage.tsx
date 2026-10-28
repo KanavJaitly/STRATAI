@@ -234,7 +234,7 @@ export function GameSpecPage() {
             <p className="small">
               Current state: <StateBadge state={workflow.data.spec_state} />{' '}
               {workflow.data.approved_version !== null && <>· approved version {workflow.data.approved_version} </>}
-              {workflow.data.entry_started_at && <>· spec entry began <When value={workflow.data.entry_started_at} /> (DM1's 5-day clock)</>}
+              {workflow.data.entry_started_at && <>· spec entry began <When value={workflow.data.entry_started_at} /> (5-day deadline)</>}
             </p>
             <p className="muted small">{workflow.data.note}</p>
           </>

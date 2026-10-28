@@ -99,7 +99,7 @@ function ReviewForm({ ruleset, checklist, onDone }: { ruleset: RulesetVersion; c
   })
   return (
     <div className="review-box" data-testid="review-form">
-      <p className="small">P6-M1 review control: a named, qualified FRC reviewer independently verifies the stored
+      <p className="small">Review: a named, qualified FRC reviewer independently verifies the stored
         ruleset against the official FIRST sources ({checklist.guide}). You may be the author. Approval is refused
         unless every item below is completed, the full sha256 you verified matches, and no UNVERIFIED marker remains.</p>
       {markers > 0 && <div className="notice notice-error">This version still has {markers} UNVERIFIED marker(s):
@@ -168,7 +168,7 @@ export function RulesetsPage() {
   return (
     <>
       <Section title={`Season ruleset — ${season}`}>
-        <p className="lede">Alliance-selection and playoff rules (P6-M1). Every Phase 6 playoff and selection engine
+        <p className="lede">Alliance-selection and playoff rules. Every playoff and alliance-selection model
           reads only the season's <strong>approved</strong> ruleset, never a draft and never another season's rules.
           People enter it from the official manual; a named, qualified reviewer approves it.</p>
         <p>{approved

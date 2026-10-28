@@ -48,10 +48,10 @@ export function OverviewPage() {
 
   return (
     <>
-      <Section title={`DM1 inputs · season ${season}`}>
+      <Section title={`Human inputs · season ${season}`}>
         <p className="lede">
-          Everything DM1 needs from people, and where it stands. These states describe what has been entered; they
-          do not decide DM1. <strong>DM1 is met only by the write-once dry-run, score and mentor-review
+          Everything the human-input goal needs from people, and where it stands. These states describe what has been entered; they
+          do not decide whether the goal is met. <strong>It is met only by the write-once dry-run, score and mentor-review
           records</strong>, never by entered data alone.
         </p>
         <LoadState loading={status.loading && !data} error={status.error} />
@@ -82,9 +82,9 @@ export function OverviewPage() {
       </Section>
 
       {data && (
-        <Section title="DM1 done-means (authoritative)">
+        <Section title="Human-input goal (authoritative)">
           <div className={`verdict ${data.done_means.met ? 'verdict-ok' : 'verdict-bad'}`} data-testid="dm1-verdict">
-            DM1: {data.done_means.met ? 'MET' : 'NOT MET'}
+            Goal: {data.done_means.met ? 'MET' : 'NOT MET'}
           </div>
           <dl className="facts">
             <dt>Inputs entered for the run</dt>

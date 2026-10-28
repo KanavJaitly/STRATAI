@@ -5,11 +5,11 @@ import type { CandidateOut, Measure } from '../api/generated'
 /** Plain explanations of the validation labels the API serves (unknown labels are shown as-is). */
 export const VALIDATION_LABELS: Record<string, { text: string; tone: 'ok' | 'wait' | 'warn' | 'bad' | 'old' }> = {
   approximately_calibrated_qualification: { tone: 'ok',
-    text: 'Validated: approximately calibrated for qualification matches with full EPA (the M7 gate failed overall).' },
+    text: 'Validated: approximately calibrated for qualification matches with full EPA (not validated for other matches).' },
   validated_playoff_success: { tone: 'ok',
-    text: 'Validated playoff success: the bracket simulator\'s event outcomes passed PX-4, in the scope stated.' },
+    text: 'Validated playoff success: the bracket simulator\'s event outcomes passed their accuracy check, in the scope stated.' },
   validated_playoff: { tone: 'ok',
-    text: 'Validated playoff match probability: single playoff-match probabilities passed PX-2.' },
+    text: 'Validated playoff match probability: single playoff-match probabilities passed their accuracy check.' },
   moderate_held_out: { tone: 'wait', text: 'An ordering with moderate held-out accuracy; only the order is meaningful.' },
   descriptive: { tone: 'old', text: 'Descriptive: a recorded or computed fact, not a prediction.' },
   descriptive_definition_pending: { tone: 'warn',
@@ -30,7 +30,7 @@ export type FactorKey = Exclude<keyof CandidateOut, 'team_number'>
 export const FACTORS: { key: FactorKey; label: string; digits: number }[] = [
   { key: 'scoring_epa', label: 'Scoring EPA', digits: 1 },
   { key: 'average_score', label: 'Average score', digits: 1 },
-  { key: 'reliability', label: 'Reliability (INTERIM)', digits: 1 },
+  { key: 'reliability', label: 'Reliability (estimate)', digits: 1 },
   { key: 'consistency', label: 'Consistency', digits: 1 },
   { key: 'defense', label: 'Defense', digits: 2 },
   { key: 'feeding', label: 'Feeding', digits: 2 },
