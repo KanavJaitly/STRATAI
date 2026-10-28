@@ -56,7 +56,7 @@ describe('ReportPage (P8-M6)', () => {
     expect(within(ours).getByText(`Defense on ${BLUE[0]}`)).toBeInTheDocument()
     expect(within(ours).getByText('65%')).toBeInTheDocument()
     const forecast = screen.getByRole('heading', { name: 'Match forecast' }).closest('section') as HTMLElement
-    expect(within(forecast).getByText('60%')).toBeInTheDocument()
+    expect(within(forecast).getByText('Red 60%')).toBeInTheDocument()
     const theirs = screen.getByRole('heading', { name: /Opposing alliance/ }).closest('section') as HTMLElement
     expect(within(theirs).getByText(/The engine gives no probability: insufficient_data/)).toBeInTheDocument()
   })
