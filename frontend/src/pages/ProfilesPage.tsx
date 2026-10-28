@@ -29,7 +29,7 @@ function ProfileEditor({ existing, onSaved, onCancel }: {
     <form onSubmit={(e) => { e.preventDefault(); void save() }}>
       <p className="muted small">
         {existing ? `Saving creates version ${existing.version + 1}; version ${existing.version} is kept in the history.`
-          : 'A new profile. The submission is stored raw first, then validated against the P5-M9 intake fields.'}
+          : 'A new profile. The submission is stored raw first, then validated against the required profile fields.'}
       </p>
       <div className="form-grid">
         {!existing && <label>Profile key<input value={key} onChange={(e) => setKey(e.target.value)} aria-label="Profile key" required /></label>}
@@ -142,7 +142,7 @@ function ProfileDetail({ profile, onChanged }: { profile: Profile; onChanged: (k
       )}
       <ErrorNotice error={action.error} />
       <SuccessNotice message={action.message} />
-      <h4>Recommendation (P5-M9)</h4>
+      <h4>Recommendation</h4>
       <RecommendationView profileKey={profile.profile_key} />
       <h4>History</h4>
       {history.data && (
@@ -173,11 +173,11 @@ export function ProfilesPage() {
 
   return (
     <>
-      <Section title="Team capability profiles (P5-M9)"
+      <Section title="Team capability profiles"
         actions={<WriteGate><button type="button" onClick={() => setCreating(true)}>New profile</button></WriteGate>}>
         <p className="lede">
           Each profile records a team's budget and its manufacturing, programming and mentoring capability. Edits create
-          new versions, so nothing is overwritten. DM1 needs at least 10 active profiles; {active} {active === 1 ? 'is' : 'are'} shown.
+          new versions, so nothing is overwritten. The human-input goal needs at least 10 active profiles; {active} {active === 1 ? 'is' : 'are'} shown.
         </p>
         <label className="inline">
           <input type="checkbox" checked={includeArchived} onChange={(e) => setIncludeArchived(e.target.checked)} /> Show archived

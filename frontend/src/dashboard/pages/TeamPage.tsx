@@ -96,14 +96,14 @@ export function StrengthView({ view, compact = false, level = 2 }: { view: TeamS
         <dt>Average score</dt><dd><MeasureValue measure={s.average_score} /></dd>
         <dt>Score SD</dt><dd><MeasureValue measure={s.score_stddev} /></dd>
         <dt>Consistency</dt><dd><MeasureValue measure={s.consistency_rating} /></dd>
-        <dt>Reliability (INTERIM)</dt><dd><MeasureValue measure={s.reliability_score} /></dd>
+        <dt>Reliability (estimate)</dt><dd><MeasureValue measure={s.reliability_score} /></dd>
         <dt>Good / average / bad days</dt><dd>
           <MeasureValue measure={s.good_day_count} digits={0} /> / <MeasureValue measure={s.average_day_count} digits={0} /> / <MeasureValue measure={s.bad_day_count} digits={0} /></dd>
         <dt>Matches considered</dt><dd>{s.matches_considered}</dd>
         <dt>Auto points (this event)</dt><dd><MeasureValue measure={view.auto_points.this_event} /></dd>
       </dl>
-      <p className="small muted">Scores are the alliance's score in each match the team played. Reliability is an INTERIM
-        placeholder (an attendance ratio, not a robot-failure measure).</p>
+      <p className="small muted">Scores are the alliance's score in each match the team played. Reliability is an
+        estimate (the share of scheduled matches with a recorded result, not a robot-failure measure).</p>
       <Part>Defense and feeding</Part>
       <div className="table-scroll">
         <table className="grid compact">
@@ -189,7 +189,7 @@ function StoredMetricsView({ data }: { data: TeamMetricsResponse }) {
   return (
     <section className="card" aria-labelledby="metrics-heading">
       <div className="card-head">
-        <h2 id="metrics-heading">Stored metrics (Phase 3)</h2>
+        <h2 id="metrics-heading">Stored metrics</h2>
         <span className="small muted">computed <When value={data.computed_at} /></span>
       </div>
       <p className="small muted">The latest computed snapshot for the whole event, including matches after any moment chosen above.</p>
@@ -200,7 +200,7 @@ function StoredMetricsView({ data }: { data: TeamMetricsResponse }) {
         <dt>Average score</dt><dd>{v(s.average_score)}</dd>
         <dt>Score SD</dt><dd>{v(s.score_stddev)}</dd>
         <dt>Consistency</dt><dd>{v(s.consistency_rating)}</dd>
-        <dt>Reliability (INTERIM)</dt><dd>{v(s.reliability_score)}</dd>
+        <dt>Reliability (estimate)</dt><dd>{v(s.reliability_score)}</dd>
         <dt>Good / average / bad days</dt><dd>{v(s.good_day_count, 0)} / {v(s.average_day_count, 0)} / {v(s.bad_day_count, 0)}</dd>
       </dl>
       <h3>Defense</h3>

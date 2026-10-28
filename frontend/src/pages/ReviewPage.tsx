@@ -128,7 +128,7 @@ function CodingGrid({ season, codebook, examples, artifacts, kappa, onSaved }: {
       <p className="muted small">
         {kind === 'coding'
           ? 'Code every row independently: do not look at another coder\'s labels. A row may have no function. The rows are a curated reference, not verified data.'
-          : 'Record the labels agreed in the consensus meeting held after the independent codings and κ. These, never one coder\'s labels, are served (P5-D13).'}
+          : 'Record the labels agreed in the consensus meeting held after the independent codings and κ. These, never one coder\'s labels, are served.'}
       </p>
       <div className="table-scroll coding-grid">
         <table className="grid compact">
@@ -337,8 +337,8 @@ export function ReviewPage() {
     <>
       <Section title={`Human review · ${season}`}>
         <p className="lede">
-          DM1's human artifacts. Each is entered by a named person; codebooks, consensus codings, action maps and
-          rubrics become <em>established</em> only by a named person's sign-off. Nothing here marks DM1 complete.
+          The human-review records. Each is entered by a named person; codebooks, consensus codings, action maps and
+          rubrics become <em>established</em> only by a named person's sign-off. Nothing here marks the human-input goal complete.
         </p>
         <LoadState loading={artifacts.loading && !artifacts.data} error={artifacts.error} />
         <ol className="stage-list" aria-label="Review stages">

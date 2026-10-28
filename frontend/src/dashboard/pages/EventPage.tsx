@@ -90,7 +90,7 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
   const columns: { name: string; of: (v: TeamStrengthView) => Measure; digits?: number }[] = [
     { name: 'EPA total', of: (v) => v.epa.total }, { name: 'Average score', of: (v) => v.scoring.average_score },
     { name: 'Consistency', of: (v) => v.scoring.consistency_rating },
-    { name: 'Reliability (INTERIM)', of: (v) => v.scoring.reliability_score },
+    { name: 'Reliability (estimate)', of: (v) => v.scoring.reliability_score },
     { name: 'Defense', of: (v) => v.defense.score, digits: 2 },
   ]
   const shared = Object.fromEntries(columns.map((c) => [c.name, sharedAbsence(data.team_comparison.teams.map(c.of))]))
@@ -117,9 +117,9 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
           <ValidationBadge validation={{ status: ordering.validation_status }} compact />
         </div>
         <p className="small">
-          Ordered by <strong>{ordering.model === 'raw_epa' ? 'raw EPA' : ordering.model}</strong>
+          Ordered by <strong>{ordering.model === 'raw_epa' ? 'raw EPA' : 'the trained ranking model'}</strong>
           {ordering.switch_time && <> · switch point <When value={ordering.switch_time} /> ({ordering.switch_point_passed ? 'passed' : 'not reached'}: before it the
-          policy orders by raw EPA, after it by M5 v2)</>}. As of <When value={data.as_of} />.
+          policy orders by raw EPA, after it by the trained ranking model)</>}. As of <When value={data.as_of} />.
         </p>
         <p className="small muted">{ordering.evidence}</p>
         <div className="table-scroll">
@@ -171,7 +171,7 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
           <table className="grid compact">
             <caption className="visually-hidden">Strength of every attending team</caption>
             <thead><tr><th scope="col">Team</th><th scope="col">EPA total</th><th scope="col">Average score</th>
-              <th scope="col">Consistency</th><th scope="col">Reliability (INTERIM)</th><th scope="col">Defense</th></tr></thead>
+              <th scope="col">Consistency</th><th scope="col">Reliability (estimate)</th><th scope="col">Defense</th></tr></thead>
             <tbody>
               {sorted.map((v) => (
                 <tr key={v.team_number}>
@@ -185,7 +185,7 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
         {columns.filter((c) => shared[c.name]).map((c) => (
           <p key={c.name} className="small">{c.name}, every team: <Absent reason={shared[c.name]} /></p>
         ))}
-        <p className="small muted">Reliability is an INTERIM placeholder: an attendance ratio, not a robot-failure measure.</p>
+        <p className="small muted">Reliability is an estimate: the share of scheduled matches with a recorded result, not a robot-failure measure.</p>
       </section>
       <EpaSourceNote epa={data.epa} />
     </>
@@ -306,7 +306,7 @@ function ForecastView({ data }: { data: QualificationForecastResponse }) {
         <div className="table-scroll">
           <table className="grid compact">
             <caption className="visually-hidden">Win probability per qualification match</caption>
-            <thead><tr><th scope="col">Match</th><th scope="col">Scheduled</th><th scope="col">Red</th><th scope="col">Blue</th><th scope="col">Win probability (M6/M7)</th></tr></thead>
+            <thead><tr><th scope="col">Match</th><th scope="col">Scheduled</th><th scope="col">Red</th><th scope="col">Blue</th><th scope="col">Win probability</th></tr></thead>
             <tbody>
               {data.matches.map((m) => (
                 <tr key={m.match_key}>

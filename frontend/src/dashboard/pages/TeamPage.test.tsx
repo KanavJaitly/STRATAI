@@ -16,7 +16,7 @@ describe('TeamPage (P8-M3)', () => {
     const { container } = renderAt(PATTERN, `/events/${EVENT}/teams/${TEAM}`, <TeamPage />)
     expect(await screen.findByRole('heading', { name: 'Strength' })).toBeInTheDocument()
     expect(screen.getAllByText(/too few observations: fewer than 2 scouting observations/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/INTERIM/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/estimate/).length).toBeGreaterThan(0)
     expect(await screen.findByRole('heading', { name: 'Performance history at this event' })).toBeInTheDocument()
     expect(screen.getByText(/1 played: 1 won, 0 tied, 0 lost/)).toBeInTheDocument()
     expect(screen.getByText(/1 without a result at this moment/)).toBeInTheDocument()

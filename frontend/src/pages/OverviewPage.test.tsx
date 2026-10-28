@@ -30,7 +30,7 @@ describe('Overview', () => {
   it('shows DM1 not met even when every input is entered: only the write-once records decide', async () => {
     mockApi({ ...WRITE_OK, 'GET /human-inputs/seasons/2099/dm1-status': status(true, false) })
     renderPage(<OverviewPage />)
-    expect(await screen.findByTestId('dm1-verdict')).toHaveTextContent('DM1: NOT MET')
+    expect(await screen.findByTestId('dm1-verdict')).toHaveTextContent('Goal: NOT MET')
     expect(screen.getByText('all present')).toBeInTheDocument()
   })
 })
