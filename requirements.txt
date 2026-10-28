@@ -34,3 +34,7 @@ scikit-learn>=1.5
 # Game Manual Manager (2026-10-11): deterministic text and page extraction from uploaded official game-manual
 # PDFs (data/manual_processing.py). Pure Python; no LLM ever reads the manual.
 pypdf>=5,<7
+
+# Deployment (2026-10-22): ml/ratings/epa/normalization.py, ml/strategy/calibration*.py and ml/meta/weekly.py import
+# scipy. It was installed locally as a scikit-learn dependency but never listed, so a clean install (Render) needs it.
+scipy>=1.11
