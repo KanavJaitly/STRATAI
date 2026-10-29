@@ -68,7 +68,8 @@ export function WriteGate({ children }: { children: ReactNode }) {
   const { access, canWrite, actor } = useSession()
   if (canWrite) return <>{children}</>
   let reason = 'Checking write access…'
-  if (access && !access.writes_enabled) reason = 'Writes are disabled on this server: no write token is configured.'
+  if (access && !access.writes_enabled) reason = 'Writes are disabled on this server: no write token is configured. '
+    + 'This site is read-only. To add or change anything, run StratAI with HUMAN_INPUTS_WRITE_TOKEN set (see docs/DEPLOYMENT.md).'
   else if (access && !access.token_accepted) reason = 'Enter a valid write token (top of the page) to make changes.'
   else if (access && !actor.trim()) reason = 'Enter your name (top of the page): every change records who made it.'
   else if (!access) reason = 'The API is unreachable, so changes cannot be made.'
