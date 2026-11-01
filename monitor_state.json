@@ -2,21 +2,23 @@
   "consecutive_contract_failures": 0,
   "escalation_reason": null,
   "last_check": {
-    "checked_at": "2026-10-31T19:30:09.868697+00:00",
-    "detail": "HTTP 500",
-    "elapsed_ms": 30920,
-    "epa_total": null,
-    "failed_stage": "A",
-    "failure_code": "http_status",
-    "http_status": 500,
-    "matches_played": null,
-    "ready": false,
-    "stage_a_passed": false,
-    "stage_b_passed": false,
+    "checked_at": "2026-11-01T19:52:38.906507+00:00",
+    "detail": "real EPA data retrieved and accepted by the production parse path",
+    "elapsed_ms": 421,
+    "epa_total": 49.22,
+    "failed_stage": null,
+    "failure_code": null,
+    "http_status": 200,
+    "matches_played": 17,
+    "ready": true,
+    "stage_a_passed": true,
+    "stage_b_passed": true,
     "url": "https://api.statbotics.io/v3/team_event/1678/2024casj"
   },
-  "pass_dates": [],
+  "pass_dates": [
+    "2026-11-01"
+  ],
   "recovery_confirmed_at": null,
   "schema_version": 1,
-  "status": "WAITING"
+  "status": "RECOVERY_PENDING"
 }
