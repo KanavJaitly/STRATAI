@@ -1,0 +1,62 @@
+/* Team workspaces: sign-in, registration, the Admin Dashboard and the role dashboards. Built on the tokens and
+   components in index.css, so the pages share StratAI's look in light and dark mode. */
+
+a.button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px;
+  background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); border-radius: 6px;
+  padding: 6px 14px; text-decoration: none; font-weight: 600;
+}
+a.button:hover, a.button:focus-visible { filter: brightness(1.08); }
+a.button.button-secondary { background: transparent; color: var(--accent); font-weight: 500; }
+
+.auth-cta { white-space: normal; text-align: center; }
+.top .auth-cta { margin: 10px 0 4px; }
+
+.account-area { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 10px 0 4px; font-size: 0.9rem; }
+
+.auth-callout {
+  display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between;
+  background: var(--info-bg); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+  border-radius: 10px; padding: 14px 18px; margin-bottom: 16px;
+}
+.auth-callout h2 { margin: 0 0 4px; font-size: 1.1rem; }
+.auth-callout p { margin: 0; max-width: 62ch; }
+
+.auth-page { max-width: 880px; }
+.auth-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.auth-card { max-width: 480px; }
+.auth-card-wide { max-width: 680px; }
+.auth-card h2 { margin-top: 0; font-size: 1.15rem; }
+.auth-choices .auth-card { max-width: none; display: flex; flex-direction: column; gap: 8px; }
+.auth-choices .auth-card .button { align-self: flex-start; }
+.auth-field input { width: 100%; }
+.auth-steps { display: flex; flex-wrap: wrap; gap: 6px 18px; list-style: none; padding: 0; margin: 0 0 12px; color: var(--muted); }
+.auth-steps li[aria-current='step'] { color: var(--text); font-weight: 600; }
+
+.inset { background: var(--bg); }
+.issued-link input { flex: 1 1 320px; font-family: ui-monospace, monospace; font-size: 0.85rem; }
+.members-table td, .members-table th { vertical-align: middle; }
+.row-actions { white-space: nowrap; }
+.permissions-table th[scope='row'] { font-weight: normal; text-align: left; }
+.permissions-table td { text-align: center; }
+
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.tool-card {
+  display: flex; flex-direction: column; gap: 4px; padding: 12px; border: 1px solid var(--border);
+  border-radius: 8px; text-decoration: none; color: var(--text); background: var(--surface);
+}
+.tool-card:hover, .tool-card:focus-visible { border-color: var(--accent); background: var(--selected); }
+
+.assignment-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.assignment-list li {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center;
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+}
+.alliance-red { color: var(--bad-fg); }
+.alliance-blue { color: var(--wait-fg); }
+.team-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+
+@media (max-width: 640px) {
+  .account-area { font-size: 0.85rem; }
+  .row-actions { white-space: normal; }
+}

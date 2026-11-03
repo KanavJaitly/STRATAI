@@ -631,6 +631,102 @@ rule cited to its section) and made authoritative only by a different, named rev
 - **Constraints:** a partial unique index allows one `approved` version per season; a CHECK requires approved
   and superseded versions to have a reviewer.
 
+### 4.5 Team workspaces
+
+Created by `0012_team_workspaces.sql` (`workspaces/`, `api/routes/auth.py`, `api/routes/workspace.py`,
+`api/routes/team_scouting.py`). The semantic reference is `docs/team_workspaces.md`. These tables hold team-private
+data and credentials only. They are never read by the data pipeline, never touch the public data tables, and change
+no D18 fingerprint. Every secret (session, invitation, reset and setup credential) is stored only as a hash.
+
+#### `workspaces`
+
+One FRC team's private area. Named `workspaces` because `teams` is the canonical FRC team list.
+
+- **PK** `id`. **Columns:** `team_number`, `team_name`, `verification_status` ∈ {pending_verification, verified,
+  rejected}, `verification_note`, `verified_at`, `verified_by`, `setup_password_hash`, `settings` (JSON object),
+  `created_at`, `updated_at`.
+- **Constraints:** a partial unique index allows one pending or verified workspace per team number; a CHECK requires
+  a verified workspace to name its verifier.
+
+#### `users`
+
+One person's account, shared across every team they belong to.
+
+- **PK** `id`; `UNIQUE (email)` (stored lower-cased). **Columns:** `email`, `full_name`, `auth_provider` ∈ {stratai,
+  supabase}, `auth_subject`, `password_hash`, `status` ∈ {active, disabled}, `created_at`, `password_changed_at`.
+
+#### `team_memberships`
+
+A person's role in one workspace.
+
+- **PK** `id`; `UNIQUE (workspace_id, user_id)`. **Columns:** `role` ∈ {admin, strategy, scouter}, `status` ∈
+  {active, suspended, removed}, `display_name`, `invited_by_user_id`, `created_at`, `updated_at`, `last_login_at`.
+- **Trigger** `trg_keep_an_active_admin`: a workspace that has an active administrator keeps at least one.
+
+#### `invitations`
+
+A single-use, expiring invitation to join a workspace.
+
+- **PK** `id`; `UNIQUE (token_hash)`. **Columns:** `email`, `full_name`, `role`, `token_hash`, `status` ∈ {pending,
+  accepted, revoked}, `expires_at`, `invited_by_user_id`, `created_at`, `accepted_at`, `accepted_user_id`,
+  `revoked_at`. A partial unique index allows one pending invitation per email per workspace.
+
+#### `workspace_role_permissions`
+
+What the strategy and scouter roles may do in one workspace.
+
+- **PK** `(workspace_id, role, permission)`. **Columns:** `granted`, `updated_at`, `updated_by_user_id`.
+- **CHECKs:** `role` ∈ {strategy, scouter}, and `permission` is one of the configurable permissions, so an
+  administrative permission can never be stored for another role.
+
+#### `auth_sessions`
+
+A server-side session, bound to one membership.
+
+- **PK** `id`; `UNIQUE (token_hash)`. **Columns:** `membership_id`, `created_at`, `last_seen_at`, `expires_at`,
+  `revoked_at`.
+
+#### `password_reset_tokens`
+
+A single-use password reset link.
+
+- **PK** `id`; `UNIQUE (token_hash)`. **Columns:** `membership_id`, `expires_at`, `used_at`, `issued_by_user_id`,
+  `created_at`.
+
+#### `auth_attempts`
+
+Credential attempts, for rate limiting; the subject is stored only as a hash.
+
+- **PK** `id`. **Columns:** `scope`, `subject_hash`, `succeeded`, `attempted_at`. Rows older than two days are
+  pruned.
+
+#### `activity_logs`
+
+The team's activity log: who did what to whom, and when. Append-only.
+
+- **PK** `id`. **Columns:** `workspace_id`, `actor_user_id`, `actor_label`, `action`, `target_user_id`,
+  `target_label`, `details` (JSON object), `created_at`.
+
+#### `scouting_assignments`
+
+A member assigned to scout one team in one match.
+
+- **PK** `id`; `UNIQUE (workspace_id, id)`. **Columns:** `event_key`, `match_key`, `team_number`,
+  `assigned_user_id`, `status` ∈ {assigned, completed, cancelled}, `created_by_user_id`, `created_at`.
+- **FKs:** the canonical event, match and team; `(workspace_id, assigned_user_id)` → a membership of the same
+  workspace.
+
+#### `workspace_scouting_reports`
+
+A team's own scouting report, private to its workspace. It uses the same rating scale and match/event rules as
+`scouting_observations`, and never feeds the shared `team_metrics`.
+
+- **PK** `id`. **Columns:** `user_id`, `event_key`, `match_key`, `team_number`, `defense_rating`, `feeding_rating`,
+  `notes`, `assignment_id`, `submitted_at`.
+- **FKs:** the canonical event, match and team; `(workspace_id, user_id)` → a membership, and
+  `(workspace_id, assignment_id)` → an assignment, both of the same workspace.
+- **CHECKs:** ratings 0–5, at least one rating, and the match belongs to the event.
+
 ---
 
 ## 5. Incremental state
@@ -1091,10 +1187,11 @@ DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 | `0009_scouting_access_codes.sql` | Phase 3 M7: creates `scouting_access_codes`, the lightweight per-event anti-abuse gate for human scouting submissions |
 | `0010_phase5_human_inputs.sql` | Phase 5 (P5-M8/M9, DM1): creates `game_manuals`, `game_spec_versions`, `capability_profiles` and `human_review_artifacts` for the web app's human-input workflows |
 | `0011_phase6_season_rulesets.sql` | Phase 6 (P6-M1): creates `season_rulesets`, the human-entered, reviewed per-season alliance-selection and playoff rules |
+| `0012_team_workspaces.sql` | Team workspaces: creates `workspaces`, `users`, `team_memberships`, `invitations`, `workspace_role_permissions`, `auth_sessions`, `password_reset_tokens`, `auth_attempts`, `activity_logs`, `scouting_assignments` and `workspace_scouting_reports` (section 4.5) |
 
 Migrations are plain SQL applied in filename order and recorded in `migrations_applied`.
 **There is no Alembic and none should be added.** To add one, create
-`database/migrations/0012_<name>.sql` and run `database/migrate.py`.
+`database/migrations/0013_<name>.sql` and run `database/migrate.py`.
 
 ### 8.7 Watching a live event
 

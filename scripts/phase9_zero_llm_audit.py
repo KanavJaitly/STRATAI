@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE_PACKAGES = ("ml", "data", "database", "api", "automation", "scripts")
+CORE_PACKAGES = ("ml", "data", "database", "api", "automation", "scripts", "workspaces")
 UNREACHABLE_DATABASE_URL = "postgresql://p9-import-check@127.0.0.1:1/unreachable"
 
 # Module names of LLM SDKs, agent frameworks, model hubs and cloud AI clients. A prefix match on the dotted name catches
@@ -136,6 +136,31 @@ OPERATION_CLASSES = {
     "GET /human-inputs/ruleset-review-checklist": NOT_OUTPUT,
     "GET /human-inputs/seasons/{season}/ruleset-worksheet": NOT_OUTPUT,
     "GET /human-inputs/seasons/{season}/readiness": NOT_OUTPUT,
+    # Team workspaces (classified 2026-11-02, docs/team_workspaces.md): accounts, Team Management and each team's
+    # private scouting. All of it is account and membership bookkeeping, or a team's own recorded scouting; none
+    # produces an engine output. The scouting summary is Phase 3's deterministic aggregation of the team's own
+    # observations (data.metrics.aggregation), with no model and no LLM; every route needs a session.
+    "GET /auth/session": NOT_OUTPUT, "POST /auth/teams/register": NOT_OUTPUT,
+    "POST /auth/teams/initial-admin": NOT_OUTPUT, "POST /auth/login": NOT_OUTPUT, "POST /auth/logout": NOT_OUTPUT,
+    "POST /auth/password/change": NOT_OUTPUT, "POST /auth/password/forgot": NOT_OUTPUT,
+    "POST /auth/password/reset": NOT_OUTPUT, "POST /auth/invitations/preview": NOT_OUTPUT,
+    "POST /auth/invitations/accept": NOT_OUTPUT,
+    "GET /workspace": NOT_OUTPUT, "GET /workspace/members": NOT_OUTPUT, "POST /workspace/invitations": NOT_OUTPUT,
+    "POST /workspace/invitations/{invitation_id}/resend": NOT_OUTPUT,
+    "POST /workspace/invitations/{invitation_id}/revoke": NOT_OUTPUT,
+    "POST /workspace/members/{membership_id}/role": NOT_OUTPUT,
+    "POST /workspace/members/{membership_id}/status": NOT_OUTPUT,
+    "POST /workspace/members/{membership_id}/profile": NOT_OUTPUT,
+    "POST /workspace/members/{membership_id}/remove": NOT_OUTPUT,
+    "POST /workspace/members/{membership_id}/password-reset": NOT_OUTPUT,
+    "GET /workspace/permissions": NOT_OUTPUT, "POST /workspace/permissions": NOT_OUTPUT,
+    "GET /workspace/settings": NOT_OUTPUT, "POST /workspace/settings": NOT_OUTPUT,
+    "GET /workspace/activity": NOT_OUTPUT, "GET /workspace/analytics": NOT_OUTPUT,
+    "GET /workspace/scouting/scouts": NOT_OUTPUT,
+    "GET /workspace/scouting/assignments": NOT_OUTPUT, "POST /workspace/scouting/assignments": NOT_OUTPUT,
+    "POST /workspace/scouting/assignments/{assignment_id}/cancel": NOT_OUTPUT,
+    "GET /workspace/scouting/reports": NOT_OUTPUT, "POST /workspace/scouting/reports": NOT_OUTPUT,
+    "GET /workspace/scouting/summary": NOT_OUTPUT,
 }
 
 

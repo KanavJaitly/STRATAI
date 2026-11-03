@@ -1,7 +1,22 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 
+import {
+  AcceptInvitationPage,
+  AccountPage,
+  AuthLandingPage,
+  ForgotPasswordPage,
+  LoginPage,
+  RegisterTeamPage,
+  ResetPasswordPage,
+} from './auth/AuthPages'
+import { AuthProvider } from './auth/AuthContext'
+import { useAuth } from './auth/authState'
+import { RequirePermission, RequireSignedIn } from './auth/guards'
 import { SessionProvider, useSession } from './state/session'
+import { DriveTeamDashboardPage, HomeRedirect, ScoutingDashboardPage } from './workspace/RoleDashboards'
+import { TeamManagementPage } from './workspace/TeamManagementPage'
+import './styles/workspace.css'
 import { OverviewPage } from './pages/OverviewPage'
 import { GameSpecPage } from './pages/GameSpecPage'
 import { ProfilesPage } from './pages/ProfilesPage'
@@ -96,41 +111,112 @@ function useFocusMainOnNavigation(pathname: string) {
 
 const EVENTS_AREA = /^\/($|events\/|matches\/|report\/)/
 
+// The sign-in pages, and the team-workspace pages, which have their own sign-in rules.
+const AUTH_AREA = /^\/auth(\/|$)/
+const WORKSPACE_AREA = /^\/(auth|account|home|team|drive-team|scouting)(\/|$)/
+
+/** Sign in / register when nobody is signed in; otherwise who is signed in, to which team, with sign-out. */
+function AccountArea() {
+  const { ready, signedIn, session, signOut } = useAuth()
+  const navigate = useNavigate()
+  if (!ready) return null
+  if (!signedIn) {
+    return <Link className="button auth-cta" to="/auth">Login / Register to Your Team&apos;s StratAI</Link>
+  }
+  return (
+    <div className="account-area">
+      <span><strong>{session.user?.name}</strong> · team {session.workspace?.team_number} · {session.role_label}</span>
+      <Link to="/account">Account</Link>
+      <button type="button" className="link" onClick={async () => { await signOut(); navigate('/auth', { replace: true }) }}>
+        Log out</button>
+    </div>
+  )
+}
+
+/** The landing page's invitation to the team workspaces, for anyone not signed in. */
+function TeamWorkspaceCallout() {
+  return (
+    <section className="auth-callout no-print" aria-labelledby="team-workspace-callout">
+      <div>
+        <h2 id="team-workspace-callout">Your team&apos;s own StratAI</h2>
+        <p>Give every member of your FRC team their own account, with roles for administrators, the drive team and
+          scouters, and keep your team&apos;s scouting private to your team.</p>
+      </div>
+      <Link className="button auth-cta" to="/auth">Login / Register to Your Team&apos;s StratAI</Link>
+    </section>
+  )
+}
+
 export function Shell() {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const { season } = useSession()
+  const { ready, signedIn, role, can, session } = useAuth()
   const inInputs = pathname.startsWith('/inputs')
   const inEvents = EVENTS_AREA.test(pathname)
   const inSeasonArea = SEASON_AREA.test(pathname)
+  const inWorkspace = WORKSPACE_AREA.test(pathname)
   useFocusMainOnNavigation(pathname)
+  // Signed-in members see the existing features their role may use; the platform-wide human-input and season tools
+  // stay visible to visitors (as before) and to administrators. The API enforces all of this on its own.
+  const showPublic = !signedIn || can('team_info')
+  const showPlatformTools = !signedIn || role === 'admin'
+  const showDriveTeam = signedIn && ['event_analysis', 'match_predictions', 'strategy_tools', 'scouting_view',
+    'alliance_selection'].some(can)
+  // Under ACCESS_POLICY=members nothing but the sign-in pages is open to a visitor.
+  const membersOnly = ready && !signedIn && session.access_policy === 'members' && !AUTH_AREA.test(pathname)
   return (
     <div className="app">
       <a href="#main" className="skip-link">Skip to content</a>
       <header className="top no-print">
         <div className="brand">
           <strong>STRATAI</strong>
-          <span>{inInputs ? 'Human inputs'
+          <span>{inWorkspace ? (signedIn ? `Team ${session.workspace?.team_number} workspace` : 'Team workspaces')
+            : inInputs ? 'Human inputs'
             : inSeasonArea ? 'Game manuals, season rulesets, readiness and historical seasons' : 'Strategy dashboard'}</span>
         </div>
         <nav aria-label="Main">
-          <Link to="/" className={inEvents ? 'active' : undefined} aria-current={inEvents ? 'page' : undefined}>
-            Events</Link>
+          {showPublic && (
+            <Link to="/" className={inEvents ? 'active' : undefined} aria-current={inEvents ? 'page' : undefined}>
+              Events</Link>
+          )}
+          {can('team_management') && <NavLink to="/team">Team Management</NavLink>}
+          {showDriveTeam && <NavLink to="/drive-team">Drive team</NavLink>}
+          {can('scouting_forms') && <NavLink to="/scouting">Scouting</NavLink>}
           <NavLink to="/status">System status</NavLink>
-          <NavLink to="/explorer">Historical seasons</NavLink>
-          <span className="nav-sep" aria-hidden="true" />
-          <NavLink to="/inputs" end>Inputs overview</NavLink>
-          <NavLink to="/readiness">Readiness &amp; tasks</NavLink>
-          <NavLink to="/manuals">Game manual</NavLink>
-          <NavLink to="/rulesets">Season ruleset</NavLink>
-          <NavLink to="/inputs/game">Game manual &amp; spec</NavLink>
-          <NavLink to="/inputs/profiles">Team profiles</NavLink>
-          <NavLink to="/inputs/review">Human review</NavLink>
+          {showPublic && <NavLink to="/explorer">Historical seasons</NavLink>}
+          {showPlatformTools && (
+            <>
+              <span className="nav-sep" aria-hidden="true" />
+              <NavLink to="/inputs" end>Inputs overview</NavLink>
+              <NavLink to="/readiness">Readiness &amp; tasks</NavLink>
+              <NavLink to="/manuals">Game manual</NavLink>
+              <NavLink to="/rulesets">Season ruleset</NavLink>
+              <NavLink to="/inputs/game">Game manual &amp; spec</NavLink>
+              <NavLink to="/inputs/profiles">Team profiles</NavLink>
+              <NavLink to="/inputs/review">Human review</NavLink>
+            </>
+          )}
         </nav>
-        <SessionBar />
+        <AccountArea />
+        {!inWorkspace && <SessionBar />}
       </header>
       {/* A season change remounts the page: no state from another season survives. */}
       <main id="main" tabIndex={-1} key={season}>
+        {/* Members-only and signed out: only the redirect renders, so no page starts a request the API would refuse. */}
+        {membersOnly ? <Navigate to={`/auth/login?next=${encodeURIComponent(pathname + search)}`} replace /> : (<>
+        {pathname === '/' && ready && !signedIn && <TeamWorkspaceCallout />}
         <Routes>
+          <Route path="/auth" element={<AuthLandingPage />} />
+          <Route path="/auth/register" element={<RegisterTeamPage />} />
+          <Route path="/auth/login" element={<LoginPage />} />
+          <Route path="/auth/forgot" element={<ForgotPasswordPage />} />
+          <Route path="/auth/reset" element={<ResetPasswordPage />} />
+          <Route path="/auth/invite" element={<AcceptInvitationPage />} />
+          <Route path="/account" element={<RequireSignedIn><AccountPage /></RequireSignedIn>} />
+          <Route path="/home" element={<HomeRedirect />} />
+          <Route path="/team" element={<RequirePermission permission="team_management"><TeamManagementPage /></RequirePermission>} />
+          <Route path="/drive-team" element={<RequireSignedIn><DriveTeamDashboardPage /></RequireSignedIn>} />
+          <Route path="/scouting" element={<RequirePermission permission="scouting_forms"><ScoutingDashboardPage /></RequirePermission>} />
           <Route path="/" element={<EventsPage />} />
           <Route path="/events/:eventKey" element={<EventPage />} />
           <Route path="/events/:eventKey/teams/:team" element={<TeamPage />} />
@@ -154,6 +240,7 @@ export function Shell() {
           <Route path="/review" element={<Navigate to="/inputs/review" replace />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </>)}
       </main>
     </div>
   )
@@ -162,9 +249,11 @@ export function Shell() {
 export default function App() {
   return (
     <SessionProvider>
-      <BrowserRouter>
-        <Shell />
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Shell />
+        </BrowserRouter>
+      </AuthProvider>
     </SessionProvider>
   )
 }
