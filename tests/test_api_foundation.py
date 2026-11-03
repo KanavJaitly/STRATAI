@@ -330,6 +330,22 @@ SEASON_PAGES_PATHS: frozenset[str] = frozenset({
     "/explorer/teams/{team_number}/seasons/{season}",
 })
 
+# Team workspaces (2026-11-02, docs/team_workspaces.md): accounts and sign-in under /auth; Team Management and
+# each team's private scouting under /workspace, where the workspace always comes from the caller's session.
+WORKSPACE_PATHS: frozenset[str] = frozenset({
+    "/auth/session", "/auth/teams/register", "/auth/teams/initial-admin", "/auth/login", "/auth/logout",
+    "/auth/password/change", "/auth/password/forgot", "/auth/password/reset", "/auth/invitations/preview",
+    "/auth/invitations/accept",
+    "/workspace", "/workspace/members", "/workspace/invitations", "/workspace/invitations/{invitation_id}/resend",
+    "/workspace/invitations/{invitation_id}/revoke", "/workspace/members/{membership_id}/role",
+    "/workspace/members/{membership_id}/status", "/workspace/members/{membership_id}/profile",
+    "/workspace/members/{membership_id}/remove", "/workspace/members/{membership_id}/password-reset",
+    "/workspace/permissions", "/workspace/settings", "/workspace/activity", "/workspace/analytics",
+    "/workspace/scouting/scouts", "/workspace/scouting/assignments",
+    "/workspace/scouting/assignments/{assignment_id}/cancel",
+    "/workspace/scouting/reports", "/workspace/scouting/summary",
+})
+
 
 def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     """The shipped application exposes these paths and nothing else.
@@ -345,13 +361,14 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     its own endpoints to PHASE7_PATHS, family by family, the same way, and Phase 9 its
     briefing to PHASE9_PATHS. The game manual manager, season readiness and the
     read-only historical explorer (2026-10-11, merged after Phase 7) are
-    SEASON_PAGES_PATHS. It still
+    SEASON_PAGES_PATHS, and the team workspaces (2026-11-02) WORKSPACE_PATHS. It still
     guards the other direction, which has not changed: a test-only
     forced-error route (/_test_boom and friends, registered on locally built
     apps in this module) must never reach the shipped application.
     """
     app = create_app(settings)
-    assert sorted(app.openapi()["paths"]) == sorted(PRE_PHASE7_PATHS | PHASE7_PATHS | PHASE9_PATHS | SEASON_PAGES_PATHS)
+    assert sorted(app.openapi()["paths"]) == sorted(
+        PRE_PHASE7_PATHS | PHASE7_PATHS | PHASE9_PATHS | SEASON_PAGES_PATHS | WORKSPACE_PATHS)
 
 
 # ===========================================================================

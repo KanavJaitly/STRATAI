@@ -163,6 +163,37 @@ class Settings(BaseSettings):
     # on every request.
     epa_source_retry_seconds: float = Field(default=30.0, ge=0)
 
+    # Team workspaces: individual accounts, roles and team-private data (workspaces/, docs/team_workspaces.md).
+    # - access_policy: who may read the public analytics routes (events, predictions, analysis, ...).
+    #   "open" keeps today's behaviour, anyone may read them, and the locked contract (docs/api_contract_lock.json)
+    #   unchanged. "members" requires a signed-in member holding the route's permission (401/403 otherwise); turning
+    #   it on adds those responses to locked operations, so it is a deliberate deployment decision. Team-private
+    #   routes (/workspace/...) always require a session, whatever this says.
+    # - session_cookie_secure: send the session cookie only over HTTPS. None means "secure unless ENV=development".
+    # - session_ttl_hours / session_idle_hours: a session ends at the first of these limits.
+    # - invitation_ttl_hours / password_reset_ttl_minutes: how long an invitation or reset link works.
+    # - public_app_url: the web app's base URL, for links in emails (invitations, password resets).
+    # - smtp_*: outgoing email. Unset means no email is sent: an administrator copies the invitation link, and
+    #   self-service password reset is unavailable (an administrator can issue a reset link instead).
+    # - dev_outbox_dir: in development only, emails are written here as files instead of being sent.
+    # - auth_trusted_proxy_hops: how many reverse proxies (Vercel, Render) sit in front of the API, so the client
+    #   address for rate limiting is read from X-Forwarded-For. 0 trusts no header.
+    access_policy: Literal["open", "members"] = "open"
+    session_cookie_secure: bool | None = None
+    session_ttl_hours: int = Field(default=336, ge=1)
+    session_idle_hours: int = Field(default=72, ge=1)
+    invitation_ttl_hours: int = Field(default=168, ge=1)
+    password_reset_ttl_minutes: int = Field(default=60, ge=5)
+    public_app_url: str | None = None
+    smtp_host: str | None = None
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str | None = None
+    smtp_starttls: bool = True
+    dev_outbox_dir: str | None = None
+    auth_trusted_proxy_hops: int = Field(default=0, ge=0, le=5)
+
     model_config = ConfigDict(
         case_sensitive=False,
     )

@@ -3,6 +3,12 @@
 // These are the shapes the Phase 7 contract lock pins (docs/api_contract_lock.json).
 /* eslint-disable */
 
+export interface AcceptInvitationBody {
+  full_name?: string | null
+  password: string
+  token: string
+}
+
 export interface AllianceSynergyOut {
   /** Why score is null; null when present. */
   absent_code: "alliance_incomplete" | null
@@ -79,6 +85,12 @@ export interface AssessmentOut {
   odds: StrategyOdds
   opponent_strategy: Strategy
   strategy: Strategy
+}
+
+export interface AssignmentBody {
+  match_key: string
+  membership_id: number
+  team_number: number
 }
 
 export interface AutoPointsView {
@@ -172,6 +184,11 @@ export interface CandidatesResponse {
   configuration: number[] | null
   epa: EpaSourceInfo
   event_key: string
+}
+
+export interface ChangePasswordBody {
+  current_password: string
+  new_password: string
 }
 
 /** A structured, timestamped, attributed measured input (P6-A9). No free text. */
@@ -376,6 +393,11 @@ export interface FieldOut {
   win_event: StrategyOdds
 }
 
+export interface ForgotPasswordBody {
+  email: string
+  team_number: number
+}
+
 /** Liveness payload. */
 export interface HealthResponse {
   /** The configured environment: development, staging, or production. */
@@ -420,10 +442,34 @@ export interface HypotheticalRecommendBody {
   side: "red" | "blue"
 }
 
+export interface InitialAdminBody {
+  email: string
+  full_name: string
+  password: string
+  setup_password: string
+  team_number: number
+}
+
+export interface InvitationTokenBody {
+  token: string
+}
+
+export interface InviteBody {
+  email: string
+  full_name: string
+  role: "admin" | "strategy" | "scouter"
+}
+
 export interface LabelledTeams {
   evidence: string
   team_numbers: number[]
   validation_status: string
+}
+
+export interface LoginBody {
+  email: string
+  password: string
+  team_number: number
 }
 
 export interface MatchForecastOut {
@@ -454,6 +500,10 @@ export interface Measure {
   value: number | null
 }
 
+export interface MemberProfileBody {
+  name: string
+}
+
 /** P7-Q13: how far each part of a stored metrics object may be trusted, using labels the strength view already assigns (ml.views.strength), derived only from the object's own flags. */
 export interface MetricsValidation {
   /** descriptive_definition_pending (Phase 3 M14 is open); insufficient_data when fewer than 2 observations. */
@@ -479,6 +529,11 @@ export interface NotProducedItems {
   key_success_factors: NotProduced
   predicted_flow: NotProduced
   strengths_and_weaknesses: NotProduced
+}
+
+export interface PermissionsBody {
+  grants: Record<string, boolean>
+  role: "strategy" | "scouter"
 }
 
 export interface PickListProvenance {
@@ -632,6 +687,26 @@ export interface RecommendResponse {
   vs_baseline_label: string | null
 }
 
+export interface RegisterTeamBody {
+  setup_password: string
+  team_name: string
+  team_number: number
+}
+
+export interface ReportBody {
+  assignment_id?: number | null
+  defense_rating?: number | null
+  feeding_rating?: number | null
+  match_key: string
+  notes?: string | null
+  team_number: number
+}
+
+export interface ResetPasswordBody {
+  new_password: string
+  token: string
+}
+
 export interface ResolveBody {
   note?: string
   resolved_by: string
@@ -651,6 +726,10 @@ export interface RobotPlan {
   feed_target?: number | null
   role?: "scoring" | "defense" | "feeding"
   team_number: number
+}
+
+export interface RoleBody {
+  role: "admin" | "strategy" | "scouter"
 }
 
 export interface RosterTeamOut {
@@ -742,11 +821,21 @@ export interface ServedModelInfo {
   training_dataset_hash: string
 }
 
+export interface SettingsBody {
+  default_event_key?: string | null
+  scouting_instructions?: string | null
+  team_name?: string | null
+}
+
 export interface SpecDraftBody {
   based_on_id?: number | null
   created_by: string
   manual_id?: number | null
   spec_json: Record<string, unknown>
+}
+
+export interface StatusBody {
+  status: "active" | "suspended"
 }
 
 /** One alliance's strategy. No field records its origin (P6-DM2). */

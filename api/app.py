@@ -11,8 +11,9 @@ from __future__ import annotations
 
 import logging
 import threading
+from typing import Any
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from api.body_limit import UPLOAD_MARGIN_BYTES, BodySizeLimitMiddleware, declare_body_limit
@@ -27,6 +28,7 @@ from api.ml_loading import (
 )
 from api.request_id import REQUEST_ID_HEADER
 from api.routes.alliance_selection import router as alliance_selection_router
+from api.routes.auth import router as auth_router
 from api.routes.common import unsupported_season_handler
 from api.routes.discovery import router as discovery_router
 from api.routes.event_analysis import router as event_analysis_router
@@ -40,6 +42,9 @@ from api.routes.pre_match_report import router as pre_match_report_router
 from api.routes.qualification_forecast import router as qualification_forecast_router
 from api.routes.strategy import router as strategy_router
 from api.routes.strength import router as strength_router
+from api.routes.team_scouting import router as team_scouting_router
+from api.routes.workspace import router as workspace_router
+from api.session import permission_gate, platform_gate
 from data.config import Settings
 from data.human_inputs import MAX_MANUAL_BYTES
 from database.connection import Database, DatabaseConfig
@@ -53,9 +58,10 @@ API_DESCRIPTION = ("FRC strategy platform API: team metrics, win probability, ra
                    "strategy and the Phase 5 human-input workflows. Contracts and their locks: docs/phase7.md.")
 API_VERSION = "0.1.0"
 
-# No authentication exists yet, so credentialed cross-origin requests are not
-# something the API should be inviting. Turning this on later should be a
-# deliberate, reviewed change rather than a default that was inherited.
+# Credentialed cross-origin requests stay refused. The session cookie (api.session) is first-party: the web app
+# reaches the API on its own origin (the Vite proxy locally, the Vercel rewrite when hosted). Refusing credentialed
+# CORS is also half of the CSRF defence, since no other origin can send the X-StratAI-CSRF header with a member's
+# cookie. Turning this on would be a deliberate, reviewed change rather than a default that was inherited.
 CORS_ALLOW_CREDENTIALS = False
 CORS_ALLOW_METHODS = ("GET", "POST", "OPTIONS")
 CORS_ALLOW_HEADERS = ("Content-Type", REQUEST_ID_HEADER)
@@ -157,21 +163,39 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Data routes, unlike the probes, DO sit under api_prefix -- which is what
     # that setting exists for. It defaults to "", so the team metrics endpoint
     # is served at the path the milestone documents it at.
-    app.include_router(metrics_router, prefix=settings.api_prefix)
-    app.include_router(predictions_router, prefix=settings.api_prefix)
-    app.include_router(strength_router, prefix=settings.api_prefix)
-    app.include_router(event_analysis_router, prefix=settings.api_prefix)
-    app.include_router(qualification_forecast_router, prefix=settings.api_prefix)
-    app.include_router(human_inputs_router, prefix=settings.api_prefix)
-    app.include_router(discovery_router, prefix=settings.api_prefix)  # Phase 7 (P7-M4, P7-Q8)
-    app.include_router(strategy_router, prefix=settings.api_prefix)  # Phase 7 (P7-M5)
-    app.include_router(alliance_selection_router, prefix=settings.api_prefix)  # Phase 7 (P7-M6)
-    app.include_router(pre_match_report_router, prefix=settings.api_prefix)  # Phase 7 (P7-M7)
-    app.include_router(manual_manager_router, prefix=settings.api_prefix)  # game manuals, rulesets, readiness
-    app.include_router(explorer_router, prefix=settings.api_prefix)  # historical season explorer (read-only)
+    #
+    # Each existing router carries the gate for the permission it serves (api.session.permission_gate). Under the
+    # default ACCESS_POLICY=open the gates admit everyone, as before; under ACCESS_POLICY=members they require a
+    # signed-in member with that permission. The gates add nothing to any operation's OpenAPI contract.
+    def gated(permission: str) -> list[Any]:
+        return [Depends(permission_gate(permission))]
+
+    app.include_router(metrics_router, prefix=settings.api_prefix, dependencies=gated("team_analytics"))
+    app.include_router(predictions_router, prefix=settings.api_prefix, dependencies=gated("match_predictions"))
+    app.include_router(strength_router, prefix=settings.api_prefix, dependencies=gated("team_analytics"))
+    app.include_router(event_analysis_router, prefix=settings.api_prefix, dependencies=gated("event_analysis"))
+    app.include_router(qualification_forecast_router, prefix=settings.api_prefix,
+                       dependencies=gated("qualification_forecast"))
+    app.include_router(human_inputs_router, prefix=settings.api_prefix, dependencies=[Depends(platform_gate)])
+    app.include_router(discovery_router, prefix=settings.api_prefix,  # Phase 7 (P7-M4, P7-Q8)
+                       dependencies=gated("team_info"))
+    app.include_router(strategy_router, prefix=settings.api_prefix,  # Phase 7 (P7-M5)
+                       dependencies=gated("strategy_tools"))
+    app.include_router(alliance_selection_router, prefix=settings.api_prefix,  # Phase 7 (P7-M6)
+                       dependencies=gated("alliance_selection"))
+    app.include_router(pre_match_report_router, prefix=settings.api_prefix,  # Phase 7 (P7-M7)
+                       dependencies=gated("strategy_tools"))
+    app.include_router(manual_manager_router, prefix=settings.api_prefix,  # game manuals, rulesets, readiness
+                       dependencies=[Depends(platform_gate)])
+    app.include_router(explorer_router, prefix=settings.api_prefix,  # historical season explorer (read-only)
+                       dependencies=gated("team_info"))
     briefing_router = _briefing_router()
     if briefing_router is not None:  # Phase 9 (P9-M4): optional and downstream only (P9-Q1)
-        app.include_router(briefing_router, prefix=settings.api_prefix)
+        app.include_router(briefing_router, prefix=settings.api_prefix, dependencies=gated("strategy_tools"))
+    # Team workspaces (docs/team_workspaces.md): accounts, Team Management and each team's private scouting.
+    app.include_router(auth_router, prefix=settings.api_prefix)
+    app.include_router(workspace_router, prefix=settings.api_prefix)
+    app.include_router(team_scouting_router, prefix=settings.api_prefix)
 
     # Captured request/response examples (docs/api_examples/, P7-Q4) appear in the OpenAPI document. They are
     # documentation only: the locked response shapes ignore them. Installed after every router is included.

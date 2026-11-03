@@ -106,6 +106,12 @@ EXPLORER_PATHS = {
 }
 
 
+# The team workspaces' accounts, Team Management and team scouting routes (2026-11-02), documented in
+# docs/team_workspaces.md and pinned by tests/test_api_foundation.py's WORKSPACE_PATHS -- out of this page's scope like
+# the human-input routes. None serves a ScoringProfile.
+WORKSPACE_PREFIXES = ("/auth/", "/workspace")
+
+
 def _phase7_paths() -> set[str]:
     """Phase 7's own endpoints, documented in docs/phase7.md's "Endpoints owned by Phase 7" section and pinned by
     tests/test_phase7_contract.py -- out of this page's scope for the same reason as PHASE5_PATHS (2026-10-17,
@@ -387,7 +393,7 @@ def monkeypatch_module_env():
 
 
 def test_documented_endpoints_are_exactly_the_live_ones(docs_text: str, openapi_schema: dict):
-    live = {p for p in openapi_schema["paths"] if not p.startswith("/human-inputs")}         - PROBE_PATHS - ML_PREDICTION_PATHS - PHASE5_PATHS - _phase7_paths() - EXPLORER_PATHS - _phase9_paths()
+    live = {p for p in openapi_schema["paths"] if not p.startswith(("/human-inputs",) + WORKSPACE_PREFIXES)}         - PROBE_PATHS - ML_PREDICTION_PATHS - PHASE5_PATHS - _phase7_paths() - EXPLORER_PATHS - _phase9_paths()
     documented = set(re.findall(r"^GET (/\S+)$", docs_text, flags=re.MULTILINE))
     assert documented, "section 8 documents no endpoint"
     assert live == documented, (
@@ -425,7 +431,8 @@ def test_reliability_score_placeholder_caveat_reaches_the_served_schema(openapi_
         operation["description"]
         for path, item in openapi_schema["paths"].items()
         if path not in PROBE_PATHS and path not in ML_PREDICTION_PATHS and path not in PHASE5_PATHS
-        and path not in _phase7_paths() and path not in EXPLORER_PATHS and path not in _phase9_paths() and not path.startswith("/human-inputs")
+        and path not in _phase7_paths() and path not in EXPLORER_PATHS and path not in _phase9_paths()
+        and not path.startswith(("/human-inputs",) + WORKSPACE_PREFIXES)
         for operation in item.values()
     ]
     assert endpoints, "no non-probe endpoint to check"
