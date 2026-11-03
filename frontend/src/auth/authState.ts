@@ -10,9 +10,15 @@ import type { Role, SessionInfo } from './api'
 
 export const SIGNED_OUT: SessionInfo = { authenticated: false, access_policy: 'open', email_delivery_configured: false }
 
+/** Why team accounts cannot work against this server, if they cannot:
+ * - api_outdated: the API answered GET /auth/session with 404, so it is running code from before team accounts;
+ * - schema_missing: the API has the routes, but its database lacks migration 0012. */
+export type AccountsUnavailable = 'api_outdated' | 'schema_missing' | null
+
 export interface Auth {
   /** False until the first GET /auth/session has answered. */
   ready: boolean
+  accountsUnavailable: AccountsUnavailable
   session: SessionInfo
   signedIn: boolean
   role: Role | null
@@ -26,10 +32,11 @@ export interface Auth {
 export const AuthContext = createContext<Auth | null>(null)
 
 export function makeAuth(ready: boolean, session: SessionInfo, setSession: (s: SessionInfo) => void,
-  refresh: () => Promise<void>, signOut: () => Promise<void>): Auth {
+  refresh: () => Promise<void>, signOut: () => Promise<void>, apiOutdated = false): Auth {
   const permissions = new Set(session.permissions ?? [])
   return {
     ready, session, setSession, refresh, signOut,
+    accountsUnavailable: apiOutdated ? 'api_outdated' : session.accounts_available === false ? 'schema_missing' : null,
     signedIn: session.authenticated,
     role: session.authenticated ? session.role ?? null : null,
     can: (permission) => session.authenticated && permissions.has(permission),

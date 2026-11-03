@@ -270,6 +270,16 @@ python -m api                       # the API on http://127.0.0.1:8000
 cd frontend && npm ci && npm run dev  # the web app on http://localhost:5173 (proxies /api to the API)
 ```
 
+Two things to check when testing locally:
+- **Restart `python -m api` after updating the code.** It loads the code once and never reloads it. An API started
+  before team accounts existed, or from another checkout, has no `/auth` routes, so registration answers
+  `404 not_found` ("The requested resource was not found"). The sign-in pages then say "This StratAI server does
+  not have team accounts yet".
+- **Point the API at a disposable database.** `.env` names the serving `stratai` database. For testing, set
+  `DATABASE_URL` to a `stratai_test_<suffix>` copy with 0012 applied, and `ENV=development` so the session cookie
+  works over plain http. If the database lacks 0012, the sign-in pages say "Team accounts are not set up on this
+  server's database".
+
 For local email testing, set `ENV=development`, `PUBLIC_APP_URL=http://localhost:5173` and
 `DEV_OUTBOX_DIR=./.outbox`. Verify a local test team with `python -m scripts.workspace_operator verify ...`.
 

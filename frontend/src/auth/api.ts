@@ -57,6 +57,8 @@ export interface SessionInfo {
   authenticated: boolean
   access_policy: 'open' | 'members'
   email_delivery_configured: boolean
+  /** False when the server's database lacks the team-account tables (migration 0012). */
+  accounts_available?: boolean
   user?: { id: number; name: string; email: string }
   workspace?: { team_number: number; team_name: string; verification_status: VerificationStatus }
   role?: Role

@@ -33,7 +33,13 @@ from api.session import (
 from data.config import Settings
 from database.connection import Database
 from workspaces import accounts, mailer
-from workspaces.sessions import COOKIE_NAME, SessionContext, resolve_session, revoke_token
+from workspaces.sessions import (
+    COOKIE_NAME,
+    SessionContext,
+    accounts_schema_present,
+    resolve_session,
+    revoke_token,
+)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -89,9 +95,11 @@ class AcceptInvitationBody(_Body):
     password: str = Field(max_length=_TEXT)
 
 
-def _session_payload(context: SessionContext | None, settings: Settings) -> dict[str, Any]:
+def _session_payload(context: SessionContext | None, settings: Settings, *,
+                     accounts_available: bool = True) -> dict[str, Any]:
     base = {"access_policy": settings.access_policy,
-            "email_delivery_configured": mailer.email_channel(settings) is not None}
+            "email_delivery_configured": mailer.email_channel(settings) is not None,
+            "accounts_available": accounts_available}
     if context is None:
         return {"authenticated": False, **base}
     return {**accounts.session_summary(context), **base}
@@ -107,7 +115,12 @@ _CSRF = {403: ["csrf_check_failed"]}
 
 @router.get("/session", summary="Who is signed in (or that nobody is), and how the API is configured",
             responses=error_responses({}, validates_input=False))
-def get_session(request: Request, settings: Settings = Depends(get_settings)) -> Any:
+def get_session(request: Request, database: Database = Depends(get_database),
+                settings: Settings = Depends(get_settings)) -> Any:
+    # accounts_available is False when this server's database lacks migration 0012: the web app then says so
+    # instead of every registration or sign-in failing with an unexplained error.
+    if not accounts_schema_present(database):
+        return _session_payload(None, settings, accounts_available=False)
     return _session_payload(current_session(request), settings)
 
 

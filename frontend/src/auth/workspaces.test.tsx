@@ -85,6 +85,27 @@ describe('signed out', () => {
     expect(await axeViolations(container, { region: true })).toEqual([])
   })
 
+  it('says so when the API answering predates team accounts (its /auth/session is a 404)', async () => {
+    mockApi({}) // every route unmocked: GET /auth/session answers the unmatched-route 404, as an older API does
+    renderApp('/auth/register')
+    expect(await screen.findByText(/This StratAI server does not have team accounts yet/)).toBeInTheDocument()
+    expect(screen.getByText(/running\s+an older version of StratAI/)).toBeInTheDocument()
+  })
+
+  it("says so when the server's database lacks the team-account migration", async () => {
+    mockApi({ 'GET /auth/session': { ...SIGNED_OUT, accounts_available: false } })
+    renderApp('/auth/login')
+    expect(await screen.findByText(/Team accounts are not set up on this server/)).toBeInTheDocument()
+    expect(screen.getByText('0012_team_workspaces.sql')).toBeInTheDocument()
+  })
+
+  it('shows no such notice when the server is ready for accounts', async () => {
+    mockApi({ 'GET /auth/session': { ...SIGNED_OUT, accounts_available: true } })
+    renderApp('/auth/register')
+    expect(await screen.findByRole('heading', { name: 'Register a new team' })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
   it('sends a visitor to sign in when the server is members-only', async () => {
     mockApi({ 'GET /auth/session': { ...SIGNED_OUT, access_policy: 'members' } })
     renderApp('/events/2099synth')
