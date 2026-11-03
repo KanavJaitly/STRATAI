@@ -56,16 +56,25 @@ def get_seasons(database: Database = Depends(get_database)) -> Any:
     return [{"season": s, "coverage": data_coverage(database, s)} for s in SUPPORTED_SEASONS]
 
 
-@router.get("/seasons/{season}/events", responses=error_responses({}), summary="A season's events, with team and match counts")
+@router.get("/seasons/{season}/events", responses=error_responses({}),
+            summary="A season's events, with their district and team and match counts")
 def get_season_events(season: int = Path(ge=1992, le=2100), database: Database = Depends(get_database)) -> Any:
+    # The district (e.g. "fma", "FIRST Mid-Atlantic") is not a canonical column; it is read from the event's current
+    # untouched TBA payload. NULL for events outside a district (regionals, championship, off-season).
     with database.cursor() as c:
         c.execute(
             "SELECT e.event_key, e.name, e.event_code, e.event_type, e.start_date, e.end_date, e.city, e.state_prov, "
-            "e.country, count(DISTINCT m.match_key) AS matches, "
+            "e.country, d.district_json->>'abbreviation' AS district, d.district_json->>'display_name' AS district_name, "
+            "count(DISTINCT m.match_key) AS matches, "
             "count(DISTINCT m.match_key) FILTER (WHERE m.score_red IS NOT NULL) AS matches_played, "
             "count(DISTINCT mt.team_number) AS teams "
-            "FROM events e LEFT JOIN matches m USING (event_key) LEFT JOIN match_teams mt USING (match_key) "
-            "WHERE e.season = %s GROUP BY e.event_key ORDER BY e.start_date NULLS LAST, e.event_key", (season,))
+            "FROM events e "
+            "LEFT JOIN LATERAL (SELECT NULLIF(r.payload_json->'district', 'null'::jsonb) AS district_json "
+            "                   FROM raw_source_payloads r WHERE r.source = 'tba' AND r.source_object_type = 'event' "
+            "                   AND r.source_object_id = e.event_key AND r.is_current ORDER BY r.id DESC LIMIT 1) d ON TRUE "
+            "LEFT JOIN matches m USING (event_key) LEFT JOIN match_teams mt USING (match_key) "
+            "WHERE e.season = %s GROUP BY e.event_key, d.district_json ORDER BY e.start_date NULLS LAST, e.event_key",
+            (season,))
         return _rows(c)
 
 

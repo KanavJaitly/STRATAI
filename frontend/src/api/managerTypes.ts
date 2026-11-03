@@ -209,6 +209,10 @@ export interface EventSummary {
   city: string | null
   state_prov: string | null
   country: string | null
+  /** The district's abbreviation (e.g. "fma"); null for events outside a district (regionals, championship). */
+  district: string | null
+  /** e.g. "FIRST Mid-Atlantic"; null outside a district. */
+  district_name: string | null
   matches: number
   matches_played: number
   teams: number

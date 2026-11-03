@@ -60,3 +60,19 @@ a.button.button-secondary { background: transparent; color: var(--accent); font-
   .account-area { font-size: 0.85rem; }
   .row-actions { white-space: normal; }
 }
+
+/* The event chooser: year, region and a name search, then pick from the list (no event key to type). */
+.event-chooser { border: 0; padding: 0; margin: 0 0 8px; min-width: 0; }
+.event-chooser legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
+.event-chooser .event-search { flex: 1 1 260px; }
+.event-chooser .event-search input { width: 100%; }
+.event-chosen { margin: 4px 0 8px; }
+.event-results { list-style: none; padding: 0; margin: 6px 0; display: grid; gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.event-option {
+  width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+}
+.event-option:hover, .event-option:focus-visible { border-color: var(--accent); background: var(--selected); }
+.event-option.selected { border-color: var(--accent); background: var(--selected); box-shadow: inset 3px 0 0 var(--accent); }
+.event-option-name { font-weight: 600; }
