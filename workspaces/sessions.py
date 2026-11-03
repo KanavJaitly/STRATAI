@@ -91,6 +91,15 @@ WHERE s.token_hash = %s
 """
 
 
+def accounts_schema_present(database: Database) -> bool:
+    """Whether this database holds the team-account tables (migration 0012). Checked live, so applying the
+    migration to a running server's database takes effect without a restart."""
+    with database.cursor() as cursor:
+        cursor.execute("SELECT to_regclass('public.workspaces') IS NOT NULL AND to_regclass('public.auth_sessions') "
+                       "IS NOT NULL")
+        return bool(cursor.fetchone()[0])
+
+
 def resolve_session(database: Database, token: str | None, settings: Settings) -> SessionContext | None:
     """The live session behind token, or None if there is none (absent, unknown, expired, idle, revoked, or its
     member, user or workspace is no longer active)."""

@@ -38,6 +38,31 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   )
 }
 
+/** Says plainly when this server cannot run team accounts, instead of letting every form fail with a bare 404/500. */
+export function AccountsUnavailableNotice() {
+  const { accountsUnavailable } = useAuth()
+  if (accountsUnavailable === 'api_outdated') {
+    return (
+      <div className="notice notice-error" role="alert">
+        <strong>This StratAI server does not have team accounts yet.</strong> The API answering this page is running
+        an older version of StratAI, from before team registration and sign-in existed. Stop it and start{' '}
+        <code>python -m api</code> again from the current checkout; the API does not reload new code on its own.
+      </div>
+    )
+  }
+  if (accountsUnavailable === 'schema_missing') {
+    return (
+      <div className="notice notice-error" role="alert">
+        <strong>Team accounts are not set up on this server&apos;s database.</strong> The database the API uses has
+        not had migration <code>0012_team_workspaces.sql</code> applied (<code>python database/migrate.py</code>, run
+        against that database). For local testing, point the API at a disposable <code>stratai_test_&lt;suffix&gt;</code>{' '}
+        copy, never the serving database.
+      </div>
+    )
+  }
+  return null
+}
+
 function teamNumberValue(text: string): number | null {
   const value = Number(text)
   return Number.isInteger(value) && value >= 1 && value <= 99999 ? value : null
@@ -51,6 +76,7 @@ export function AuthLandingPage() {
     <div className="auth-page">
       <PageHeader title="Your team's StratAI" subtitle="Each FRC team gets its own private workspace: its own members,
         roles, scouting and strategy tools. Every person signs in with their own account." />
+      <AccountsUnavailableNotice />
       {signedIn && (
         <div className="notice notice-info" role="status">
           You are signed in to team {session.workspace?.team_number} as {session.user?.name}.{' '}
@@ -117,6 +143,7 @@ export function RegisterTeamPage() {
     <div className="auth-page">
       <PageHeader title={step === 'team' ? 'Register a new team' : 'Create the administrator account'}
         crumbs={[{ to: '/auth', label: 'Sign in or register' }]} />
+      <AccountsUnavailableNotice />
       <ol className="auth-steps" aria-label="Registration steps">
         <li aria-current={step === 'team' ? 'step' : undefined}>1. Your team</li>
         <li aria-current={step === 'admin' ? 'step' : undefined}>2. Your administrator account</li>
@@ -233,6 +260,7 @@ export function LoginPage() {
   return (
     <div className="auth-page">
       <PageHeader title="Log in to your team" crumbs={[{ to: '/auth', label: 'Sign in or register' }]} />
+      <AccountsUnavailableNotice />
       <AuthCard title="Your account">
         <form onSubmit={submit} noValidate>
           <Field label="FRC team number">

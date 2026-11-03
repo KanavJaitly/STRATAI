@@ -45,7 +45,10 @@ def _db() -> Database:
 def _clean_workspaces(db: Database) -> None:
     with db.cursor() as c:
         c.execute("DELETE FROM workspaces WHERE team_number = ANY(%s)", ([TEAM_A, TEAM_B, TEAM_C],))
-        c.execute("DELETE FROM users WHERE email LIKE %s", (f"%{DOMAIN}",))
+        # Only accounts left without any membership: a test-domain account still in another workspace is not this
+        # module's to delete (and deleting a workspace's last administrator is refused by the database).
+        c.execute("DELETE FROM users u WHERE u.email LIKE %s AND NOT EXISTS "
+                  "(SELECT 1 FROM team_memberships m WHERE m.user_id = u.id)", (f"%{DOMAIN}",))
         c.execute("DELETE FROM auth_attempts")
 
 
@@ -298,6 +301,21 @@ def test_failed_sign_ins_all_read_the_same_and_are_rate_limited():
         login(browser(app), "ada", password="wrong passphrase")
     limited = login(browser(app), "ada")  # even the right password, once the account is locked out
     assert limited.status_code == 429 and code(limited) == "rate_limited"
+
+
+def test_the_session_reports_a_database_without_the_team_account_tables(monkeypatch):
+    """Against a database lacking migration 0012 the web app is told so (accounts_available: false), instead of the
+    session check itself failing on the missing tables."""
+    import api.routes.auth as auth_routes
+
+    monkeypatch.setattr(auth_routes, "accounts_schema_present", lambda database: False)
+    app = make_app()
+    c = TestClient(app, cookies={COOKIE_NAME: "a-stale-cookie"})
+    answer = c.get("/auth/session")
+    assert answer.status_code == 200 and answer.json()["accounts_available"] is False
+    assert answer.json()["authenticated"] is False
+    monkeypatch.undo()
+    assert TestClient(app).get("/auth/session").json()["accounts_available"] is True  # the real check, 0012 applied
 
 
 def test_every_state_change_needs_the_csrf_header():
@@ -630,4 +648,5 @@ def test_members_access_requires_a_session_and_the_routes_permission(monkeypatch
     assert scouter.get(f"/events/{EVENT}/analysis").status_code == 403  # event_analysis is off for scouters
     assert admin.get(f"/events/{EVENT}/analysis").status_code not in (401, 403)
     assert TestClient(app).get("/auth/session").json() == {"authenticated": False, "access_policy": "members",
-                                                           "email_delivery_configured": False}
+                                                           "email_delivery_configured": False,
+                                                           "accounts_available": True}
