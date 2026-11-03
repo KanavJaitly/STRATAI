@@ -20,6 +20,8 @@ import {
 } from '../auth/api'
 import { useAuth } from '../auth/authState'
 import { ROLE_LABEL, ROLE_ORDER } from '../auth/roles'
+import { EventChooser, EventName } from './EventChooser'
+import { seasonOf } from './events'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -82,7 +84,8 @@ function OverviewTab({ onOpen }: { onOpen: (tab: string) => void }) {
             <dd>{data.verification_status === 'verified' ? <>Verified <When value={data.verified_at} /></>
               : 'Pending verification by StratAI'}</dd>
             <dt>Active members</dt><dd>{data.active_members}</dd>
-            <dt>Default event</dt><dd>{data.settings.default_event_key ?? <span className="muted">not set</span>}</dd>
+            <dt>Default event</dt><dd>{data.settings.default_event_key
+              ? <EventName eventKey={data.settings.default_event_key} /> : <span className="muted">not set</span>}</dd>
           </dl>
           <div className="actions">
             <button type="button" onClick={() => onOpen('members')}>Add a team member</button>
@@ -491,11 +494,16 @@ function SettingsTab() {
           <p className="muted">Team number {settings.data.team_number} (fixed).</p>
           <label>Team name<input value={current.team_name} required maxLength={100}
             onChange={(e) => setForm({ ...current, team_name: e.target.value })} /></label>
-          <label>Default event key
-            <input value={current.default_event_key} placeholder="e.g. 2026casj"
-              onChange={(e) => setForm({ ...current, default_event_key: e.target.value })} />
+          <EventChooser key={seasonOf(current.default_event_key) ?? 'none'} legend="Default event"
+            value={current.default_event_key}
+            onChange={(eventKey) => setForm({ ...current, default_event_key: eventKey })} />
+          <div className="actions">
             <span className="muted small">The event the drive team and scouting dashboards open on.</span>
-          </label>
+            {current.default_event_key && (
+              <button type="button" className="link" onClick={() => setForm({ ...current, default_event_key: '' })}>
+                Clear the default event</button>
+            )}
+          </div>
           <label>Instructions shown to scouters
             <textarea rows={4} maxLength={2000} value={current.scouting_instructions}
               onChange={(e) => setForm({ ...current, scouting_instructions: e.target.value })} />

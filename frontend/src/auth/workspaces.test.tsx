@@ -8,11 +8,18 @@ import { SessionProvider } from '../state/session'
 import { axeViolations } from '../test/dashboard'
 import { EVENTS } from '../test/dashboardFixtures'
 import { apiError, mockApi } from '../test/mockApi'
+import { clearSeasonEvents } from '../workspace/events'
 import { AuthProvider } from './AuthContext'
 import type { SessionInfo } from './api'
 
 // Team workspaces in the web app: the landing button, registration, sign-in and role redirects, invitations, the
 // Admin Dashboard, permissions, the role dashboards and the members-only policy. Synthetic fixture data only.
+
+// The synthetic season's events, for the event chooser and the headings that name the chosen event.
+const SEASON_EVENTS = { 'GET /explorer/seasons/2099/events': [
+  { event_key: '2099synth', name: 'Synthetic Test Event', event_code: 'synth', event_type: null, start_date: '2099-03-01',
+    end_date: '2099-03-03', city: 'Testville', state_prov: 'NJ', country: 'USA', district: 'fma',
+    district_name: 'FIRST Mid-Atlantic', matches: 1, matches_played: 0, teams: 6 }] }
 
 const SIGNED_OUT: SessionInfo = { authenticated: false, access_policy: 'open', email_delivery_configured: false }
 const ALL_ADMIN = ['team_info', 'match_predictions', 'team_analytics', 'event_analysis', 'qualification_forecast',
@@ -65,7 +72,7 @@ function renderApp(url: string) {
   )
 }
 
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); clearSeasonEvents() })
 
 describe('signed out', () => {
   it('shows the Login / Register button on the landing page and opens the two choices', async () => {
@@ -166,7 +173,7 @@ describe('sign-in', () => {
   ])('sends a %s to their own dashboard', async (_role, session, heading) => {
     mockApi({
       'GET /auth/session': SIGNED_OUT, 'POST /auth/login': session,
-      'GET /workspace': OVERVIEW, 'GET /workspace/analytics': ANALYTICS,
+      'GET /workspace': OVERVIEW, ...SEASON_EVENTS, 'GET /workspace/analytics': ANALYTICS,
       'GET /workspace/scouting/assignments': [], 'GET /workspace/scouting/reports': [],
       'GET /workspace/scouting/summary': { event_key: '2099synth', teams: [], source: '', method: '' },
       'GET /workspace/scouting/scouts': [], 'GET /events/2099synth/matches': MATCHES,
@@ -200,7 +207,7 @@ describe('sign-in', () => {
         full_name: 'Sam Scout', role: 'scouter', role_label: 'Scouter', expires_at: '2099-01-01T00:00:00Z',
         existing_account: false },
       'POST /auth/invitations/accept': { status: 201, body: SCOUTER },
-      'GET /workspace': OVERVIEW, 'GET /workspace/scouting/assignments': [], 'GET /workspace/scouting/reports': [],
+      'GET /workspace': OVERVIEW, ...SEASON_EVENTS, 'GET /workspace/scouting/assignments': [], 'GET /workspace/scouting/reports': [],
       'GET /events/2099synth/matches': MATCHES, 'GET /events/2099synth/teams': { event_key: '2099synth', teams: [],
         validation: {} },
     })
@@ -219,7 +226,7 @@ describe('sign-in', () => {
 
 describe('navigation and permissions', () => {
   it('shows Team Management only to administrators and blocks it for a scouter', async () => {
-    mockApi({ 'GET /auth/session': SCOUTER, 'GET /workspace': OVERVIEW, 'GET /workspace/scouting/assignments': [],
+    mockApi({ 'GET /auth/session': SCOUTER, 'GET /workspace': OVERVIEW, ...SEASON_EVENTS, 'GET /workspace/scouting/assignments': [],
       'GET /workspace/scouting/reports': [] })
     renderApp('/team')
     expect(await screen.findByText(/Your role does not include this page/)).toBeInTheDocument()
@@ -230,7 +237,7 @@ describe('navigation and permissions', () => {
   })
 
   it('gives an administrator the Team Management tab and the full navigation', async () => {
-    mockApi({ 'GET /auth/session': ADMIN, 'GET /workspace': OVERVIEW, 'GET /workspace/analytics': ANALYTICS })
+    mockApi({ 'GET /auth/session': ADMIN, 'GET /workspace': OVERVIEW, ...SEASON_EVENTS, 'GET /workspace/analytics': ANALYTICS })
     renderApp('/team')
     expect(await screen.findByRole('heading', { name: 'Admin Dashboard' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Main' })
@@ -312,7 +319,7 @@ describe('role dashboards', () => {
       team_number: 9002, alliance_color: 'red', assigned_user_id: 2, assigned_to: 'Sam Scout', status: 'assigned',
       created_at: '2026-11-01T00:00:00Z', report_submitted: false }
     const api = mockApi({
-      'GET /auth/session': SCOUTER, 'GET /workspace': OVERVIEW,
+      'GET /auth/session': SCOUTER, 'GET /workspace': OVERVIEW, ...SEASON_EVENTS,
       'GET /workspace/scouting/assignments': [assignment], 'GET /workspace/scouting/reports': [],
       'GET /events/2099synth/matches': MATCHES,
       'GET /events/2099synth/teams': { event_key: '2099synth', teams: [{ team_number: 9002, name: 'Synthetic Two',
@@ -333,7 +340,7 @@ describe('role dashboards', () => {
 
   it('shows the drive team only the tools its permissions include', async () => {
     mockApi({ 'GET /auth/session': { ...STRATEGY, permissions: ['team_info', 'event_analysis'] },
-      'GET /workspace': OVERVIEW })
+      'GET /workspace': OVERVIEW, ...SEASON_EVENTS })
     renderApp('/drive-team')
     expect(await screen.findByRole('link', { name: /Event analysis/ })).toHaveAttribute('href', '/events/2099synth')
     expect(screen.queryByRole('link', { name: /Alliance selection/ })).not.toBeInTheDocument()

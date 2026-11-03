@@ -13,6 +13,8 @@ import { matchPath, teamPath } from '../dashboard/routing'
 import { teamScouting, workspace, type Assignment } from '../auth/api'
 import { useAuth } from '../auth/authState'
 import { homeFor } from '../auth/roles'
+import { EventChooser, EventName } from './EventChooser'
+import { seasonOf, useEventName } from './events'
 import { VerificationBanner } from './TeamManagementPage'
 
 export function HomeRedirect() {
@@ -28,16 +30,14 @@ function useEventKey(): [string, (key: string) => void, boolean] {
   return [chosen ?? overview.data?.settings.default_event_key ?? '', setChosen, overview.loading]
 }
 
-/** Remounted (keyed by the event) whenever the event changes, so its draft starts from the current event. */
-function EventPicker({ eventKey, onChange }: { eventKey: string; onChange: (key: string) => void }) {
-  const [draft, setDraft] = useState(eventKey)
+/** The event chooser in a card. Keyed by the event's year, so it opens on the right year whenever the chosen event
+ * changes from outside (the team's default event arriving, or "Scout this" on an assignment). */
+function EventSection({ eventKey, onChange }: { eventKey: string; onChange: (key: string) => void }) {
   return (
-    <form className="form-row" onSubmit={(e) => { e.preventDefault(); onChange(draft.trim()) }}
-      aria-label="Choose the event">
-      <label>Event key<input value={draft} placeholder="e.g. 2026casj" onChange={(e) => setDraft(e.target.value)} /></label>
-      <button type="submit">Open event</button>
-      <span className="muted small">Your administrator can set a default event in Team Settings.</span>
-    </form>
+    <section className="card">
+      <EventChooser key={seasonOf(eventKey) ?? 'none'} value={eventKey} onChange={onChange} />
+      <p className="muted small">Your administrator can set the team&apos;s default event in Team Settings.</p>
+    </section>
   )
 }
 
@@ -52,6 +52,7 @@ function matchLabel(match: { competition_level: string | null; set_number: numbe
 export function DriveTeamDashboardPage() {
   const { can, session } = useAuth()
   const [eventKey, setEventKey] = useEventKey()
+  const eventName = useEventName(eventKey)
   const event = encodeURIComponent(eventKey)
   const tools = [
     { permission: 'event_analysis', title: 'Event analysis', text: 'Rankings, contenders and the event overview.',
@@ -72,11 +73,11 @@ export function DriveTeamDashboardPage() {
     <div>
       <PageHeader title="Drive team dashboard" subtitle={`Team ${session.workspace?.team_number} · strategy tools`} />
       <VerificationBanner />
-      <EventPicker key={eventKey} eventKey={eventKey} onChange={setEventKey} />
+      <EventSection eventKey={eventKey} onChange={setEventKey} />
       {!eventKey ? <p className="notice notice-info">Choose an event to open its tools.</p> : (
         <>
           <section className="card">
-            <h2>Tools for {eventKey}</h2>
+            <h2>Tools for {eventName}</h2>
             <div className="tool-grid">
               {tools.map((tool) => (
                 <Link key={tool.title} className="tool-card" to={tool.to}>
@@ -102,9 +103,10 @@ function rating(score: number | null, agreement: number | null, insufficient: bo
 
 export function ScoutingSummaryCard({ eventKey }: { eventKey: string }) {
   const summary = useLoad(() => teamScouting.summary(eventKey), [eventKey])
+  const eventName = useEventName(eventKey)
   return (
     <section className="card">
-      <h2>Your team&apos;s scouting at {eventKey}</h2>
+      <h2>Your team&apos;s scouting at {eventName}</h2>
       <p className="muted small">Only your own scouts&apos; reports, private to your team. Defense and feeding come only from
         what scouts recorded (median, 0–5); below two ratings a value is shown as insufficient, never estimated.</p>
       <LoadState loading={summary.loading} error={summary.error} />
@@ -235,7 +237,7 @@ export function ScoutingDashboardPage() {
           <ul className="assignment-list">
             {mine.data.map((a) => (
               <li key={a.assignment_id}>
-                <span><strong>{matchLabel(a)}</strong> at {a.event_key} · team {a.team_number}
+                <span><strong>{matchLabel(a)}</strong> at <EventName eventKey={a.event_key} /> · team {a.team_number}
                   {a.alliance_color && <span className={`alliance-${a.alliance_color}`}> ({a.alliance_color})</span>}
                   {a.scheduled_time && <> · <When value={a.scheduled_time} /></>}</span>
                 <button type="button" onClick={() => { setSelected(a); setEventKey(a.event_key) }}>Scout this</button>
@@ -244,7 +246,7 @@ export function ScoutingDashboardPage() {
           </ul>
         ))}
       </section>
-      <EventPicker key={eventKey} eventKey={eventKey} onChange={(key) => { setEventKey(key); setSelected(null) }} />
+      <EventSection eventKey={eventKey} onChange={(key) => { setEventKey(key); setSelected(null) }} />
       {eventKey && can('scouting_submit') && (
         <ScoutingForm eventKey={eventKey} assignment={selected} onSubmitted={async () => {
           setSelected(null)
@@ -315,9 +317,11 @@ export function ScoutingForm({ eventKey, assignment, onSubmitted }: { eventKey: 
     if (ok) { setForm(blank); await onSubmitted() }
   }
 
+  const eventName = useEventName(eventKey)
+
   return (
     <section className="card">
-      <h2>Scouting form · {eventKey}</h2>
+      <h2>Scouting form · {eventName}</h2>
       {!verified ? <p className="muted">Scouting opens once your team&apos;s workspace is verified.</p> : (
         <form onSubmit={submit} aria-label="Scouting report">
           <div className="form-grid">
@@ -355,9 +359,10 @@ export function ScoutingForm({ eventKey, assignment, onSubmitted }: { eventKey: 
 
 function EventTeamsCard({ eventKey }: { eventKey: string }) {
   const teams = useLoad(() => dashboardApi.eventTeams(eventKey), [eventKey])
+  const eventName = useEventName(eventKey)
   return (
     <section className="card">
-      <h2>Teams at {eventKey}</h2>
+      <h2>Teams at {eventName}</h2>
       <LoadState loading={teams.loading} error={teams.error} />
       {teams.data && (
         <ul className="team-chips">

@@ -397,6 +397,10 @@ def test_each_historical_season_is_browsable_and_isolated(client, season):
     assert events, f"{season} has no events in the isolated copy"
     event = next(e for e in events if e["matches_played"] > 0)
     assert event["event_key"].startswith(str(season))
+    # Each event carries its district from the TBA payload (NULL outside a district), for the region filter.
+    assert {"district", "district_name"} <= set(event)
+    districts = {e["district"] for e in events if e["district"]}
+    assert districts and all(d == d.lower() and e["district_name"] for e in events if (d := e["district"]))
     teams = client.get(f"/explorer/events/{event['event_key']}/teams").json()
     assert teams["event"]["season"] == season and teams["teams"]
     matches = client.get(f"/explorer/events/{event['event_key']}/matches").json()["matches"]
