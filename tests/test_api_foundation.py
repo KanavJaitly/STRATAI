@@ -346,6 +346,16 @@ WORKSPACE_PATHS: frozenset[str] = frozenset({
     "/workspace/scouting/reports", "/workspace/scouting/summary",
 })
 
+# Phase 11 (2026-11-04, docs/phase11.md): each team's live alliance-selection draft record, under /workspace.
+PHASE11_PATHS: frozenset[str] = frozenset({
+    "/workspace/alliance-selection/drafts", "/workspace/alliance-selection/drafts/{record_id}",
+    "/workspace/alliance-selection/drafts/{record_id}/actions", "/workspace/alliance-selection/drafts/{record_id}/undo",
+    "/workspace/alliance-selection/drafts/{record_id}/corrections",
+    "/workspace/alliance-selection/drafts/{record_id}/close", "/workspace/alliance-selection/drafts/{record_id}/reopen",
+    "/workspace/alliance-selection/drafts/{record_id}/setup",
+    "/workspace/alliance-selection/drafts/{record_id}/recommendations",
+})
+
 
 def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     """The shipped application exposes these paths and nothing else.
@@ -361,14 +371,15 @@ def test_exactly_the_intended_endpoints_are_exposed(settings: Settings):
     its own endpoints to PHASE7_PATHS, family by family, the same way, and Phase 9 its
     briefing to PHASE9_PATHS. The game manual manager, season readiness and the
     read-only historical explorer (2026-10-11, merged after Phase 7) are
-    SEASON_PAGES_PATHS, and the team workspaces (2026-11-02) WORKSPACE_PATHS. It still
+    SEASON_PAGES_PATHS, the team workspaces (2026-11-02) WORKSPACE_PATHS, and Phase 11's live draft record
+    PHASE11_PATHS. It still
     guards the other direction, which has not changed: a test-only
     forced-error route (/_test_boom and friends, registered on locally built
     apps in this module) must never reach the shipped application.
     """
     app = create_app(settings)
     assert sorted(app.openapi()["paths"]) == sorted(
-        PRE_PHASE7_PATHS | PHASE7_PATHS | PHASE9_PATHS | SEASON_PAGES_PATHS | WORKSPACE_PATHS)
+        PRE_PHASE7_PATHS | PHASE7_PATHS | PHASE9_PATHS | SEASON_PAGES_PATHS | WORKSPACE_PATHS | PHASE11_PATHS)
 
 
 # ===========================================================================

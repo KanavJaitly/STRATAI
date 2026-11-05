@@ -298,6 +298,33 @@ def _check_state(state: DraftState, seed: int, ranks: dict[int, int], rules: Eve
                           f"{state.alliances[seed - 1][0]}")
 
 
+def ranks_are_final(database: Database, event_key: str, ranks: dict[int, int] | None, fetched: datetime | None,
+                    latest: datetime | None, roster: Sequence[int]) -> bool:
+    """The final-ranks rule of step 4 (P7-D5): ranks exist, were fetched no earlier than the last qualification
+    match's scheduled time (`latest`) and the last qualification result payload, and cover the qualification
+    roster. The Phase 11 live draft record applies this same rule before it uses ranks to check captains."""
+    if not ranks or fetched is None or latest is None or fetched < latest:
+        return False
+    with database.cursor() as cursor:
+        cursor.execute(RESULTS_FETCHED_SQL, (event_key,))
+        results_seen = cursor.fetchone()[0]
+    return not (results_seen is not None and fetched < results_seen) and not set(roster) - set(ranks)
+
+
+def qualification_schedule(database: Database, event_key: str) -> tuple[datetime | None, int]:
+    """(latest scheduled qualification time, qualification matches not yet scored) for one event."""
+    return _qualification(database, event_key)
+
+
+def approved_event_rules(database: Database, event_key: str) -> EventRules:
+    """The event's rules from its season's approved P6-M1 ruleset (steps 1-2), or the RulesetError that refuses
+    them. The Phase 11 live draft record reads rules only through this, exactly as the pick list does."""
+    season = get_event_season(database, event_key)
+    if season is None:
+        raise RulesetError("wrong_season", f"{event_key} has no season")
+    return _approved_rules(database, season, event_key)
+
+
 def pick_list(database: Database, event_key: str, seed: int, state: DraftState, now: datetime, *,
               epa_provider: Callable[[], Any], m5v2_predict_rating: Callable[[TeamFeatures], float] | None,
               playoff_models: PlayoffModels | None, results_dir: Path | None = None,
@@ -324,11 +351,8 @@ def pick_list(database: Database, event_key: str, seed: int, state: DraftState, 
     with database.cursor() as cursor:
         cursor.execute(RANKING_FETCHED_SQL, (OBJECT_TYPE_EVENT_RANKING, event_key))
         fetched = cursor.fetchone()[0]
-        cursor.execute(RESULTS_FETCHED_SQL, (event_key,))
-        results_seen = cursor.fetchone()[0]
     roster = qualification_roster(database, event_key)
-    if (not ranks or fetched is None or fetched < latest or (results_seen is not None and fetched < results_seen)
-            or set(roster) - set(ranks)):
+    if not ranks_are_final(database, event_key, ranks, fetched, latest, roster):
         raise RankingsUnavailable(f"{event_key} has no final qualification ranks fetched after its last "
                                   "qualification match was scheduled and its last result was seen, covering its "
                                   "qualification roster")
@@ -354,7 +378,7 @@ def pick_list(database: Database, event_key: str, seed: int, state: DraftState, 
 
 
 __all__ = [
-    "PX_GATE_RECORDS", "PickListResult", "PlayoffInputsInsufficient", "PlayoffModels", "PlayoffModelsNotAccepted",
+    "PX_GATE_RECORDS", "PickListResult", "approved_event_rules", "qualification_schedule", "ranks_are_final", "PlayoffInputsInsufficient", "PlayoffModels", "PlayoffModelsNotAccepted",
     "PlayoffModelsNotLoaded", "RankingsUnavailable", "SCOPE_REASONS", "SelectionServiceError",
     "SelectionTimeUnavailable", "VALIDATED_PLAYOFF_SUCCESS", "candidate_profiles", "event_selection_moment",
     "pick_list", "playoff_gate_records", "playoff_gates", "qualification_roster",

@@ -161,6 +161,19 @@ OPERATION_CLASSES = {
     "POST /workspace/scouting/assignments/{assignment_id}/cancel": NOT_OUTPUT,
     "GET /workspace/scouting/reports": NOT_OUTPUT, "POST /workspace/scouting/reports": NOT_OUTPUT,
     "GET /workspace/scouting/summary": NOT_OUTPUT,
+    # Phase 11 (classified 2026-11-04, docs/phase11.md): the team's live alliance-selection draft record. Recording,
+    # correcting and reading the record is bookkeeping of observed actions, with deterministic rule checks
+    # (workspaces.draft_log). The recommendations are an output: the P6-M7 engine, or the P11-FB1 rule over the P5-M4
+    # ordering. Neither uses an LLM, and both are checked like every other output.
+    "GET /workspace/alliance-selection/drafts": NOT_OUTPUT, "POST /workspace/alliance-selection/drafts": NOT_OUTPUT,
+    "GET /workspace/alliance-selection/drafts/{record_id}": NOT_OUTPUT,
+    "POST /workspace/alliance-selection/drafts/{record_id}/actions": NOT_OUTPUT,
+    "POST /workspace/alliance-selection/drafts/{record_id}/undo": NOT_OUTPUT,
+    "POST /workspace/alliance-selection/drafts/{record_id}/corrections": NOT_OUTPUT,
+    "POST /workspace/alliance-selection/drafts/{record_id}/close": NOT_OUTPUT,
+    "POST /workspace/alliance-selection/drafts/{record_id}/reopen": NOT_OUTPUT,
+    "POST /workspace/alliance-selection/drafts/{record_id}/setup": NOT_OUTPUT,
+    "GET /workspace/alliance-selection/drafts/{record_id}/recommendations": OUTPUT,
 }
 
 
@@ -396,6 +409,11 @@ def route_calls(event: str, database_url: str) -> list:
         ("GET", "/teams/{team_number}/events/{event_key}/metrics", f"/teams/{red[0]}/events/{event}/metrics", None),
         ("GET", "/human-inputs/capability-profiles/{profile_key}/recommendation",
          f"/human-inputs/capability-profiles/{profile_key}/recommendation?season={season}", None),
+        # Phase 11: a workspace route. Without a session it must answer its declared not_authenticated refusal; the
+        # recommendation logic itself is covered with every LLM SDK blocked by the static import check (workspaces
+        # is a core package) and by tests/test_phase11_recommendations.py.
+        ("GET", "/workspace/alliance-selection/drafts/{record_id}/recommendations",
+         "/workspace/alliance-selection/drafts/1/recommendations", None),
     ]
 
 

@@ -15,6 +15,7 @@ import { useAuth } from './auth/authState'
 import { RequirePermission, RequireSignedIn } from './auth/guards'
 import { SessionProvider, useSession } from './state/session'
 import { DriveTeamDashboardPage, HomeRedirect, ScoutingDashboardPage } from './workspace/RoleDashboards'
+import { LiveDraftPage } from './workspace/LiveDraftPage'
 import { TeamManagementPage } from './workspace/TeamManagementPage'
 import './styles/workspace.css'
 import { OverviewPage } from './pages/OverviewPage'
@@ -216,6 +217,7 @@ export function Shell() {
           <Route path="/home" element={<HomeRedirect />} />
           <Route path="/team" element={<RequirePermission permission="team_management"><TeamManagementPage /></RequirePermission>} />
           <Route path="/drive-team" element={<RequireSignedIn><DriveTeamDashboardPage /></RequireSignedIn>} />
+          <Route path="/alliance-selection/live" element={<RequirePermission permission="alliance_selection"><LiveDraftPage /></RequirePermission>} />
           <Route path="/scouting" element={<RequirePermission permission="scouting_forms"><ScoutingDashboardPage /></RequirePermission>} />
           <Route path="/" element={<EventsPage />} />
           <Route path="/events/:eventKey" element={<EventPage />} />

@@ -42,6 +42,7 @@ from api.routes.pre_match_report import router as pre_match_report_router
 from api.routes.qualification_forecast import router as qualification_forecast_router
 from api.routes.strategy import router as strategy_router
 from api.routes.strength import router as strength_router
+from api.routes.live_draft import router as live_draft_router
 from api.routes.team_scouting import router as team_scouting_router
 from api.routes.workspace import router as workspace_router
 from api.session import permission_gate, platform_gate
@@ -196,6 +197,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth_router, prefix=settings.api_prefix)
     app.include_router(workspace_router, prefix=settings.api_prefix)
     app.include_router(team_scouting_router, prefix=settings.api_prefix)
+    # Phase 11 (docs/phase11.md): each team's live alliance-selection draft record, under /workspace like the above.
+    app.include_router(live_draft_router, prefix=settings.api_prefix)
 
     # Captured request/response examples (docs/api_examples/, P7-Q4) appear in the OpenAPI document. They are
     # documentation only: the locked response shapes ignore them. Installed after every router is included.

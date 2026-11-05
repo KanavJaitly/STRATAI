@@ -389,8 +389,9 @@ def test_the_413_is_declared_on_exactly_the_operations_that_take_a_body_and_matc
     # 20 at P10-Q9, plus 4 from the game manual manager and season rulesets (merged 2026-10-21): processing start,
     # identity resolution, ruleset save and ruleset review; plus 16 from the team workspaces (2026-11-02): the 8
     # /auth writes with a body (every /auth POST but logout), and the 8 under /workspace (invitation, role, status,
-    # profile, permissions, settings, scouting assignment, scouting report).
-    assert declared == with_body and len(declared) == 40
+    # profile, permissions, settings, scouting assignment, scouting report); plus 7 from Phase 11 (2026-11-04): the
+    # live draft record's start, actions, undo, corrections, close, reopen and setup.
+    assert declared == with_body and len(declared) == 47
     served = client.post("/predictions/win-probability", content=b"{" + b" " * (65 * 1024) + b"}",
                          headers={"content-type": "application/json"})
     assert served.status_code == 413 and served.json()["error"]["code"] == "payload_too_large"

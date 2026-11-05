@@ -65,6 +65,9 @@ export function DriveTeamDashboardPage() {
       to: `/events/${event}?tab=forecast` },
     { permission: 'alliance_selection', title: 'Alliance selection', text: 'Candidates and the pick list.',
       to: `/events/${event}/alliance-selection` },
+    { permission: 'alliance_selection', title: 'Live alliance selection',
+      text: 'Record each pick as it happens; your picks update after every one.',
+      to: `/alliance-selection/live?event=${event}` },
     { permission: 'strategy_tools', title: 'Strategy lab', text: 'Assess and compare match strategies.',
       to: `/events/${event}/strategy-lab` },
   ].filter((tool) => can(tool.permission))

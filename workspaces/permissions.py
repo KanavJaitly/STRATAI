@@ -18,15 +18,18 @@ ROLES = (ADMIN, STRATEGY, SCOUTER)
 CONFIGURABLE_ROLES = (STRATEGY, SCOUTER)
 ROLE_LABELS = {ADMIN: "Administrator", STRATEGY: "Drive team / strategy", SCOUTER: "Scouter"}
 
-# Configurable permissions, with what each one opens. The keys must match the CHECK constraint in
-# database/migrations/0012_team_workspaces.sql (tests/test_workspaces_service.py checks they do).
+# Configurable permissions, with what each one opens. The keys must match the CHECK constraint on
+# workspace_role_permissions in the latest migration that defines it (0012, redefined by 0013;
+# tests/test_workspaces_units.py checks they do).
 CONFIGURABLE_PERMISSIONS: dict[str, str] = {
     "team_info": "Event, team and match information (event lists, rosters, schedules, historical seasons)",
     "match_predictions": "Match predictions: win probability, event rankings, alliance synergy",
     "team_analytics": "Team analytics: team metrics and team strength",
     "event_analysis": "Event analysis",
     "qualification_forecast": "Qualification forecasts",
-    "alliance_selection": "Alliance selection: candidates and pick lists",
+    "alliance_selection": "Alliance selection: candidates and pick lists, and the team's live draft board",
+    # Phase 11 (P11-Q2): administrators always hold it; granting it to a role delegates the recording.
+    "alliance_selection_record": "Recording live alliance-selection actions (picks, declines, corrections)",
     "strategy_tools": "Match strategy tools, pre-match reports and briefings",
     "scouting_forms": "Scouting forms and one's own assignments and submissions",
     "scouting_submit": "Submitting scouting reports",

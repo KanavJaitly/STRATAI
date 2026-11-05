@@ -9,6 +9,28 @@ export interface AcceptInvitationBody {
   token: string
 }
 
+export interface ActionBody {
+  /** A client-created UUID: a retry with the same id and content is idempotent. */
+  action_id?: string | null
+  client_recorded_at?: string | null
+  /** Record an action the rules refuse, because the room did it. */
+  override_reason?: string | null
+  /** The alliance; optional only for a backup. */
+  seed?: number | null
+  team_number: number
+  type: "captain" | "pick" | "decline" | "backup"
+}
+
+export interface AllianceOut {
+  /** Recorded (observed). */
+  captain: number | null
+  /** Recorded picks, in order (observed). */
+  picks: number[]
+  /** Projection from the rules and ranks, for a seed without a recorded captain; never a record. */
+  projected_captain: number | null
+  seed: number
+}
+
 export interface AllianceSynergyOut {
   /** Why score is null; null when present. */
   absent_code: "alliance_incomplete" | null
@@ -97,6 +119,13 @@ export interface AutoPointsView {
   season_by_event: EventAutoPoints[]
   this_event: Measure
   validation_status?: string
+}
+
+export interface AvailableOut {
+  declined_earlier: boolean
+  projected_captain_of: number | null
+  rank: number | null
+  team_number: number
 }
 
 export interface BriefingFactOut {
@@ -216,6 +245,11 @@ export interface CoachStrategyStored {
   strategy_sha256: string
 }
 
+export interface CodeMessage {
+  code: string
+  message: string
+}
+
 export interface CompareBody {
   first: Strategy
   /** Default: the opponent's baseline. */
@@ -241,6 +275,14 @@ export interface CompareSide {
   strategy: Strategy
 }
 
+export interface CorrectionBody {
+  action_id?: string | null
+  override_reason?: string | null
+  /** What really happened; null if it did not happen. */
+  replacement: ReplacementBody | null
+  target_action_id: string
+}
+
 /** Aggregated defense/feeding assessment for one team at one event, built exclusively from ScoutingObservation rows -- never from match scores. A score is present if and only if the matching insufficient_data flag is False -- there is deliberately no way to construct a confident-looking score from zero observations. Phase 3 Milestone 8 (data.metrics.aggregation. aggregate_defense_feeding) decided the exact minimum-observation threshold for anything above zero (2, not 1 -- see that module's docstring for why); this model only enforces that whatever that policy decides, "insufficient" and "no score" always travel together. *_agreement is a 0.0-1.0 confidence signal (1.0 = every observation agreed exactly, 0.0 = maximal disagreement), independent of observation_count: six scouts who all disagree is a real, low-confidence result, not the same as relying on one scout's opinion. Implemented in Phase 3 Milestone 8 (data.metrics.aggregation) as: agreement = max(0, 1 - observation_stddev / ((MAX_RATING - MIN_RATING) / 2)). contributing_sources lists which sources (e.g. "human_scout", "scoutradioz") had at least one observation counted, so a future explainability layer can say not just "how many" but "from where". Empty if and only if both defense and feeding are insufficient_data -- if either has a real score, at least one source must be named as having produced it. */
 export interface DefenseFeedingProfile {
   contributing_sources?: string[]
@@ -254,6 +296,34 @@ export interface DefenseFeedingProfile {
   feeding_score?: number | null
 }
 
+export interface DraftOut {
+  alliances: AllianceOut[]
+  available: AvailableOut[]
+  backups: TeamSeedOut[]
+  can_record: boolean
+  complete: boolean
+  configured: boolean
+  created_at: string
+  created_by: string
+  declined: TeamSeedOut[]
+  effective: EffectiveOut[]
+  event_key: string
+  /** Actions that became invalid after a correction or a new setup. */
+  flags: FlagOut[]
+  history: HistoryOut[]
+  record_id: number
+  /** The last log entry's sequence: the version every derived value cites. */
+  record_seq: number
+  record_uid: string
+  /** Rules, ranks, pool, what is missing, and provenance. */
+  setup: Record<string, unknown> | null
+  status: "open" | "closed"
+  team_number: number | null
+  turn: TurnOut | null
+  unavailable: UnavailableOut[]
+  value_kind?: "observed"
+}
+
 export interface DraftStateBody {
   /** Every alliance so far by seed, captain first ([] if not yet formed); as many alliances as the event's rules give. */
   alliances: number[][]
@@ -265,9 +335,41 @@ export interface DraftStateBody {
   turns_taken: number
 }
 
+export interface DraftSummaryOut {
+  complete: boolean
+  created_at: string
+  created_by: string
+  event_key: string
+  picks_made: number
+  record_id: number
+  record_seq: number
+  record_uid: string
+  status: "open" | "closed"
+}
+
 export interface DuplicateBody {
   created_by: string
   new_key: string
+}
+
+export interface EffectiveOut {
+  action_id: string
+  notes: string[]
+  override_reason: string | null
+  recorded_at: string | null
+  recorded_by: string
+  seed: number | null
+  seq: number
+  slot_action_id: string
+  status: "accepted" | "overridden" | "invalid" | "not_applied"
+  summary: string
+  team_number: number
+  type: string
+  violation: ViolationOut | null
+}
+
+export interface EntryBody {
+  action_id?: string | null
 }
 
 export interface EpaSourceInfo {
@@ -379,6 +481,11 @@ export interface EventTeamsResponse {
   validation: Validation
 }
 
+export interface ExcludedOut {
+  reason: string
+  team_number: number
+}
+
 export interface FactorOut {
   n: number | null
   validation: Validation
@@ -393,6 +500,13 @@ export interface FieldOut {
   win_event: StrategyOdds
 }
 
+export interface FlagOut {
+  action_id: string
+  code: string | null
+  message: string | null
+  status: string
+}
+
 export interface ForgotPasswordBody {
   email: string
   team_number: number
@@ -404,6 +518,20 @@ export interface HealthResponse {
   env: string
   /** Always 'ok' -- reaching this handler is the check. */
   status: string
+}
+
+export interface HistoryOut {
+  action_id: string
+  in_effect: boolean
+  mode: string
+  override_reason: string | null
+  recorded_at: string | null
+  recorded_by: string
+  seq: number
+  source: string
+  summary: string
+  superseded_by: string | null
+  type: string
 }
 
 export interface HypotheticalAssessBody {
@@ -470,6 +598,17 @@ export interface LoginBody {
   email: string
   password: string
   team_number: number
+}
+
+/** The event's rules, entered from the event, when no approved ruleset covers it (stored as manual_entry). */
+export interface ManualRulesBody {
+  backup_robots: boolean
+  captain_may_accept_higher_alliance: boolean
+  declined_team_may_be_picked_later: boolean
+  /** Null: not established. */
+  declined_team_may_become_captain?: boolean | null
+  n_alliances: number
+  picks_per_alliance: number
 }
 
 export interface MatchForecastOut {
@@ -687,10 +826,52 @@ export interface RecommendResponse {
   vs_baseline_label: string | null
 }
 
+export interface RecommendationsOut {
+  backups: RecommendedOut[]
+  computed_at: string
+  /** Why the P6-M7 engine did not serve (fallback only). */
+  engine_refusal: CodeMessage | null
+  excluded: ExcludedOut[]
+  movement: string[]
+  primary: RecommendedOut | null
+  provenance: Record<string, unknown>
+  record_id: number
+  /** The record version these recommendations reflect. */
+  record_seq: number
+  seed: number | null
+  selecting_as: "on_alliance" | "projected_captain" | null
+  source: "engine_p6_m7" | "fallback_p11_fb1" | null
+  status: "current" | "withheld"
+  timing_ms: Record<string, number>
+  /** Other alliances' picks before this alliance's next turn. */
+  turns_before: number | null
+  unranked_available: number[]
+  validation: Validation | null
+  value_kind?: "model_prediction"
+  withheld: CodeMessage | null
+}
+
+export interface RecommendedOut {
+  configuration: number[] | null
+  /** Position in the P5-M4 strength ordering (fallback only). */
+  ordering_position: number | null
+  profile: CandidateOut | null
+  reach_finals: StrategyOdds | null
+  team_number: number
+  /** Engine only: P(the alliance wins the event), displayed. */
+  win_event: StrategyOdds | null
+}
+
 export interface RegisterTeamBody {
   setup_password: string
   team_name: string
   team_number: number
+}
+
+export interface ReplacementBody {
+  seed?: number | null
+  team_number: number
+  type: "captain" | "pick" | "decline" | "backup"
 }
 
 export interface ReportBody {
@@ -827,11 +1008,25 @@ export interface SettingsBody {
   team_name?: string | null
 }
 
+export interface SetupBody {
+  action_id?: string | null
+  manual_rules?: ManualRulesBody | null
+}
+
 export interface SpecDraftBody {
   based_on_id?: number | null
   created_by: string
   manual_id?: number | null
   spec_json: Record<string, unknown>
+}
+
+export interface StartBody {
+  /** The configure entry's UUID; else the server's. */
+  action_id?: string | null
+  event_key: string
+  manual_rules?: ManualRulesBody | null
+  /** A client-created UUID (local-first); else the server's. */
+  record_uid?: string | null
 }
 
 export interface StatusBody {
@@ -964,6 +1159,11 @@ export interface TeamRecordOut {
   team_number: number
 }
 
+export interface TeamSeedOut {
+  seed: number | null
+  team_number: number
+}
+
 export interface TeamStrengthResponse {
   epa: EpaSourceInfo
   strength: TeamStrengthView
@@ -980,10 +1180,34 @@ export interface TeamStrengthView {
   team_number: number
 }
 
+export interface TurnOut {
+  captain_named: boolean
+  /** The captain the rules name now, if it can be determined. */
+  expected_captain: number | null
+  expected_captain_reason: string | null
+  index: number
+  round: number | null
+  seed: number
+}
+
+export interface UnavailableOut {
+  rank: number | null
+  /** projected_captain: the rules will make it a lower alliance's captain, and they do not let a captain join a higher alliance. */
+  reason: "captain" | "picked" | "declined" | "backup" | "projected_captain"
+  seed: number | null
+  team_number: number
+}
+
 export interface Uncertainty {
   kind: "sd" | "none"
   reason?: string | null
   value?: number | null
+}
+
+export interface UndoBody {
+  action_id?: string | null
+  /** The most recent action in effect, as the caller sees it; refused if it is not. */
+  target_action_id?: string | null
 }
 
 /** How far a result may be trusted, as its producing engine or record states it. `status` repeats a label the engine or a write-once record already assigns; the API never assigns a stronger one. `reasons` lists every qualifier (for example `p6_m10_gate_failed`, `strategy_effect_unmeasured`, or the INTERIM reliability caveat), most important first. `evidence` cites the record or document behind the status. */
@@ -994,6 +1218,11 @@ export interface Validation {
   reasons?: string[]
   /** The inherited validation label, e.g. not_validated. */
   status: string
+}
+
+export interface ViolationOut {
+  code: string
+  message: string
 }
 
 export interface WinProbabilityByAlliancesRequestBody {

@@ -75,7 +75,8 @@ export function EventChooser({ value, onChange, legend = 'Choose the event' }: {
           </select>
         </label>
         <label className="event-search">Event
-          <input type="search" value={query} placeholder="Type the event's name or city" aria-controls={listId}
+          <input type="search" value={query} placeholder="Type the event's name or city"
+            aria-controls={events.data?.length && browsing ? listId : undefined}
             onChange={(e) => setQuery(e.target.value)} />
         </label>
       </div>

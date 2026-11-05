@@ -1104,6 +1104,261 @@
     }
    }
   },
+  "GET /workspace/alliance-selection/drafts": {
+   "deprecated": false,
+   "operation_id": "get_drafts_workspace_alliance_selection_drafts_get",
+   "parameters": [
+    {
+     "in": "query",
+     "name": "event_key",
+     "required": false,
+     "schema": {
+      "anyOf": [
+       {
+        "maxLength": 64,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "items": {
+        "$ref": "#/components/schemas/DraftSummaryOut"
+       },
+       "type": "array"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "permission_denied"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "live_draft_unavailable"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /workspace/alliance-selection/drafts/{record_id}": {
+   "deprecated": false,
+   "operation_id": "get_draft_workspace_alliance_selection_drafts__record_id__get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "record_id",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/DraftOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "permission_denied"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "draft_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "live_draft_unavailable"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /workspace/alliance-selection/drafts/{record_id}/recommendations": {
+   "deprecated": false,
+   "operation_id": "get_recommendations_workspace_alliance_selection_drafts__record_id__recommendations_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "record_id",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/RecommendationsOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "permission_denied"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "draft_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "live_draft_unavailable"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
   "POST /events/{event_key}/alliance-selection/pick-list": {
    "deprecated": false,
    "operation_id": "alliance_selection_pick_list_events__event_key__alliance_selection_pick_list_post",
@@ -2054,6 +2309,881 @@
      }
     }
    }
+  },
+  "POST /workspace/alliance-selection/drafts": {
+   "deprecated": false,
+   "operation_id": "post_draft_workspace_alliance_selection_drafts_post",
+   "parameters": [],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/StartBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "201": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/DraftOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "csrf_check_failed",
+      "permission_denied",
+      "team_not_at_event",
+      "workspace_not_verified"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "event_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "draft_exists",
+      "live_draft_unavailable"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "invalid_input",
+      "rules_required",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /workspace/alliance-selection/drafts/{record_id}/actions": {
+   "deprecated": false,
+   "operation_id": "post_action_workspace_alliance_selection_drafts__record_id__actions_post",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "record_id",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/ActionBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/DraftOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "csrf_check_failed",
+      "permission_denied",
+      "workspace_not_verified"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "draft_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "action_id_conflict",
+      "alliance_full",
+      "already_backup",
+      "backups_not_used",
+      "captain_already_named",
+      "captain_not_named",
+      "captain_not_pickable",
+      "captain_rule_not_established",
+      "draft_complete",
+      "draft_incomplete",
+      "invalid_action",
+      "invalid_setup",
+      "live_draft_unavailable",
+      "no_eligible_captain",
+      "not_applicable",
+      "not_configured",
+      "not_in_effect",
+      "not_last_action",
+      "record_closed",
+      "team_declined",
+      "team_not_in_pool",
+      "team_on_alliance",
+      "unknown_alliance",
+      "wrong_captain",
+      "wrong_turn"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "invalid_input",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /workspace/alliance-selection/drafts/{record_id}/close": {
+   "deprecated": false,
+   "operation_id": "post_close_workspace_alliance_selection_drafts__record_id__close_post",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "record_id",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/EntryBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/DraftOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "csrf_check_failed",
+      "permission_denied",
+      "workspace_not_verified"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "draft_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "action_id_conflict",
+      "alliance_full",
+      "already_backup",
+      "backups_not_used",
+      "captain_already_named",
+      "captain_not_named",
+      "captain_not_pickable",
+      "captain_rule_not_established",
+      "draft_complete",
+      "draft_incomplete",
+      "invalid_action",
+      "invalid_setup",
+      "live_draft_unavailable",
+      "no_eligible_captain",
+      "not_applicable",
+      "not_configured",
+      "not_in_effect",
+      "not_last_action",
+      "record_closed",
+      "team_declined",
+      "team_not_in_pool",
+      "team_on_alliance",
+      "unknown_alliance",
+      "wrong_captain",
+      "wrong_turn"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "invalid_input",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /workspace/alliance-selection/drafts/{record_id}/corrections": {
+   "deprecated": false,
+   "operation_id": "post_correction_workspace_alliance_selection_drafts__record_id__corrections_post",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "record_id",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/CorrectionBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/DraftOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "csrf_check_failed",
+      "permission_denied",
+      "workspace_not_verified"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "draft_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "action_id_conflict",
+      "alliance_full",
+      "already_backup",
+      "backups_not_used",
+      "captain_already_named",
+      "captain_not_named",
+      "captain_not_pickable",
+      "captain_rule_not_established",
+      "draft_complete",
+      "draft_incomplete",
+      "invalid_action",
+      "invalid_setup",
+      "live_draft_unavailable",
+      "no_eligible_captain",
+      "not_applicable",
+      "not_configured",
+      "not_in_effect",
+      "not_last_action",
+      "record_closed",
+      "team_declined",
+      "team_not_in_pool",
+      "team_on_alliance",
+      "unknown_alliance",
+      "wrong_captain",
+      "wrong_turn"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "invalid_input",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /workspace/alliance-selection/drafts/{record_id}/reopen": {
+   "deprecated": false,
+   "operation_id": "post_reopen_workspace_alliance_selection_drafts__record_id__reopen_post",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "record_id",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/EntryBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/DraftOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "csrf_check_failed",
+      "permission_denied",
+      "workspace_not_verified"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "draft_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "action_id_conflict",
+      "alliance_full",
+      "already_backup",
+      "backups_not_used",
+      "captain_already_named",
+      "captain_not_named",
+      "captain_not_pickable",
+      "captain_rule_not_established",
+      "draft_complete",
+      "draft_incomplete",
+      "invalid_action",
+      "invalid_setup",
+      "live_draft_unavailable",
+      "no_eligible_captain",
+      "not_applicable",
+      "not_configured",
+      "not_in_effect",
+      "not_last_action",
+      "record_closed",
+      "record_open",
+      "team_declined",
+      "team_not_in_pool",
+      "team_on_alliance",
+      "unknown_alliance",
+      "wrong_captain",
+      "wrong_turn"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "invalid_input",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /workspace/alliance-selection/drafts/{record_id}/setup": {
+   "deprecated": false,
+   "operation_id": "post_setup_workspace_alliance_selection_drafts__record_id__setup_post",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "record_id",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/SetupBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/DraftOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "csrf_check_failed",
+      "permission_denied",
+      "workspace_not_verified"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "draft_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "action_id_conflict",
+      "alliance_full",
+      "already_backup",
+      "backups_not_used",
+      "captain_already_named",
+      "captain_not_named",
+      "captain_not_pickable",
+      "captain_rule_not_established",
+      "draft_complete",
+      "draft_incomplete",
+      "invalid_action",
+      "invalid_setup",
+      "live_draft_unavailable",
+      "no_eligible_captain",
+      "not_applicable",
+      "not_configured",
+      "not_in_effect",
+      "not_last_action",
+      "record_closed",
+      "team_declined",
+      "team_not_in_pool",
+      "team_on_alliance",
+      "unknown_alliance",
+      "wrong_captain",
+      "wrong_turn"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "invalid_input",
+      "rules_required",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "POST /workspace/alliance-selection/drafts/{record_id}/undo": {
+   "deprecated": false,
+   "operation_id": "post_undo_workspace_alliance_selection_drafts__record_id__undo_post",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "record_id",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": {
+    "content": {
+     "application/json": {
+      "$ref": "#/components/schemas/UndoBody"
+     }
+    },
+    "required": true
+   },
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/DraftOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "csrf_check_failed",
+      "permission_denied",
+      "workspace_not_verified"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "draft_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "action_id_conflict",
+      "alliance_full",
+      "already_backup",
+      "backups_not_used",
+      "captain_already_named",
+      "captain_not_named",
+      "captain_not_pickable",
+      "captain_rule_not_established",
+      "draft_complete",
+      "draft_incomplete",
+      "invalid_action",
+      "invalid_setup",
+      "live_draft_unavailable",
+      "no_eligible_captain",
+      "not_applicable",
+      "not_configured",
+      "not_in_effect",
+      "not_last_action",
+      "nothing_to_undo",
+      "record_closed",
+      "team_declined",
+      "team_not_in_pool",
+      "team_on_alliance",
+      "unknown_alliance",
+      "wrong_captain",
+      "wrong_turn"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "413": {
+     "codes": [
+      "payload_too_large"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "invalid_input",
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
   }
  },
  "revisions": [
@@ -2260,9 +3390,148 @@
    "operations_added": [],
    "operations_removed": [],
    "reason": "P10-Q9: declare the body-limit 413 (payload_too_large) on the 11 locked operations that take a request body; additive (no existing leaf changed)"
+  },
+  {
+   "added_leaves": 419,
+   "changed": [],
+   "command": "lock",
+   "date": "2026-11-04",
+   "decision": null,
+   "operations_added": [
+    "GET /workspace/alliance-selection/drafts",
+    "POST /workspace/alliance-selection/drafts",
+    "GET /workspace/alliance-selection/drafts/{record_id}",
+    "POST /workspace/alliance-selection/drafts/{record_id}/actions",
+    "POST /workspace/alliance-selection/drafts/{record_id}/undo",
+    "POST /workspace/alliance-selection/drafts/{record_id}/corrections",
+    "POST /workspace/alliance-selection/drafts/{record_id}/close",
+    "POST /workspace/alliance-selection/drafts/{record_id}/reopen",
+    "POST /workspace/alliance-selection/drafts/{record_id}/setup",
+    "GET /workspace/alliance-selection/drafts/{record_id}/recommendations"
+   ],
+   "operations_removed": [],
+   "reason": "Phase 11 (docs/phase11.md, 2026-11-04): the live alliance-selection draft record and its recommendations; additive, no locked entry changes"
+  },
+  {
+   "added_leaves": 0,
+   "changed": [
+    "/schemas/UnavailableOut/properties/reason/enum"
+   ],
+   "command": "relock",
+   "date": "2026-11-04",
+   "decision": ".agent/phase11/decisions/P11_IMPLEMENTATION_NOTES_2026-11-04.md 2026-11-04",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "Phase 11 review fix: UnavailableOut.reason gains projected_captain (captain_may_accept_higher_alliance=False applied to the pool); Phase 11 entries only"
   }
  ],
  "schemas": {
+  "ActionBody": {
+   "additionalProperties": false,
+   "properties": {
+    "action_id": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "client_recorded_at": {
+     "anyOf": [
+      {
+       "format": "date-time",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "override_reason": {
+     "anyOf": [
+      {
+       "maxLength": 500,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "seed": {
+     "anyOf": [
+      {
+       "minimum": 1.0,
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "team_number": {
+     "minimum": 1.0,
+     "type": "integer"
+    },
+    "type": {
+     "enum": [
+      "backup",
+      "captain",
+      "decline",
+      "pick"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "team_number",
+    "type"
+   ],
+   "type": "object"
+  },
+  "AllianceOut": {
+   "properties": {
+    "captain": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "picks": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "projected_captain": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "seed": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "captain",
+    "picks",
+    "projected_captain",
+    "seed"
+   ],
+   "type": "object"
+  },
   "AllianceSynergyOut": {
    "properties": {
     "absent_code": {
@@ -2621,6 +3890,43 @@
    "required": [
     "season_by_event",
     "this_event"
+   ],
+   "type": "object"
+  },
+  "AvailableOut": {
+   "properties": {
+    "declined_earlier": {
+     "type": "boolean"
+    },
+    "projected_captain_of": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "rank": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "declined_earlier",
+    "projected_captain_of",
+    "rank",
+    "team_number"
    ],
    "type": "object"
   },
@@ -3086,6 +4392,21 @@
    ],
    "type": "object"
   },
+  "CodeMessage": {
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "code",
+    "message"
+   ],
+   "type": "object"
+  },
   "CompareBody": {
    "properties": {
     "first": {
@@ -3177,6 +4498,52 @@
    ],
    "type": "object"
   },
+  "CorrectionBody": {
+   "additionalProperties": false,
+   "properties": {
+    "action_id": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "override_reason": {
+     "anyOf": [
+      {
+       "maxLength": 500,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "replacement": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/ReplacementBody"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "target_action_id": {
+     "maxLength": 64,
+     "minLength": 1,
+     "type": "string"
+    }
+   },
+   "required": [
+    "replacement",
+    "target_action_id"
+   ],
+   "type": "object"
+  },
   "DefenseFeedingProfile": {
    "properties": {
     "contributing_sources": {
@@ -3256,6 +4623,153 @@
    ],
    "type": "object"
   },
+  "DraftOut": {
+   "properties": {
+    "alliances": {
+     "items": {
+      "$ref": "#/components/schemas/AllianceOut"
+     },
+     "type": "array"
+    },
+    "available": {
+     "items": {
+      "$ref": "#/components/schemas/AvailableOut"
+     },
+     "type": "array"
+    },
+    "backups": {
+     "items": {
+      "$ref": "#/components/schemas/TeamSeedOut"
+     },
+     "type": "array"
+    },
+    "can_record": {
+     "type": "boolean"
+    },
+    "complete": {
+     "type": "boolean"
+    },
+    "configured": {
+     "type": "boolean"
+    },
+    "created_at": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "created_by": {
+     "type": "string"
+    },
+    "declined": {
+     "items": {
+      "$ref": "#/components/schemas/TeamSeedOut"
+     },
+     "type": "array"
+    },
+    "effective": {
+     "items": {
+      "$ref": "#/components/schemas/EffectiveOut"
+     },
+     "type": "array"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "flags": {
+     "items": {
+      "$ref": "#/components/schemas/FlagOut"
+     },
+     "type": "array"
+    },
+    "history": {
+     "items": {
+      "$ref": "#/components/schemas/HistoryOut"
+     },
+     "type": "array"
+    },
+    "record_id": {
+     "type": "integer"
+    },
+    "record_seq": {
+     "type": "integer"
+    },
+    "record_uid": {
+     "type": "string"
+    },
+    "setup": {
+     "anyOf": [
+      {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "status": {
+     "enum": [
+      "closed",
+      "open"
+     ],
+     "type": "string"
+    },
+    "team_number": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "turn": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/TurnOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "unavailable": {
+     "items": {
+      "$ref": "#/components/schemas/UnavailableOut"
+     },
+     "type": "array"
+    },
+    "value_kind": {
+     "const": "observed",
+     "default": "observed",
+     "type": "string"
+    }
+   },
+   "required": [
+    "alliances",
+    "available",
+    "backups",
+    "can_record",
+    "complete",
+    "configured",
+    "created_at",
+    "created_by",
+    "declined",
+    "effective",
+    "event_key",
+    "flags",
+    "history",
+    "record_id",
+    "record_seq",
+    "record_uid",
+    "setup",
+    "status",
+    "team_number",
+    "turn",
+    "unavailable"
+   ],
+   "type": "object"
+  },
   "DraftStateBody": {
    "properties": {
     "alliances": {
@@ -3287,6 +4801,167 @@
     "seed",
     "turns_taken"
    ],
+   "type": "object"
+  },
+  "DraftSummaryOut": {
+   "properties": {
+    "complete": {
+     "type": "boolean"
+    },
+    "created_at": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "created_by": {
+     "type": "string"
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "picks_made": {
+     "type": "integer"
+    },
+    "record_id": {
+     "type": "integer"
+    },
+    "record_seq": {
+     "type": "integer"
+    },
+    "record_uid": {
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "closed",
+      "open"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "complete",
+    "created_at",
+    "created_by",
+    "event_key",
+    "picks_made",
+    "record_id",
+    "record_seq",
+    "record_uid",
+    "status"
+   ],
+   "type": "object"
+  },
+  "EffectiveOut": {
+   "properties": {
+    "action_id": {
+     "type": "string"
+    },
+    "notes": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "override_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "recorded_at": {
+     "anyOf": [
+      {
+       "format": "date-time",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "recorded_by": {
+     "type": "string"
+    },
+    "seed": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "seq": {
+     "type": "integer"
+    },
+    "slot_action_id": {
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "accepted",
+      "invalid",
+      "not_applied",
+      "overridden"
+     ],
+     "type": "string"
+    },
+    "summary": {
+     "type": "string"
+    },
+    "team_number": {
+     "type": "integer"
+    },
+    "type": {
+     "type": "string"
+    },
+    "violation": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/ViolationOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "action_id",
+    "notes",
+    "override_reason",
+    "recorded_at",
+    "recorded_by",
+    "seed",
+    "seq",
+    "slot_action_id",
+    "status",
+    "summary",
+    "team_number",
+    "type",
+    "violation"
+   ],
+   "type": "object"
+  },
+  "EntryBody": {
+   "additionalProperties": false,
+   "properties": {
+    "action_id": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
    "type": "object"
   },
   "EpaSourceInfo": {
@@ -3703,6 +5378,21 @@
    ],
    "type": "object"
   },
+  "ExcludedOut": {
+   "properties": {
+    "reason": {
+     "type": "string"
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "reason",
+    "team_number"
+   ],
+   "type": "object"
+  },
   "FactorOut": {
    "properties": {
     "n": {
@@ -3761,6 +5451,43 @@
    ],
    "type": "object"
   },
+  "FlagOut": {
+   "properties": {
+    "action_id": {
+     "type": "string"
+    },
+    "code": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "message": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "status": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "action_id",
+    "code",
+    "message",
+    "status"
+   ],
+   "type": "object"
+  },
   "HealthResponse": {
    "properties": {
     "env": {
@@ -3773,6 +5500,79 @@
    "required": [
     "env",
     "status"
+   ],
+   "type": "object"
+  },
+  "HistoryOut": {
+   "properties": {
+    "action_id": {
+     "type": "string"
+    },
+    "in_effect": {
+     "type": "boolean"
+    },
+    "mode": {
+     "type": "string"
+    },
+    "override_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "recorded_at": {
+     "anyOf": [
+      {
+       "format": "date-time",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "recorded_by": {
+     "type": "string"
+    },
+    "seq": {
+     "type": "integer"
+    },
+    "source": {
+     "type": "string"
+    },
+    "summary": {
+     "type": "string"
+    },
+    "superseded_by": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "type": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "action_id",
+    "in_effect",
+    "mode",
+    "override_reason",
+    "recorded_at",
+    "recorded_by",
+    "seq",
+    "source",
+    "summary",
+    "superseded_by",
+    "type"
    ],
    "type": "object"
   },
@@ -3975,6 +5775,48 @@
     "evidence",
     "team_numbers",
     "validation_status"
+   ],
+   "type": "object"
+  },
+  "ManualRulesBody": {
+   "additionalProperties": false,
+   "properties": {
+    "backup_robots": {
+     "type": "boolean"
+    },
+    "captain_may_accept_higher_alliance": {
+     "type": "boolean"
+    },
+    "declined_team_may_be_picked_later": {
+     "type": "boolean"
+    },
+    "declined_team_may_become_captain": {
+     "anyOf": [
+      {
+       "type": "boolean"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "n_alliances": {
+     "maximum": 16.0,
+     "minimum": 2.0,
+     "type": "integer"
+    },
+    "picks_per_alliance": {
+     "maximum": 4.0,
+     "minimum": 1.0,
+     "type": "integer"
+    }
+   },
+   "required": [
+    "backup_robots",
+    "captain_may_accept_higher_alliance",
+    "declined_team_may_be_picked_later",
+    "n_alliances",
+    "picks_per_alliance"
    ],
    "type": "object"
   },
@@ -4748,6 +6590,278 @@
    ],
    "type": "object"
   },
+  "RecommendationsOut": {
+   "properties": {
+    "backups": {
+     "items": {
+      "$ref": "#/components/schemas/RecommendedOut"
+     },
+     "type": "array"
+    },
+    "computed_at": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "engine_refusal": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/CodeMessage"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "excluded": {
+     "items": {
+      "$ref": "#/components/schemas/ExcludedOut"
+     },
+     "type": "array"
+    },
+    "movement": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "primary": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/RecommendedOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "provenance": {
+     "additionalProperties": true,
+     "type": "object"
+    },
+    "record_id": {
+     "type": "integer"
+    },
+    "record_seq": {
+     "type": "integer"
+    },
+    "seed": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "selecting_as": {
+     "anyOf": [
+      {
+       "enum": [
+        "on_alliance",
+        "projected_captain"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "source": {
+     "anyOf": [
+      {
+       "enum": [
+        "engine_p6_m7",
+        "fallback_p11_fb1"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "status": {
+     "enum": [
+      "current",
+      "withheld"
+     ],
+     "type": "string"
+    },
+    "timing_ms": {
+     "additionalProperties": {
+      "type": "number"
+     },
+     "type": "object"
+    },
+    "turns_before": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "unranked_available": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "validation": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/Validation"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "value_kind": {
+     "const": "model_prediction",
+     "default": "model_prediction",
+     "type": "string"
+    },
+    "withheld": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/CodeMessage"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "backups",
+    "computed_at",
+    "engine_refusal",
+    "excluded",
+    "movement",
+    "primary",
+    "provenance",
+    "record_id",
+    "record_seq",
+    "seed",
+    "selecting_as",
+    "source",
+    "status",
+    "timing_ms",
+    "turns_before",
+    "unranked_available",
+    "validation",
+    "withheld"
+   ],
+   "type": "object"
+  },
+  "RecommendedOut": {
+   "properties": {
+    "configuration": {
+     "anyOf": [
+      {
+       "items": {
+        "type": "integer"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "ordering_position": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "profile": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/CandidateOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "reach_finals": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/StrategyOdds"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "team_number": {
+     "type": "integer"
+    },
+    "win_event": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/StrategyOdds"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "configuration",
+    "ordering_position",
+    "profile",
+    "reach_finals",
+    "team_number",
+    "win_event"
+   ],
+   "type": "object"
+  },
+  "ReplacementBody": {
+   "additionalProperties": false,
+   "properties": {
+    "seed": {
+     "anyOf": [
+      {
+       "minimum": 1.0,
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "team_number": {
+     "minimum": 1.0,
+     "type": "integer"
+    },
+    "type": {
+     "enum": [
+      "backup",
+      "captain",
+      "decline",
+      "pick"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "team_number",
+    "type"
+   ],
+   "type": "object"
+  },
   "RobotPlan": {
    "additionalProperties": false,
    "properties": {
@@ -5182,6 +7296,76 @@
     "model_version_tag",
     "provenance",
     "training_dataset_hash"
+   ],
+   "type": "object"
+  },
+  "SetupBody": {
+   "additionalProperties": false,
+   "properties": {
+    "action_id": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "manual_rules": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/ManualRulesBody"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "type": "object"
+  },
+  "StartBody": {
+   "additionalProperties": false,
+   "properties": {
+    "action_id": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "event_key": {
+     "maxLength": 64,
+     "minLength": 1,
+     "type": "string"
+    },
+    "manual_rules": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/ManualRulesBody"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "record_uid": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "event_key"
    ],
    "type": "object"
   },
@@ -5744,6 +7928,28 @@
    ],
    "type": "object"
   },
+  "TeamSeedOut": {
+   "properties": {
+    "seed": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "seed",
+    "team_number"
+   ],
+   "type": "object"
+  },
   "TeamStrengthResponse": {
    "properties": {
     "epa": {
@@ -5799,6 +8005,102 @@
    ],
    "type": "object"
   },
+  "TurnOut": {
+   "properties": {
+    "captain_named": {
+     "type": "boolean"
+    },
+    "expected_captain": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "expected_captain_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "index": {
+     "type": "integer"
+    },
+    "round": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "seed": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "captain_named",
+    "expected_captain",
+    "expected_captain_reason",
+    "index",
+    "round",
+    "seed"
+   ],
+   "type": "object"
+  },
+  "UnavailableOut": {
+   "properties": {
+    "rank": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "reason": {
+     "enum": [
+      "backup",
+      "captain",
+      "declined",
+      "picked",
+      "projected_captain"
+     ],
+     "type": "string"
+    },
+    "seed": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "rank",
+    "reason",
+    "seed",
+    "team_number"
+   ],
+   "type": "object"
+  },
   "Uncertainty": {
    "properties": {
     "kind": {
@@ -5834,6 +8136,32 @@
    ],
    "type": "object"
   },
+  "UndoBody": {
+   "additionalProperties": false,
+   "properties": {
+    "action_id": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "target_action_id": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "type": "object"
+  },
   "Validation": {
    "properties": {
     "evidence": {
@@ -5859,6 +8187,21 @@
    },
    "required": [
     "status"
+   ],
+   "type": "object"
+  },
+  "ViolationOut": {
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "code",
+    "message"
    ],
    "type": "object"
   },

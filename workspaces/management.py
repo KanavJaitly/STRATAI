@@ -393,11 +393,19 @@ def set_role_permissions(database: Database, context: SessionContext, *, role: s
         changed = {}
         for permission, granted in grants.items():
             previous = before.get(permission, permission in DEFAULT_GRANTS[role])
-            cursor.execute(
-                "INSERT INTO workspace_role_permissions (workspace_id, role, permission, granted, updated_by_user_id) "
-                "VALUES (%s, %s, %s, %s, %s) ON CONFLICT (workspace_id, role, permission) DO UPDATE "
-                "SET granted = EXCLUDED.granted, updated_at = NOW(), updated_by_user_id = EXCLUDED.updated_by_user_id",
-                (context.workspace_id, role, permission, granted, context.user_id))
+            try:
+                cursor.execute(
+                    "INSERT INTO workspace_role_permissions (workspace_id, role, permission, granted, "
+                    "updated_by_user_id) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (workspace_id, role, permission) "
+                    "DO UPDATE SET granted = EXCLUDED.granted, updated_at = NOW(), "
+                    "updated_by_user_id = EXCLUDED.updated_by_user_id",
+                    (context.workspace_id, role, permission, granted, context.user_id))
+            except psycopg.errors.CheckViolation:
+                # A permission added by a later migration (e.g. alliance_selection_record, 0013) on a database that
+                # has not applied it: say so instead of failing with a 500. The whole change is rolled back.
+                raise conflict("permission_needs_migration",
+                               f"'{permission}' needs a newer database migration on this server before it can be "
+                               "changed. Ask whoever runs StratAI to apply the latest migrations.") from None
             if previous != granted:
                 changed[permission] = {"from": previous, "to": granted}
         if changed:

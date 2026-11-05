@@ -104,6 +104,9 @@ PHASE7_CAPABILITY_ROUTES = {
     "api.routes.strategy": re.compile(r"^/strategy/"),
     "api.routes.alliance_selection": re.compile(r"^/events/\{event_key\}/alliance-selection(/|$)"),
     "api.routes.pre_match_report": re.compile(r"^/matches/\{match_key\}/pre-match-report$"),
+    # Phase 11 (2026-11-04; docs/P11-P19Phases.md §5, "the new recommendation operation calls the same engine
+    # service"): the team-private live draft record, whose recommendations call the P6-M7 engine unchanged.
+    "api.routes.live_draft": re.compile(r"^/workspace/alliance-selection/drafts(/|$)"),
 }
 
 

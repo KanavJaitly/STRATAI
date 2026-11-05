@@ -1,5 +1,6 @@
 """Team workspaces: the rules that need no database -- password hashing and policy, tokens, the permission model,
-and the agreement between the code's permission list and migration 0012's CHECK constraint."""
+and the agreement between the code's permission list and the workspace_role_permissions CHECK constraint (defined by
+0012, redefined by 0013)."""
 
 from __future__ import annotations
 
@@ -12,7 +13,8 @@ from workspaces import passwords, permissions
 from workspaces.errors import WorkspaceError
 from workspaces.tokens import new_token, subject_hash, token_hash
 
-MIGRATION = Path(__file__).resolve().parents[1] / "database" / "migrations" / "0012_team_workspaces.sql"
+MIGRATIONS = Path(__file__).resolve().parents[1] / "database" / "migrations"
+CHECK_PATTERN = r"workspace_role_permissions_permission_check CHECK \(permission IN \((.*?)\)\)"
 
 
 @pytest.fixture(autouse=True)
@@ -94,8 +96,11 @@ def test_a_stored_grant_overrides_the_default_and_a_missing_one_falls_back():
 
 
 def test_the_migration_check_lists_exactly_the_configurable_permissions():
-    sql = MIGRATION.read_text(encoding="utf-8")
-    block = re.search(r"workspace_role_permissions_permission_check CHECK \(permission IN \((.*?)\)\)", sql, re.S)
+    # The constraint in force is the one the last migration to define it leaves (migrations apply in name order).
+    defining = [path for path in sorted(MIGRATIONS.glob("*.sql"))
+                if re.search(CHECK_PATTERN, path.read_text(encoding="utf-8"), re.S)]
+    assert [path.name for path in defining][:1] == ["0012_team_workspaces.sql"]
+    block = re.search(CHECK_PATTERN, defining[-1].read_text(encoding="utf-8"), re.S)
     assert block is not None
     in_sql = set(re.findall(r"'([a-z_]+)'", block.group(1)))
     assert in_sql == set(permissions.CONFIGURABLE_PERMISSIONS)
