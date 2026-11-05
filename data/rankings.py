@@ -147,6 +147,28 @@ def read_final_ranks_for_season(database: Database, season: int) -> dict[str, di
     return final_ranks
 
 
+def read_event_ranks(database: Database, event_key: str) -> tuple[dict[int, int], object] | None:
+    """One event's current landed ranking: ({team_number: rank}, the payload's fetch_timestamp), or None when no
+    ranking payload is landed or it names no team. The per-event form of read_final_ranks_for_season (same raw
+    read, same parser), for callers that need one event at a time, such as the Phase 11 live draft record.
+    Whether the ranking is *final* (fetched after qualification ended) is the caller's check, because only the
+    caller knows the schedule it is judging against."""
+    with database.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT payload_json, fetch_timestamp FROM raw_source_payloads
+            WHERE source = %s AND source_object_type = %s AND source_object_id = %s AND is_current
+            ORDER BY id DESC LIMIT 1
+            """,
+            (SOURCE_TBA, OBJECT_TYPE_EVENT_RANKING, event_key),
+        )
+        row = cursor.fetchone()
+    if row is None:
+        return None
+    ranks = _parse_ranking_payload(row[0])
+    return (ranks, row[1]) if ranks else None
+
+
 def _parse_ranking_payload(payload_json: object) -> dict[int, int]:
     """{team_number: rank} from one landed raw TBA ranking payload.
 

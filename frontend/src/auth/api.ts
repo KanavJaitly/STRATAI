@@ -46,6 +46,16 @@ export const WORKSPACE_ENDPOINTS = {
   reports: ['GET', '/workspace/scouting/reports'],
   submitReport: ['POST', '/workspace/scouting/reports'],
   scoutingSummary: ['GET', '/workspace/scouting/summary'],
+  drafts: ['GET', '/workspace/alliance-selection/drafts'],
+  startDraft: ['POST', '/workspace/alliance-selection/drafts'],
+  draft: ['GET', '/workspace/alliance-selection/drafts/{record_id}'],
+  recordDraftAction: ['POST', '/workspace/alliance-selection/drafts/{record_id}/actions'],
+  undoDraftAction: ['POST', '/workspace/alliance-selection/drafts/{record_id}/undo'],
+  correctDraftAction: ['POST', '/workspace/alliance-selection/drafts/{record_id}/corrections'],
+  closeDraft: ['POST', '/workspace/alliance-selection/drafts/{record_id}/close'],
+  reopenDraft: ['POST', '/workspace/alliance-selection/drafts/{record_id}/reopen'],
+  refreshDraftSetup: ['POST', '/workspace/alliance-selection/drafts/{record_id}/setup'],
+  draftRecommendations: ['GET', '/workspace/alliance-selection/drafts/{record_id}/recommendations'],
 } as const satisfies Record<string, readonly [Method, string]>
 
 type EndpointName = keyof typeof WORKSPACE_ENDPOINTS
@@ -316,6 +326,110 @@ export const teamScouting = {
     feeding_rating: number | null; notes: string | null; assignment_id?: number | null }) =>
     call<ScoutingReport>('submitReport', { body }),
   summary: (eventKey: string) => call<ScoutingSummary>('scoutingSummary', { query: { event_key: eventKey } }),
+}
+
+// --- Phase 11: the live alliance-selection draft record (docs/phase11.md) -----------------------------------------
+
+export type DraftActionType = 'captain' | 'pick' | 'decline' | 'backup'
+
+export interface ManualDraftRules {
+  n_alliances: number
+  picks_per_alliance: number
+  declined_team_may_be_picked_later: boolean
+  declined_team_may_become_captain: boolean | null
+  captain_may_accept_higher_alliance: boolean
+  backup_robots: boolean
+}
+
+export interface DraftSummary {
+  record_id: number; record_uid: string; event_key: string; created_at: string; created_by: string
+  record_seq: number; status: 'open' | 'closed'; picks_made: number; complete: boolean
+}
+
+export interface DraftEffectiveAction {
+  action_id: string; slot_action_id: string; seq: number; type: DraftActionType; seed: number | null
+  team_number: number; status: 'accepted' | 'overridden' | 'invalid' | 'not_applied'
+  violation: { code: string; message: string } | null; override_reason: string | null; notes: string[]
+  summary: string; recorded_by: string; recorded_at: string | null
+}
+
+export interface DraftHistoryItem {
+  action_id: string; seq: number; type: string; summary: string; override_reason: string | null; in_effect: boolean
+  superseded_by: string | null; recorded_by: string; recorded_at: string | null; source: string; mode: string
+}
+
+export interface DraftRecord {
+  record_id: number; record_uid: string; event_key: string; created_at: string; created_by: string
+  can_record: boolean; team_number: number | null; record_seq: number; status: 'open' | 'closed'
+  configured: boolean
+  setup: { rules: ManualDraftRules & { source: string; ruleset_sha256: string | null; ruleset_variant: string | null;
+    captain_rule_established: boolean }; ranks: [number, number][] | null; pool: number[] | null; missing: string[];
+    provenance: Record<string, unknown> } | null
+  value_kind: 'observed'
+  alliances: { seed: number; captain: number | null; picks: number[]; projected_captain: number | null }[]
+  turn: { index: number; round: number | null; seed: number; captain_named: boolean; expected_captain: number | null;
+    expected_captain_reason: string | null } | null
+  complete: boolean
+  available: { team_number: number; rank: number | null; projected_captain_of: number | null; declined_earlier: boolean }[]
+  unavailable: { team_number: number; reason: 'captain' | 'picked' | 'declined' | 'backup' | 'projected_captain';
+    rank: number | null;
+    seed: number | null }[]
+  declined: { team_number: number; seed: number | null }[]
+  backups: { team_number: number; seed: number | null }[]
+  flags: { action_id: string; status: string; code: string | null; message: string | null }[]
+  effective: DraftEffectiveAction[]
+  history: DraftHistoryItem[]
+}
+
+export interface RecommendedTeam {
+  team_number: number
+  ordering_position: number | null
+  win_event: { display: string | null; validation: { status: string; reasons: string[] } } | null
+  reach_finals: { display: string | null; validation: { status: string; reasons: string[] } } | null
+  configuration: number[] | null
+  profile: Record<string, unknown> | null
+}
+
+export interface DraftRecommendations {
+  record_id: number; record_seq: number; computed_at: string; status: 'current' | 'withheld'
+  withheld: { code: string; message: string } | null
+  value_kind: 'model_prediction'
+  source: 'engine_p6_m7' | 'fallback_p11_fb1' | null
+  validation: { status: string; reasons: string[] } | null
+  engine_refusal: { code: string; message: string } | null
+  seed: number | null; selecting_as: 'on_alliance' | 'projected_captain' | null; turns_before: number | null
+  primary: RecommendedTeam | null; backups: RecommendedTeam[]; unranked_available: number[]
+  excluded: { team_number: number; reason: string }[]; movement: string[]
+  provenance: Record<string, unknown>; timing_ms: Record<string, number>
+}
+
+/** A stable id for an entry, created here so that a retried write is idempotent (and, in Phase 12, local-first). */
+export function newActionId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
+  return 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16))
+}
+
+export const liveDraft = {
+  list: (eventKey?: string) => call<DraftSummary[]>('drafts', { query: { event_key: eventKey } }),
+  start: (body: { event_key: string; manual_rules?: ManualDraftRules | null; record_uid?: string; action_id?: string }) =>
+    call<DraftRecord>('startDraft', { body: { record_uid: newActionId(), action_id: newActionId(), ...body } }),
+  get: (id: number) => call<DraftRecord>('draft', { params: { record_id: id } }),
+  record: (id: number, body: { type: DraftActionType; seed: number | null; team_number: number;
+    override_reason?: string | null; action_id?: string }) =>
+    call<DraftRecord>('recordDraftAction', { params: { record_id: id },
+      body: { action_id: newActionId(), client_recorded_at: new Date().toISOString(), ...body } }),
+  undo: (id: number, targetActionId: string) =>
+    call<DraftRecord>('undoDraftAction', { params: { record_id: id },
+      body: { target_action_id: targetActionId, action_id: newActionId() } }),
+  correct: (id: number, body: { target_action_id: string; replacement: { type: DraftActionType; seed: number | null;
+    team_number: number } | null; override_reason?: string | null }) =>
+    call<DraftRecord>('correctDraftAction', { params: { record_id: id }, body: { action_id: newActionId(), ...body } }),
+  close: (id: number) => call<DraftRecord>('closeDraft', { params: { record_id: id }, body: { action_id: newActionId() } }),
+  reopen: (id: number) => call<DraftRecord>('reopenDraft', { params: { record_id: id }, body: { action_id: newActionId() } }),
+  refreshSetup: (id: number, manualRules?: ManualDraftRules | null) =>
+    call<DraftRecord>('refreshDraftSetup', { params: { record_id: id },
+      body: { action_id: newActionId(), manual_rules: manualRules ?? null } }),
+  recommendations: (id: number) => call<DraftRecommendations>('draftRecommendations', { params: { record_id: id } }),
 }
 
 /** A link the API returned as a path ("/auth/invite#token=...") made absolute for copying. */

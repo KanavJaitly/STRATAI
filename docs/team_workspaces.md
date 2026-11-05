@@ -66,7 +66,8 @@ Three roles.
 | `team_analytics`: team metrics and strength | yes | yes | configurable (off) |
 | `event_analysis` | yes | yes | configurable (off) |
 | `qualification_forecast` | yes | yes | configurable (off) |
-| `alliance_selection` | yes | yes | configurable (off) |
+| `alliance_selection`: candidates, pick lists and the live draft board | yes | yes | configurable (off) |
+| `alliance_selection_record`: recording live alliance-selection actions (Phase 11, migration 0013) | yes | configurable (off) | configurable (off) |
 | `strategy_tools`: strategy lab, pre-match report, briefing | yes | yes | configurable (off) |
 | `scouting_forms`: scouting forms, own assignments and submissions | yes | yes | yes |
 | `scouting_submit` | yes | configurable (off) | yes |
@@ -163,9 +164,10 @@ What each shows follows the member's permissions.
   - Analytics: membership, sign-ins, invitations and scouting activity;
   - Team Settings: team name, default event, scouting instructions;
   - Activity Log: actor, action, affected member, details and time, filterable.
+  - The Overview links to live alliance selection (`/alliance-selection/live`, Phase 11) for the default event.
 - **Drive team dashboard** (`/drive-team`), for the chosen event:
-  - event analysis, match predictions, team comparisons, qualification forecast, alliance selection and the strategy
-    lab, each shown only with its permission;
+  - event analysis, match predictions, team comparisons, qualification forecast, alliance selection, live alliance
+    selection (Phase 11, `docs/phase11.md`) and the strategy lab, each shown only with its permission;
   - the team's own scouting summary;
   - scouting assignments.
 - **Scouting dashboard** (`/scouting`):
@@ -265,7 +267,7 @@ committed file.
 ## 10. Running it locally
 
 ```
-python database/migrate.py          # applies 0012 to the database DATABASE_URL names
+python database/migrate.py          # applies 0012 (and 0013, Phase 11) to the database DATABASE_URL names
 python -m api                       # the API on http://127.0.0.1:8000
 cd frontend && npm ci && npm run dev  # the web app on http://localhost:5173 (proxies /api to the API)
 ```

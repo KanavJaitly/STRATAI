@@ -33,6 +33,15 @@ ACTIONS: dict[str, str] = {
     "settings_changed": "Team settings changed",
     "scouting_assignment_created": "Scouting assignment created",
     "scouting_assignment_cancelled": "Scouting assignment cancelled",
+    # Phase 11: the live alliance-selection draft record (workspaces/live_draft.py).
+    "draft_started": "Live alliance selection started",
+    "draft_reconfigured": "Live alliance selection setup refreshed",
+    "draft_action_recorded": "Alliance selection action recorded",
+    "draft_action_overridden": "Alliance selection action recorded with an override",
+    "draft_action_undone": "Alliance selection action undone",
+    "draft_action_corrected": "Alliance selection action corrected",
+    "draft_closed": "Live alliance selection closed",
+    "draft_reopened": "Live alliance selection reopened",
 }
 
 

@@ -727,6 +727,27 @@ A team's own scouting report, private to its workspace. It uses the same rating 
   `(workspace_id, assignment_id)` → an assignment, both of the same workspace.
 - **CHECKs:** ratings 0–5, at least one rating, and the match belongs to the event.
 
+#### `draft_records` (migration 0013, Phase 11)
+
+A team's live alliance-selection record for one event (`docs/phase11.md`). Its state is the replay of its
+`draft_actions`; none is stored.
+
+- **PK** `id`; `UNIQUE (workspace_id, event_key)`, `UNIQUE (workspace_id, record_uid)`, `UNIQUE (workspace_id, id)`.
+  **Columns:** `workspace_id`, `record_uid` (a client-created UUID), `event_key`, `created_by_user_id`, `created_at`.
+- **FKs:** the canonical event; `(workspace_id, created_by_user_id)` → a membership of the same workspace.
+
+#### `draft_actions` (migration 0013, Phase 11)
+
+The record's append-only log: one row per entry, never updated (a trigger refuses UPDATE) and never deleted by the
+application.
+
+- **PK** `(workspace_id, action_id)`; `UNIQUE (record_id, seq)`. **Columns:** `record_id`, `action_id` (a
+  client-created UUID), `seq`, `action_type` ∈ {configure, captain, pick, decline, backup, undo, correct, close,
+  reopen}, `payload` (JSON object), `override_reason`, `author_user_id`, `author_label`, `recorded_at`,
+  `client_recorded_at`, `source` ∈ {manual, imported}, `mode` ∈ {online, local}.
+- **FKs:** `(workspace_id, record_id)` → a record of the same workspace (cascade); `(workspace_id, author_user_id)`
+  → a membership of the same workspace.
+
 ---
 
 ## 5. Incremental state
@@ -1188,10 +1209,11 @@ DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 | `0010_phase5_human_inputs.sql` | Phase 5 (P5-M8/M9, DM1): creates `game_manuals`, `game_spec_versions`, `capability_profiles` and `human_review_artifacts` for the web app's human-input workflows |
 | `0011_phase6_season_rulesets.sql` | Phase 6 (P6-M1): creates `season_rulesets`, the human-entered, reviewed per-season alliance-selection and playoff rules |
 | `0012_team_workspaces.sql` | Team workspaces: creates `workspaces`, `users`, `team_memberships`, `invitations`, `workspace_role_permissions`, `auth_sessions`, `password_reset_tokens`, `auth_attempts`, `activity_logs`, `scouting_assignments` and `workspace_scouting_reports` (section 4.5) |
+| `0013_live_alliance_selection.sql` | Phase 11: creates `draft_records` and `draft_actions` (each team's append-only live alliance-selection log) and adds `alliance_selection_record` to the `workspace_role_permissions` CHECK constraint (section 4.5; `docs/phase11.md`) |
 
 Migrations are plain SQL applied in filename order and recorded in `migrations_applied`.
 **There is no Alembic and none should be added.** To add one, create
-`database/migrations/0013_<name>.sql` and run `database/migrate.py`.
+`database/migrations/0014_<name>.sql` and run `database/migrate.py`.
 
 ### 8.7 Watching a live event
 

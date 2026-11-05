@@ -153,30 +153,47 @@ def _check_supported(rules: EventRules) -> None:
                                             "represented by the draft model")
 
 
-def available_for_pick(state: DraftState, teams: Sequence[int], rules: EventRules) -> list[int]:
+def pickable_teams(state: DraftState, teams: Sequence[int], *, declined_team_may_be_picked_later: bool) -> list[int]:
+    """The teams of `teams` a captain may pick from `state`: not on an alliance, and not declined unless the decline
+    rule lets a declined team be picked later. The rule behind `available_for_pick`, taken as a plain value so the
+    live draft record (Phase 11, workspaces.draft_log) applies exactly the same rule to its own rules source."""
     taken = state.on_alliance()
-    blocked = set() if _selection(rules).declined_team_may_be_picked_later else set(state.declined)
+    blocked = set() if declined_team_may_be_picked_later else set(state.declined)
     return [t for t in teams if t not in taken and t not in blocked]
 
 
-def _captain(state: DraftState, ranks: Mapping[int, int], rules: EventRules) -> int:
-    """The highest-ranked available team. A declined team's eligibility follows the event's decline rule.
+def available_for_pick(state: DraftState, teams: Sequence[int], rules: EventRules) -> list[int]:
+    return pickable_teams(state, teams,
+                          declined_team_may_be_picked_later=_selection(rules).declined_team_may_be_picked_later)
+
+
+def highest_ranked_captain(state: DraftState, ranks: Mapping[int, int], *,
+                           declined_team_may_become_captain: bool | None, label: str) -> int:
+    """The highest-ranked available team. A declined team's eligibility follows the decline rule.
 
     If that rule is null (not established), the captain is still decided whenever no declined team is decisive.
-    If one is decisive, `not_established` is raised: the value is never guessed (D-PX1-4)."""
+    If one is decisive, `not_established` is raised: the value is never guessed (D-PX1-4). `label` names the event
+    in the message. The rule behind `_captain`, taken as plain values (see `pickable_teams`)."""
     taken = state.on_alliance()
-    rule = _selection(rules).declined_team_may_become_captain
+    rule = declined_team_may_become_captain
     available = [t for t in ranks if t not in taken]
     eligible = available if rule is True else [t for t in available if t not in state.declined]
     if rule is None and available:
         best_of_all = min(available, key=lambda t: (ranks[t], t))
         if best_of_all in state.declined:
-            raise RulesetError("not_established", f"{rules.event_key}: declined team {best_of_all} would be the next "
+            raise RulesetError("not_established", f"{label}: declined team {best_of_all} would be the next "
                                                   "captain, and whether a declined team may become captain is not "
                                                   "established (P6-M1 `unresolved`)")
     if not eligible:
         raise RulesetError("infeasible", "no team is eligible to be a captain")
     return min(eligible, key=lambda t: (ranks[t], t))
+
+
+def _captain(state: DraftState, ranks: Mapping[int, int], rules: EventRules) -> int:
+    """The highest-ranked available team under the event's decline rule (`highest_ranked_captain`)."""
+    return highest_ranked_captain(
+        state, ranks, declined_team_may_become_captain=_selection(rules).declined_team_may_become_captain,
+        label=rules.event_key)
 
 
 def next_captain(state: DraftState, ranks: Mapping[int, int], rules: EventRules) -> int:

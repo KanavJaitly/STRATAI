@@ -90,6 +90,9 @@ function OverviewTab({ onOpen }: { onOpen: (tab: string) => void }) {
           <div className="actions">
             <button type="button" onClick={() => onOpen('members')}>Add a team member</button>
             <Link className="button button-secondary" to="/drive-team">Drive team dashboard</Link>
+            <Link className="button button-secondary" to={data.settings.default_event_key
+              ? `/alliance-selection/live?event=${encodeURIComponent(data.settings.default_event_key)}`
+              : '/alliance-selection/live'}>Live alliance selection</Link>
             <Link className="button button-secondary" to="/scouting">Scouting dashboard</Link>
             <Link className="button button-secondary" to="/">All StratAI features</Link>
           </div>

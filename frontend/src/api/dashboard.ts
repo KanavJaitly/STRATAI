@@ -85,6 +85,16 @@ export const DASHBOARD_QUERY_PARAMS: Record<keyof typeof DASHBOARD_ENDPOINTS, re
 /** Locked operations the dashboard deliberately does not call, with the reason (checked by the contract test). */
 export const NOT_CALLED = {
   'GET /predictions/events/{event_key}/ranking': 'deprecated (P7-Q2); the canonical ranking is the analysis ordering',
+  'GET /workspace/alliance-selection/drafts': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'POST /workspace/alliance-selection/drafts': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'GET /workspace/alliance-selection/drafts/{record_id}': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'POST /workspace/alliance-selection/drafts/{record_id}/actions': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'POST /workspace/alliance-selection/drafts/{record_id}/undo': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'POST /workspace/alliance-selection/drafts/{record_id}/corrections': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'POST /workspace/alliance-selection/drafts/{record_id}/close': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'POST /workspace/alliance-selection/drafts/{record_id}/reopen': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'POST /workspace/alliance-selection/drafts/{record_id}/setup': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'GET /workspace/alliance-selection/drafts/{record_id}/recommendations': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
 } as const
 
 type EndpointName = keyof typeof DASHBOARD_ENDPOINTS

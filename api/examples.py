@@ -132,11 +132,19 @@ PROBES = frozenset({"GET /health", "GET /ready"})
 REFUSAL_ONLY = frozenset({"POST /events/{event_key}/alliance-selection/pick-list"})
 
 
+# Locked, but never captured as committed examples: the team-private /workspace operations (Phase 11, 2026-11-04;
+# .agent/phase11/decisions/P11_Q1_Q4_DECISIONS_2026-11-04.md). They need a member's session, and a real capture
+# would publish one team's private draft record and picklist in the repository.
+TEAM_PRIVATE_PREFIX = "/workspace/"
+
+
 def examples_scope(lock_file: Path = LOCK_FILE) -> list[str]:
-    """Every operation that needs examples: each locked operation except the probes (P7-Q4: core features and
-    discovery reads; the human-input operations are not locked and have none)."""
+    """Every operation that needs examples: each locked operation except the probes and the team-private
+    /workspace operations (P7-Q4: core features and discovery reads; the human-input operations are not locked and
+    have none)."""
     operations = json.loads(lock_file.read_text(encoding="utf-8"))["operations"]
-    return sorted(op for op in operations if op not in PROBES)
+    return sorted(op for op in operations
+                  if op not in PROBES and not op.split(" ", 1)[1].startswith(TEAM_PRIVATE_PREFIX))
 
 
 def iter_api_routes(app: FastAPI) -> list[tuple[str, Any]]:
