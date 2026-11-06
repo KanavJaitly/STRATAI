@@ -1,0 +1,93 @@
+{
+  "name": "P11A E2 historical alliance-score benchmark protocol",
+  "version": 1,
+  "frozen_at": "2026-11-05",
+  "status": "Research benchmark protocol, fixed before any execution. It is NOT the P11A pre-registration record (docs/P11-RecommendationIntelligence.md section 20), which belongs in .agent/phase11/decisions/ and needs owner approval. Nothing here approves a threshold.",
+  "spec": "docs/P11-RecommendationIntelligence.md (PROPOSED / NOT APPROVED)",
+  "data_source": {
+    "primary": "Statbotics public API v3 (https://api.statbotics.io/v3): /events and /matches, recorded match results only",
+    "why_not_canonical": "The project's canonical TBA data lives in a PostgreSQL database that is not on this machine, and no TBA API key is configured. Statbotics mirrors TBA's official results and component points.",
+    "used_fields": [
+      "match key, event, comp_level, elim, time",
+      "alliances.team_keys, surrogate_team_keys, dq_team_keys",
+      "result.{red,blue}_{score,no_foul,auto_points,teleop_points,endgame_points}",
+      "event type, start_date, end_date, week"
+    ],
+    "never_used_as_inputs": [
+      "Statbotics EPA values (any)",
+      "Statbotics pred.* fields",
+      "Statbotics metrics.*",
+      "Reason: today's values for past events come from the current model version and are not point-in-time"
+    ],
+    "raw_first": "Every API page is stored unmodified with its URL, fetch time and sha256 before parsing"
+  },
+  "population": {
+    "seasons": [2024, 2025, 2026],
+    "holdout": "2027 is never requested, read or used",
+    "event_types_included": ["regional", "district", "district_cmp", "champs_div"],
+    "event_types_excluded": ["offseason", "preseason", "einstein (no qualification matches)"],
+    "targets": "Every playoff (elim=true) alliance appearance: the three robots listed as playing",
+    "exclusions": [
+      "missing_result: the match has no recorded result",
+      "dq_alliance: the alliance has a DQ'd team (excluded from fitting and from targets; kept for the G2 known-anomaly check)",
+      "parity_failure: auto + teleop + endgame != no_foul, or no_foul > score",
+      "playoff_before_selection: playoff match time is before the last qualification match time",
+      "robot_without_quals: a playing robot has no qualification row at this event",
+      "event_too_small: fewer than 12 qualification matches with results",
+      "no_time: the match has no time"
+    ]
+  },
+  "information_set": {
+    "rule": "A prediction for a playoff alliance uses only (a) this event's qualification results, all of which precede the selection moment (the last qualification match time), and (b) results of events in the same season whose end_date is strictly before this event's start_date",
+    "no_in_playoff_updating": "Earlier playoff matches of the same event are not used (spec E2: features at the selection moment)",
+    "cross_season": "No information crosses seasons: each season has different scoring rules"
+  },
+  "components": {
+    "fitted": ["auto", "teleop", "endgame", "no_foul"],
+    "total": "total = no_foul prediction + the event's mean qualification foul points received (foul points are awarded for the opponent's fouls, so they are not a robot capability)",
+    "definitions": "Statbotics' per-season component definitions; parity auto + teleop + endgame == no_foul is checked on every row"
+  },
+  "models": {
+    "M0_event_mean": "The event's mean qualification alliance points for the component. Predictive SD: SD of qualification alliance rows",
+    "M1_team_average": "The mean of the three robots' qualification alliance averages. Predictive SD: SD of the predictor's qualification residuals",
+    "M2_prior_event": "The sum of each robot's posterior-mean contribution (AS1_joint fit) from its most recent same-season event that ended before this one started. A robot without one gets the event mean/3 (counted and reported). Predictive SD: SD of the predictor's residuals on this event's qualification rows",
+    "M3_plain_opr": "Least-squares component OPR on this event's qualification rows (ridge 1e-6). Predictive variance: s^2 * (1 + a'(A'A + ridge)^-1 a)",
+    "AS1_joint": "Spec A3.2 (iii) + B5: a hierarchical Gaussian model per event and component. x_r = mu + u_r, u_r ~ N(0, tau^2), y = A x + e, e ~ N(0, sigma^2). mu has a flat prior and is integrated. sigma^2 and tau^2 are fitted by REML on the event's qualification rows. Prediction: mean a'x_hat; estimation variance a' Sigma_post a (full covariance); predictive variance adds sigma^2",
+    "AS1_indep_prior": "Spec A3.2 (i) with fallback (iii). Each robot with a same-season prior event: prior N(m_r, v_r + tau_drift^2), where m_r and v_r are the AS1_joint posterior mean and variance from that event. tau_drift^2 is the method-of-moments drift variance from team pairs whose later event ended before this event started (needs >= 30 pairs, else the robot uses the population fallback). Robots without one: x_r ~ N(mu, tau^2), with mu flat and tau^2 from REML",
+    "AS1_plugin": "Diagnostic comparator only (spec: prohibited for serving). As AS1_joint, but mu is fixed at mean(y)/3 from the same rows and treated as known",
+    "AS1_joint_diag": "AS1_joint's mean with the estimation variance computed from the diagonal of Sigma_post only (the independence assumption), for the covariance analysis",
+    "caps": "Not evaluated: no approved GameSpec or B4 configuration exists, so AS-1's nonlinear rules cannot be implemented faithfully"
+  },
+  "metrics": {
+    "accuracy": ["MAE", "RMSE", "mean signed error (pred - actual)", "median absolute error", "absolute-error percentiles 50/75/90/95/99"],
+    "intervals": {"nominal_levels": [0.5, 0.8, 0.9, 0.95], "report": ["coverage", "mean width", "by season", "by event where n >= 10"]},
+    "pairwise": ["red vs blue in each playoff match: sign accuracy of the expected-score difference vs the actual no_foul difference", "predicted vs actual difference (MAE, correlation, calibration slope)", "rate and magnitude of incorrect preferences"],
+    "metric_uncertainty": "Event-cluster bootstrap, 1000 resamples, seed 20261105, percentile 95% CIs"
+  },
+  "delta_pi_grid": {
+    "delta_points_absolute": [0, 2, 5, 10, 15, 20, 30],
+    "delta_relative_to_season_playoff_alliance_sd": [0.05, 0.1, 0.2, 0.3],
+    "pi": [0.6, 0.7, 0.8, 0.9, 0.95, 0.99],
+    "compared_quantity": "Delta = E[V(red)] - E[V(blue)] under AS1_joint estimation uncertainty only (full joint covariance across both alliances' robots at the event). Single-match noise is excluded",
+    "outcomes": "A_preferred: P(Delta > delta) >= pi; B_preferred: P(Delta < -delta) >= pi; practically_equivalent: P(|Delta| < delta) >= pi; unresolved: otherwise",
+    "incorrect_preference": "A preferred alliance scored fewer no_foul points than the other in that match (single-match outcome; noisy by nature)"
+  },
+  "simulations": {
+    "seed": 20261105,
+    "schedules": "Real qualification schedules (team lists only) from a seeded sample of 24 events: 8 per season, stratified by size (<= 36 teams, 37-50, > 50)",
+    "truth": "x_r ~ N(mu, tau^2); y = A x + e",
+    "grid": {
+      "sigma_over_tau": [0.5, 1.0, 2.0, 3.0],
+      "matches_per_team_cap": [3, 6, 9, "all"],
+      "unequal_obs": [false, true],
+      "correlated_noise": ["none", "shared_match_effect_rho_0.5", "robot_specific_heteroscedastic"]
+    },
+    "prior_scenarios": ["indep_individual (prior mean = truth + N(0, d^2), with d = 0.5 tau; prior var = d^2)", "indep_population (known mu with V_mu = tau^2/50; tau^2 known)", "current_event_joint (REML)", "current_event_plugin (diagnostic)"],
+    "replicates_per_cell": 3,
+    "metrics": ["per-robot coverage at 50/80/95", "mean width", "bias", "RMSE vs truth", "random 3-robot alliance coverage with full vs diagonal covariance", "pairwise alliance-difference coverage with full vs diagonal covariance", "per-robot diagnostics: n, w_eff, max |corr| with another robot, distinct partners, variance reduction"],
+    "fairness": "Every prior scenario sees the same simulated data in each replicate; the joint and plug-in models use identical hyperparameters, so only the treatment of mu differs"
+  },
+  "g2": {"standardized_residual": "z = (actual - pred) / predictive SD (AS1_joint)", "candidate_bounds_abs_z": [2.0, 2.5, 3.0, 3.5, 4.0], "known_anomalies": "DQ'd alliances (excluded from targets) are scored for detection only"},
+  "field_audit": {"source": "TBA public OpenAPI schema (https://www.thebluealliance.com/swagger/api_v3.json), fetched and stored with its sha256", "data_level_checks": "Not possible without TBA match payloads (no key, no database): reported as unverified"},
+  "runtime": "Every step is a separate command with --budget-minutes (default 40, max 45). A step that hits its budget stops and writes partial results marked partial=true."
+}

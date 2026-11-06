@@ -20,6 +20,7 @@ import {
 } from '../auth/api'
 import { useAuth } from '../auth/authState'
 import { EventChooser } from './EventChooser'
+import { ExpectedScorePlan } from './ExpectedScorePlan'
 import { seasonOf, useEventName } from './events'
 
 const POLL_MS = 2000
@@ -208,6 +209,7 @@ function DraftBoard({ recordId, eventKey, pollMs }: { recordId: number; eventKey
         </section>
         <RecommendationPanel draft={draft} recs={recs} />
       </div>
+      <ExpectedScorePlan recordId={recordId} seq={draft.record_seq} />
       {recordable && <Recorder draft={draft} onChange={setDraft}
         recommendation={recs.data && recs.failure === null && recs.data.record_seq === draft.record_seq
           && recs.data.status === 'current' ? recs.data : null} />}

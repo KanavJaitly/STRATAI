@@ -1,0 +1,413 @@
+{
+ "schema_source": {
+  "url": "https://www.thebluealliance.com/swagger/api_v3.json",
+  "fetched_at": "2026-11-06T00:09:20.265319+00:00",
+  "sha256": "7cc321d3a2cbc93b95ce42c46bdb6161aedbef3e0e6b60230cc4f1325fdb8d2a",
+  "bytes": 412844
+ },
+ "fields": [
+  {
+   "season": 2024,
+   "field": "autoLineRobot1",
+   "source": "TBA API v3 schema AutoLineRobot_2024",
+   "data_type": "string",
+   "allowed_values": [
+    "No",
+    "Yes"
+   ],
+   "meaning": "Whether the robot left its starting zone in auto (Yes/No)",
+   "kind": "categorical",
+   "component": "auto",
+   "determines": "only the robot's auto-leave points, a sub-component of auto (autoLeavePoints). Auto note points are alliance-level only",
+   "classification": "partial",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2024,
+   "field": "autoLineRobot2",
+   "source": "TBA API v3 schema AutoLineRobot_2024",
+   "data_type": "string",
+   "allowed_values": [
+    "No",
+    "Yes"
+   ],
+   "meaning": "Whether the robot left its starting zone in auto (Yes/No)",
+   "kind": "categorical",
+   "component": "auto",
+   "determines": "only the robot's auto-leave points, a sub-component of auto (autoLeavePoints). Auto note points are alliance-level only",
+   "classification": "partial",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2024,
+   "field": "autoLineRobot3",
+   "source": "TBA API v3 schema AutoLineRobot_2024",
+   "data_type": "string",
+   "allowed_values": [
+    "No",
+    "Yes"
+   ],
+   "meaning": "Whether the robot left its starting zone in auto (Yes/No)",
+   "kind": "categorical",
+   "component": "auto",
+   "determines": "only the robot's auto-leave points, a sub-component of auto (autoLeavePoints). Auto note points are alliance-level only",
+   "classification": "partial",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2024,
+   "field": "endGameRobot1",
+   "source": "TBA API v3 schema EndGameRobot_2024",
+   "data_type": "string",
+   "allowed_values": [
+    "CenterStage",
+    "None",
+    "Parked",
+    "StageLeft",
+    "StageRight"
+   ],
+   "meaning": "The robot's end state: None, Parked, CenterStage, StageLeft or StageRight",
+   "kind": "categorical",
+   "component": "endgame",
+   "determines": "park and on-stage points per robot. Harmony and spotlight bonuses depend on other robots and the microphones (alliance-level), and trap points are recorded per stage, not per robot (trapCenterStage etc.)",
+   "classification": "partial",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2024,
+   "field": "endGameRobot2",
+   "source": "TBA API v3 schema EndGameRobot_2024",
+   "data_type": "string",
+   "allowed_values": [
+    "CenterStage",
+    "None",
+    "Parked",
+    "StageLeft",
+    "StageRight"
+   ],
+   "meaning": "The robot's end state: None, Parked, CenterStage, StageLeft or StageRight",
+   "kind": "categorical",
+   "component": "endgame",
+   "determines": "park and on-stage points per robot. Harmony and spotlight bonuses depend on other robots and the microphones (alliance-level), and trap points are recorded per stage, not per robot (trapCenterStage etc.)",
+   "classification": "partial",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2024,
+   "field": "endGameRobot3",
+   "source": "TBA API v3 schema EndGameRobot_2024",
+   "data_type": "string",
+   "allowed_values": [
+    "CenterStage",
+    "None",
+    "Parked",
+    "StageLeft",
+    "StageRight"
+   ],
+   "meaning": "The robot's end state: None, Parked, CenterStage, StageLeft or StageRight",
+   "kind": "categorical",
+   "component": "endgame",
+   "determines": "park and on-stage points per robot. Harmony and spotlight bonuses depend on other robots and the microphones (alliance-level), and trap points are recorded per stage, not per robot (trapCenterStage etc.)",
+   "classification": "partial",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2025,
+   "field": "autoLineRobot1",
+   "source": "TBA API v3 schema AutoLineRobot_2024",
+   "data_type": "string",
+   "allowed_values": [
+    "No",
+    "Yes"
+   ],
+   "meaning": "Whether the robot left its starting line in auto (Yes/No)",
+   "kind": "categorical",
+   "component": "auto",
+   "determines": "only the robot's auto-mobility points (autoMobilityPoints). Auto coral points are alliance-level only",
+   "classification": "partial",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2025,
+   "field": "autoLineRobot2",
+   "source": "TBA API v3 schema AutoLineRobot_2024",
+   "data_type": "string",
+   "allowed_values": [
+    "No",
+    "Yes"
+   ],
+   "meaning": "Whether the robot left its starting line in auto (Yes/No)",
+   "kind": "categorical",
+   "component": "auto",
+   "determines": "only the robot's auto-mobility points (autoMobilityPoints). Auto coral points are alliance-level only",
+   "classification": "partial",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2025,
+   "field": "autoLineRobot3",
+   "source": "TBA API v3 schema AutoLineRobot_2024",
+   "data_type": "string",
+   "allowed_values": [
+    "No",
+    "Yes"
+   ],
+   "meaning": "Whether the robot left its starting line in auto (Yes/No)",
+   "kind": "categorical",
+   "component": "auto",
+   "determines": "only the robot's auto-mobility points (autoMobilityPoints). Auto coral points are alliance-level only",
+   "classification": "partial",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2025,
+   "field": "endGameRobot1",
+   "source": "TBA API v3 schema EndGameRobot_2025",
+   "data_type": "string",
+   "allowed_values": [
+    "DeepCage",
+    "None",
+    "Parked",
+    "ShallowCage"
+   ],
+   "meaning": "The robot's barge state: None, Parked, ShallowCage or DeepCage",
+   "kind": "categorical",
+   "component": "endgame",
+   "determines": "plausibly the robot's entire barge points. The project's 2025 endgame component is endGameBargePoints (ml/features/score_components.py), so a fixed per-state point table would make the per-robot points sum to it exactly",
+   "classification": "unverified",
+   "why_unverified": "The strongest candidate to qualify for the whole 2025 endgame component. It needs: (a) the point table pre-registered under an approved 2025 GameSpec (none exists); (b) confirmation that no alliance-level term enters endGameBargePoints; (c) the parity check on every stored alliance row. None of these is possible here",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2025,
+   "field": "endGameRobot2",
+   "source": "TBA API v3 schema EndGameRobot_2025",
+   "data_type": "string",
+   "allowed_values": [
+    "DeepCage",
+    "None",
+    "Parked",
+    "ShallowCage"
+   ],
+   "meaning": "The robot's barge state: None, Parked, ShallowCage or DeepCage",
+   "kind": "categorical",
+   "component": "endgame",
+   "determines": "plausibly the robot's entire barge points. The project's 2025 endgame component is endGameBargePoints (ml/features/score_components.py), so a fixed per-state point table would make the per-robot points sum to it exactly",
+   "classification": "unverified",
+   "why_unverified": "The strongest candidate to qualify for the whole 2025 endgame component. It needs: (a) the point table pre-registered under an approved 2025 GameSpec (none exists); (b) confirmation that no alliance-level term enters endGameBargePoints; (c) the parity check on every stored alliance row. None of these is possible here",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2025,
+   "field": "endGameRobot3",
+   "source": "TBA API v3 schema EndGameRobot_2025",
+   "data_type": "string",
+   "allowed_values": [
+    "DeepCage",
+    "None",
+    "Parked",
+    "ShallowCage"
+   ],
+   "meaning": "The robot's barge state: None, Parked, ShallowCage or DeepCage",
+   "kind": "categorical",
+   "component": "endgame",
+   "determines": "plausibly the robot's entire barge points. The project's 2025 endgame component is endGameBargePoints (ml/features/score_components.py), so a fixed per-state point table would make the per-robot points sum to it exactly",
+   "classification": "unverified",
+   "why_unverified": "The strongest candidate to qualify for the whole 2025 endgame component. It needs: (a) the point table pre-registered under an approved 2025 GameSpec (none exists); (b) confirmation that no alliance-level term enters endGameBargePoints; (c) the parity check on every stored alliance row. None of these is possible here",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2026,
+   "field": "autoTowerRobot1",
+   "source": "TBA API v3 schema TowerRobot_2026",
+   "data_type": "string",
+   "allowed_values": [
+    "Level1",
+    "Level2",
+    "Level3",
+    "None"
+   ],
+   "meaning": "The robot's tower level reached in auto: None, Level1, Level2 or Level3",
+   "kind": "categorical",
+   "component": "auto",
+   "determines": "at most the robot's auto tower points. 2026 auto points also include fuel scored (hubScore), which is alliance-level, so this cannot be the whole auto component",
+   "classification": "partial",
+   "note": "Whether the level fully determines the robot's auto tower points is itself unverified: no approved 2026 GameSpec, and no payloads to check against autoTowerPoints",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2026,
+   "field": "autoTowerRobot2",
+   "source": "TBA API v3 schema TowerRobot_2026",
+   "data_type": "string",
+   "allowed_values": [
+    "Level1",
+    "Level2",
+    "Level3",
+    "None"
+   ],
+   "meaning": "The robot's tower level reached in auto: None, Level1, Level2 or Level3",
+   "kind": "categorical",
+   "component": "auto",
+   "determines": "at most the robot's auto tower points. 2026 auto points also include fuel scored (hubScore), which is alliance-level, so this cannot be the whole auto component",
+   "classification": "partial",
+   "note": "Whether the level fully determines the robot's auto tower points is itself unverified: no approved 2026 GameSpec, and no payloads to check against autoTowerPoints",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2026,
+   "field": "autoTowerRobot3",
+   "source": "TBA API v3 schema TowerRobot_2026",
+   "data_type": "string",
+   "allowed_values": [
+    "Level1",
+    "Level2",
+    "Level3",
+    "None"
+   ],
+   "meaning": "The robot's tower level reached in auto: None, Level1, Level2 or Level3",
+   "kind": "categorical",
+   "component": "auto",
+   "determines": "at most the robot's auto tower points. 2026 auto points also include fuel scored (hubScore), which is alliance-level, so this cannot be the whole auto component",
+   "classification": "partial",
+   "note": "Whether the level fully determines the robot's auto tower points is itself unverified: no approved 2026 GameSpec, and no payloads to check against autoTowerPoints",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2026,
+   "field": "endGameTowerRobot1",
+   "source": "TBA API v3 schema TowerRobot_2026",
+   "data_type": "string",
+   "allowed_values": [
+    "Level1",
+    "Level2",
+    "Level3",
+    "None"
+   ],
+   "meaning": "The robot's tower level at the end of the match: None, Level1, Level2 or Level3",
+   "kind": "categorical",
+   "component": "endgame",
+   "determines": "at most the robot's endgame tower points. The project's 2026 endgame component is hubScore.endgamePoints + endGameTowerPoints (ml/features/score_components.py); the fuel part is alliance-level, so this cannot be the whole endgame component",
+   "classification": "partial",
+   "note": "Whether it exactly determines the tower sub-component is unverified, for the same reasons as autoTowerRobot",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2026,
+   "field": "endGameTowerRobot2",
+   "source": "TBA API v3 schema TowerRobot_2026",
+   "data_type": "string",
+   "allowed_values": [
+    "Level1",
+    "Level2",
+    "Level3",
+    "None"
+   ],
+   "meaning": "The robot's tower level at the end of the match: None, Level1, Level2 or Level3",
+   "kind": "categorical",
+   "component": "endgame",
+   "determines": "at most the robot's endgame tower points. The project's 2026 endgame component is hubScore.endgamePoints + endGameTowerPoints (ml/features/score_components.py); the fuel part is alliance-level, so this cannot be the whole endgame component",
+   "classification": "partial",
+   "note": "Whether it exactly determines the tower sub-component is unverified, for the same reasons as autoTowerRobot",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  },
+  {
+   "season": 2026,
+   "field": "endGameTowerRobot3",
+   "source": "TBA API v3 schema TowerRobot_2026",
+   "data_type": "string",
+   "allowed_values": [
+    "Level1",
+    "Level2",
+    "Level3",
+    "None"
+   ],
+   "meaning": "The robot's tower level at the end of the match: None, Level1, Level2 or Level3",
+   "kind": "categorical",
+   "component": "endgame",
+   "determines": "at most the robot's endgame tower points. The project's 2026 endgame component is hubScore.endgamePoints + endGameTowerPoints (ml/features/score_components.py); the fuel part is alliance-level, so this cannot be the whole endgame component",
+   "classification": "partial",
+   "note": "Whether it exactly determines the tower sub-component is unverified, for the same reasons as autoTowerRobot",
+   "numerical_points": false,
+   "directly_measures_complete_contribution": false,
+   "exact_conversion_possible": "unverified (no approved GameSpec; no payloads to check)",
+   "reconciles_with_alliance_breakdown": "unverified (no TBA match payloads available here)",
+   "availability": "unverified (no TBA match payloads available here)"
+  }
+ ],
+ "counts": {
+  "qualifies": 0,
+  "partial": 15,
+  "does_not_qualify": 0,
+  "unverified": 3
+ },
+ "conclusion": "No TBA per-robot field for 2024-2026 currently qualifies as individual numerical ground truth. Every one is categorical. Most can determine only a sub-component. The 2025 endGameRobot fields are the one candidate for a whole component (2025 endgame), and remain unverified until an approved 2025 GameSpec, a pre-registered conversion, and a parity check on stored payloads exist."
+}

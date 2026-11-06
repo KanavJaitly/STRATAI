@@ -10,6 +10,8 @@
     POST /workspace/alliance-selection/drafts/{record_id}/reopen
     POST /workspace/alliance-selection/drafts/{record_id}/setup          refresh the setup from the event's data
     GET  /workspace/alliance-selection/drafts/{record_id}/recommendations  primary and backup picks for the state
+    GET  /workspace/alliance-selection/drafts/{record_id}/plan             P11A experimental expected-score plan
+    GET  /workspace/alliance-selection/drafts/{record_id}/teams/{team_number}/profile  P11A team profile
 
 **Thin wrappers over workspaces.live_draft and workspaces.draft_recommendations.**
 - The workspace always comes from the session.
@@ -21,6 +23,12 @@
 **The recommendations** come from the P6-M7 engine when it serves. Otherwise they come from the pre-declared
 fallback rule P11-FB1 (`not_validated`, no probability, with the engine's refusal beside it). Every response
 carries the record sequence it reflects. The locked alliance-selection operations are not changed.
+
+**The P11A plan and profile** (docs/P11-RecommendationIntelligence.md, PROPOSED; workspaces.alliance_plan) are
+additive and experimental. They rank by expected alliance score in points, never by chance of winning, and are served
+`not_validated` and `not_calibrated`. Their response types (`ml.alliance.contract`, shared with the offline CLI) pin
+those labels, and FastAPI validates every response against them. They do not change `/recommendations` or
+P11-Q1's precedence. Without an approved season scoring configuration, which no season has, the plan is withheld.
 """
 
 from __future__ import annotations
@@ -33,11 +41,13 @@ from fastapi import APIRouter, Depends, Path, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from api.contract import StrategyOdds, Validation, error_responses
-from api.dependencies import get_database, get_epa_source, get_playoff_models, get_ranking_model
+from api.dependencies import get_database, get_epa_source, get_playoff_models, get_ranking_model, get_settings
 from api.routes.alliance_selection import CandidateOut, _candidate, _odds
 from api.session import call, require_csrf, require_permission, require_session
 from database.connection import Database
-from workspaces import draft_log, draft_recommendations, live_draft
+from data.config import Settings
+from ml.alliance.contract import AlliancePlanOut, TeamProfileOut
+from workspaces import alliance_plan, draft_log, draft_recommendations, live_draft
 from workspaces.sessions import SessionContext
 
 router = APIRouter(prefix="/workspace/alliance-selection", tags=["live alliance selection"])
@@ -410,6 +420,34 @@ def get_recommendations(record_id: int = Path(ge=1), database: Database = Depend
         backups=[_recommended(c, status) for c in out.backups], unranked_available=out.unranked_available,
         excluded=[ExcludedOut(team_number=t, reason=r) for t, r in out.excluded], movement=out.movement,
         provenance=out.provenance, timing_ms=out.timing_ms)
+
+
+
+@router.get("/drafts/{record_id}/plan", response_model=AlliancePlanOut, dependencies=_VIEWS,
+            summary="P11A: the experimental expected-score plan for the record's current state",
+            description="First picks with conditional second picks, the next pick, or (for a team that is not "
+                        "selecting) the alliances it could join, ranked by expected alliance score in points under the "
+                        "approved season scoring configuration. Experimental, not_validated, not_calibrated, no win "
+                        "probability. Separate from /recommendations, which is unchanged. Withheld, with the reason, "
+                        "when a gate is unmet (for example no approved scoring configuration or no snapshot).",
+            responses=error_responses({**_READ, 404: ["draft_not_found"]}))
+def get_plan(record_id: int = Path(ge=1), database: Database = Depends(get_database),
+             context: SessionContext = Depends(require_session), settings: Settings = Depends(get_settings)) -> Any:
+    return call(alliance_plan.plan_for_record, database, context, record_id,
+                snapshot_dir=settings.p11a_snapshot_dir)
+
+
+@router.get("/drafts/{record_id}/teams/{team_number}/profile", response_model=TeamProfileOut, dependencies=_VIEWS,
+            summary="P11A: one team's profile at the record's event (experimental)",
+            description="Its alliances' observed qualification scores with alliance-level residuals (never attributed "
+                        "to the robot), its estimated contributions (not validated), scouting, prior, and its alliance "
+                        "fit with your team when the season scoring configuration is approved.",
+            responses=error_responses({**_READ, 404: ["draft_not_found"]}))
+def get_team_profile(record_id: int = Path(ge=1), team_number: int = Path(ge=1, le=99999),
+                     database: Database = Depends(get_database), context: SessionContext = Depends(require_session),
+                     settings: Settings = Depends(get_settings)) -> Any:
+    return call(alliance_plan.profile_for_record, database, context, record_id, team_number,
+                snapshot_dir=settings.p11a_snapshot_dir)
 
 
 __all__ = ["RULE_CODES", "router", "draft_log"]

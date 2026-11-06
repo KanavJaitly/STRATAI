@@ -354,6 +354,9 @@ PHASE11_PATHS: frozenset[str] = frozenset({
     "/workspace/alliance-selection/drafts/{record_id}/close", "/workspace/alliance-selection/drafts/{record_id}/reopen",
     "/workspace/alliance-selection/drafts/{record_id}/setup",
     "/workspace/alliance-selection/drafts/{record_id}/recommendations",
+    # P11A (2026-11-06, workspaces/alliance_plan.py): the experimental plan and team profile, additive.
+    "/workspace/alliance-selection/drafts/{record_id}/plan",
+    "/workspace/alliance-selection/drafts/{record_id}/teams/{team_number}/profile",
 })
 
 

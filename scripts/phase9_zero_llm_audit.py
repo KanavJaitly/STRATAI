@@ -174,6 +174,10 @@ OPERATION_CLASSES = {
     "POST /workspace/alliance-selection/drafts/{record_id}/reopen": NOT_OUTPUT,
     "POST /workspace/alliance-selection/drafts/{record_id}/setup": NOT_OUTPUT,
     "GET /workspace/alliance-selection/drafts/{record_id}/recommendations": OUTPUT,
+    # P11A (classified 2026-11-06, workspaces/alliance_plan.py): the experimental expected-score plan and the team
+    # profile are outputs (estimates and rankings from ml.alliance: a Gaussian estimator and the scoring rules). No LLM.
+    "GET /workspace/alliance-selection/drafts/{record_id}/plan": OUTPUT,
+    "GET /workspace/alliance-selection/drafts/{record_id}/teams/{team_number}/profile": OUTPUT,
 }
 
 
@@ -414,6 +418,12 @@ def route_calls(event: str, database_url: str) -> list:
         # is a core package) and by tests/test_phase11_recommendations.py.
         ("GET", "/workspace/alliance-selection/drafts/{record_id}/recommendations",
          "/workspace/alliance-selection/drafts/1/recommendations", None),
+        # P11A: workspace routes too (not_authenticated without a session); the plan logic is covered with every LLM
+        # SDK blocked by the static import check (ml and workspaces are core) and by tests/test_p11a_*.py.
+        ("GET", "/workspace/alliance-selection/drafts/{record_id}/plan",
+         "/workspace/alliance-selection/drafts/1/plan", None),
+        ("GET", "/workspace/alliance-selection/drafts/{record_id}/teams/{team_number}/profile",
+         "/workspace/alliance-selection/drafts/1/teams/254/profile", None),
     ]
 
 

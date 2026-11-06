@@ -1,0 +1,45 @@
+{
+  "name": "P11A E2 follow-up: playoff bias, short-schedule reliability",
+  "version": 1,
+  "frozen_at": "2026-11-06",
+  "status": "Fixed before any follow-up analysis was run. It does not change PROTOCOL.json, the original E2 results, the P11A specification, or any threshold. Every correction here is a research candidate, not an approved method.",
+  "inputs": "The original E2 records (results/e2_records_<season>.json) and populations (cache/population). The same leakage rules as PROTOCOL.json. 2027 never used.",
+  "F1_bias_decomposition": {
+    "F1a_distributions": "Per event: mean qualification vs mean playoff alliance points (no_foul and components). Per playoff alliance: AS1_joint residual (actual - pred).",
+    "F1b_by_event": "Event-mean AS1_joint residual (no_foul): distribution, share of events > 0, median, 10% trimmed mean, by season, event type, week and size. Influence: bias after removing the 5% of events with the largest absolute mean residual.",
+    "F1c_within_qualification_trend": "Per event and component, refit AS1_joint (same REML method) on the first two-thirds of qualification rows by time. Predict (i) the last third of qualification rows and (ii) the playoff rows. The mean residual of (i) measures late-qualification drift; (ii) is compared with the full-qualification playoff residual.",
+    "F1d_strength": "Playoff residual by the alliance's predicted-strength tercile among the event's playoff alliances, and held-out late-qualification residual by predicted-strength tercile (a regression-to-the-mean check of the shrinkage).",
+    "F1e_round": "Playoff residual by comp_level (sf, f) and by the order of the alliance's playoff appearances (1st, 2nd, 3rd+).",
+    "F1f_components_and_data": "Bias by component and season (from the original records), and with vs without fouls (total vs no_foul). The exclusions are as logged; no excluded row is reintroduced."
+  },
+  "F2_correction_candidates": {
+    "forms": {
+      "C1_multiplicative": "pred' = m * pred, with m = sum(actual) / sum(pred) over the training rows; sd' = k * sd, with k = RMS((actual - m*pred) / sd) over the training rows",
+      "C2_z_shift": "pred' = pred + c * sd, with c = mean((actual - pred) / sd) over the training rows; sd' = k * sd, with k = RMS((actual - pred') / sd) over the training rows"
+    },
+    "model": "AS1_joint, no_foul, from the original E2 records (no refitting)",
+    "designs": {
+      "W_within_season": "Per season: training = events whose end_date is strictly before the season's median event start_date; test = events starting on or after that date. Parameters are fitted per season on its training events only",
+      "X_cross_season": "Training = all 2024 and 2025 events; test = all 2026 events (both forms are scale-free)"
+    },
+    "evaluation_on_test_only": ["MAE", "RMSE", "bias", "coverage 50/80/90/95", "mean 80% width", "paired MAE difference vs uncorrected, event-cluster bootstrap 95% CI (1000 resamples, seed 20261106)"],
+    "rule": "Both forms are reported for both designs. Nothing is selected after seeing test results, and no correction is applied to the original E2 results"
+  },
+  "F3_short_schedule": {
+    "seed": 20261106,
+    "schedules": "The same 24 events as the original simulations (seed 20261105 sampling)",
+    "grid": {"sigma_over_tau": [1.0, 3.0], "matches_per_team_cap": [3, 6, "none"], "noise": "independent", "unequal_obs": false, "replicates": 3},
+    "variants": {
+      "V1_reml_plugin": "The current method: sigma^2 and tau^2 from REML, plugged in",
+      "V2_oracle": "The true sigma^2 and tau^2 (isolates hyperparameter estimation)",
+      "V3_sigma_known": "The true sigma^2, with tau^2 from REML conditional on it",
+      "V4_grid_integrated": "Hyperparameters integrated: a 15 x 15 grid over log(sigma^2/var(y)) and log(tau^2/var(y)) in [-7, 1]; weights proportional to exp(-negll_REML/2) (flat prior on the logs); posterior = the weighted mixture"
+    },
+    "diagnostics": ["REML sigma-hat^2 / true sigma^2 (collapse = ratio < 0.25)", "a data-only collapse flag: REML sigma-hat^2 / var(y) < 0.05", "per-robot coverage 50/80/95 and width per variant and cap"],
+    "criteria_check": {
+      "candidates": {"n_min": [4, 6], "max_abs_corr": [0.4, 0.5], "min_partners": [12], "w_min": [0.4, 0.5]},
+      "measure": "Under V1 and V4: the share of robots passing all of {n >= 4, max|corr| <= 0.5, partners >= 12, w_eff >= 0.4}, and the stricter {n >= 6, max|corr| <= 0.4, partners >= 12, w_eff >= 0.5}, plus the coverage of passing and failing robots, by cap; also with the collapse flag added"
+    }
+  },
+  "runtime": "F1/F2: one task (estimated < 15 minutes). F3: one task per sigma/tau (estimated < 15 minutes each). Each has --budget-minutes (max 45) and reports partial results if it stops."
+}

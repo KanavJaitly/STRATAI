@@ -173,3 +173,88 @@ Applying 0013 to a deployed database is a separate, authorized step (§3.6).
 | Every route as each role and another team, CSRF, concurrency, append-only, idempotency | `tests/test_phase11_live_draft_api.py` | written; **not run**: no PostgreSQL on the build machine |
 | Real past events replayed action by action (seeded sample, ≤ 45 min) | `python -m scripts.phase11_replay` | harness fixture-tested; **not run** on real data |
 | The page: recording, override, stale, withheld, start with manual rules, permission, axe | `frontend/src/workspace/LiveDraftPage.test.tsx` | passing |
+
+## P11A: the experimental expected-score plan (implementation in progress)
+
+Spec: `docs/P11-RecommendationIntelligence.md` (PROPOSED, NOT APPROVED, unchanged). Authorization and working
+assumptions: `.agent/phase11/decisions/P11A_IMPLEMENTATION_START_2026-11-06.md`. Evidence behind the labels:
+`docs/P11-E2-Benchmark-Report.md`.
+
+**What it is.** A separate, additive plan beside the P11-Q1 recommendation. It ranks by **expected alliance score in
+points**, under a reviewed season scoring configuration, never by chance of winning.
+
+| Part | Module |
+|---|---|
+| Season scoring configuration (B4): references the approved GameSpec by sha256; approval is a human review | `ml/alliance/scoring_config.py`, `data/season_scoring/` (empty: no season is configured) |
+| Estimator (A3): hierarchical Gaussian, REML, joint posterior covariance, independent priors, diagnostics | `ml/alliance/estimator.py` |
+| Alliance value (B5), first/conditional second/next/fourth-member plan (C, D, E), comparisons (B6) | `ml/alliance/planner.py` |
+| Team profile (G2): observed alliance matches with alliance-level residuals, estimates, scouting, prior, fit | `ml/alliance/profile.py` |
+| Event snapshot (§14): everything before `as_of`, integrity-hashed, leakage-checked | `ml/alliance/snapshot.py` |
+| Phase 11 adapter: draft record → planner input, snapshot folder, withheld reasons | `workspaces/alliance_plan.py` |
+| Offline CLI: export (read-only), plan, profile | `scripts/p11a_snapshot.py` |
+| Web panel (closed by default, below "Your picks") | `frontend/src/workspace/ExpectedScorePlan.tsx` |
+
+**API (additive, locked, classified as outputs; `alliance_selection` to read):**
+- `GET /workspace/alliance-selection/drafts/{record_id}/plan`
+- `GET /workspace/alliance-selection/drafts/{record_id}/teams/{team_number}/profile`
+
+`/recommendations` and P11-Q1's precedence (P6-M7, else P11-FB1) are **unchanged**. Promoting the plan into
+`/recommendations` would change P11-Q1, so it is not done. The smallest compatible route, if wanted later, is a new
+optional `source` value plus a human decision; it is not proposed as approved.
+
+**Availability** comes only from the record: its rules (`DraftView.availability()`) and the same next-turn exclusions
+P11-FB1 applies (`draft_recommendations.selectable_teams`, shared by P11-FB1, the P6-M7 branch and P11A). Nothing predicts other captains' picks
+(`availability_model: not_modelled`, `predicted: null`).
+
+**Labels the response types pin:** `objective: expected_alliance_score`, `unit: points`,
+`win_probability.status: not_available`, `validation_status: not_validated`, `interval_status: not_calibrated`,
+`availability_model: not_modelled`, comparison `outcome: unresolved`. Thresholds are `candidate_unapproved`.
+
+**Withheld (HTTP 200, with a code):** `not_configured`, `record_needs_review`, `snapshot_unavailable`
+(`P11A_SNAPSHOT_DIR` unset or no file), `snapshot_invalid`, `scoring_config_not_approved`, `game_spec_not_approved`,
+`game_spec_mismatch`, `scoring_config_not_registered`, `estimator_fit_unreliable` (a degenerate fit only),
+`team_without_estimate`, `no_remaining_turn`, `invalid_position`.
+**Today every real event's plan is withheld:** no season scoring configuration is entered or approved.
+
+**Snapshots.** `python -m scripts.p11a_snapshot export --event KEY --as-of ISO --out DIR` reads the database in one
+read-only transaction, prints the destination it reads, calls no external API, and writes
+`<event>__<as_of>__<id>.json`. The server reads the newest file for the event from `P11A_SNAPSHOT_DIR`. A ranking
+fetched after `as_of` is left out. The export is **unverified against a real database** (no PostgreSQL on the build
+machine).
+
+**Offline.** `plan` and `profile` need only the snapshot (which embeds the configuration and GameSpec) and, for the
+plan, a JSON list of draft log entries. `tests/test_p11a_offline.py` runs them under macOS `sandbox-exec` with the
+network denied, with a local-listener positive control. Syncing a device's draft log is Phase 12, not built here.
+
+### P11A hardening (2026-11-06)
+
+Decision record: `.agent/phase11/decisions/P11A_HARDENING_2026-11-06.md`.
+
+- **Collapse check.** The ratio σ̂²/var(y) < 0.05 measures the residual share of the variance (about r²/(3 + r²), with
+  r = σ/τ), not degeneracy.
+  - In a pre-declared simulation (`research/p11a_hardening/collapse_check.py`), at σ/τ = 0.2 it flagged 100% of
+    accurate fits, which had nominal coverage.
+  - Neither the optimizer-bound check nor a likelihood-ratio check detected short-schedule collapse (0–8%).
+  - It is now a reported, **non-authoritative** screen (`fit_diagnostics.*.collapse_screen`). Only a degenerate
+    optimum (σ̂² on its bound) withholds a plan.
+  - Short-schedule collapse stays an open limitation, with the threshold unchanged.
+- **One availability definition.** `draft_recommendations.selectable_teams` is used by P11-FB1, the P6-M7 branch and
+  P11A. A random-draft regression test checks they agree at every state, under five rule variants.
+- **Runtime contract.**
+  - `ml/alliance/contract.py` types every P11A output. The API validates each response against it (a tampered
+    result is a 500, never served), and the offline CLI validates before writing.
+  - The profile is fully typed: observed matches, estimates with SD, sample sizes and prior influence, scouting with
+    its computation time, the prior, data times (`as_of`, `data_through`) and provenance. Absent sections carry a
+    reason.
+- **Trust root.**
+  - A configuration's approval is self-attested JSON, so a snapshot could have carried its own. Now only the
+    registered approved configuration in `data/season_scoring/` counts: the snapshot's copy must match it exactly.
+  - No real season is registered.
+- **Leakage.** The snapshot also excludes:
+  - a qualification result posted after `as_of` (a delayed match);
+  - a scouting summary computed after `as_of`.
+- **Identical lineups.** Two first picks whose best lineups are the same three robots now compare as `same_lineup`.
+  The comparison previously reported floating-point noise.
+- **Verification on PostgreSQL** is prepared, not run: `docs/p11a_verification.md`, `scripts/p11a_db_preflight.py`
+  and `tests/test_p11a_db.py`.
+- **E5** is prepared, not registered and not run: `research/p11a_e5/`.
