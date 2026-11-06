@@ -95,6 +95,8 @@ export const NOT_CALLED = {
   'POST /workspace/alliance-selection/drafts/{record_id}/reopen': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
   'POST /workspace/alliance-selection/drafts/{record_id}/setup': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
   'GET /workspace/alliance-selection/drafts/{record_id}/recommendations': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'GET /workspace/alliance-selection/drafts/{record_id}/plan': 'P11A: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
+  'GET /workspace/alliance-selection/drafts/{record_id}/teams/{team_number}/profile': 'P11A: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
 } as const
 
 type EndpointName = keyof typeof DASHBOARD_ENDPOINTS

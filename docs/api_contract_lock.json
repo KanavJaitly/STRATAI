@@ -1274,6 +1274,91 @@
     }
    }
   },
+  "GET /workspace/alliance-selection/drafts/{record_id}/plan": {
+   "deprecated": false,
+   "operation_id": "get_plan_workspace_alliance_selection_drafts__record_id__plan_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "record_id",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/AlliancePlanOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "permission_denied"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "draft_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "live_draft_unavailable"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
   "GET /workspace/alliance-selection/drafts/{record_id}/recommendations": {
    "deprecated": false,
    "operation_id": "get_recommendations_workspace_alliance_selection_drafts__record_id__recommendations_get",
@@ -1294,6 +1379,101 @@
      "content": {
       "application/json": {
        "$ref": "#/components/schemas/RecommendationsOut"
+      }
+     }
+    },
+    "401": {
+     "codes": [
+      "not_authenticated"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "403": {
+     "codes": [
+      "permission_denied"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "404": {
+     "codes": [
+      "draft_not_found"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "409": {
+     "codes": [
+      "live_draft_unavailable"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "422": {
+     "codes": [
+      "validation_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    },
+    "500": {
+     "codes": [
+      "internal_error"
+     ],
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/ErrorResponse"
+      }
+     }
+    }
+   }
+  },
+  "GET /workspace/alliance-selection/drafts/{record_id}/teams/{team_number}/profile": {
+   "deprecated": false,
+   "operation_id": "get_team_profile_workspace_alliance_selection_drafts__record_id__teams__team_number__profile_get",
+   "parameters": [
+    {
+     "in": "path",
+     "name": "record_id",
+     "required": true,
+     "schema": {
+      "minimum": 1,
+      "type": "integer"
+     }
+    },
+    {
+     "in": "path",
+     "name": "team_number",
+     "required": true,
+     "schema": {
+      "maximum": 99999,
+      "minimum": 1,
+      "type": "integer"
+     }
+    }
+   ],
+   "request_body": null,
+   "responses": {
+    "200": {
+     "content": {
+      "application/json": {
+       "$ref": "#/components/schemas/TeamProfileOut"
       }
      }
     },
@@ -3423,6 +3603,38 @@
    "operations_added": [],
    "operations_removed": [],
    "reason": "Phase 11 review fix: UnavailableOut.reason gains projected_captain (captain_may_accept_higher_alliance=False applied to the pool); Phase 11 entries only"
+  },
+  {
+   "added_leaves": 192,
+   "changed": [],
+   "command": "lock",
+   "date": "2026-11-05",
+   "decision": null,
+   "operations_added": [
+    "GET /workspace/alliance-selection/drafts/{record_id}/plan",
+    "GET /workspace/alliance-selection/drafts/{record_id}/teams/{team_number}/profile"
+   ],
+   "operations_removed": [],
+   "reason": "P11A (2026-11-06): experimental expected-score plan and team profile, additive; /recommendations unchanged"
+  },
+  {
+   "added_leaves": 150,
+   "changed": [
+    "/schemas/AlliancePlanOut/properties/withheld/anyOf",
+    "/schemas/P11AAvailabilityOut/properties/confirmed_unavailable/items/$ref",
+    "/schemas/P11ACardOut/properties/scouting/anyOf",
+    "/schemas/P11AComparisonOut/properties/p_delta_positive/type",
+    "/schemas/P11ADestinationOut/properties/status/anyOf",
+    "/schemas/P11APlanOut/required",
+    "/schemas/TeamProfileOut/properties/profile/anyOf",
+    "/schemas/TeamProfileOut/properties/withheld/anyOf"
+   ],
+   "command": "relock",
+   "date": "2026-11-06",
+   "decision": ".agent/phase11/decisions/P11A_HARDENING_2026-11-06.md 2026-11-06",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P11A hardening: shared runtime contract (ml/alliance/contract.py), typed profile, registry trust root, non-authoritative collapse screen; only the two P11A operations change"
   }
  ],
  "schemas": {
@@ -3529,6 +3741,77 @@
     "picks",
     "projected_captain",
     "seed"
+   ],
+   "type": "object"
+  },
+  "AlliancePlanOut": {
+   "properties": {
+    "computed_at": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "experimental": {
+     "const": true,
+     "type": "boolean"
+    },
+    "plan": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11APlanOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "record_id": {
+     "type": "integer"
+    },
+    "record_seq": {
+     "type": "integer"
+    },
+    "relation_to_recommendations": {
+     "type": "string"
+    },
+    "source": {
+     "const": "p11a_expected_score_plan",
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "current",
+      "withheld"
+     ],
+     "type": "string"
+    },
+    "timing_ms": {
+     "additionalProperties": {
+      "type": "number"
+     },
+     "type": "object"
+    },
+    "withheld": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11ACodeMessage"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "computed_at",
+    "experimental",
+    "plan",
+    "record_id",
+    "record_seq",
+    "relation_to_recommendations",
+    "source",
+    "status",
+    "timing_ms",
+    "withheld"
    ],
    "type": "object"
   },
@@ -6027,6 +6310,1362 @@
    ],
    "type": "object"
   },
+  "P11AAllianceFitOut": {
+   "properties": {
+    "expected_alliance_score": {
+     "type": "number"
+    },
+    "lineup": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "note": {
+     "type": "string"
+    },
+    "unit": {
+     "const": "points",
+     "type": "string"
+    },
+    "with_team": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "expected_alliance_score",
+    "lineup",
+    "note",
+    "unit",
+    "with_team"
+   ],
+   "type": "object"
+  },
+  "P11AAnomalyOut": {
+   "properties": {
+    "reason": {
+     "type": "string"
+    },
+    "status": {
+     "const": "not_flagged",
+     "type": "string"
+    }
+   },
+   "required": [
+    "reason",
+    "status"
+   ],
+   "type": "object"
+  },
+  "P11AAvailabilityOut": {
+   "properties": {
+    "confirmed_available": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "confirmed_unavailable": {
+     "items": {
+      "$ref": "#/components/schemas/P11ATeamReason"
+     },
+     "type": "array"
+    },
+    "no_estimate": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "predicted": {
+     "type": "null"
+    }
+   },
+   "required": [
+    "confirmed_available",
+    "confirmed_unavailable",
+    "no_estimate"
+   ],
+   "type": "object"
+  },
+  "P11ACardOut": {
+   "properties": {
+    "availability": {
+     "const": "confirmed_available",
+     "type": "string"
+    },
+    "conditional_seconds": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/components/schemas/P11ATeamScoreOut"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "estimation_interval_80": {
+     "items": {
+      "type": "number"
+     },
+     "type": "array"
+    },
+    "expected_alliance_score": {
+     "type": "number"
+    },
+    "interval_note": {
+     "type": "string"
+    },
+    "lineup": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "lineup_gain": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "rank": {
+     "type": "integer"
+    },
+    "robot": {
+     "$ref": "#/components/schemas/P11ARobotOut"
+    },
+    "scouting": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11AScoutingOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "statements": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "availability",
+    "estimation_interval_80",
+    "expected_alliance_score",
+    "interval_note",
+    "lineup",
+    "rank",
+    "robot",
+    "scouting",
+    "statements",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "P11ACodeMessage": {
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "code",
+    "message"
+   ],
+   "type": "object"
+  },
+  "P11ACollapseScreenOut": {
+   "properties": {
+    "flagged": {
+     "type": "boolean"
+    },
+    "note": {
+     "type": "string"
+    },
+    "ratio": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "status": {
+     "const": "non_authoritative",
+     "type": "string"
+    },
+    "threshold": {
+     "type": "number"
+    }
+   },
+   "required": [
+    "flagged",
+    "note",
+    "ratio",
+    "status",
+    "threshold"
+   ],
+   "type": "object"
+  },
+  "P11ACombinationOut": {
+   "properties": {
+    "expected_alliance_score": {
+     "type": "number"
+    },
+    "picks": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    }
+   },
+   "required": [
+    "expected_alliance_score",
+    "picks"
+   ],
+   "type": "object"
+  },
+  "P11AComparisonOut": {
+   "properties": {
+    "a": {
+     "type": "integer"
+    },
+    "b": {
+     "type": "integer"
+    },
+    "compared": {
+     "type": "string"
+    },
+    "delta_interval_80": {
+     "items": {
+      "type": "number"
+     },
+     "type": "array"
+    },
+    "delta_mean": {
+     "type": "number"
+    },
+    "outcome": {
+     "const": "unresolved",
+     "type": "string"
+    },
+    "p_delta_positive": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "reason": {
+     "enum": [
+      "comparison_threshold_not_approved",
+      "same_lineup"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "a",
+    "b",
+    "compared",
+    "delta_interval_80",
+    "delta_mean",
+    "outcome",
+    "p_delta_positive",
+    "reason"
+   ],
+   "type": "object"
+  },
+  "P11AComponentOut": {
+   "properties": {
+    "estimate": {
+     "type": "number"
+    },
+    "kind": {
+     "const": "estimated",
+     "type": "string"
+    },
+    "labels": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "prior_kind": {
+     "enum": [
+      "current_event_joint",
+      "prior_event_individual"
+     ],
+     "type": "string"
+    },
+    "sd": {
+     "type": "number"
+    },
+    "w_eff": {
+     "type": "number"
+    }
+   },
+   "required": [
+    "estimate",
+    "kind",
+    "labels",
+    "prior_kind",
+    "sd",
+    "w_eff"
+   ],
+   "type": "object"
+  },
+  "P11AConsistencyOut": {
+   "properties": {
+    "alliance_points_mean": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "alliance_points_sd": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "kind": {
+     "const": "observed_alliance",
+     "type": "string"
+    },
+    "n": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "alliance_points_mean",
+    "alliance_points_sd",
+    "kind",
+    "n"
+   ],
+   "type": "object"
+  },
+  "P11ADestinationOut": {
+   "properties": {
+    "expected_alliance_score": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "lineup": {
+     "anyOf": [
+      {
+       "items": {
+        "type": "integer"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "members": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "seed": {
+     "type": "integer"
+    },
+    "status": {
+     "anyOf": [
+      {
+       "const": "withheld",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "members",
+    "seed"
+   ],
+   "type": "object"
+  },
+  "P11AEstimatesOut": {
+   "properties": {
+    "components": {
+     "additionalProperties": {
+      "$ref": "#/components/schemas/P11AComponentOut"
+     },
+     "propertyNames": {
+      "enum": [
+       "auto",
+       "endgame",
+       "teleop"
+      ]
+     },
+     "type": "object"
+    },
+    "labels": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "n": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "note": {
+     "type": "string"
+    },
+    "partners": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "team_number": {
+     "type": "integer"
+    },
+    "validation_status": {
+     "const": "not_validated",
+     "type": "string"
+    }
+   },
+   "required": [
+    "components",
+    "labels",
+    "n",
+    "note",
+    "team_number",
+    "validation_status"
+   ],
+   "type": "object"
+  },
+  "P11AFitDiagnosticsOut": {
+   "properties": {
+    "collapse_screen": {
+     "$ref": "#/components/schemas/P11ACollapseScreenOut"
+    },
+    "degenerate": {
+     "type": "boolean"
+    },
+    "residual_df": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "rows": {
+     "type": "integer"
+    },
+    "sigma2": {
+     "type": "number"
+    },
+    "sigma2_zero_lr": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "tau2": {
+     "type": "number"
+    }
+   },
+   "required": [
+    "collapse_screen",
+    "degenerate",
+    "residual_df",
+    "rows",
+    "sigma2",
+    "sigma2_zero_lr",
+    "tau2"
+   ],
+   "type": "object"
+  },
+  "P11AMatchOut": {
+   "properties": {
+    "alliance_residual": {
+     "anyOf": [
+      {
+       "additionalProperties": {
+        "$ref": "#/components/schemas/P11AResidualOut"
+       },
+       "propertyNames": {
+        "enum": [
+         "auto",
+         "endgame",
+         "teleop"
+        ]
+       },
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "anomaly": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11AAnomalyOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "auto": {
+     "type": "number"
+    },
+    "color": {
+     "enum": [
+      "blue",
+      "red"
+     ],
+     "type": "string"
+    },
+    "endgame": {
+     "type": "number"
+    },
+    "fouls": {
+     "type": "number"
+    },
+    "kind": {
+     "const": "observed_alliance",
+     "type": "string"
+    },
+    "match_key": {
+     "type": "string"
+    },
+    "partners": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "teleop": {
+     "type": "number"
+    },
+    "time": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "alliance_residual",
+    "anomaly",
+    "auto",
+    "color",
+    "endgame",
+    "fouls",
+    "kind",
+    "match_key",
+    "partners",
+    "teleop",
+    "time"
+   ],
+   "type": "object"
+  },
+  "P11APlanOut": {
+   "properties": {
+    "as_of": {
+     "type": "string"
+    },
+    "availability": {
+     "$ref": "#/components/schemas/P11AAvailabilityOut"
+    },
+    "availability_model": {
+     "const": "not_modelled",
+     "type": "string"
+    },
+    "backup_combinations": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/components/schemas/P11ACombinationOut"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "cards": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/components/schemas/P11ACardOut"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "combinations_note": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "comparisons": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/components/schemas/P11AComparisonOut"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "destinations": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/components/schemas/P11ADestinationOut"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "fit_diagnostics": {
+     "additionalProperties": {
+      "$ref": "#/components/schemas/P11AFitDiagnosticsOut"
+     },
+     "propertyNames": {
+      "enum": [
+       "auto",
+       "endgame",
+       "teleop"
+      ]
+     },
+     "type": "object"
+    },
+    "interval_status": {
+     "const": "not_calibrated",
+     "type": "string"
+    },
+    "invitation_likelihood": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11AWithheldOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "known_limitations": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "members": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "mode": {
+     "enum": [
+      "captain",
+      "non_captain",
+      "on_alliance",
+      "projected_captain"
+     ],
+     "type": "string"
+    },
+    "note": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "objective": {
+     "const": "expected_alliance_score",
+     "type": "string"
+    },
+    "picks_remaining": {
+     "type": "integer"
+    },
+    "record_seq": {
+     "type": "integer"
+    },
+    "seed": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "snapshot_id": {
+     "type": "string"
+    },
+    "stage": {
+     "anyOf": [
+      {
+       "enum": [
+        "first_pick",
+        "fourth_member",
+        "next_pick"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "thresholds_status": {
+     "const": "candidate_unapproved",
+     "type": "string"
+    },
+    "turns_before": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "unit": {
+     "const": "points",
+     "type": "string"
+    },
+    "validation_status": {
+     "const": "not_validated",
+     "type": "string"
+    },
+    "versions": {
+     "additionalProperties": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string"
+       }
+      ]
+     },
+     "type": "object"
+    },
+    "win_probability": {
+     "$ref": "#/components/schemas/P11AWinProbabilityOut"
+    }
+   },
+   "required": [
+    "as_of",
+    "availability",
+    "availability_model",
+    "event_key",
+    "fit_diagnostics",
+    "interval_status",
+    "known_limitations",
+    "members",
+    "mode",
+    "objective",
+    "picks_remaining",
+    "record_seq",
+    "seed",
+    "snapshot_id",
+    "thresholds_status",
+    "turns_before",
+    "unit",
+    "validation_status",
+    "versions",
+    "win_probability"
+   ],
+   "type": "object"
+  },
+  "P11APriorComponentOut": {
+   "properties": {
+    "mean": {
+     "type": "number"
+    },
+    "variance": {
+     "type": "number"
+    }
+   },
+   "required": [
+    "mean",
+    "variance"
+   ],
+   "type": "object"
+  },
+  "P11APriorOut": {
+   "properties": {
+    "components": {
+     "additionalProperties": {
+      "$ref": "#/components/schemas/P11APriorComponentOut"
+     },
+     "propertyNames": {
+      "enum": [
+       "auto",
+       "endgame",
+       "teleop"
+      ]
+     },
+     "type": "object"
+    },
+    "end_date": {
+     "type": "string"
+    },
+    "kind": {
+     "const": "estimated",
+     "type": "string"
+    },
+    "source_event": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "components",
+    "end_date",
+    "kind",
+    "source_event"
+   ],
+   "type": "object"
+  },
+  "P11AProfileOut": {
+   "properties": {
+    "alliance_fit": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11AAllianceFitOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "alliance_fit_absent_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "as_of": {
+     "type": "string"
+    },
+    "consistency": {
+     "$ref": "#/components/schemas/P11AConsistencyOut"
+    },
+    "data_through": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "estimates": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11AEstimatesOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "estimates_absent_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "event_key": {
+     "type": "string"
+    },
+    "fit_diagnostics": {
+     "anyOf": [
+      {
+       "additionalProperties": {
+        "$ref": "#/components/schemas/P11AFitDiagnosticsOut"
+       },
+       "propertyNames": {
+        "enum": [
+         "auto",
+         "endgame",
+         "teleop"
+        ]
+       },
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "matches": {
+     "items": {
+      "$ref": "#/components/schemas/P11AMatchOut"
+     },
+     "type": "array"
+    },
+    "matches_played": {
+     "type": "integer"
+    },
+    "prior": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11APriorOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "prior_absent_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "provenance": {
+     "$ref": "#/components/schemas/P11AProvenanceOut"
+    },
+    "rank": {
+     "$ref": "#/components/schemas/P11ARankOut"
+    },
+    "scouting": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11AScoutingOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "scouting_absent_reason": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "snapshot_id": {
+     "type": "string"
+    },
+    "strengths_and_weaknesses_absent_reason": {
+     "type": "string"
+    },
+    "team_number": {
+     "type": "integer"
+    },
+    "thresholds_status": {
+     "const": "candidate_unapproved",
+     "type": "string"
+    },
+    "validation_status": {
+     "const": "not_validated",
+     "type": "string"
+    }
+   },
+   "required": [
+    "alliance_fit",
+    "alliance_fit_absent_reason",
+    "as_of",
+    "consistency",
+    "data_through",
+    "estimates",
+    "estimates_absent_reason",
+    "event_key",
+    "fit_diagnostics",
+    "matches",
+    "matches_played",
+    "prior",
+    "prior_absent_reason",
+    "provenance",
+    "rank",
+    "scouting",
+    "scouting_absent_reason",
+    "snapshot_id",
+    "strengths_and_weaknesses_absent_reason",
+    "team_number",
+    "thresholds_status",
+    "validation_status"
+   ],
+   "type": "object"
+  },
+  "P11AProvenanceOut": {
+   "properties": {
+    "built_at": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "prior_events": {
+     "default": [],
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "ranking_fetched_at": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "snapshot_version": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "source": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "type": "object"
+  },
+  "P11ARankOut": {
+   "properties": {
+    "fetched_at": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "status": {
+     "enum": [
+      "not_available",
+      "observed"
+     ],
+     "type": "string"
+    },
+    "value": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "fetched_at",
+    "status",
+    "value"
+   ],
+   "type": "object"
+  },
+  "P11AResidualOut": {
+   "properties": {
+    "residual": {
+     "type": "number"
+    },
+    "z": {
+     "type": "number"
+    }
+   },
+   "required": [
+    "residual",
+    "z"
+   ],
+   "type": "object"
+  },
+  "P11ARobotOut": {
+   "properties": {
+    "components": {
+     "additionalProperties": {
+      "$ref": "#/components/schemas/P11AComponentOut"
+     },
+     "propertyNames": {
+      "enum": [
+       "auto",
+       "endgame",
+       "teleop"
+      ]
+     },
+     "type": "object"
+    },
+    "labels": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "n": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "partners": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "components",
+    "labels",
+    "n",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "P11AScoutingOut": {
+   "properties": {
+    "computed_at": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "defense": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "defense_n": {
+     "type": "integer"
+    },
+    "feeding": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "feeding_n": {
+     "type": "integer"
+    },
+    "kind": {
+     "const": "scouted",
+     "type": "string"
+    }
+   },
+   "required": [
+    "defense",
+    "defense_n",
+    "feeding",
+    "feeding_n",
+    "kind"
+   ],
+   "type": "object"
+  },
+  "P11ATeamReason": {
+   "properties": {
+    "reason": {
+     "type": "string"
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "reason",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "P11ATeamScoreOut": {
+   "properties": {
+    "expected_alliance_score": {
+     "type": "number"
+    },
+    "team_number": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "expected_alliance_score",
+    "team_number"
+   ],
+   "type": "object"
+  },
+  "P11AWinProbabilityOut": {
+   "properties": {
+    "reason": {
+     "type": "string"
+    },
+    "status": {
+     "const": "not_available",
+     "type": "string"
+    }
+   },
+   "required": [
+    "reason",
+    "status"
+   ],
+   "type": "object"
+  },
+  "P11AWithheldOut": {
+   "properties": {
+    "reason": {
+     "type": "string"
+    },
+    "status": {
+     "const": "withheld",
+     "type": "string"
+    }
+   },
+   "required": [
+    "reason",
+    "status"
+   ],
+   "type": "object"
+  },
   "PickListProvenance": {
    "properties": {
     "ordering_policy": {
@@ -7765,6 +9404,77 @@
     "season",
     "team_number",
     "validation"
+   ],
+   "type": "object"
+  },
+  "TeamProfileOut": {
+   "properties": {
+    "computed_at": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "experimental": {
+     "const": true,
+     "type": "boolean"
+    },
+    "profile": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11AProfileOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "record_id": {
+     "type": "integer"
+    },
+    "record_seq": {
+     "type": "integer"
+    },
+    "relation_to_recommendations": {
+     "type": "string"
+    },
+    "source": {
+     "const": "p11a_expected_score_plan",
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "current",
+      "withheld"
+     ],
+     "type": "string"
+    },
+    "timing_ms": {
+     "additionalProperties": {
+      "type": "number"
+     },
+     "type": "object"
+    },
+    "withheld": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11ACodeMessage"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "computed_at",
+    "experimental",
+    "profile",
+    "record_id",
+    "record_seq",
+    "relation_to_recommendations",
+    "source",
+    "status",
+    "timing_ms",
+    "withheld"
    ],
    "type": "object"
   },

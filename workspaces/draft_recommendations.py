@@ -139,8 +139,9 @@ def selecting_seed(view: dl.DraftView, team_number: int) -> tuple[int | None, st
     return None, None
 
 
-def _excluded(view: dl.DraftView, seed: int, team_number: int) -> dict[int, str]:
-    """Available teams this alliance cannot pick at its next turn, by the rules alone (not by any prediction)."""
+def next_turn_exclusions(view: dl.DraftView, seed: int, team_number: int) -> dict[int, str]:
+    """Teams this alliance cannot pick at its next turn, by the rules alone (not by any prediction): this team, its
+    own members, and lower seeds' projected captains who act first. Includes teams already unavailable."""
     out: dict[int, str] = {team_number: "your team"}
     for member in view.alliances[seed - 1]:
         out[member] = "on your alliance"
@@ -153,6 +154,17 @@ def _excluded(view: dl.DraftView, seed: int, team_number: int) -> dict[int, str]
     return out
 
 
+def selectable_teams(view: dl.DraftView, seed: int, team_number: int) -> tuple[list[int], dict[int, str]]:
+    """(the teams `seed` may pick at its next turn, in rank order; {available team it may not pick: reason}).
+
+    The one definition of "pickable now" for this alliance. P11-FB1 (`fallback_lists`), the P6-M7 engine branch of
+    `recommend`, and the P11A plan (workspaces.alliance_plan) all use it, so they cannot disagree."""
+    available, _ = view.availability()
+    rules = next_turn_exclusions(view, seed, team_number)
+    excluded = {t: r for t, r in rules.items() if t in available}
+    return [t for t in available if t not in excluded], excluded
+
+
 # --- the fallback rule (pure) ----------------------------------------------------------------------------------------
 
 
@@ -160,15 +172,12 @@ def fallback_lists(view: dl.DraftView, seed: int, team_number: int,
                    ordering: Sequence[int]) -> tuple[list[int], list[int], list[tuple[int, str]]]:
     """P11-FB1's (primary-first ranked list, unranked available teams, excluded teams) for `seed` from `view`.
     The ranked list is primary + backups: 1 + max(MIN_BACKUPS, m) teams at most."""
-    available, _ = view.availability()
-    excluded = _excluded(view, seed, team_number)
-    candidates = [t for t in available if t not in excluded]
+    candidates, excluded = selectable_teams(view, seed, team_number)
     position = {t: i for i, t in enumerate(ordering)}
     ranked = sorted((t for t in candidates if t in position), key=lambda t: position[t])
     unranked = sorted(t for t in candidates if t not in position)
     m = view.turns_before(seed) or 0
-    return ranked[:1 + max(MIN_BACKUPS, m)], unranked, sorted(
-        ((t, r) for t, r in excluded.items() if t in available), key=lambda tr: tr[0])
+    return ranked[:1 + max(MIN_BACKUPS, m)], unranked, sorted(excluded.items(), key=lambda tr: tr[0])
 
 
 def movement(previous: dl.DraftView | None, current: dl.DraftView, before: Sequence[int],
@@ -293,16 +302,16 @@ def recommend(database: Database, event_key: str, view: dl.DraftView, previous: 
                                   playoff_models=playoff_models)
     out.timing_ms["engine"] = round((time.perf_counter() - started) * 1000, 1)
     if engine is not None:
-        available, _ = view.availability()
-        excluded = _excluded(view, seed, team_number)
-        ranked = [p for p in engine.recommendation.ranked if p.team_number in available and p.team_number not in excluded]
+        selectable, excluded = selectable_teams(view, seed, team_number)
+        pickable = set(selectable)
+        ranked = [p for p in engine.recommendation.ranked if p.team_number in pickable]
         keep = 1 + max(MIN_BACKUPS, out.turns_before)
         candidates = [Candidate(p.team_number, None, p.profile, p.p_win_event, p.p_reach_finals, p.configuration)
                       for p in ranked[:keep]]
         out.status, out.source = "current", SOURCE_ENGINE
         out.validation_status = engine.recommendation.probability_status
         out.validation_reasons = list(SCOPE_REASONS) if out.validation_status == VALIDATED_PLAYOFF_SUCCESS else []
-        out.excluded = sorted(((t, r) for t, r in excluded.items() if t in available), key=lambda tr: tr[0])
+        out.excluded = sorted(excluded.items(), key=lambda tr: tr[0])
         out.primary, out.backups = (candidates[0] if candidates else None), candidates[1:]
         out.engine_result = engine
         out.provenance = {"engine": "P6-M7", "ruleset_sha256": engine.ruleset_sha256,
@@ -346,4 +355,5 @@ def recommend(database: Database, event_key: str, view: dl.DraftView, previous: 
 
 
 __all__ = ["Candidate", "Ordering", "RULE", "Recommendation", "SOURCE_ENGINE", "SOURCE_FALLBACK", "clear_cache",
-           "event_ordering", "fallback_lists", "movement", "recommend", "selecting_seed"]
+           "event_ordering", "fallback_lists", "movement", "next_turn_exclusions", "recommend", "selectable_teams",
+           "selecting_seed"]

@@ -127,6 +127,10 @@ class Settings(BaseSettings):
     live_epa_log_dir: str | None = None
     live_epa_a1a2_policy: Literal["d18_skip", "literal_state"] | None = None
     live_epa_concluded_seasons: list[int] = []
+    # P11A (docs/P11-RecommendationIntelligence.md, PROPOSED): the folder of event snapshots
+    # (ml/alliance/snapshot.py, written by `python -m scripts.p11a_snapshot export`) that the experimental expected-score
+    # plan reads. Unset: every plan is withheld (`snapshot_unavailable`). It never changes /recommendations.
+    p11a_snapshot_dir: str | None = None
     # Phase 5 human-input workflows (data/human_inputs.py, api/routes/human_inputs.py).
     # - human_inputs_write_token: the shared secret every write request must present in the
     #   X-StratAI-Write-Token header. Unset means every write is refused (fail closed); reads stay open, as

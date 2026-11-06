@@ -1,0 +1,32 @@
+{
+ "id": "P11A-E5",
+ "status": "draft_not_registered",
+ "statement": "E5 is descriptive and observational. It does not show that the plan selects superior alliances or that following it causes better playoff outcomes. Regret is measured under AS-1's own valuation.",
+ "spec": "docs/P11-RecommendationIntelligence.md section 20 (E5) and section 17 (P11A-DM2); the spec is PROPOSED and unchanged",
+ "drafted": "2026-11-06",
+ "registration": "Write-once: a human fills every decision below, sets status to 'registered', and writes .agent/phase11/decisions/P11A_E5_REGISTRATION_<date>.md naming this file's sha256. The harness refuses any other state. Nothing has been run on real data.",
+ "decisions_required": [
+  {"id": "P11A-Q10", "decided": false, "question": "Which 2024-2026 split is used, given that PX-1b's final fit used 2024-2026", "proposed_default": "All of 2024-2026 as E5's population (E5 fits nothing and has no pass criterion; it only describes), with the 2027 holdout untouched"},
+  {"id": "E5-SCORING", "decided": false, "question": "Reviewed and approved season scoring configurations for 2024, 2025 and 2026, registered in data/season_scoring (and the approved P5-M8 GameSpecs they reference)", "proposed_default": "none: a human enters and reviews them; without them every event is not_evaluable"},
+  {"id": "E5-ASOF", "decided": false, "question": "The as_of rule", "proposed_default": "selection_moment: one minute after the latest scheduled qualification match (ml.playoffs.service.event_selection_moment, the P6-M7/P11-FB1 rule). The snapshot cutoff also requires each result to have been posted before as_of, so a final match that ran late is excluded and counted; the alternative (as_of = latest result time + 1 minute) must be chosen here, not after seeing results"},
+  {"id": "E5-SAMPLE", "decided": false, "question": "The frozen event sample", "proposed_default": "Seeded stratified sample, seed 20261106, 2 events per season x stratum (championship_division / small / large by the season's median team count), drawn with --draw-sample (reads no outcome) and pasted into runs before registration"},
+  {"id": "E5-BASELINES", "decided": false, "question": "Baseline set", "proposed_default": "individual_epa (raw EPA ordering at as_of), p5_m4 (the pinned P5-M4 ordering; equals raw EPA when none is pinned, recorded), p11_fb1 (P5-M4 under the record's exclusions per turn)"}
+ ],
+ "population": {"seasons": [2024, 2025, 2026], "excluded": "2027 (holdout for PX-1b and P6-M10b): never read, inspected or tuned on", "event_requirement": "at least two seeded TBA alliances; the approved P6-M1 ruleset (else the event is reported, not imputed)"},
+ "as_of_rule": "selection_moment",
+ "metrics": {
+  "per_pick": ["regret = V(plan top) - V(actual pick) under AS-1", "actual pick's rank in the plan", "top-1 and top-3 agreement", "per baseline: V(plan top) - V(baseline top), and whether the baseline chose the actual pick"],
+  "per_alliance_label": ["TBA playoff level reached", "win share (wins / games)"],
+  "summary": ["means with event-cluster bootstrap 95% intervals, per stage (first pick, later picks)", "Spearman(alliance mean regret, playoff win share) with event bootstrap 95% interval, labelled observational"]
+ },
+ "pass_criteria": "none: E5 is descriptive (spec section 17, DM2); no result is a pass or fail, and none may be described as evidence of better outcomes",
+ "bootstrap_seed": 20261106,
+ "bootstrap_draws": 2000,
+ "runs": [
+  {"id": "R1", "seasons": [2024], "budget_minutes": 40, "events": []},
+  {"id": "R2", "seasons": [2025], "budget_minutes": 40, "events": []},
+  {"id": "R3", "seasons": [2026], "budget_minutes": 40, "events": []}
+ ],
+ "runtime": "Each run is independently executable, stops at its budget (<= 45 minutes) and reports partial results; the three are reported separately, never as one verification",
+ "safety": "Read-only session on an isolated stratai_test copy only (scripts.phase6_common.isolated_database); the serving database is refused"
+}

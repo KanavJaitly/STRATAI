@@ -53,6 +53,8 @@ EXPECTED_INVENTORY = {
     "POST /strategy/matches/{match_key}/compare",
     "POST /strategy/matches/{match_key}/recommend",
     "GET /workspace/alliance-selection/drafts/{record_id}/recommendations",  # Phase 11 (P11-Q1)
+    "GET /workspace/alliance-selection/drafts/{record_id}/plan",  # P11A (experimental)
+    "GET /workspace/alliance-selection/drafts/{record_id}/teams/{team_number}/profile",  # P11A (experimental)
 }
 
 

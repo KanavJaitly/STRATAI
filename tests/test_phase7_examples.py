@@ -60,9 +60,10 @@ def test_the_scope_is_every_locked_operation_but_the_probes():
     locked = set(json.loads(LOCK_FILE.read_text(encoding="utf-8"))["operations"])
     # 22 Phase 7 operations, plus the Phase 9 briefing since it was locked (P9-M4, 2026-10-20; P7-Q4 covers every
     # locked operation).
-    # The team-private /workspace operations (Phase 11) are locked but never captured (TEAM_PRIVATE_PREFIX).
+    # The team-private /workspace operations (Phase 11: 10; P11A: the plan and the team profile, 2) are locked but never
+    # captured (TEAM_PRIVATE_PREFIX).
     private = {op for op in locked if op.split(" ", 1)[1].startswith(TEAM_PRIVATE_PREFIX)}
-    assert len(private) == 10
+    assert len(private) == 12
     assert set(examples_scope()) == locked - PROBES - private and len(examples_scope()) == 23
     assert PROBES <= locked and REFUSAL_ONLY <= set(examples_scope())
     assert not any(op.split(" ", 1)[1].startswith("/human-inputs") for op in examples_scope())

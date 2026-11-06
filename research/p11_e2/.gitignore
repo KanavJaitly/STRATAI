@@ -1,0 +1,4 @@
+# Raw API cache and per-record outputs: large, regenerable from the protocol (README.md); kept local.
+cache/
+results/e2_records_*.json
+results/followup_f1c_*.json

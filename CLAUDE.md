@@ -193,6 +193,17 @@ instruction. Not committed.
 - **Not verified:** the build machine has no PostgreSQL. The DB-backed API tests and the real-data replay
   (`scripts/phase11_replay.py`) are written but not run, so P11-DM1 is NOT MET.
 
+**P11A (Recommendation intelligence): STAGES 1-3 IMPLEMENTED, NOT VALIDATED, NOT ACCEPTED (2026-11-06)**
+(`docs/phase11.md` "P11A", `.agent/phase11/PHASE_STATUS.md`). Spec `docs/P11-RecommendationIntelligence.md` stays PROPOSED.
+Not committed.
+- `ml/alliance/` (scoring configuration, estimator, planner, profile, snapshot), `workspaces/alliance_plan.py`, two additive
+  locked operations (`…/plan`, `…/teams/{team_number}/profile`), `scripts/p11a_snapshot.py`, a closed-by-default web panel.
+- `/recommendations` and P11-Q1 are unchanged. Every real plan is withheld: no season scoring configuration is approved.
+- Expected score in points only: no win probability, `not_validated`, `not_calibrated`, thresholds `candidate_unapproved`.
+- Hardening (2026-11-06, `.agent/phase11/decisions/P11A_HARDENING_2026-11-06.md`): runtime contract `ml/alliance/contract.py`;
+  the registry `data/season_scoring` is the trust root; the collapse screen is non-authoritative. PostgreSQL verification
+  (`docs/p11a_verification.md`) and E5 (`research/p11a_e5`, protocol unregistered) are prepared, not run.
+
 **Phase 10 (Polish, Backtesting, Hardening): IN PROGRESS (2026-10-21)** (`.agent/phase10/PHASE_STATUS.md`). Spec:
 `docs/P10Milestones.md`, an agent working freeze pending ratification. Not committed.
 - **M1 (hardening):** implemented. The failing-first evidence is partial; declaring 413 on locked operations is

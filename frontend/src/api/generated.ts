@@ -31,6 +31,20 @@ export interface AllianceOut {
   seed: number
 }
 
+export interface AlliancePlanOut {
+  computed_at: string
+  experimental: true
+  plan: P11APlanOut | null
+  record_id: number
+  /** The record version this reflects. */
+  record_seq: number
+  relation_to_recommendations: string
+  source: "p11a_expected_score_plan"
+  status: "current" | "withheld"
+  timing_ms: Record<string, number>
+  withheld: P11ACodeMessage | null
+}
+
 export interface AllianceSynergyOut {
   /** Why score is null; null when present. */
   absent_code: "alliance_incomplete" | null
@@ -670,6 +684,276 @@ export interface NotProducedItems {
   strengths_and_weaknesses: NotProduced
 }
 
+export interface P11AAllianceFitOut {
+  expected_alliance_score: number
+  lineup: number[]
+  note: string
+  unit: "points"
+  with_team: number
+}
+
+export interface P11AAnomalyOut {
+  reason: string
+  status: "not_flagged"
+}
+
+export interface P11AAvailabilityOut {
+  confirmed_available: number[]
+  confirmed_unavailable: P11ATeamReason[]
+  no_estimate: number[]
+  /** Availability before your turn is not modelled (always null). */
+  predicted?: null
+}
+
+export interface P11ACardOut {
+  availability: "confirmed_available"
+  conditional_seconds?: P11ATeamScoreOut[] | null
+  /** Estimation uncertainty of the expected score only; not a prediction interval; not calibrated. */
+  estimation_interval_80: number[]
+  /** Expected points of the best three-robot lineup; not a chance of winning. */
+  expected_alliance_score: number
+  interval_note: string
+  lineup: number[]
+  lineup_gain?: number | null
+  rank: number
+  robot: P11ARobotOut
+  scouting: P11AScoutingOut | null
+  statements: string[]
+  team_number: number
+}
+
+export interface P11ACodeMessage {
+  code: string
+  message: string
+}
+
+export interface P11ACollapseScreenOut {
+  flagged: boolean
+  note: string
+  /** sigma_hat^2 / var(y). */
+  ratio: number | null
+  status: "non_authoritative"
+  threshold: number
+}
+
+export interface P11ACombinationOut {
+  expected_alliance_score: number
+  picks: number[]
+}
+
+export interface P11AComparisonOut {
+  a: number
+  b: number
+  compared: string
+  delta_interval_80: number[]
+  delta_mean: number
+  /** Always unresolved until delta and pi are approved (B6). */
+  outcome: "unresolved"
+  /** Share of estimation draws in which a's expected score exceeds b's; null when both cards have the same lineup. */
+  p_delta_positive: number | null
+  reason: "comparison_threshold_not_approved" | "same_lineup"
+}
+
+export interface P11AComponentOut {
+  /** Estimated points this robot adds to its alliance's component (not validated). */
+  estimate: number
+  kind: "estimated"
+  labels: string[]
+  prior_kind: "prior_event_individual" | "current_event_joint"
+  /** Posterior SD of the estimate (estimation uncertainty only; not calibrated). */
+  sd: number
+  /** Share of the estimate that comes from this event's data (1 - posterior/prior variance); 1 - w_eff is the prior's influence. */
+  w_eff: number
+}
+
+export interface P11AConsistencyOut {
+  alliance_points_mean: number | null
+  alliance_points_sd: number | null
+  kind: "observed_alliance"
+  n: number
+}
+
+export interface P11ADestinationOut {
+  expected_alliance_score?: number | null
+  lineup?: number[] | null
+  members: number[]
+  reason?: string | null
+  seed: number
+  status?: "withheld" | null
+}
+
+export interface P11AEstimatesOut {
+  components: Record<string, P11AComponentOut>
+  labels: string[]
+  /** Qualification alliance rows this robot played at the event. */
+  n: number | null
+  note: string
+  /** Distinct alliance partners at the event. */
+  partners?: number | null
+  team_number: number
+  validation_status: "not_validated"
+}
+
+export interface P11AFitDiagnosticsOut {
+  collapse_screen: P11ACollapseScreenOut
+  /** sigma^2 on the optimizer's lower bound; a degenerate fit withholds plans. */
+  degenerate: boolean
+  residual_df: number | null
+  rows: number
+  /** Fitted alliance-level residual variance (points^2). */
+  sigma2: number
+  /** Profile REML likelihood ratio for sigma^2 = 0, capped at 100. */
+  sigma2_zero_lr: number | null
+  /** Fitted between-robot variance (points^2). */
+  tau2: number
+}
+
+export interface P11AMatchOut {
+  alliance_residual: Record<string, P11AResidualOut> | null
+  anomaly: P11AAnomalyOut | null
+  auto: number
+  color: "red" | "blue"
+  endgame: number
+  fouls: number
+  kind: "observed_alliance"
+  match_key: string
+  partners: number[]
+  teleop: number
+  time: string
+}
+
+export interface P11APlanOut {
+  as_of: string
+  availability: P11AAvailabilityOut
+  availability_model: "not_modelled"
+  backup_combinations?: P11ACombinationOut[] | null
+  cards?: P11ACardOut[] | null
+  combinations_note?: string | null
+  comparisons?: P11AComparisonOut[] | null
+  destinations?: P11ADestinationOut[] | null
+  event_key: string
+  fit_diagnostics: Record<string, P11AFitDiagnosticsOut>
+  interval_status: "not_calibrated"
+  invitation_likelihood?: P11AWithheldOut | null
+  known_limitations: string[]
+  members: number[]
+  mode: "captain" | "on_alliance" | "projected_captain" | "non_captain"
+  note?: string | null
+  objective: "expected_alliance_score"
+  picks_remaining: number
+  record_seq: number
+  seed: number | null
+  snapshot_id: string
+  stage?: "first_pick" | "next_pick" | "fourth_member" | null
+  thresholds_status: "candidate_unapproved"
+  turns_before: number | null
+  unit: "points"
+  validation_status: "not_validated"
+  versions: Record<string, string | null>
+  win_probability: P11AWinProbabilityOut
+}
+
+export interface P11APriorComponentOut {
+  mean: number
+  variance: number
+}
+
+export interface P11APriorOut {
+  components: Record<string, P11APriorComponentOut>
+  end_date: string
+  kind: "estimated"
+  source_event: string
+}
+
+export interface P11AProfileOut {
+  alliance_fit: P11AAllianceFitOut | null
+  alliance_fit_absent_reason: string | null
+  /** Only data before this time is in the snapshot. */
+  as_of: string
+  consistency: P11AConsistencyOut
+  /** Time of the latest qualification match in the snapshot. */
+  data_through: string | null
+  estimates: P11AEstimatesOut | null
+  estimates_absent_reason: string | null
+  event_key: string
+  fit_diagnostics: Record<string, P11AFitDiagnosticsOut> | null
+  matches: P11AMatchOut[]
+  matches_played: number
+  prior: P11APriorOut | null
+  prior_absent_reason: string | null
+  provenance: P11AProvenanceOut
+  rank: P11ARankOut
+  scouting: P11AScoutingOut | null
+  scouting_absent_reason: string | null
+  snapshot_id: string
+  strengths_and_weaknesses_absent_reason: string
+  team_number: number
+  thresholds_status: "candidate_unapproved"
+  validation_status: "not_validated"
+}
+
+export interface P11AProvenanceOut {
+  built_at?: string | null
+  prior_events?: string[]
+  ranking_fetched_at?: string | null
+  snapshot_version?: string | null
+  source?: string | null
+}
+
+export interface P11ARankOut {
+  /** When the ranking was fetched (at or before as_of). */
+  fetched_at: string | null
+  status: "observed" | "not_available"
+  value: number | null
+}
+
+export interface P11AResidualOut {
+  /** Alliance points minus the fit's expectation (the alliance's, never the robot's). */
+  residual: number
+  z: number
+}
+
+export interface P11ARobotOut {
+  components: Record<string, P11AComponentOut>
+  labels: string[]
+  /** Qualification alliance rows this robot played at the event. */
+  n: number | null
+  /** Distinct alliance partners at the event. */
+  partners?: number | null
+  team_number: number
+}
+
+export interface P11AScoutingOut {
+  computed_at?: string | null
+  /** Scouted defense quality (0-5), not points. */
+  defense: number | null
+  defense_n: number
+  /** Scouted feeding quality (0-5), not points. */
+  feeding: number | null
+  feeding_n: number
+  kind: "scouted"
+}
+
+export interface P11ATeamReason {
+  reason: string
+  team_number: number
+}
+
+export interface P11ATeamScoreOut {
+  expected_alliance_score: number
+  team_number: number
+}
+
+export interface P11AWinProbabilityOut {
+  reason: string
+  status: "not_available"
+}
+
+export interface P11AWithheldOut {
+  reason: string
+  status: "withheld"
+}
+
 export interface PermissionsBody {
   grants: Record<string, boolean>
   role: "strategy" | "scouter"
@@ -1121,6 +1405,20 @@ export interface TeamMetricsResponse {
   season: number
   team_number: number
   validation: MetricsValidation
+}
+
+export interface TeamProfileOut {
+  computed_at: string
+  experimental: true
+  profile: P11AProfileOut | null
+  record_id: number
+  /** The record version this reflects. */
+  record_seq: number
+  relation_to_recommendations: string
+  source: "p11a_expected_score_plan"
+  status: "current" | "withheld"
+  timing_ms: Record<string, number>
+  withheld: P11ACodeMessage | null
 }
 
 export interface TeamRankingEntry {

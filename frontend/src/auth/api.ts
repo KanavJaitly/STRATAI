@@ -7,6 +7,7 @@
 
 import { API_BASE } from '../api/client'
 import { requestJson } from '../api/http'
+import type { AlliancePlanOut, P11ACardOut, P11APlanOut, P11AProfileOut, TeamProfileOut } from '../api/generated'
 
 export const CSRF_HEADER = 'X-StratAI-CSRF'
 
@@ -56,6 +57,8 @@ export const WORKSPACE_ENDPOINTS = {
   reopenDraft: ['POST', '/workspace/alliance-selection/drafts/{record_id}/reopen'],
   refreshDraftSetup: ['POST', '/workspace/alliance-selection/drafts/{record_id}/setup'],
   draftRecommendations: ['GET', '/workspace/alliance-selection/drafts/{record_id}/recommendations'],
+  draftPlan: ['GET', '/workspace/alliance-selection/drafts/{record_id}/plan'],
+  draftTeamProfile: ['GET', '/workspace/alliance-selection/drafts/{record_id}/teams/{team_number}/profile'],
 } as const satisfies Record<string, readonly [Method, string]>
 
 type EndpointName = keyof typeof WORKSPACE_ENDPOINTS
@@ -403,6 +406,14 @@ export interface DraftRecommendations {
   provenance: Record<string, unknown>; timing_ms: Record<string, number>
 }
 
+/** P11A (experimental): expected alliance score in points, never a chance of winning; not validated, not calibrated.
+ * The types are the generated OpenAPI ones (ml/alliance/contract.py), so the labels they pin cannot drift here. */
+export type P11ACard = P11ACardOut
+export type P11APlan = P11APlanOut
+export type P11AProfile = P11AProfileOut
+export type AlliancePlanResponse = AlliancePlanOut
+export type TeamProfileResponse = TeamProfileOut
+
 /** A stable id for an entry, created here so that a retried write is idempotent (and, in Phase 12, local-first). */
 export function newActionId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
@@ -430,6 +441,9 @@ export const liveDraft = {
     call<DraftRecord>('refreshDraftSetup', { params: { record_id: id },
       body: { action_id: newActionId(), manual_rules: manualRules ?? null } }),
   recommendations: (id: number) => call<DraftRecommendations>('draftRecommendations', { params: { record_id: id } }),
+  plan: (id: number) => call<AlliancePlanResponse>('draftPlan', { params: { record_id: id } }),
+  teamProfile: (id: number, team: number) =>
+    call<TeamProfileResponse>('draftTeamProfile', { params: { record_id: id, team_number: team } }),
 }
 
 /** A link the API returned as a path ("/auth/invite#token=...") made absolute for copying. */
