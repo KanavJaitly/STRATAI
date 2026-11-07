@@ -954,11 +954,20 @@ required — `Settings()` fails fast if either is missing.
 ### 7.5 Apply migrations
 
 ```bash
-venv/bin/python database/migrate.py
+venv/bin/python database/migrate.py                                              # report only
+venv/bin/python database/migrate.py --apply --confirm-database stratai_test_dev  # apply
 ```
 
 Idempotent: already-applied migrations are recorded in `migrations_applied` and skipped.
-`database/init_db.py` is an equivalent alias that calls the same function.
+`database/init_db.py` is an equivalent alias with the same command line.
+
+**Guarded (2026-11-07, `database/target_guard.py`).** The runner migrates only a database on this machine (socket or
+loopback, confirmed by the server) named `stratai_test_<suffix>`.
+- It refuses the serving `stratai`, Render and every other remote host. There is no override: hosted databases are
+  loaded from a dump (docs/DEPLOYMENT.md).
+- It refuses a database whose `migrations_applied` history is missing or incomplete.
+- It refuses a destructive pending migration (drop, truncate, delete) on a populated database.
+- Without `--apply --confirm-database <name>` it only reports the target and the pending files.
 
 ### 7.6 Verify the schema
 

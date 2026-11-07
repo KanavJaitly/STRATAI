@@ -11,9 +11,16 @@ import database.migrate as migrate_module
 from database.migrate import run_migrations
 
 
+UNIT_DATABASE = "stratai_test_unit"  # a name the migration guard accepts (database/target_guard.py)
+
+
 class DummyCursor:
-    def __init__(self, already_applied: set[str]) -> None:
+    """Answers the queries run_migrations makes: the server identity, the history table's existence, the count of
+    application tables, and the recorded files. Everything else is just recorded."""
+
+    def __init__(self, already_applied: set[str], application_tables: int | None = None) -> None:
         self.already_applied = already_applied
+        self.application_tables = (1 if already_applied else 0) if application_tables is None else application_tables
         self.executed: list[tuple[str, tuple | None]] = []
         self._last_query: str | None = None
 
@@ -21,13 +28,20 @@ class DummyCursor:
         self.executed.append((query, params))
         self._last_query = query
 
-    def fetchone(self) -> tuple[int] | None:
-        if self._last_query and "SELECT 1 FROM migrations_applied" in self._last_query:
-            migration_file = self.executed[-1][1][0]
-            if migration_file in self.already_applied:
-                return (1,)
-            return None
+    def fetchone(self):
+        q = self._last_query or ""
+        if "current_database()" in q:
+            return (UNIT_DATABASE, None, "18.6")
+        if "to_regclass" in q:
+            return (bool(self.already_applied),)
+        if "information_schema.tables" in q:
+            return (self.application_tables,)
         return None
+
+    def fetchall(self):
+        if "SELECT migration_file FROM migrations_applied" in (self._last_query or ""):
+            return [(name,) for name in sorted(self.already_applied)]
+        return []
 
     def __enter__(self) -> "DummyCursor":
         return self
@@ -58,7 +72,7 @@ class DummyConnection:
 
 @pytest.fixture(autouse=True)
 def env_settings(monkeypatch):
-    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/testdb")
+    monkeypatch.setenv("DATABASE_URL", f"postgresql://user:pass@localhost:5432/{UNIT_DATABASE}")
     monkeypatch.setenv("TBA_API_KEY", "test-key")
     monkeypatch.setenv("ENV", "development")
     return Settings()
@@ -88,7 +102,9 @@ def test_migrations_apply_in_sorted_order(monkeypatch, env_settings):
 
 
 def test_migrations_skip_already_applied(monkeypatch, env_settings):
-    cursor = _run_with_dummy(monkeypatch, env_settings, already_applied={"0001_initial.sql"})
+    # Through 0005: a populated database may only be extended by non-destructive migrations (0006 onward).
+    names = [f.name for f in sorted(Path("database/migrations").glob("*.sql"))]
+    cursor = _run_with_dummy(monkeypatch, env_settings, already_applied=set(names[:5]))
 
     applied_inserts = [
         params[0]
@@ -98,7 +114,7 @@ def test_migrations_skip_already_applied(monkeypatch, env_settings):
     executed_sql_bodies = [query for query, _ in cursor.executed]
 
     assert "0001_initial.sql" not in applied_inserts
-    assert "0002_add_indexes.sql" in applied_inserts
+    assert applied_inserts == names[5:]
     assert not any("CREATE TABLE IF NOT EXISTS raw_source_payloads" in body for body in executed_sql_bodies)
 
 
@@ -109,6 +125,16 @@ def test_migrations_creates_tracking_table(monkeypatch, env_settings):
         "CREATE TABLE IF NOT EXISTS migrations_applied" in query
         for query, _ in cursor.executed
     )
+
+
+def test_a_refused_history_applies_nothing(monkeypatch, env_settings):
+    from database.migrate import MigrationRefused
+
+    cursor = DummyCursor(already_applied=set(), application_tables=12)  # populated, but no history table
+    monkeypatch.setattr("database.connection.psycopg.connect", lambda *_a, **_k: DummyConnection(cursor))
+    with pytest.raises(MigrationRefused):
+        run_migrations(env_settings)
+    assert not any("INSERT INTO migrations_applied" in q or "CREATE TABLE" in q for q, _ in cursor.executed)
 
 
 # ---------------------------------------------------------------------------
@@ -172,6 +198,10 @@ def test_run_migrations_rolls_back_the_whole_batch_on_a_later_failure(monkeypatc
     )
     broken_migration = tmp_path / "9999_test_rollback_broken.sql"
     broken_migration.write_text("SELECT * FROM table_that_does_not_exist_anywhere")
+    # The real files too, so the history check sees the database's recorded migrations as a complete prefix and
+    # only the two 9999 files are pending (database/migrate.py refuses an unknown or incomplete history).
+    for real in sorted(Path(migrate_module.__file__).parent.joinpath("migrations").glob("*.sql")):
+        (tmp_path / real.name).write_text(real.read_text(encoding="utf-8"), encoding="utf-8")
 
     monkeypatch.setattr(migrate_module, "MIGRATIONS_DIR", tmp_path)
 

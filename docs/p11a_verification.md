@@ -1,6 +1,7 @@
 # P11A verification on an isolated PostgreSQL copy
 
-**Status (2026-11-06): prepared, NOT RUN.** The build machine has no PostgreSQL. Nothing below has a result yet.
+**Status (2026-11-07): prepared, NOT RUN.** A local PostgreSQL 18.6 now exists on the build machine; no copy has
+been restored yet, so nothing below has a result.
 
 **Hard rules, from CLAUDE.md:**
 - The serving database `stratai` is never modified, migrated or used for testing.
@@ -13,60 +14,99 @@
 | Item | Requirement |
 |---|---|
 | Server | PostgreSQL 16 or later (the project ran 18.6), reachable from the test machine |
-| Copy | A new database `stratai_test_p11a` (any `stratai_test_<suffix>` works) holding a full copy of real data |
+| Copy | A local database `stratai_test_<suffix>` (for example `stratai_test_p11a_20261107`) holding a full copy of real data; the bare `stratai_test` is refused by the runner and the preflight |
 | Data | 2024–2026 TBA ingestion: events, matches, match_teams, current raw match payloads with `score_breakdown`, event rankings, event alliances (with outcomes), team_metrics. No 2027 rows. |
 | Schema | Migrations 0001–0013 recorded in `migrations_applied` |
 | Rulesets | The approved P6-M1 rulesets for 2024–2026 (ids 4–6), for the replay and E5 setup |
 | Python | This repository's `.venv`. On macOS without OpenMP, set `DYLD_LIBRARY_PATH` to the scikit-learn `.dylibs` folder, so xgboost loads. |
 | EPA (Part B baselines and E5 only) | The production EPA configuration (`EPA_SOURCE`, `STATBOTICS_SNAPSHOT_DIR`, and so on) pointing at local files. No network call is needed. |
 
-## 2. Make the copy (read-only on the serving database)
+## 2. Make the copy (corrected 2026-11-07)
 
-**Preferred: `pg_dump` / `pg_restore`.** It only reads the serving database, in one serializable snapshot, and needs
-no exclusive access:
+The source is the full `stratai_test` on the machine that holds it. The Render public dump is **not** a substitute:
+it lacks the approved rulesets, the GameSpecs and the scouting data. Everything below happens on two machines, and
+nothing is ever created or restored on the source's server.
+
+**On the source machine (read-only).** The owner runs:
 
 ```bash
-SERVING_URL=postgresql://USER@HOST:5432/stratai          # read access is enough
-TEST_URL=postgresql://USER@HOST:5432/stratai_test_p11a
-createdb --maintenance-db="$SERVING_URL" stratai_test_p11a
-pg_dump --format=custom --no-owner --serializable-deferrable --dbname="$SERVING_URL" --file=stratai.dump
-pg_restore --no-owner --dbname="$TEST_URL" stratai.dump
+pg_dump --format=custom --no-owner --no-privileges --serializable-deferrable \
+        --dbname="postgresql://<user>@localhost:5432/stratai_test" --file=stratai_test_<date>.dump
+shasum -a 256 stratai_test_<date>.dump        # Windows: certutil -hashfile stratai_test_<date>.dump SHA256
 ```
 
-**Alternative: `python -m scripts.phase5_isolated_db --name stratai_test_p11a`.**
-- It uses `CREATE DATABASE … TEMPLATE stratai`. PostgreSQL then needs **no other session connected to `stratai`**, so
-  stop the API and any `--watch` sync first.
-- It writes nothing to `stratai` and refuses the serving name.
+`pg_dump` only reads. Record the checksum, and keep the original where it is.
+
+**On this Mac.** Keep the file **outside the repository** (for example `~/StratAI-local/backups/`, mode 600), because
+it holds accounts and scouting data.
+1. Check the checksum: `shasum -a 256 <file>` must equal the recorded value.
+2. Inspect the contents, without any database: `pg_restore --list <file>`. Confirm:
+   - `TABLE DATA public migrations_applied` is present;
+   - there are no entries that need a superuser (`EXTENSION` other than plpgsql, `POLICY`, `EVENT TRIGGER`,
+     `PUBLICATION`, `SUBSCRIPTION`).
+3. The local test role and database exist. They are created by the local `postgres` superuser, with
+   `OWNER stratai_tester`, `ENCODING 'UTF8'` and `TEMPLATE template0`.
+4. Restore into the local test database only:
+
+   ```bash
+   pg_restore --no-owner --no-privileges --exit-on-error --single-transaction \
+              --dbname="postgresql://stratai_tester@localhost:5432/stratai_test_<suffix>" <file>
+   ```
+
+5. Delete the local dump file only after the restored copy has passed the preflight and the tests, and the original
+   is confirmed intact on the source machine.
+
+`python -m scripts.phase5_isolated_db` (`CREATE DATABASE … TEMPLATE`) works only when the source is on the same server.
+It is not part of this procedure.
 
 ## 3. Point every command at the copy, and check it, before anything else
 
 ```bash
-export DATABASE_URL="$TEST_URL"      # the environment overrides .env; never rely on .env
-python -m scripts.p11a_db_preflight  # read-only; must print "status": "ready"
+export DATABASE_URL="postgresql://stratai_tester@localhost:5432/stratai_test_<suffix>"   # password from ~/.pgpass
+export TBA_API_KEY=unused
+python -m scripts.p11a_db_preflight     # read-only; before migrating it lists 0013 as pending
+python database/migrate.py              # report only: the target and the pending files
+python database/migrate.py --apply --confirm-database stratai_test_<suffix>
+python -m scripts.p11a_db_preflight     # must print "status": "ready"
 ```
 
-**What the preflight does:**
-- **Before connecting:**
-  - prints host, port and database name (never the password);
-  - **refuses (exit 2)** anything but `stratai_test` / `stratai_test_<suffix>`, including the serving `stratai`.
-- **Then, inside one READ ONLY transaction:**
-  - confirms `transaction_read_only = on`;
-  - lists missing migrations;
-  - counts 2024–2026 qualification matches with landed breakdowns, rankings and alliances;
-  - reports any 2027 row.
+**The preflight and the migration runner share one guard** (`database/target_guard.py`).
+- **Before connecting, both refuse:**
+  - Render and every other remote host;
+  - the serving `stratai`;
+  - the bare `stratai_test`;
+  - any name that is not `stratai_test_<suffix>`.
+- **After connecting:** the server must confirm the database name and a socket or loopback address.
+- **The runner also refuses:**
+  - a missing or incomplete `migrations_applied` history on a populated database;
+  - a destructive pending migration (drop, truncate, delete) on a populated database.
+- **The runner applies only with `--apply --confirm-database <exact name>`.**
+- There is no production override.
 
-**If migrations are missing**, apply them **only after** the preflight has printed the copy's name:
-`python database/migrate.py`. It migrates whatever `DATABASE_URL` names and has no guard of its own, so the
-explicit export above is required.
+The preflight reads inside one READ ONLY transaction and reports missing or incomplete history instead of failing. Take
+a `pg_dump -Fc` backup of the copy before `--apply`.
 
 ## 4. The P11A database tests (`tests/test_p11a_db.py`)
 
 | Run | Command | Writes | Expected time |
 |---|---|---|---|
-| Real data, read-only | `pytest tests/test_p11a_db.py -k real_data` | none: one READ ONLY transaction; one test proves a write is refused | seconds to a few minutes |
+| Real data | `pytest tests/test_p11a_db.py -k real_data` | Its real-data reads use one READ ONLY transaction (one test proves a write is refused), **but the file's module-wide fixtures write**: see below | seconds to a few minutes |
 | Authenticated API | `pytest tests/test_p11a_db.py -k api` | sentinel rows (season 9977, teams 99771–99799) in the copy only, removed afterwards | under a minute |
 | Phase 11 API (prerequisite) | `pytest tests/test_phase11_live_draft_api.py` | as above | under a minute |
 | Phase 11 replay (P11-DM1) | `python -m scripts.phase11_replay --per-season 2 --budget-minutes 40` | none | ≤ 40 min |
+
+**What `-k real_data` writes (corrected 2026-11-07).** `tests/test_p11a_db.py` imports the automatic fixtures of
+tests/test_phase11_live_draft_api.py, so they run for **every** test in the file, including the real-data ones:
+- **Once per module:**
+  - inserts sentinel events `9977zzzdraft` and `9977zzzother`, teams 99771–99786 and 99799, and eight qualification
+    matches with their `match_teams`;
+  - deletes them at the end.
+- **Before and after each test:**
+  - deletes the workspaces of teams 99771, 99772 and 99799, and users with `@workspaces.test.invalid` emails that have
+    no membership;
+  - deletes **every** row of `auth_attempts`.
+
+All of this happens in the isolated copy only, and nothing outside those rows changes.
 
 **What they check:**
 - **Snapshot export:** `build_event_snapshot` on a real 2024–2026 event (`P11A_DB_EVENT`, or the event with the most
