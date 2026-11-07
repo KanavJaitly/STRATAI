@@ -47,9 +47,10 @@ The short version:
 ```bash
 python3 -m venv venv
 venv/bin/python -m pip install -r requirements.txt
-createdb -U postgres -h localhost stratai  # use a role that exists in your cluster
-cp .env.example .env                       # then fill in DATABASE_URL and TBA_API_KEY
-venv/bin/python database/migrate.py        # apply migrations
+createdb -U postgres -h localhost stratai_test_dev  # a local stratai_test_<suffix> database
+cp .env.example .env                       # then fill in DATABASE_URL (that local database) and TBA_API_KEY
+venv/bin/python database/migrate.py        # report the target and the pending migrations
+venv/bin/python database/migrate.py --apply --confirm-database stratai_test_dev   # apply them
 venv/bin/python database/verify_db.py      # confirm the schema
 venv/bin/python -m data.orchestrator 2024casj   # sync one event end to end
 ```

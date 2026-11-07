@@ -235,22 +235,12 @@ def test_no_real_season_has_a_registered_configuration():
         assert find_config(season, real) is None
 
 
-# --- the database preflight (no connection is made for these) ---------------------------------------------------------
+# --- the database preflight: its guard is tested in tests/test_migration_guard.py ---------------------------------------
 
 
-@pytest.mark.parametrize("name", ["stratai", "stratai_dev", "postgres", "stratai_prod"])
-def test_the_preflight_refuses_anything_but_an_isolated_test_copy_before_connecting(name, monkeypatch):
-    import psycopg
-
+def test_the_preflight_accepts_a_local_suffixed_copy_only():
     from scripts.p11a_db_preflight import refuse_unless_isolated
 
-    monkeypatch.setattr(psycopg, "connect", lambda *a, **k: pytest.fail("connected"))
-    with pytest.raises(SystemExit) as refused:
-        refuse_unless_isolated(f"postgresql://localhost:5432/{name}")
-    assert refused.value.code == 2
-
-
-def test_the_preflight_accepts_an_isolated_copy():
-    from scripts.p11a_db_preflight import refuse_unless_isolated
-
-    assert refuse_unless_isolated("postgresql://u:secret@db:5433/stratai_test_p11a")["dbname"] == "stratai_test_p11a"
+    assert refuse_unless_isolated("postgresql://u:secret@localhost:5433/stratai_test_p11a").dbname == "stratai_test_p11a"
+    with pytest.raises(SystemExit):
+        refuse_unless_isolated("postgresql://u:secret@db:5433/stratai_test_p11a")  # a remote host
