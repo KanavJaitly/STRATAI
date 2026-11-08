@@ -2,9 +2,9 @@
   "consecutive_contract_failures": 0,
   "escalation_reason": null,
   "last_check": {
-    "checked_at": "2026-11-07T19:34:27.668577+00:00",
+    "checked_at": "2026-11-08T19:54:46.911541+00:00",
     "detail": "real EPA data retrieved and accepted by the production parse path",
-    "elapsed_ms": 843,
+    "elapsed_ms": 5277,
     "epa_total": 49.22,
     "failed_stage": null,
     "failure_code": null,
@@ -22,7 +22,8 @@
     "2026-11-04",
     "2026-11-05",
     "2026-11-06",
-    "2026-11-07"
+    "2026-11-07",
+    "2026-11-08"
   ],
   "recovery_confirmed_at": "2026-11-02T23:11:51.699807+00:00",
   "schema_version": 1,
