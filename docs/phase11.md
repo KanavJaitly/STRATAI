@@ -147,8 +147,11 @@ scope, because they are team-private (`api/examples.py` `TEAM_PRIVATE_PREFIX`).
   - Composite keys tie each action to its own team's record and each author to its own team's membership.
   - A trigger refuses every UPDATE.
   - The application never deletes an action. Actions go only with their workspace, by cascade.
+  - Migration 0014 (2026-11-09) checks the two author keys at commit. As 0013 shipped, they were checked immediately,
+    so deleting any workspace with a recorded action failed with a foreign-key violation. The first DB-backed test
+    run found it.
 
-Applying 0013 to a deployed database is a separate, authorized step (§3.6).
+Applying 0013 and 0014 to a deployed database is a separate, authorized step (§3.6).
 
 ## The web app
 

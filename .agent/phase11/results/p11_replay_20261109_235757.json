@@ -1,0 +1,155 @@
+{
+ "kind": "p11_replay",
+ "run_at": "2026-11-09T23:57:57.660424+00:00",
+ "seed": 20261104,
+ "per_season": 2,
+ "seasons": [
+  2024,
+  2025,
+  2026
+ ],
+ "sample": [
+  "2024lake",
+  "2024txbel",
+  "2025miket",
+  "2025misjo",
+  "2026nhdur",
+  "2026onwat"
+ ],
+ "budget_minutes": 40.0,
+ "partial": false,
+ "epa_source_loaded": true,
+ "ranking_model_loaded": true,
+ "events": [
+  {
+   "event_key": "2024lake",
+   "actions": 24,
+   "notes": [
+    "alliance 3: TBA lists [2556] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 137,
+    "withheld:team_not_selecting": 19,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.8177,
+    "warm_p95": 0.003,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024txbel",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 139,
+    "withheld:team_not_selecting": 17,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.3213,
+    "warm_p95": 0.0047,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025miket",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.5053,
+    "warm_p95": 0.0031,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025misjo",
+   "actions": 24,
+   "notes": [
+    "alliance 1: TBA lists [6588] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.3472,
+    "warm_p95": 0.0025,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026nhdur",
+   "actions": 24,
+   "notes": [
+    "alliance 1: TBA lists [9443] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 130,
+    "withheld:team_not_selecting": 26,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.3346,
+    "warm_p95": 0.0027,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026onwat",
+   "actions": 24,
+   "notes": [
+    "alliance 8: TBA lists [5408] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 135,
+    "withheld:team_not_selecting": 21,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2505,
+    "warm_p95": 0.0023,
+    "count": 192
+   },
+   "passed": true
+  }
+ ],
+ "skipped": 0,
+ "passed": true
+}

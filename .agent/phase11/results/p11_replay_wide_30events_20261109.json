@@ -1,0 +1,675 @@
+{
+ "kind": "p11_replay",
+ "run_at": "2026-11-09T23:58:36.845900+00:00",
+ "seed": 20261104,
+ "per_season": 10,
+ "seasons": [
+  2024,
+  2025,
+  2026
+ ],
+ "sample": [
+  "2024arc",
+  "2024azva",
+  "2024lake",
+  "2024mawor",
+  "2024milsu",
+  "2024mndu2",
+  "2024mosl",
+  "2024nytr",
+  "2024qcmo",
+  "2024txbel",
+  "2025brba",
+  "2025casd",
+  "2025mitvc",
+  "2025ncgre",
+  "2025ncwak",
+  "2025okok",
+  "2025onwin",
+  "2025pawar",
+  "2025tuak",
+  "2025txhou",
+  "2026cosp",
+  "2026gagai",
+  "2026mabil",
+  "2026mibig",
+  "2026ncwak",
+  "2026ohcl",
+  "2026tuis2",
+  "2026tuis4",
+  "2026txcl2",
+  "2026wabon"
+ ],
+ "budget_minutes": 40.0,
+ "partial": false,
+ "epa_source_loaded": true,
+ "ranking_model_loaded": true,
+ "events": [
+  {
+   "event_key": "2024arc",
+   "actions": 32,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 219,
+    "withheld:team_not_selecting": 1,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 1.0467,
+    "warm_p95": 0.0023,
+    "count": 256
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024azva",
+   "actions": 24,
+   "notes": [
+    "alliance 2: TBA lists [7755] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 146,
+    "withheld:team_not_selecting": 10,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2638,
+    "warm_p95": 0.0024,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024lake",
+   "actions": 24,
+   "notes": [
+    "alliance 3: TBA lists [2556] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 137,
+    "withheld:team_not_selecting": 19,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2583,
+    "warm_p95": 0.0028,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024mawor",
+   "actions": 24,
+   "notes": [
+    "alliance 2: TBA lists [2712] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 141,
+    "withheld:team_not_selecting": 15,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2488,
+    "warm_p95": 0.0023,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024milsu",
+   "actions": 24,
+   "notes": [
+    "alliance 4: TBA lists [6098] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed",
+    "alliance 6: TBA lists [7250] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 133,
+    "withheld:team_not_selecting": 23,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.4846,
+    "warm_p95": 0.0025,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024mndu2",
+   "actions": 24,
+   "notes": [
+    "alliance 4: TBA lists [3023] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 151,
+    "withheld:team_not_selecting": 5,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.3227,
+    "warm_p95": 0.0036,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024mosl",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 143,
+    "withheld:team_not_selecting": 13,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.4201,
+    "warm_p95": 0.0044,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024nytr",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 141,
+    "withheld:team_not_selecting": 15,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.3457,
+    "warm_p95": 0.0019,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024qcmo",
+   "actions": 24,
+   "notes": [
+    "alliance 3: TBA lists [3550] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 136,
+    "withheld:team_not_selecting": 20,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.3952,
+    "warm_p95": 0.0036,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024txbel",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 139,
+    "withheld:team_not_selecting": 17,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.3171,
+    "warm_p95": 0.0017,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025brba",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.3089,
+    "warm_p95": 0.0015,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025casd",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2955,
+    "warm_p95": 0.002,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025mitvc",
+   "actions": 24,
+   "notes": [
+    "alliance 1: TBA lists [5560] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed",
+    "alliance 7: TBA lists [5193] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2566,
+    "warm_p95": 0.0018,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025ncgre",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.1762,
+    "warm_p95": 0.0015,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025ncwak",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.177,
+    "warm_p95": 0.0014,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025okok",
+   "actions": 24,
+   "notes": [
+    "alliance 8: TBA lists [6809] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.3012,
+    "warm_p95": 0.0015,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025onwin",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.1749,
+    "warm_p95": 0.0015,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025pawar",
+   "actions": 24,
+   "notes": [
+    "alliance 2: TBA lists [430] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2292,
+    "warm_p95": 0.0013,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025tuak",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2182,
+    "warm_p95": 0.0014,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025txhou",
+   "actions": 24,
+   "notes": [
+    "alliance 2: TBA lists [8144] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2027,
+    "warm_p95": 0.0016,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026cosp",
+   "actions": 24,
+   "notes": [
+    "alliance 2: TBA lists [3807] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed",
+    "alliance 4: TBA lists [5493] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed",
+    "alliance 8: TBA lists [11220] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 139,
+    "withheld:team_not_selecting": 17,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2758,
+    "warm_p95": 0.0016,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026gagai",
+   "actions": 24,
+   "notes": [
+    "alliance 3: TBA lists [2415] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed",
+    "alliance 5: TBA lists [6712] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed",
+    "alliance 7: TBA lists [9582] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 141,
+    "withheld:team_not_selecting": 15,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.1623,
+    "warm_p95": 0.0015,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026mabil",
+   "actions": 24,
+   "notes": [
+    "alliance 2: TBA lists [3182] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed",
+    "alliance 3: TBA lists [2064] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 139,
+    "withheld:team_not_selecting": 17,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.1629,
+    "warm_p95": 0.0014,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026mibig",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 140,
+    "withheld:team_not_selecting": 16,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2364,
+    "warm_p95": 0.0019,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026ncwak",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 143,
+    "withheld:team_not_selecting": 13,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.1559,
+    "warm_p95": 0.0019,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026ohcl",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 131,
+    "withheld:team_not_selecting": 25,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.231,
+    "warm_p95": 0.0018,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026tuis2",
+   "actions": 24,
+   "notes": [
+    "alliance 2: TBA lists [11095] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed",
+    "alliance 8: TBA lists [11164] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 133,
+    "withheld:team_not_selecting": 23,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.198,
+    "warm_p95": 0.0018,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026tuis4",
+   "passed": true,
+   "skipped": "No approved ruleset gives this event's rules (event_excluded). Enter the alliance count, picks per alliance and the decline, captain and backup rules from the event.",
+   "problems": []
+  },
+  {
+   "event_key": "2026txcl2",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 144,
+    "withheld:team_not_selecting": 12,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.206,
+    "warm_p95": 0.0018,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026wabon",
+   "actions": 24,
+   "notes": [
+    "alliance 5: TBA lists [2147] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb1": 137,
+    "withheld:team_not_selecting": 19,
+    "withheld:no_remaining_turn": 36
+   },
+   "recommend_seconds": {
+    "cold_first": 0.2011,
+    "warm_p95": 0.0014,
+    "count": 192
+   },
+   "passed": true
+  }
+ ],
+ "skipped": 1,
+ "passed": true
+}
