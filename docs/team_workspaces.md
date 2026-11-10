@@ -267,7 +267,7 @@ committed file.
 ## 10. Running it locally
 
 ```
-python database/migrate.py          # applies 0012 (and 0013, Phase 11) to the database DATABASE_URL names
+python database/migrate.py          # applies 0012 (and 0013-0014, Phase 11) to the database DATABASE_URL names
 python -m api                       # the API on http://127.0.0.1:8000
 cd frontend && npm ci && npm run dev  # the web app on http://localhost:5173 (proxies /api to the API)
 ```
