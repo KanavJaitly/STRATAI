@@ -38,6 +38,7 @@ import { ExplorerPage } from './pages/ExplorerPage'
 import { EventPage as ExplorerEventPage } from './pages/EventPage'
 import { TeamPage as ExplorerTeamPage } from './pages/TeamPage'
 import { SUPPORTED_SEASONS } from './lib/format'
+import Velaris from './components/ui/velaris'
 
 // Three areas share one shell: the dashboard (Phase 8); the human-input pages (Phase 5, under /inputs; the old paths
 // redirect); and the season pages (game manuals, rulesets, readiness, the historical explorer), each read for one
@@ -135,10 +136,15 @@ function AccountArea() {
   )
 }
 
+// The hero's animated gradient: burnt amber, dusk violet and cobalt over the black canvas, dark enough that the
+// white text on it stays readable.
+const HERO_COLORS = ['#9a3412', '#4c3a9e', '#1e3a8a', '#0a0a0a']
+
 /** The landing page's invitation to the team workspaces, for anyone not signed in. */
 function TeamWorkspaceCallout() {
   return (
     <section className="auth-callout no-print" aria-labelledby="team-workspace-callout">
+      <Velaris bg="#0a0a0a" colors={HERO_COLORS} speed={1.2} grain={0.25} />
       <div>
         <h2 id="team-workspace-callout">Your team&apos;s own StratAI</h2>
         <p>Give every member of your FRC team their own account, with roles for administrators, the drive team and
