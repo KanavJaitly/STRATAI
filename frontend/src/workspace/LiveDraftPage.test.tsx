@@ -110,6 +110,15 @@ describe('live alliance selection', () => {
     expect(screen.getByText(/You can watch the board/)).toBeInTheDocument()
   })
 
+  it('is shown as a team page: the team header, without the public pages\' name and write-token bar', async () => {
+    mockApi({ 'GET /auth/session': STRATEGY, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
+      [`GET ${BASE}/5`]: draft({ can_record: false }), [`GET ${BASE}/5/recommendations`]: recs() })
+    renderAt(URL)
+    await screen.findByRole('region', { name: 'Your picks' })
+    expect(screen.getByText('Team 1 workspace')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Write token')).not.toBeInTheDocument()
+  })
+
   it('records a pick by tapping a listed team, with CSRF and a client action id', async () => {
     const after = draft({ record_seq: 3, turn: { index: 1, round: 1, seed: 2, captain_named: false,
       expected_captain: 2, expected_captain_reason: null } })
