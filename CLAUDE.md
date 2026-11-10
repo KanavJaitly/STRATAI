@@ -178,7 +178,7 @@ observations gets no rating, never one synthesized from its scoring.
 
 **Phase 11 (Live alliance selection): VERIFIED ON AN ISOLATED COPY, NOT ACCEPTED (2026-11-09)** (`.agent/phase11/PHASE_STATUS.md`,
 `docs/phase11.md`). Spec: `docs/P11-P19Phases.md` §5. That document is PROPOSED; Phase 11 was started on the owner's
-instruction. Not committed.
+instruction. The implementation is on main (3757d2a); the verification and fixes are on PR #44 (not merged).
 - **Built:**
   - each team's append-only live draft record (`workspaces/draft_log.py`, `live_draft.py`; migration 0013);
   - its recommendations (`workspaces/draft_recommendations.py`);
