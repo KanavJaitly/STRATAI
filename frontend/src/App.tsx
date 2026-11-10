@@ -114,7 +114,8 @@ const EVENTS_AREA = /^\/($|events\/|matches\/|report\/)/
 
 // The sign-in pages, and the team-workspace pages, which have their own sign-in rules.
 const AUTH_AREA = /^\/auth(\/|$)/
-const WORKSPACE_AREA = /^\/(auth|account|home|team|drive-team|scouting)(\/|$)/
+// The live alliance-selection page (Phase 11) is a team page too: the team header, not the public pages' session bar.
+const WORKSPACE_AREA = /^\/(auth|account|home|team|drive-team|scouting|alliance-selection\/live)(\/|$)/
 
 /** Sign in / register when nobody is signed in; otherwise who is signed in, to which team, with sign-out. */
 function AccountArea() {

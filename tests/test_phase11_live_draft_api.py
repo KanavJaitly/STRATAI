@@ -278,6 +278,27 @@ def test_the_log_is_append_only_in_the_database(team):
             c.execute("UPDATE draft_actions SET seq = seq WHERE record_id = %s", (record,))
 
 
+def test_a_workspace_takes_its_history_with_it_but_an_author_alone_cannot_be_deleted(team):
+    """0014: the author keys are checked at commit, so the workspace cascade completes; the log keeps its authors."""
+    _, admin, _, _ = team
+    record = start(admin).json()["record_id"]
+    assert act(admin, record, "captain", TEAM_A, 1).status_code == 200
+    db = _db()
+    with db.cursor() as c:
+        author, workspace_id = c.execute("SELECT author_user_id, workspace_id FROM draft_actions WHERE record_id = %s "
+                                         "ORDER BY seq DESC LIMIT 1", (record,)).fetchone()
+    with pytest.raises(psycopg.errors.IntegrityError):
+        with db.cursor() as c:
+            c.execute("DELETE FROM users WHERE id = %s", (author,))
+    with db.cursor() as c:
+        c.execute("DELETE FROM workspaces WHERE id = %s", (workspace_id,))
+    with db.cursor() as c:
+        left = c.execute("SELECT (SELECT count(*) FROM draft_records WHERE workspace_id = %s), "
+                         "(SELECT count(*) FROM draft_actions WHERE workspace_id = %s)",
+                         (workspace_id, workspace_id)).fetchone()
+    assert left == (0, 0)
+
+
 def test_recommendations_are_withheld_with_the_reason_when_inputs_are_missing(team):
     app, admin, _, _ = team
     record = start(admin).json()["record_id"]

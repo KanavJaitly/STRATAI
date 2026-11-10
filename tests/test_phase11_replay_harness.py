@@ -77,6 +77,33 @@ def test_a_fact_the_rules_refuse_is_counted_as_an_override_not_hidden(faked):
     assert any(o["code"] == "wrong_captain" for o in result["overridden"])
 
 
+def test_a_team_tba_lists_after_the_selected_ones_is_noted_not_counted_as_a_mismatch(faked):
+    """A playoff backup TBA appends to an alliance joined after selection: noted, and the draft still matches."""
+    field = alliances()
+    third = field[2]
+    field[2] = Alliance(3, 3, "Alliance 3", third.picks[0], third.picks + (99,), None, ())
+    actions, notes = harness.reconstruct(field, faked.rules)
+    assert not any(team == 99 for _, _, team in actions)
+    assert any("alliance 3: TBA lists [99] after the 3 selected teams" in n for n in notes)
+    result = harness.replay_event(None, "2030test", field, epa_source=object(), ranking=None, playoff_models=None)
+    assert result["passed"], result["problems"]
+
+
+def test_a_selected_team_that_differs_from_tba_is_still_a_mismatch(faked, monkeypatch):
+    """The comparison is not loosened: the record's alliances must equal TBA's selected teams exactly."""
+    field = alliances()
+    real = harness.reconstruct
+    def swapped(rows, rules):
+        actions, notes = real(rows, rules)
+        last = [i for i, a in enumerate(actions) if a[0] == "pick"][-1]
+        type_, seed, _ = actions[last]
+        actions[last] = (type_, seed, 15)  # an available team, but not the one TBA recorded
+        return actions, notes
+    monkeypatch.setattr(harness, "reconstruct", swapped)
+    result = harness.replay_event(None, "2030test", field, epa_source=object(), ranking=None, playoff_models=None)
+    assert "the recorded alliances differ from TBA's" in result["problems"]
+
+
 def test_the_budget_is_capped_at_the_verification_limit():
     with pytest.raises(SystemExit):
         harness.main(["--budget-minutes", "60"])
