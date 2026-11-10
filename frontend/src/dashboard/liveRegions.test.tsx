@@ -18,7 +18,7 @@ import { RecordObservation, SaveCoachStrategy } from './coachInputs'
 afterEach(() => setWriteToken(''))
 
 // Read from disk: the test config sets `css: false`, which empties CSS imports, even `?raw` ones.
-const STYLES = ['../index.css', '../styles/dashboard.css'] // every stylesheet main.tsx loads
+const STYLES = ['../index.css', '../styles/dashboard.css', '../styles/theme.css'] // every stylesheet main.tsx loads
   .map((file) => readFileSync(fileURLToPath(new URL(file, import.meta.url)), 'utf8')).join('\n')
 
 describe('persistent status regions', () => {
