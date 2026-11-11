@@ -3,6 +3,9 @@
 **Status (2026-11-07): prepared, NOT RUN.** A local PostgreSQL 18.6 now exists on the build machine; no copy has
 been restored yet, so nothing below has a result.
 
+**Update (2026-11-11):** first run, on a clone of the local `stratai_test` rather than the intended source. See §6 for
+the copy, its limits, a test defect it found, and the results.
+
 **Hard rules, from CLAUDE.md:**
 - The serving database `stratai` is never modified, migrated or used for testing.
 - Tests run only against `stratai_test` or `stratai_test_<suffix>`. `tests/db_guard.py` refuses anything else, at
@@ -131,3 +134,103 @@ All of this happens in the isolated copy only, and nothing outside those rows ch
 ## 5. Then E5 (`research/p11a_e5/`)
 
 E5 must not run before it is registered. See `research/p11a_e5/README.md`.
+
+## 6. Run record
+
+### 2026-11-11: first run, Kanav's Windows machine (local PostgreSQL 18.6)
+
+**The copy is not the one §2 describes.**
+- `stratai_test_p11a` is a `CREATE DATABASE … TEMPLATE stratai_test` clone of this machine's local `stratai_test`. It
+  is **not** Sven's `stratai_test_p11`, nor a restore of `stratai_test_handoff`; neither exists on this machine.
+- Results here are therefore **not directly comparable** with the Phase 11 verification on Sven's machine.
+- The source `stratai_test` was only read (as the template) and was never connected to by any test. The serving
+  `stratai` was never connected to.
+- The clone was at 0011. `database/migrate.py --apply --confirm-database stratai_test_p11a` applied exactly 0012, 0013
+  and 0014. The preflight then printed `"status": "ready"` with no problems.
+
+**What the copy holds** (read-only counts, after migration):
+
+| Season | Events | Qual. matches | Played qual. with breakdown | Rankings | Alliances (non-empty) | team_metrics |
+|---|---|---|---|---|---|---|
+| 2024 | 190 | 14,129 | 14,125 | 190 | 190 (190) | 42, all `2024casj` |
+| 2025 | 203 | 14,826 | 14,805 | 203 | 203 (203) | 0 |
+| 2026 | 215 | 15,176 | 15,176 | 215 | 215 (213) | 0 |
+
+- The approved P6-M1 rulesets (ids 4–6) are present. Their `ruleset_sha256` equals each
+  `.agent/phase6/decisions/P6_M1_APPROVAL_<season>_v2.json`.
+- **No scouting data:** `scouting_observations` holds 0 rows.
+- **No GameSpecs:** `game_spec_versions`, `human_review_artifacts` and `capability_profiles` hold 0 rows, and
+  `data/season_scoring/` is empty.
+- The 42 `team_metrics` rows (`2024casj`) have no sufficient defense or feeding rating. All were computed on
+  2026-09-24.
+
+**To resolve before E5: 2027 rows outside the preflight's holdout check.**
+- `season_rulesets` ids 684 and 717–721: season 2027, five `awaiting_review` and one `draft`, created by "Checklist
+  Automation" on 2026-10-12.
+- `game_manuals`: 17 rows, season 2027, uploaded 2026-10-12.
+- They look like 2027 manual-readiness leftovers, not match data. The preflight's 2027 check covers only events,
+  matches, landed breakdowns and rankings, so it reports none of them.
+
+**A test defect, found on this first real run, and fixed.**
+- **The defect:** `test_real_data_export_connection_is_read_only` deliberately ran a refused write
+  (`CREATE TEMP TABLE`) on the module-scoped `readonly` transaction. The failed statement aborted that shared
+  transaction. Every later real-data test then errored at setup in the `real_event` fixture with
+  `InFailedSqlTransaction` (1 passed, 5 errors).
+- **Why it went unseen:** this file had never run against a database before.
+- **The fix** (`tests/test_p11a_db.py`, that test's body only):
+  - the refused write now runs inside `SAVEPOINT p11a_readonly_probe` and is undone with `ROLLBACK TO SAVEPOINT`;
+  - the test then asserts the shared snapshot still answers `SELECT 1`.
+- Local edit, not committed.
+
+**Results (after the fix):**
+
+| Run | Passed | Failed | Errors | Skipped |
+|---|---|---|---|---|
+| `pytest tests/test_phase11_live_draft_api.py` | 16 | 0 | 0 | 0 |
+| `pytest tests/test_p11a_db.py -v` (default event) | 10 | 0 | 0 | 0 |
+| `P11A_DB_EVENT=2024casj pytest tests/test_p11a_db.py -k real_data` | 6 (4 deselected) | 0 | 0 | 0 |
+| `pytest tests/test_p11a*.py` | 89 | 0 | 0 | 4 |
+
+- **The four skips** are all `tests/test_p11a_offline.py`, each "needs macOS sandbox-exec": the network-denial
+  checks (the sandbox denies the network; the plan and the profile run with it denied; an altered snapshot is
+  refused offline). **They are not verified on this machine.**
+- **Snapshot builds** (`test_real_data_snapshot_export_and_integrity`):
+
+  | Run | Event | Rows | Exclusions | Build time |
+  |---|---|---|---|---|
+  | Default event | `2026mrcmp` | 264 | 1 | 12.5 s |
+  | Chosen event | `2024casj` | 154 | 43 | 0.1 s |
+
+- **Exclusions,** broken down by a separate read-only rebuild at the tests' own `as_of` values:
+  - **`2024casj`:** 42 `scouting` (every `team_metrics` row, each computed after `as_of`) and 1 `ranks` (the
+    landed ranking was fetched after `as_of`), at both the full and the mid-qualification cutoff. 0 summaries kept.
+  - **`2026mrcmp`:** 1 `ranks` at the full cutoff. At the mid cutoff, also 1 `result_posted_after_as_of`
+    (`2026mrcmp_qm67`, posted 5 s after `as_of`).
+- **What these results do not show:**
+  - **The scouting assertion is vacuous here.**
+    - `test_real_data_rankings_and_scouting_after_as_of_are_left_out` asserts only over the summaries kept, and 0
+      were kept, so its scouting loop checked nothing.
+    - The 42 exclusions are real, but no test asserts their count.
+    - With no scouting data and no summary computed before any `as_of`, the copy cannot show that a valid summary is
+      kept.
+  - **The plan test uses made-up rules.** `test_real_data_plan_mechanics_with_a_synthetic_test_only_configuration`
+    runs on real rows, but with a synthetic, test-only GameSpec and configuration. It is not a real plan. Its plan
+    time is asserted under 2 s but not recorded.
+  - **No real rows elsewhere:**
+    - `test_real_data_export_connection_is_read_only` touches no data rows;
+    - the four `test_api_*` tests and all 16 Phase 11 API tests use only the sentinel event, teams and workspaces
+      (`..._served_from_a_snapshot` also uses a synthetic snapshot and registry);
+    - the other `tests/test_p11a_*.py` files use no database.
+- **Cleanup:** afterwards there were 0 sentinel events, matches, `match_teams` or teams, and 0 workspaces, users,
+  drafts, draft actions, sessions and auth attempts. `team_metrics` was still at 42.
+- **Scouting assertion strengthened (same day; supersedes the "vacuous" caveat above).**
+  - **The new check:** `test_real_data_rankings_and_scouting_after_as_of_are_left_out` now queries the event's
+    `team_metrics` rows computed after `as_of` (or at an unknown time). It asserts that the snapshot's `scouting`
+    exclusions are exactly those teams.
+  - **Result:** 42 on `2024casj`, 0 on `2026mrcmp`.
+  - **Break-it check:** with the `exclusions.append` in `ml/alliance/snapshot.py::_scouting` temporarily commented
+    out, the test FAILED on `2024casj` (0 recorded against 42 expected), and only that test failed. The file was then
+    restored byte-for-byte (`git diff` empty), and the test passed again.
+  - **The four sandbox-exec skips:** they were run and passed on the Mac build machine, not this one
+    (`.agent/phase11/PHASE_STATUS.md`, `last_verification` 2026-11-06: "4 run under sandbox-exec with the network
+    denied, with a positive control").
