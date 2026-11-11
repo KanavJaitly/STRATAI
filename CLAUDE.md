@@ -176,9 +176,9 @@ observations gets no rating, never one synthesized from its scoring.
 
 ## Current Development Phase
 
-**Phase 11 (Live alliance selection): IMPLEMENTED, NOT ACCEPTED (2026-11-04)** (`.agent/phase11/PHASE_STATUS.md`,
+**Phase 11 (Live alliance selection): VERIFIED ON AN ISOLATED COPY, NOT ACCEPTED (2026-11-09)** (`.agent/phase11/PHASE_STATUS.md`,
 `docs/phase11.md`). Spec: `docs/P11-P19Phases.md` §5. That document is PROPOSED; Phase 11 was started on the owner's
-instruction. Not committed.
+instruction. The implementation is on main (3757d2a); the verification and fixes are on PR #44 (not merged).
 - **Built:**
   - each team's append-only live draft record (`workspaces/draft_log.py`, `live_draft.py`; migration 0013);
   - its recommendations (`workspaces/draft_recommendations.py`);
@@ -190,8 +190,13 @@ instruction. Not committed.
   - P11-Q2: a new configurable permission, `alliance_selection_record`, off by default;
   - P11-Q3: ≤ 2 s at p95;
   - P11-Q4: viewing uses the existing `alliance_selection`.
-- **Not verified:** the build machine has no PostgreSQL. The DB-backed API tests and the real-data replay
-  (`scripts/phase11_replay.py`) are written but not run, so P11-DM1 is NOT MET.
+- **Verified (2026-11-09, PR #44):** on an isolated `stratai_test_p11` (a clone of the D18 handoff, through 0014):
+  - the DB-backed API tests pass;
+  - the real-data replay matches TBA in 6 of 6 prescribed events and 29 of 29 in a wider sample, so P11-DM1 is MET;
+  - a real-browser tablet check passes.
+  Three defects were fixed: workspace deletion (migration 0014), the replay's backup-robot comparison, and the live
+  page's header. The full backend suite has 9 failures, all environment or baseline, 0 regressions. Acceptance is the
+  owners' decision.
 
 **P11A (Recommendation intelligence): STAGES 1-3 IMPLEMENTED, NOT VALIDATED, NOT ACCEPTED (2026-11-06)**
 (`docs/phase11.md` "P11A", `.agent/phase11/PHASE_STATUS.md`). Spec `docs/P11-RecommendationIntelligence.md` stays PROPOSED.
