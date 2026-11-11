@@ -734,7 +734,8 @@ A team's live alliance-selection record for one event (`docs/phase11.md`). Its s
 
 - **PK** `id`; `UNIQUE (workspace_id, event_key)`, `UNIQUE (workspace_id, record_uid)`, `UNIQUE (workspace_id, id)`.
   **Columns:** `workspace_id`, `record_uid` (a client-created UUID), `event_key`, `created_by_user_id`, `created_at`.
-- **FKs:** the canonical event; `(workspace_id, created_by_user_id)` → a membership of the same workspace.
+- **FKs:** the canonical event; `(workspace_id, created_by_user_id)` → a membership of the same workspace, checked at
+  commit (0014).
 
 #### `draft_actions` (migration 0013, Phase 11)
 
@@ -746,7 +747,8 @@ application.
   reopen}, `payload` (JSON object), `override_reason`, `author_user_id`, `author_label`, `recorded_at`,
   `client_recorded_at`, `source` ∈ {manual, imported}, `mode` ∈ {online, local}.
 - **FKs:** `(workspace_id, record_id)` → a record of the same workspace (cascade); `(workspace_id, author_user_id)`
-  → a membership of the same workspace.
+  → a membership of the same workspace, checked at commit (0014), so a workspace's deletion cascades through its log
+  while an author cannot be deleted on their own.
 
 ---
 
@@ -1219,10 +1221,11 @@ DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 | `0011_phase6_season_rulesets.sql` | Phase 6 (P6-M1): creates `season_rulesets`, the human-entered, reviewed per-season alliance-selection and playoff rules |
 | `0012_team_workspaces.sql` | Team workspaces: creates `workspaces`, `users`, `team_memberships`, `invitations`, `workspace_role_permissions`, `auth_sessions`, `password_reset_tokens`, `auth_attempts`, `activity_logs`, `scouting_assignments` and `workspace_scouting_reports` (section 4.5) |
 | `0013_live_alliance_selection.sql` | Phase 11: creates `draft_records` and `draft_actions` (each team's append-only live alliance-selection log) and adds `alliance_selection_record` to the `workspace_role_permissions` CHECK constraint (section 4.5; `docs/phase11.md`) |
+| `0014_draft_author_fk_deferred.sql` | Phase 11 fix: checks `draft_records_author_fk` and `draft_actions_author_fk` at commit (`DEFERRABLE INITIALLY DEFERRED`), so deleting a workspace cascades through its draft history as 0013 intends; removing an author without its workspace is still refused |
 
 Migrations are plain SQL applied in filename order and recorded in `migrations_applied`.
 **There is no Alembic and none should be added.** To add one, create
-`database/migrations/0014_<name>.sql` and run `database/migrate.py`.
+`database/migrations/0015_<name>.sql` and run `database/migrate.py`.
 
 ### 8.7 Watching a live event
 

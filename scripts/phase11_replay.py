@@ -22,7 +22,9 @@
 - Who a declining team declined, and when, are not recorded. Each decline is recorded against alliance 1, right
   after its captain is named. This is the earliest point the rules allow. The rules decide what a decline makes
   unavailable, whenever it happened.
-- TBA's `backup` was null for every 2024-2026 alliance at ingestion, so no backup is replayed.
+- TBA's `backup` was null for every 2024-2026 alliance at ingestion, so no backup is replayed. TBA can still list a
+  team after an alliance's selected teams (a backup robot called in during the playoffs): the final comparison
+  covers the captain and `picks_per_alliance` picks the draft selects, and each such later team is noted.
 - A recorded fact that the rules refuse is recorded with an override that says so, and counted. It is a finding
   about the rules or the reconstruction, not an error to hide.
 
@@ -67,6 +69,13 @@ def reconstruct(alliances: Sequence[Any], rules: dl.DraftRules) -> tuple[list[tu
         notes.append(f"TBA lists {len(seeded)} seeded alliances; the rules give {rules.n_alliances}")
     by_seed = {a.seed: a for a in seeded}
     declines = sorted({t for a in seeded for t in a.declines})
+    size = 1 + rules.picks_per_alliance
+    for a in seeded:
+        if len(a.picks) > size:
+            # A team TBA lists past the draft's size joined after selection (a backup robot called in during the
+            # playoffs): not a selection action, so it is reported and not replayed.
+            notes.append(f"alliance {a.seed}: TBA lists {list(a.picks[size:])} after the {size} selected teams "
+                         "(joined after selection, e.g. a playoff backup); not part of the draft, not replayed")
     if declines:
         notes.append(f"{len(declines)} decline(s): timing and inviter not recorded by TBA; recorded against "
                      "alliance 1 after its captain is named")
@@ -153,7 +162,9 @@ def replay_event(database: Any, event_key: str, alliances: Sequence[Any], *, epa
             if out.record_seq != view.record_seq:
                 problems.append(f"seq {number}: a recommendation cites record #{out.record_seq}")
     final = views[-1]
-    tba = {a.seed: tuple(a.picks) for a in alliances if a.seed is not None}
+    # The draft selects captain + picks_per_alliance teams; anything TBA lists after them joined later (see notes).
+    size = 1 + setup.rules.picks_per_alliance
+    tba = {a.seed: tuple(a.picks[:size]) for a in alliances if a.seed is not None}
     recorded = {seed: alliance for seed, alliance in enumerate(final.alliances, start=1) if alliance}
     if not problems and recorded != {s: p for s, p in tba.items() if s in recorded}:
         problems.append("the recorded alliances differ from TBA's")

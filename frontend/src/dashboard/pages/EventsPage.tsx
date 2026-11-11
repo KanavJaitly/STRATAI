@@ -84,7 +84,7 @@ export function EventsPage() {
                             <tr key={e.event_key}>
                               <th scope="row"><Link to={`/events/${encodeURIComponent(e.event_key)}`}>{e.name ?? e.event_key}</Link></th>
                               <td><code>{e.event_key}</code></td>
-                              <td>{dates(e)}</td>
+                              <td className="nowrap">{dates(e)}</td>
                               <td>{location(e) || <Absent reason="no location" />}</td>
                             </tr>
                           ))}
