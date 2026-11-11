@@ -89,8 +89,13 @@ def test_real_data_export_connection_is_read_only(readonly):
     with readonly.cursor() as c:
         c.execute("SELECT current_setting('transaction_read_only')")
         assert c.fetchone()[0] == "on"
+        c.execute("SAVEPOINT p11a_readonly_probe")
         with pytest.raises(psycopg.errors.ReadOnlySqlTransaction):
             c.execute("CREATE TEMP TABLE p11a_should_fail (x int)")
+        c.execute("ROLLBACK TO SAVEPOINT p11a_readonly_probe")
+        # the shared snapshot must survive the refused write, or every later real-data test errors
+        c.execute("SELECT 1")
+        assert c.fetchone()[0] == 1
 
 
 def test_real_data_snapshot_export_and_integrity(readonly, real_event, tmp_path):
@@ -138,6 +143,14 @@ def test_real_data_rankings_and_scouting_after_as_of_are_left_out(readonly, real
         assert snap.ranks is None and any(e.get("what") == "ranks" for e in snap.exclusions)
     for team, entry in snap.scouting.items():
         assert datetime.fromisoformat(entry["computed_at"]) <= as_of, team
+    # not vacuous: every team_metrics summary computed after as_of (or at an unknown time) must be recorded as excluded
+    with readonly.cursor() as c:
+        c.execute("SELECT team_number FROM team_metrics WHERE event_key = %s "
+                  "AND (computed_at IS NULL OR computed_at > %s)", (event_key, as_of))
+        computed_after = sorted(r[0] for r in c.fetchall())
+    excluded = sorted(e["team_number"] for e in snap.exclusions if e.get("what") == "scouting")
+    assert excluded == computed_after, (excluded, computed_after)
+    print(f"{event_key}: {len(excluded)} scouting exclusions (team_metrics computed after as_of)")
 
 
 def test_real_data_plan_is_withheld_without_a_registered_configuration(readonly, real_event):
