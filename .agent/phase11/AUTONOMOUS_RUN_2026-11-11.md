@@ -269,3 +269,37 @@ conditions as given).
   each with its reason.
   - D3 and the G1 statements are deliberately not built: the spec allows them only past pre-declared thresholds
     (HUMAN-GATED Q3), so building them now would add the "generic text" it forbids.
+
+### Item 4: STOPPED for all three seasons (a frozen project rule forbids it). No draft was written.
+
+- **The conflict:**
+  - **P5-D7** (`.agent/phase5/P5_M0_DECISIONS.md:13`): "Human input is limited to manual facts … prevents hindsight
+    leakage through human input."
+  - `docs/phase5.md:237-241`: "**Blocked by required human input.** None of these may be authored by an AI; AI
+    knowledge of 2026 is hindsight leakage (P5-D7)." Item 1 of that list is "The 2026 game spec, entered from the
+    manual by a person". Item 2 is "The pre-2026 catalog specs" (2024 and 2025).
+  - The schema itself asserts it: `data/game_spec.py:79` `llm_used: Literal[False] = False  # the core never lets an
+    LLM parse the manual`.
+  - P11A B4 (spec 525–526): a configuration "is human-entered from the game manual, with citations".
+- **Why this is a stop:**
+  - A GameSpec drafted by Claude, in the real schema, would carry `llm_used: false`, which is false.
+  - A draft placed in front of the people who must enter the spec independently would anchor them. That is the leakage
+    P5-D7 exists to prevent. For 2026 it would also invalidate DM1's "genuine human inputs".
+  - A scoring configuration needs the approved GameSpec's action ids and sha256, so it cannot be drafted
+    independently of the spec.
+- **What exists instead (facts only, no drafted values):** the official manuals were downloaded for the humans who
+  will enter the specs. They are in the session scratch folder, outside the repository; their URLs and sha256 values
+  are under item 1 above. In each manual, the point-values table is:
+
+  | Season | Manual | Table | Page |
+  |---|---|---|---|
+  | 2024 | V10 | Table 6-2, "CRESCENDO point values" | 49 |
+  | 2025 | | Table 6-2, "REEFSCAPE point values" | 50 |
+  | 2026 | TU22 | Table 6-4, "REBUILT point values", with Table 6-5 for the bonus RP thresholds | 47–48 |
+
+- **Needed from the owners:**
+  - Whether any AI-prepared material may be used in P5-M8 / B4 entry at all. Possibilities:
+    - none (the P5-D7 reading applied here);
+    - only as an independent cross-check *after* a person has entered and reviewed the spec;
+    - other.
+  - Until that is decided, the entry is a human task, with the item-3 tools for checking and copying.
