@@ -303,3 +303,13 @@ conditions as given).
     - only as an independent cross-check *after* a person has entered and reviewed the spec;
     - other.
   - Until that is decided, the entry is a human task, with the item-3 tools for checking and copying.
+
+### Item 5: baseline failures (environment / test plumbing only)
+
+- **Fixed:** `tests/test_phase9_zero_llm.py::test_every_core_module_imports_and_the_app_builds_with_every_llm_sdk_blocked`
+  failed on Windows.
+  - **Cause:** `scripts/phase10_connection_profile.py:40` `import resource`, a Unix-only module, so the audit could not
+    import the module ("ModuleNotFoundError: No module named 'resource'").
+  - **Fix:** the import moved into `under_load`, its only user (`getrusage`, lines 200 and 215). Behaviour on Unix is
+    identical; the module now imports on any OS.
+  - **Result:** zero-LLM tests 43 passed.

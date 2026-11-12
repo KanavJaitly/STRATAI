@@ -37,7 +37,6 @@ import contextvars
 import json
 import os
 import random
-import resource
 import statistics
 import threading
 import time
@@ -173,6 +172,8 @@ def per_route(client, probe: Probe, paths: dict[str, str], repeats: int) -> dict
 
 
 def under_load(client, probe: Probe, paths: dict[str, str], readers: int, seconds: float, url: str) -> dict:
+    import resource  # Unix-only (getrusage); imported here so the module imports on any OS
+
     stop = threading.Event()
     lock = threading.Lock()
     latencies: dict[str, list[float]] = {name: [] for name in paths}
