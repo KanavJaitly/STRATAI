@@ -92,7 +92,8 @@ function Cards({ plan, recordId }: { plan: P11APlan; recordId: number }) {
           onProfile={() => setProfileOf(c)} />)}
         </tbody>
       </table>
-      {profileOf !== null && <ProfilePanel recordId={recordId} card={profileOf} onClose={() => setProfileOf(null)} />}
+      {profileOf !== null && <ProfilePanel key={profileOf.team_number} recordId={recordId} card={profileOf}
+        onClose={() => setProfileOf(null)} />}
       {(plan.comparisons ?? []).length > 0 && (
         <p className="muted small">Adjacent teams are not declared different: no comparison threshold is approved, so
           every comparison is unresolved.</p>
@@ -142,9 +143,7 @@ function ProfilePanel({ recordId, card, onClose }: { recordId: number; card: P11
   const [response, setResponse] = useState<TeamProfileResponse | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
   useEffect(() => {
-    let live = true
-    setResponse(null)
-    setFailure(null)
+    let live = true  // the panel is keyed by team, so its state starts empty for each team
     liveDraft.teamProfile(recordId, card.team_number).then(
       (data) => { if (live) setResponse(data) },
       (caught: unknown) => {
