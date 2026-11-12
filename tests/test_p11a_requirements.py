@@ -515,3 +515,19 @@ def test_criterion_21_joint_posterior_sd_is_at_least_the_plug_ins_for_every_robo
         joint_sd, plug_sd = np.sqrt(np.diag(fit.cov)), np.sqrt(np.diag(plug_cov))
         assert np.all(joint_sd >= plug_sd - 1e-9), (c, float((plug_sd - joint_sd).max()))
         assert np.any(joint_sd > plug_sd + 1e-6)  # and the difference is real, not zero
+
+
+# --- E3: an undetermined captain is stated, never silently dropped ---------------------------------------------------
+
+
+def test_e3_when_the_captain_rule_is_not_established_the_destination_says_not_determined():
+    log = Log(setup(captain_rule_established=False))
+    log.captain(1, 1)
+    pos = alliance_plan.position_from_view(log.view(), 20)
+    assert pos.mode == "non_captain"
+    snap = snapshot(truth={i: v for i, v in enumerate(truths(24, 7).values(), start=1)})
+    plan = build_plan(snap, pos)
+    undetermined = [d for d in plan["destinations"] if d.get("status") == "withheld" and not d["members"]]
+    assert undetermined and all("outcome not determined" in d["reason"] for d in undetermined)
+    assert {d["seed"] for d in undetermined} == set(range(2, 9))  # seeds 2-8 have no captain yet
+    P11APlanOut.model_validate(plan)

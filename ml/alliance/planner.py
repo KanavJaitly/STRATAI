@@ -338,6 +338,12 @@ def build_plan(snapshot: EventSnapshot, position: DraftPosition, *, policy: Esti
     if position.mode == "non_captain":
         destinations = []
         for seed, members in position.other_alliances:
+            if not members:  # spec E3: the captain rule cannot name this alliance's captain yet
+                destinations.append({"seed": seed, "members": [], "status": "withheld",
+                                     "reason": "outcome not determined: this alliance's captain cannot be "
+                                               "projected (the captain rule is not established, or ranks "
+                                               "are missing)"})
+                continue
             if not all(t in known for t in members):
                 destinations.append({"seed": seed, "members": list(members), "status": "withheld",
                                      "reason": "a member has no estimate"})
