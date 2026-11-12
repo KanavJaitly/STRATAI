@@ -256,3 +256,16 @@ conditions as given).
   two files: see the commit.
 - **A process slip, caught:** one scripted text replacement silently matched nothing (no assertion). The failing tests
   exposed it, and it was re-applied with the Edit tool. Later scripted replacements assert their match count.
+
+### Item 2: closed
+
+- **Last additions:**
+  - H4: `ruleset_sha256` and `rules_source` in the plan's `versions`, carried on `DraftPosition` so the offline and
+    online paths stay identical;
+  - criterion 21's plug-in half: the joint posterior SD is ≥ the plug-in's for every robot, and strictly greater
+    somewhere, on short schedules.
+- **Tests:** P11A plus Phase 11 draft log and replay harness: 177 passed.
+- **Map:** `docs/p11a_requirements_map.md` §4 lists everything built, and every MISSING-BUILDABLE item **not** built,
+  each with its reason.
+  - D3 and the G1 statements are deliberately not built: the spec allows them only past pre-declared thresholds
+    (HUMAN-GATED Q3), so building them now would add the "generic text" it forbids.
