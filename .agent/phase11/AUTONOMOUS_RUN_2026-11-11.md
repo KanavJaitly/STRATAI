@@ -216,3 +216,26 @@ conditions as given).
     `scripts.phase10_connection_profile` → "ModuleNotFoundError: No module named 'resource'".
   - `resource` is Unix-only, so this is an environment failure on Windows, not caused by this run. It is handled in
     item 5.
+
+### Item 2, batch 4: snapshot rules (A3.6), fit cache (§7), participation (A5)
+
+- **A3.6:** the snapshot follows `ml.dataset.builder`'s rules, reusing `_parse_dq_and_surrogates` (no duplicate).
+  - **DQ:** a match with a disqualified team is excluded, as `dq_affected: disqualified [...]`.
+  - **Surrogates:** kept and listed in `provenance.surrogate_appearances`. The key is added only when non-empty, so
+    a snapshot without surrogates has the same content and id as before.
+  - `_QUAL_SQL` now also selects `payload_json->'alliances'`.
+  - Prior-event fits apply the same rule automatically.
+- **§7:** `EventSnapshot.fit` is cached per (snapshot id, policy) in a bounded LRU of 16.
+  - The id is the sha256 of the whole content, so changed data is a new key.
+  - **Test plumbing:** identical synthetic snapshots share a key, so `tests/p11a_support.py`'s autouse fixture now
+    calls `clear_fit_cache()`. Otherwise a test that patches the estimator (the degenerate-fit test) would see a cached
+    fit.
+- **A5:** the profile's `participation` (matches played, the team's surrogate matches, and a note on DQ exclusions).
+- **Relock (additive):** 0 changed leaves, 7 added leaves; types regenerated; `--check` 0.
+- **Test fixture changed, with its reason:** `tests/test_p11a_snapshot_builder.py`'s fake `_matches` rows gained an
+  8th column (`alliances`, None), matching the builder's query. The assertions are unchanged, and two tests were added
+  (DQ/surrogate; no-surrogate key).
+- **Tests:**
+  - P11A pure: 131 passed.
+  - `test_p11a_db.py` default event: 11 passed (3 min 44 s), including Scenario M.
+  - `2024casj` real-data run: 7 passed.

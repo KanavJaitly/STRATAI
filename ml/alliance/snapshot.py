@@ -34,7 +34,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from collections import OrderedDict
+
 from ml.alliance.estimator import ComponentFit, EstimatorError, EstimatorPolicy, drift_variance, fit_component
+
+FIT_CACHE_SIZE = 16
+_FIT_CACHE: OrderedDict[tuple[str, EstimatorPolicy], dict[str, ComponentFit]] = OrderedDict()
 
 SNAPSHOT_VERSION = "p11a-snapshot-v1"
 COMPONENTS = ("auto", "teleop", "endgame")
@@ -138,7 +143,23 @@ class EventSnapshot:
         return sorted(set(self.roster) | {t for r in self.qual_rows for t in r.teams})
 
     def fit(self, policy: EstimatorPolicy = EstimatorPolicy()) -> dict[str, ComponentFit]:
-        """Every component's A3 fit from this snapshot (deterministic)."""
+        """Every component's A3 fit from this snapshot (deterministic).
+
+        Spec §7: cached per (snapshot id, policy). The id is the sha256 of the snapshot's whole content, so any change
+        to its rows, priors or drift is a new key; the cache never returns a fit for other data. Callers must not
+        mutate the returned fits (none does)."""
+        key = (self.snapshot_id(), policy)
+        cached = _FIT_CACHE.get(key)
+        if cached is not None:
+            _FIT_CACHE.move_to_end(key)
+            return cached
+        out = self._fit(policy)
+        _FIT_CACHE[key] = out
+        while len(_FIT_CACHE) > FIT_CACHE_SIZE:
+            _FIT_CACHE.popitem(last=False)
+        return out
+
+    def _fit(self, policy: EstimatorPolicy) -> dict[str, ComponentFit]:
         self.validate()
         teams = self.teams()
         rows = [list(r.teams) for r in self.qual_rows]
@@ -186,7 +207,7 @@ def latest_snapshot_path(directory: str | Path, event_key: str) -> Path | None:
 
 _QUAL_SQL = """
 SELECT m.match_key, m.scheduled_time, r.payload_json->'score_breakdown', r.id, r.fetch_timestamp,
-       r.payload_json->>'post_result_time', r.payload_json->>'actual_time'
+       r.payload_json->>'post_result_time', r.payload_json->>'actual_time', r.payload_json->'alliances'
 FROM matches m
 JOIN raw_source_payloads r ON r.source = 'tba' AND r.source_object_type = 'match' AND r.is_current
                           AND r.source_object_id = m.match_key
@@ -215,9 +236,15 @@ def result_known_at(scheduled: datetime, posted: Any, actual: Any) -> datetime:
     return scheduled if scheduled.tzinfo else scheduled.replace(tzinfo=timezone.utc)
 
 
-def qual_rows_from_database(database: Any, event_key: str, season: int, before: datetime
+def qual_rows_from_database(database: Any, event_key: str, season: int, before: datetime,
+                            surrogates: list[dict[str, Any]] | None = None
                             ) -> tuple[list[QualRow], list[dict[str, Any]], list[int]]:
-    """(rows, exclusions, raw payload ids) for one event's qualification alliances before `before`."""
+    """(rows, exclusions, raw payload ids) for one event's qualification alliances before `before`.
+
+    Spec A3.6 follows the labelled-dataset rules (`ml.dataset.builder`): a match in which either alliance had a team
+    disqualified is excluded (`dq_affected`), and a surrogate appearance is kept and recorded (appended to
+    `surrogates` when given)."""
+    from ml.dataset.builder import _parse_dq_and_surrogates
     from ml.features.score_breakdown import ScoreBreakdownSchemaError, UnsupportedSeasonError
     from ml.features.score_components import score_components
 
@@ -229,12 +256,20 @@ def qual_rows_from_database(database: Any, event_key: str, season: int, before: 
         for match_key, color, team in cursor.fetchall():
             lineup.setdefault((match_key, color), []).append(team)
     rows, exclusions, payload_ids = [], [], []
-    for match_key, scheduled, breakdown, payload_id, _fetched, posted, actual in matches:
+    for match_key, scheduled, breakdown, payload_id, _fetched, posted, actual, alliances in matches:
         known_at = result_known_at(scheduled, posted, actual)
         if known_at >= before:  # scheduled before the cutoff but played or posted after it (a delayed match)
             exclusions.append({"match_key": match_key, "reason": "result_posted_after_as_of",
                                "known_at": known_at.isoformat()})
             continue
+        red_dq, blue_dq, red_sur, blue_sur = _parse_dq_and_surrogates({"alliances": alliances})
+        if red_dq or blue_dq:
+            exclusions.append({"match_key": match_key,
+                               "reason": f"dq_affected: disqualified {sorted(red_dq + blue_dq)}"})
+            continue
+        if surrogates is not None:
+            surrogates.extend({"match_key": match_key, "color": color, "team_number": t}
+                              for color, group in (("red", red_sur), ("blue", blue_sur)) for t in sorted(group))
         for color in ("red", "blue"):
             teams = sorted(lineup.get((match_key, color), []))
             reason = None
@@ -271,7 +306,8 @@ def build_event_snapshot(database: Any, event_key: str, as_of: datetime, *, poli
     if row is None:
         raise SnapshotError("event_not_found", f"{event_key} is not known")
     season, start_date, _ = row
-    rows, exclusions, payload_ids = qual_rows_from_database(database, event_key, season, as_of)
+    surrogates: list[dict[str, Any]] = []
+    rows, exclusions, payload_ids = qual_rows_from_database(database, event_key, season, as_of, surrogates)
     landed = read_event_ranks(database, event_key)
     if landed is not None and not (isinstance(landed[1], datetime) and landed[1] <= as_of):
         exclusions.append({"what": "ranks", "reason": "the landed ranking was fetched after as_of (or its fetch time "
@@ -323,7 +359,10 @@ def build_event_snapshot(database: Any, event_key: str, as_of: datetime, *, poli
         game_spec=None if spec is None else spec.model_dump(mode="json"),
         provenance={"source": "project database (canonical TBA ingestion; P5-M7 adapter)",
                     "raw_payload_ids": payload_ids, "ranking_fetched_at": None if landed is None else str(landed[1]),
-                    "prior_events": [e["event"] for e in history], "built_at": datetime.now(timezone.utc).isoformat()},
+                    "prior_events": [e["event"] for e in history], "built_at": datetime.now(timezone.utc).isoformat(),
+                    # spec A3.6: surrogate appearances are kept and recorded (only when there are any, so a snapshot
+                    # without them keeps the same content and id as before)
+                    **({"surrogate_appearances": surrogates} if surrogates else {})},
         exclusions=exclusions)
 
 
@@ -360,3 +399,8 @@ def _scouting(database: Any, event_key: str, as_of: datetime) -> tuple[dict[int,
 
 __all__ = ["COMPONENTS", "EventSnapshot", "QualRow", "SNAPSHOT_VERSION", "SnapshotError", "build_event_snapshot",
            "latest_snapshot_path", "qual_rows_from_database", "result_known_at", "snapshot_filename"]
+
+
+def clear_fit_cache() -> None:
+    """Empty the per-snapshot fit cache (tests that patch the estimator; a deployment never needs it)."""
+    _FIT_CACHE.clear()

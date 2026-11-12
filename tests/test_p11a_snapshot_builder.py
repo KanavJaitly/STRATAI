@@ -34,7 +34,8 @@ def _matches():
         if n == 12:
             posted = AS_OF + timedelta(minutes=20)  # delayed
         rows.append((f"9911syn_qm{n}", scheduled, {"red": {"n": n}, "blue": {"n": n}}, 100 + n,
-                     T0 + timedelta(days=30), str(int(posted.timestamp())), None))
+                     T0 + timedelta(days=30), str(int(posted.timestamp())), None,
+                     None))  # alliances (DQ/surrogate keys; spec A3.6, 2026-11-11): none here
     return [r for r in rows if r[1] < AS_OF]
 
 
@@ -128,3 +129,30 @@ def test_the_result_time_prefers_posted_then_actual_then_scheduled():
     assert result_known_at(scheduled, None, int((T0 + timedelta(minutes=4)).timestamp())) == T0 + timedelta(minutes=4)
     assert result_known_at(scheduled, "null", "bad") == T0
     assert result_known_at(scheduled.replace(tzinfo=None), None, None) == T0
+
+
+def test_a6_dq_affected_matches_are_left_out_and_surrogates_kept_and_recorded(monkeypatch):
+    """Spec A3.6: the labelled-dataset rules (ml.dataset.builder). Match 3 had a disqualified team: it is excluded
+    and recorded. Match 4 had a surrogate: it stays, and the appearance is recorded in the provenance."""
+    original = _matches
+
+    def with_flags():
+        rows = [list(r) for r in original()]
+        rows[2][7] = {"red": {"dq_team_keys": ["frc5"], "surrogate_team_keys": []},
+                      "blue": {"dq_team_keys": [], "surrogate_team_keys": []}}
+        rows[3][7] = {"red": {"dq_team_keys": [], "surrogate_team_keys": []},
+                      "blue": {"dq_team_keys": [], "surrogate_team_keys": ["frc7"]}}
+        return [tuple(r) for r in rows]
+
+    monkeypatch.setitem(globals(), "_matches", with_flags)
+    snap = _build(monkeypatch, T0, T0)
+    keys = {r.match_key for r in snap.qual_rows}
+    assert "9911syn_qm3" not in keys and "9911syn_qm4" in keys
+    assert {"match_key": "9911syn_qm3", "reason": "dq_affected: disqualified [5]"} in snap.exclusions
+    assert snap.provenance["surrogate_appearances"] == [{"match_key": "9911syn_qm4", "color": "blue",
+                                                         "team_number": 7}]
+
+
+def test_a_snapshot_without_surrogates_has_no_surrogate_key(monkeypatch):
+    snap = _build(monkeypatch, T0, T0)
+    assert "surrogate_appearances" not in snap.provenance  # unchanged content and id for events without surrogates
