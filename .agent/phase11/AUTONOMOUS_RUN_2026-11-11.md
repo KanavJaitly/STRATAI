@@ -341,3 +341,39 @@ conditions as given).
   - **Part 3's two failures:** the SDK tests above.
   - **This run is not a clean baseline,** because it overlapped this run's edits. The final run (item 6) is
     authoritative.
+
+### Item 6: final verification (on the finished tree, `c1d8c1d`; nothing changed during the run)
+
+- **Backend, full suite:** four parts, each capped at 44 minutes, plus `test_config.py` alone (it pops env vars).
+  Against `stratai_test_p11a`.
+
+  | Part | Passed | Failed | Skipped | Other | Time |
+  |---|---|---|---|---|---|
+  | 0 | 1,094 | 0 | 4 | | 5.9 min |
+  | 1 | 654 | 0 | 4 | | 8.1 min |
+  | 2 | 935 | 0 | 0 | 1 xfailed | 39.6 min |
+  | 3 | 888 | 0 | 2 | | 3.6 min |
+  | `test_config` | 10 | 0 | | | |
+  | **Total** | **3,581** | **0** | **10** | **1 xfailed** | |
+
+  Every part exited 0.
+- **Skips, with their reasons:**
+  - `test_d18_production_source.py:52`, `:63`: need the D18 snapshot/chain (`STATBOTICS_SNAPSHOT_DIR`,
+    `STRATAI_EPA_CHAIN`).
+  - `test_m11_generalization.py:67`: real-data evidence, run only with `PHASE4_REAL_DATA_TESTS=1`.
+  - `test_manual_manager.py:396`: 2023 is not in this copy (it lives in `stratai_test_2023`).
+  - `test_p11a_offline.py:50`, `:74`, `:87`, `:99`: need macOS `sandbox-exec`. They passed on the Mac on 2026-11-06,
+    per `PHASE_STATUS.md`.
+  - `test_phase9_llm.py:160`, `:373`: the optional briefing SDK is not installed (item 5).
+  - The xfail is the strict P7-M8 completeness check (unchanged, known).
+- **`tests/test_p11a_db.py`:**
+  - default event `2026mrcmp`: inside the suite;
+  - `P11A_DB_EVENT=2024casj -k real_data`: 7 passed, 42 scouting exclusions asserted.
+  - Cleanup verified read-only: 0 sentinel events, teams, workspaces and drafts; 0 `*_qm9999` matches; `team_metrics`
+    still 42.
+- **Frontend:** vitest 247 passed, 6 skipped (35 files, 1 skipped: the opt-in live end-to-end file, run only with
+  `STRATAI_LIVE_API`); `tsc -b` 0; oxlint 8 warnings (the baseline, none in P11A files); build 0.
+- **Contract:** `phase7_contract_lock check` is clean. Both relocks were additive (0 changed leaves); types `--check`
+  0.
+- **Push:** authorized by Kanav after this verification, to `origin/p11a/recommendation-intelligence`, as a fast-forward
+  (no force).
