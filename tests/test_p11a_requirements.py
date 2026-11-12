@@ -358,3 +358,36 @@ def test_d2_top_combinations_is_global_even_when_the_best_pairs_are_disjoint():
     values.update({(b, a): v for (a, b), v in list(values.items())})
     got = planner.top_combinations(values, 5)
     assert [c["picks"] for c in got] == [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+
+
+# --- disclosures (A3.2, A3.5, A3.3/B5.3, B5.1, B5.2(b)) -----------------------------------------------------------
+
+
+def test_the_plan_states_the_omitted_opponent_adjustment_and_the_independence_of_components():
+    snap = snapshot()
+    plan = build_plan(snap, position(snap, snap.teams()[0]))
+    text = " | ".join(plan["known_limitations"])
+    assert "No opponent adjustment" in text and "spec A3.5" in text
+    assert "covariance across auto, teleop and endgame is not modelled" in text
+    assert "alliance-level noise" in text
+    assert planner.PER_ROBOT_CAP_NOTE not in plan["known_limitations"]  # no per-robot cap in this configuration
+
+
+def test_a_per_robot_cap_is_disclosed_as_an_approximation_only_when_configured(tmp_path):
+    data = scoring_config(approved=False).model_dump(mode="json")
+    data["rules"][1].update({"per_robot_cap_action_id": "teleop_piece", "per_robot_cap_count": 30})
+    config = approve(type(scoring_config())(**data))
+    snap = snapshot()
+    snap.scoring_config = config.model_dump(mode="json")
+    (tmp_path / "9911.json").write_text(config.model_dump_json())
+    plan = build_plan(snap, position(snap, snap.teams()[0]), scoring_dir=tmp_path)
+    assert plan["known_limitations"][-1] == planner.PER_ROBOT_CAP_NOTE
+
+
+def test_cards_say_the_prior_was_estimated_from_this_events_own_matches():
+    snap = snapshot()  # no earlier event: every robot's prior is current_event_joint
+    plan = build_plan(snap, position(snap, snap.teams()[0]))
+    for card in plan["cards"]:
+        assert all(v["prior_kind"] == "current_event_joint" for v in card["robot"]["components"].values())
+        assert any(s.startswith("Prior estimated from this event's own matches (auto, teleop, endgame;")
+                   for s in card["statements"])

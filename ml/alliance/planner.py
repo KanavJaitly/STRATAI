@@ -76,7 +76,17 @@ LIMITATIONS = (
     "validated (no qualifying per-robot ground truth)",
     "Defense and feeding have no measured effect on points; they are shown as scouted descriptions only",
     "Availability before your turn is not modelled: every team not confirmed unavailable is treated as available",
+    "No opponent adjustment: robot estimates do not account for opponent strength; no pre-registered comparison has "
+    "shown that one improves held-out prediction (spec A3.5)",
+    "Components are estimated and sampled separately: covariance across auto, teleop and endgame is not modelled, so "
+    "an alliance's component totals are treated as independent (spec A3.3, B5.3; not yet tested by a pre-registered "
+    "comparison)",
+    "A robot's own match-to-match variability cannot be separated from alliance-level noise using alliance scores; "
+    "it is modelled at the alliance level (spec B5.2(b))",
 )
+PER_ROBOT_CAP_NOTE = ("Per-robot caps in this season's configuration are applied to each robot's estimated mean, not to "
+                      "sampled contributions: an approximation (spec B5.1, B5.2(c))")
+CURRENT_EVENT_PRIOR_NOTE = "prior estimated from this event's own matches"
 
 
 @dataclass(frozen=True)
@@ -226,6 +236,9 @@ def _statements(model: _Model, team: int, lineup_value: float, rob: dict) -> lis
         cap = model.scoring.rules[c].cap_points
         if cap is not None:
             lines.append(f"{c.capitalize()} is capped at {cap:g} alliance points by the season rules")
+    joint = [c for c in COMPONENTS if comps[c]["prior_kind"] == "current_event_joint"]
+    if joint:  # spec A3.2 disclosure: cards say the prior came from this event's own matches
+        lines.append(f"{CURRENT_EVENT_PRIOR_NOTE.capitalize()} ({', '.join(joint)}; current_event_joint)")
     if "prior_dominated" in rob["labels"]:
         lines.append("Estimate is prior-dominated (few matches or little information); treat with caution")
     if "weakly_identified" in rob["labels"]:
@@ -299,7 +312,8 @@ def build_plan(snapshot: EventSnapshot, position: DraftPosition, *, policy: Esti
         "versions": {"estimator": ESTIMATOR_VERSION, "planner": PLANNER_VERSION,
                      "scoring_config_sha256": model.scoring.config_sha256,
                      "game_spec_sha256": model.scoring.game_spec_sha256},
-        "known_limitations": list(LIMITATIONS)}
+        "known_limitations": list(LIMITATIONS) + ([PER_ROBOT_CAP_NOTE] if any(
+            r.per_robot_cap_points is not None for r in model.scoring.rules.values()) else [])}
     if position.team_number not in known:
         raise PlanWithheld("team_without_estimate", f"team {position.team_number} has no qualification data here")
     if position.mode == "no_remaining_turn":
