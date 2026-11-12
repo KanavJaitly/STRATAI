@@ -29,6 +29,7 @@ session's workspace and requires `alliance_selection`.
 
 from __future__ import annotations
 
+import dataclasses
 import threading
 import time
 from collections import OrderedDict
@@ -103,8 +104,9 @@ def position_from_view(view: dl.DraftView, team_number: int) -> DraftPosition:
             members = tuple(alliance) or ((projected.get(other),) if projected.get(other) is not None else ())
             if members and team_number not in members:
                 others.append((other, members))
-        return DraftPosition(team_number, view.record_seq, "non_captain", None, (), 0, None,
-                             tuple(t for t in available if t != team_number), dict(unavailable), tuple(others))
+        return _with_rules(view, DraftPosition(team_number, view.record_seq, "non_captain", None, (), 0, None,
+                                               tuple(t for t in available if t != team_number), dict(unavailable),
+                                               tuple(others)))
     alliance = view.alliances[seed - 1]
     members = tuple(alliance) if alliance else (team_number,)
     remaining = sum(1 for s in order[view.picks_made:] if s == seed)
@@ -117,8 +119,14 @@ def position_from_view(view: dl.DraftView, team_number: int) -> DraftPosition:
         mode = "no_remaining_turn"
     pickable, excluded = selectable_teams(view, seed, team_number)
     blocked = {**unavailable, **excluded}
-    return DraftPosition(team_number, view.record_seq, mode, seed, members, remaining, turns_before, tuple(pickable),
-                         blocked)
+    return _with_rules(view, DraftPosition(team_number, view.record_seq, mode, seed, members, remaining, turns_before,
+                                           tuple(pickable), blocked))
+
+
+def _with_rules(view: dl.DraftView, position: DraftPosition) -> DraftPosition:
+    """Spec H4: the plan names the selection rules it was computed under."""
+    rules = view.setup.rules
+    return dataclasses.replace(position, ruleset_sha256=rules.ruleset_sha256, rules_source=rules.source)
 
 
 def _envelope(record_id: int, view: dl.DraftView, started: float) -> dict[str, Any]:
