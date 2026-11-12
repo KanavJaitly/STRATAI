@@ -27,6 +27,7 @@ reason (`<section>_absent_reason`). Nothing missing is invented.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -50,8 +51,32 @@ def _prior(entry: dict[str, Any] | None) -> tuple[dict[str, Any] | None, str | N
 def _scouting(entry: dict[str, Any] | None) -> tuple[dict[str, Any] | None, str | None]:
     if not entry:
         return None, "no scouting summary computed before as_of is in the snapshot"
-    keep = ("kind", "defense", "defense_n", "feeding", "feeding_n", "computed_at")
+    keep = ("kind", "defense", "defense_n", "feeding", "feeding_n", "computed_at", "defense_agreement",
+            "feeding_agreement", "defense_insufficient_data", "feeding_insufficient_data")
     return {k: entry.get(k) for k in keep}, None
+
+
+EXCLUSION_KEYS = ("what", "match_key", "color", "team_number", "reason", "known_at")
+
+
+def _exclusion(entry: dict[str, Any]) -> dict[str, Any]:
+    return {k: entry.get(k) for k in EXCLUSION_KEYS}
+
+
+def _last_updated(snapshot: EventSnapshot, team: int, prov: dict[str, Any]) -> str | None:
+    """The newest of: the latest qualification match in the snapshot, the ranking fetch, this team's scouting summary."""
+    times = [max((r.time for r in snapshot.qual_rows), default=None), prov.get("ranking_fetched_at"),
+             (snapshot.scouting.get(team) or {}).get("computed_at")]
+    parsed = []
+    for t in times:
+        if t in (None, "", "None"):
+            continue
+        try:
+            when = datetime.fromisoformat(str(t))
+        except ValueError:
+            continue
+        parsed.append((when if when.tzinfo else when.replace(tzinfo=timezone.utc), str(t)))
+    return max(parsed)[1] if parsed else None
 
 
 def team_profile(snapshot: EventSnapshot, team: int, *, our_team: int | None = None,
@@ -75,7 +100,12 @@ def team_profile(snapshot: EventSnapshot, team: int, *, our_team: int | None = N
         "strengths_and_weaknesses_absent_reason": "not produced by any engine (Phase 16)",
         "provenance": {"source": prov.get("source"), "built_at": prov.get("built_at"),
                        "ranking_fetched_at": prov.get("ranking_fetched_at"),
-                       "prior_events": list(prov.get("prior_events") or []), "snapshot_version": SNAPSHOT_VERSION},
+                       "prior_events": list(prov.get("prior_events") or []), "snapshot_version": SNAPSHOT_VERSION,
+                       # spec G2/§8: what the snapshot left out, and why (the missing-data list)
+                       "exclusions": [_exclusion(e) for e in snapshot.exclusions],
+                       "scoring_config_sha256": None, "game_spec_sha256": None},
+        # spec A7: the newest input time behind this profile (all at or before as_of)
+        "last_updated": _last_updated(snapshot, team, prov),
         "estimates": None, "estimates_absent_reason": None, "fit_diagnostics": None,
         "alliance_fit": None, "alliance_fit_absent_reason": None,
     }
@@ -124,6 +154,8 @@ def team_profile(snapshot: EventSnapshot, team: int, *, our_team: int | None = N
             if our_team not in model.index or team not in model.index or not pool:
                 raise PlanWithheld("team_without_estimate", "a team in the lineup has no estimate")
             value, lineup = max((model.best_lineup_value([our_team, team, t]) for t in pool), key=lambda v: v[0])
+            out["provenance"]["scoring_config_sha256"] = model.scoring.config_sha256
+            out["provenance"]["game_spec_sha256"] = model.scoring.game_spec_sha256
             out["alliance_fit"] = {"with_team": our_team, "expected_alliance_score": round(value, 1),
                                    "lineup": list(lineup), "unit": "points",
                                    "note": "best expected lineup score with any third robot; expected score, not a "

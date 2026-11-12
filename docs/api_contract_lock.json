@@ -3635,6 +3635,16 @@
    "operations_added": [],
    "operations_removed": [],
    "reason": "P11A hardening: shared runtime contract (ml/alliance/contract.py), typed profile, registry trust root, non-authoritative collapse screen; only the two P11A operations change"
+  },
+  {
+   "added_leaves": 35,
+   "changed": [],
+   "command": "relock",
+   "date": "2026-11-11",
+   "decision": null,
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P11A (autonomous run 2026-11-11): additive optional fields on the two P11A operations only, required by the spec: A3.2 prior mean/SD, A3.7 max |corr| and label reasons, B5.6 defense_effect_insufficient_data, B5.7 Monte Carlo record, A7 last_updated and scouting agreement, G2/B4 profile provenance (exclusions, config and spec sha256). No existing entry changed."
   }
  ],
  "schemas": {
@@ -6606,11 +6616,34 @@
      "const": "estimated",
      "type": "string"
     },
+    "label_reasons": {
+     "anyOf": [
+      {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
     "labels": {
      "items": {
       "type": "string"
      },
      "type": "array"
+    },
+    "max_abs_corr": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
     },
     "prior_kind": {
      "enum": [
@@ -6618,6 +6651,26 @@
       "prior_event_individual"
      ],
      "type": "string"
+    },
+    "prior_mean": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "prior_sd": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
     },
     "sd": {
      "type": "number"
@@ -6671,6 +6724,27 @@
     "alliance_points_sd",
     "kind",
     "n"
+   ],
+   "type": "object"
+  },
+  "P11ADefenseEffectOut": {
+   "properties": {
+    "points": {
+     "const": 0.0,
+     "type": "number"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "status": {
+     "const": "defense_effect_insufficient_data",
+     "type": "string"
+    }
+   },
+   "required": [
+    "points",
+    "reason",
+    "status"
    ],
    "type": "object"
   },
@@ -6795,6 +6869,67 @@
     "note",
     "team_number",
     "validation_status"
+   ],
+   "type": "object"
+  },
+  "P11AExclusionOut": {
+   "properties": {
+    "color": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "known_at": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "match_key": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "reason": {
+     "type": "string"
+    },
+    "team_number": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "what": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "reason"
    ],
    "type": "object"
   },
@@ -6930,6 +7065,29 @@
    ],
    "type": "object"
   },
+  "P11AMonteCarloOut": {
+   "properties": {
+    "draws": {
+     "type": "integer"
+    },
+    "note": {
+     "type": "string"
+    },
+    "p_delta_positive_mc_se_max": {
+     "type": "number"
+    },
+    "seed_basis": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "draws",
+    "note",
+    "p_delta_positive_mc_se_max",
+    "seed_basis"
+   ],
+   "type": "object"
+  },
   "P11APlanOut": {
    "properties": {
     "as_of": {
@@ -6985,6 +7143,16 @@
         "$ref": "#/components/schemas/P11AComparisonOut"
        },
        "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "defense_effect": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11ADefenseEffectOut"
       },
       {
        "type": "null"
@@ -7054,6 +7222,16 @@
       "projected_captain"
      ],
      "type": "string"
+    },
+    "monte_carlo": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11AMonteCarloOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "note": {
      "anyOf": [
@@ -7296,6 +7474,16 @@
       }
      ]
     },
+    "last_updated": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
     "matches": {
      "items": {
       "$ref": "#/components/schemas/P11AMatchOut"
@@ -7407,6 +7595,29 @@
       }
      ]
     },
+    "exclusions": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/components/schemas/P11AExclusionOut"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "game_spec_sha256": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
     "prior_events": {
      "default": [],
      "items": {
@@ -7415,6 +7626,16 @@
      "type": "array"
     },
     "ranking_fetched_at": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "scoring_config_sha256": {
      "anyOf": [
       {
        "type": "null"
@@ -7574,6 +7795,26 @@
       }
      ]
     },
+    "defense_agreement": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "defense_insufficient_data": {
+     "anyOf": [
+      {
+       "type": "boolean"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
     "defense_n": {
      "type": "integer"
     },
@@ -7584,6 +7825,26 @@
       },
       {
        "type": "number"
+      }
+     ]
+    },
+    "feeding_agreement": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "number"
+      }
+     ]
+    },
+    "feeding_insufficient_data": {
+     "anyOf": [
+      {
+       "type": "boolean"
+      },
+      {
+       "type": "null"
       }
      ]
     },

@@ -161,7 +161,9 @@ def _always_together_snapshot(seed=31):
                                 round(parts["endgame"], 1), 0.0, round(sum(parts.values()), 1)))
     return EventSnapshot(event_key="9911syn", season=9911, start_date="2099-03-01",
                          as_of=(T0 + timedelta(hours=100)).isoformat(), qual_rows=rows, roster=teams,
-                         ranks=None, provenance={"source": "SYNTHETIC test fixture"})
+                         ranks=None, provenance={"source": "SYNTHETIC test fixture"},
+                         scoring_config=scoring_config().model_dump(mode="json"),
+                         game_spec=game_spec().model_dump(mode="json"))
 
 
 def test_criterion_19_two_robots_that_share_every_match_are_both_weakly_identified():
@@ -391,3 +393,57 @@ def test_cards_say_the_prior_was_estimated_from_this_events_own_matches():
         assert all(v["prior_kind"] == "current_event_joint" for v in card["robot"]["components"].values())
         assert any(s.startswith("Prior estimated from this event's own matches (auto, teleop, endgame;")
                    for s in card["statements"])
+
+
+# --- additive response fields (A3.2, A3.7, B5.6, B5.7, A7, G2) ------------------------------------------------------
+
+
+def test_each_estimate_reports_its_prior_mean_and_sd_max_corr_and_label_reasons():
+    snap = _always_together_snapshot()
+    plan = build_plan(snap, position(snap, 9903, available=[t for t in snap.teams() if t != 9903]))
+    model = planner._model(snap, planner.EstimatorPolicy())
+    for card in plan["cards"]:
+        for c, comp in card["robot"]["components"].items():
+            fit = model.fits[c]
+            assert comp["prior_kind"] == "current_event_joint" and comp["prior_sd"] > 0
+            assert comp["prior_sd"] >= round(float(np.sqrt(fit.tau2)), 2) - 0.01  # sqrt(tau^2 + V_mu) >= tau
+            assert comp["max_abs_corr"] is not None
+            for label in comp["labels"]:
+                assert any(r.startswith(f"{label}:") for r in comp["label_reasons"]), (label, comp["label_reasons"])
+    pair = [c for c in plan["cards"] if c["team_number"] in (9901, 9902)]
+    for card in pair:
+        reasons = card["robot"]["components"]["teleop"]["label_reasons"]
+        assert any(r.startswith("weakly_identified: max |corr|") for r in reasons)
+
+
+def test_the_plan_records_its_monte_carlo_and_the_zero_defense_effect():
+    snap = snapshot()
+    plan = build_plan(snap, position(snap, snap.teams()[0]), draws=400)
+    assert plan["monte_carlo"]["draws"] == 400 and plan["monte_carlo"]["p_delta_positive_mc_se_max"] == 0.025
+    assert plan["defense_effect"] == {"status": "defense_effect_insufficient_data", "points": 0.0,
+                                      "reason": plan["defense_effect"]["reason"]}
+    P11APlanOut.model_validate(plan)
+
+
+def test_the_profile_lists_exclusions_last_updated_and_the_config_behind_its_fit():
+    from ml.alliance.contract import P11AProfileOut
+
+    snap = snapshot()
+    snap.exclusions = [{"match_key": "9911syn_qm99", "reason": "result_posted_after_as_of", "known_at": "2099"},
+                       {"what": "scouting", "team_number": 9905, "reason": "computed after as_of"}]
+    t = snap.teams()[2]
+    snap.scouting = {t: {"defense": 3.0, "defense_n": 2, "feeding": None, "feeding_n": 0, "kind": "scouted",
+                         "computed_at": (T0 + timedelta(hours=99)).isoformat(), "defense_agreement": 0.5,
+                         "feeding_agreement": None, "defense_insufficient_data": False,
+                         "feeding_insufficient_data": True}}
+    prof = team_profile(snap, t, our_team=snap.teams()[0])
+    P11AProfileOut.model_validate(prof)
+    assert [e["reason"] for e in prof["provenance"]["exclusions"]] == ["result_posted_after_as_of",
+                                                                         "computed after as_of"]
+    assert prof["provenance"]["scoring_config_sha256"] == scoring_config().content_sha256()
+    assert prof["provenance"]["game_spec_sha256"] == game_spec().sha256()
+    assert prof["last_updated"] == (T0 + timedelta(hours=99)).isoformat()  # the scouting summary is newest
+    assert prof["scouting"]["defense_agreement"] == 0.5 and prof["scouting"]["feeding_insufficient_data"] is True
+    alone = team_profile(snap, snap.teams()[1])  # no alliance fit: no configuration was used
+    assert alone["provenance"]["scoring_config_sha256"] is None
+    assert alone["last_updated"] == max(r.time for r in snap.qual_rows)

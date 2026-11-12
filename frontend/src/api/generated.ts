@@ -758,8 +758,16 @@ export interface P11AComponentOut {
   /** Estimated points this robot adds to its alliance's component (not validated). */
   estimate: number
   kind: "estimated"
+  /** Each label with the threshold comparison that set it (candidate thresholds, unapproved). */
+  label_reasons?: string[] | null
   labels: string[]
+  /** Largest |correlation| of this estimate with another robot's (spec A3.7). */
+  max_abs_corr?: number | null
   prior_kind: "prior_event_individual" | "current_event_joint"
+  /** The prior's mean (spec A3.2). For current_event_joint: the event population mean estimated jointly from this event's matches. */
+  prior_mean?: number | null
+  /** The prior's SD. For current_event_joint: sqrt(tau^2 + V_mu), with V_mu the population mean's uncertainty. */
+  prior_sd?: number | null
   /** Posterior SD of the estimate (estimation uncertainty only; not calibrated). */
   sd: number
   /** Share of the estimate that comes from this event's data (1 - posterior/prior variance); 1 - w_eff is the prior's influence. */
@@ -771,6 +779,13 @@ export interface P11AConsistencyOut {
   alliance_points_sd: number | null
   kind: "observed_alliance"
   n: number
+}
+
+export interface P11ADefenseEffectOut {
+  /** Defense and feeding add no points until a measured effect exists. */
+  points: 0.0
+  reason: string
+  status: "defense_effect_insufficient_data"
 }
 
 export interface P11ADestinationOut {
@@ -792,6 +807,15 @@ export interface P11AEstimatesOut {
   partners?: number | null
   team_number: number
   validation_status: "not_validated"
+}
+
+export interface P11AExclusionOut {
+  color?: string | null
+  known_at?: string | null
+  match_key?: string | null
+  reason: string
+  team_number?: number | null
+  what?: string | null
 }
 
 export interface P11AFitDiagnosticsOut {
@@ -822,6 +846,14 @@ export interface P11AMatchOut {
   time: string
 }
 
+export interface P11AMonteCarloOut {
+  draws: number
+  note: string
+  /** Upper bound of the Monte Carlo SE of p_delta_positive. */
+  p_delta_positive_mc_se_max: number
+  seed_basis: string
+}
+
 export interface P11APlanOut {
   as_of: string
   availability: P11AAvailabilityOut
@@ -830,6 +862,7 @@ export interface P11APlanOut {
   cards?: P11ACardOut[] | null
   combinations_note?: string | null
   comparisons?: P11AComparisonOut[] | null
+  defense_effect?: P11ADefenseEffectOut | null
   destinations?: P11ADestinationOut[] | null
   event_key: string
   fit_diagnostics: Record<string, P11AFitDiagnosticsOut>
@@ -838,6 +871,7 @@ export interface P11APlanOut {
   known_limitations: string[]
   members: number[]
   mode: "captain" | "on_alliance" | "projected_captain" | "non_captain"
+  monte_carlo?: P11AMonteCarloOut | null
   note?: string | null
   objective: "expected_alliance_score"
   picks_remaining: number
@@ -877,6 +911,8 @@ export interface P11AProfileOut {
   estimates_absent_reason: string | null
   event_key: string
   fit_diagnostics: Record<string, P11AFitDiagnosticsOut> | null
+  /** The newest input time behind this profile (latest match, ranking fetch or scouting summary; all at or before as_of). */
+  last_updated?: string | null
   matches: P11AMatchOut[]
   matches_played: number
   prior: P11APriorOut | null
@@ -894,8 +930,13 @@ export interface P11AProfileOut {
 
 export interface P11AProvenanceOut {
   built_at?: string | null
+  /** What the snapshot left out, and why. */
+  exclusions?: P11AExclusionOut[] | null
+  game_spec_sha256?: string | null
   prior_events?: string[]
   ranking_fetched_at?: string | null
+  /** The configuration behind alliance_fit. */
+  scoring_config_sha256?: string | null
   snapshot_version?: string | null
   source?: string | null
 }
@@ -927,9 +968,16 @@ export interface P11AScoutingOut {
   computed_at?: string | null
   /** Scouted defense quality (0-5), not points. */
   defense: number | null
+  /** Scout agreement on defense (team_metrics; lower is closer agreement). */
+  defense_agreement?: number | null
+  /** Fewer observations than the minimum (team_metrics). */
+  defense_insufficient_data?: boolean | null
   defense_n: number
   /** Scouted feeding quality (0-5), not points. */
   feeding: number | null
+  /** Scout agreement on feeding. */
+  feeding_agreement?: number | null
+  feeding_insufficient_data?: boolean | null
   feeding_n: number
   kind: "scouted"
 }

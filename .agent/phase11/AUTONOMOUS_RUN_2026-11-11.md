@@ -181,3 +181,38 @@ conditions as given).
     reported sorted; `picks` is an unordered `list[int]`, and no UI renders it.
   - **Tests:** seeds 1, 3 and 8 against brute force, and a constructed case of disjoint best pairs.
 - **Result:** P11A pure tests 123 passed, 4 skipped (the macOS `sandbox-exec` tests).
+
+### Item 2, batches 2–3: disclosures, additive fields, one relock
+
+- **Batch 2** (no contract change: `known_limitations` and `statements` are free text):
+  - statements: the omitted opponent adjustment (A3.5), component independence (A3.3/B5.3), alliance-level variance
+    (B5.2(b));
+  - a per-robot-cap note (B5.1), only when a configuration has a per-robot cap;
+  - the card sentence "prior estimated from this event's own matches" (A3.2), whenever a component's prior is
+    `current_event_joint`.
+- **Batch 3** (additive, optional fields on the two P11A operations only):
+  - **A3.2:** `prior_mean` and `prior_sd` per component.
+    - For `current_event_joint`: μ̂ and √(τ² + V_μ). μ is integrated, so this is the honest prior.
+    - `posterior(..., with_population=True)` exposes (μ̂, V_μ) without changing its default 3-tuple; research
+      callers are unchanged.
+    - `w_eff` is unchanged, so no served value moved.
+  - **A3.7:** `max_abs_corr` and `label_reasons` (each label with the threshold comparison that set it).
+  - **B5.7:** `monte_carlo` (draws, seed basis, the bound on the MC SE of `p_delta_positive`).
+  - **B5.6:** `defense_effect` = `defense_effect_insufficient_data`, 0 points.
+  - **A7:** the profile's `last_updated` (the newest input time at or before `as_of`), plus scouting
+    `defense/feeding_agreement` and `*_insufficient_data`. The snapshot now selects those `team_metrics` columns.
+    The Phase 3 metrics layer is untouched; only the P11A read changed.
+  - **G2/B4:** the profile provenance now has `exclusions` (typed), `scoring_config_sha256` and `game_spec_sha256`.
+- **Relock:** `python -m scripts.phase7_contract_lock relock --reason ...` wrote 37 operations, **0 changed leaves**
+  and 35 added leaves, all P11A schemas. A purely additive change needs only a reason (`scripts/phase7_contract_lock.py`
+  docstring), so no decision document was required. The check is clean.
+- **Types:** frontend types regenerated (`scripts.phase8_generate_api_types`); `--check` exit 0.
+- **Test fixture changed, with its reason:** `tests/test_p11a_snapshot_builder.py`'s fake `team_metrics` rows went
+  from 6 to 10 columns, because the builder's query now selects agreement and sufficiency. The assertions are
+  unchanged.
+- **Tests:** P11A 129 passed. Contract, foundation, zero-LLM and frontend-contract tests: 119 passed, 1 xfailed,
+  **1 failed**.
+  - The failure is `test_phase9_zero_llm::test_every_core_module_imports_and_the_app_builds_with_every_llm_sdk_blocked`:
+    `scripts.phase10_connection_profile` → "ModuleNotFoundError: No module named 'resource'".
+  - `resource` is Unix-only, so this is an environment failure on Windows, not caused by this run. It is handled in
+    item 5.

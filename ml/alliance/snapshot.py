@@ -337,19 +337,24 @@ def _scouting(database: Any, event_key: str, as_of: datetime) -> tuple[dict[int,
     try:
         with database.cursor() as cursor:
             cursor.execute("SELECT team_number, defense_score, defense_observation_count, feeding_score, "
-                           "feeding_observation_count, computed_at FROM team_metrics WHERE event_key = %s",
+                           "feeding_observation_count, computed_at, defense_agreement, feeding_agreement, "
+                           "defense_insufficient_data, feeding_insufficient_data FROM team_metrics WHERE event_key = %s",
                            (event_key,))
             rows = cursor.fetchall()
     except psycopg.Error:
         return {}, []
     kept, exclusions = {}, []
-    for t, d, dn, f, fn, computed_at in rows:
+    for t, d, dn, f, fn, computed_at, d_agree, f_agree, d_short, f_short in rows:
         if not (isinstance(computed_at, datetime) and computed_at <= as_of):
             exclusions.append({"what": "scouting", "team_number": t,
                                "reason": "the scouting summary was computed after as_of (or at an unknown time)"})
             continue
         kept[t] = {"defense": d, "defense_n": dn, "feeding": f, "feeding_n": fn, "kind": "scouted",
-                   "computed_at": computed_at.isoformat()}
+                   "computed_at": computed_at.isoformat(),
+                   # spec A7: scouted values with their n and agreement (team_metrics; not points)
+                   "defense_agreement": None if d_agree is None else float(d_agree),
+                   "feeding_agreement": None if f_agree is None else float(f_agree),
+                   "defense_insufficient_data": d_short, "feeding_insufficient_data": f_short}
     return kept, exclusions
 
 
