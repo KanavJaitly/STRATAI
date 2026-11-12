@@ -239,3 +239,20 @@ conditions as given).
   - P11A pure: 131 passed.
   - `test_p11a_db.py` default event: 11 passed (3 min 44 s), including Scenario M.
   - `2024casj` real-data run: 7 passed.
+
+### Item 2, batch 5: frontend (`frontend/src/workspace/ExpectedScorePlan.tsx`)
+
+- **G2/G3, criterion 13:** each card's team is a button that opens that team's own profile (same record and
+  snapshot) in one tap. The profile shows:
+  - estimate ± SD per component;
+  - the prior kind in words;
+  - labels with their reasons;
+  - matches played and `last_updated`;
+  - the card's reasons in full (previously only a hover `title`).
+- **§11:** cards carry `weakly identified` / `prior-dominated` markers from the robot's labels.
+- **Criterion 12:** the stale state is now tested. After a new action, a failed refresh leaves the previous plan
+  visible, marked "out of date", with the failure reason. The behaviour already existed; the test did not.
+- **Results:** vitest for the file: 7 passed (3 new), with axe clean on the new states. `tsc -b` exit 0. oxlint on the
+  two files: see the commit.
+- **A process slip, caught:** one scripted text replacement silently matched nothing (no assertion). The failing tests
+  exposed it, and it was re-applied with the Edit tool. Later scripted replacements assert their match count.

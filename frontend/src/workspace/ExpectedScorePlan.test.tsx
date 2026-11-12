@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { AlliancePlanResponse, P11APlan } from '../auth/api'
 import { axeViolations } from '../test/dashboard'
-import { mockApi } from '../test/mockApi'
+import { apiError, mockApi } from '../test/mockApi'
 import { ExpectedScorePlan } from './ExpectedScorePlan'
 
 // P11A (experimental) panel. Synthetic fixture data only (teams 1-24): nothing here is evidence about any real team.
@@ -86,4 +86,56 @@ describe('expected-score plan (P11A, experimental)', () => {
     expect(await screen.findByText(/Alliance 2 \(2\): 140.3 pts expected/)).toBeInTheDocument()
     expect(screen.getByText(/Invitation likelihood is not estimated/)).toBeInTheDocument()
   })
+
+  it('keeps the previous plan visible, marked out of date with the reason, when a refresh fails (criterion 12)',
+    async () => {
+      let fail = false
+      mockApi({ [PATH]: () => (fail ? apiError(500, 'internal_error', 'recalculation failed') : envelope({ plan: plan() })) })
+      const { rerender } = render(<ExpectedScorePlan recordId={5} seq={2} />)
+      await userEvent.click(screen.getByText('Expected-score plan'))
+      expect(await screen.findByText('151.2 pts')).toBeInTheDocument()
+      expect(screen.queryByText(/out of date/)).not.toBeInTheDocument()
+      fail = true
+      rerender(<ExpectedScorePlan recordId={5} seq={3} />) // a new action was recorded; its recalculation fails
+      expect(await screen.findByText(/Could not load the plan/)).toBeInTheDocument()
+      expect(screen.getByText('151.2 pts')).toBeInTheDocument() // the previous plan stays visible...
+      expect(screen.getByText(/out of date/)).toBeInTheDocument() // ...never as current
+    })
+
+  it('marks weakly identified and prior-dominated estimates on their cards (spec §11)', async () => {
+    const p = plan()
+    p.cards![0].robot.labels = ['weakly_identified', 'prior_dominated']
+    mockApi({ [PATH]: envelope({ plan: p }) })
+    const { container } = render(<ExpectedScorePlan recordId={5} seq={2} />)
+    await userEvent.click(screen.getByText('Expected-score plan'))
+    expect(await screen.findByText(/weakly identified/)).toBeInTheDocument()
+    expect(screen.getByText(/prior-dominated/)).toBeInTheDocument()
+    expect(await axeViolations(container)).toEqual([])
+  })
+
+  it("opens a card's own profile in one tap, with the card's reasons in full (criterion 13, G3)", async () => {
+    const profile = { team_number: 24, event_key: '2099synth', snapshot_id: 'ab'.repeat(32), as_of: '2099-03-03T15:00Z',
+      data_through: null, last_updated: '2099-03-03T14:50:00Z', validation_status: 'not_validated',
+      thresholds_status: 'candidate_unapproved', rank: { value: 3, status: 'observed', fetched_at: null },
+      matches_played: 10, matches: [], consistency: { kind: 'observed_alliance', alliance_points_mean: 140,
+        alliance_points_sd: 9, n: 10 },
+      estimates: { team_number: 24, labels: [], n: 10, partners: 18, validation_status: 'not_validated', note: 'x',
+        components: { auto: { estimate: 12.3, sd: 2.1, kind: 'estimated', prior_kind: 'current_event_joint',
+          w_eff: 0.8, labels: [], label_reasons: [] } } },
+      estimates_absent_reason: null, fit_diagnostics: null, prior: null, prior_absent_reason: 'none',
+      scouting: null, scouting_absent_reason: 'none', alliance_fit: null, alliance_fit_absent_reason: 'none',
+      strengths_and_weaknesses_absent_reason: 'not produced', provenance: {} }
+    const api = mockApi({ [PATH]: envelope({ plan: plan() }),
+      'GET /workspace/alliance-selection/drafts/5/teams/24/profile': { ...envelope(), profile } })
+    const { container } = render(<ExpectedScorePlan recordId={5} seq={2} />)
+    await userEvent.click(screen.getByText('Expected-score plan'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Profile of team 24' }))
+    const panel = await screen.findByRole('region', { name: 'Team 24 profile' })
+    expect(await within(panel).findByText('12.3 ± 2.1')).toBeInTheDocument()
+    expect(within(panel).getByText("estimated from this event's own matches")).toBeInTheDocument()
+    expect(within(panel).getByText(/not a chance of winning/)).toBeInTheDocument() // the card's reason, visible
+    expect(api.calls.map((c) => c.path)).toContain('/workspace/alliance-selection/drafts/5/teams/24/profile')
+    expect(await axeViolations(container)).toEqual([])
+  })
 })
+
