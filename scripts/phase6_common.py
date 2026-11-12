@@ -6,7 +6,8 @@
   - the D18 frame is the evaluated Phase 4 population;
   - the model registry is the production registry (write-once entries);
   - the database is always the isolated copy: scripts read `Settings().database_url` and refuse anything that is
-    not a `stratai_test*` copy.
+    not `stratai_test` or `stratai_test_<suffix>` (tests/db_guard.py's naming rule).
+  - P11 tools (E5, the Phase 11 replay) use `strict_isolated_database`, which also refuses the bare `stratai_test`.
 """
 
 from __future__ import annotations
@@ -51,12 +52,36 @@ def isolated_database():
     from database.connection import DatabaseConfig
     from database.readonly import ReadOnlySessionDatabase
     from scripts.phase5_isolated_db import serving_name
+    from tests.db_guard import ALLOWED_TEST_DATABASE
 
     url = str(Settings().database_url)
     name = serving_name(url)
-    if not name.startswith("stratai_test"):
+    if not ALLOWED_TEST_DATABASE.fullmatch(name):
         raise SystemExit(f"refusing database {name!r}: Phase 6 evaluations run only on an isolated stratai_test copy")
     return ReadOnlySessionDatabase(DatabaseConfig(Settings().database_url))
+
+
+def strict_isolated_database():
+    """For P11 tools (E5, the Phase 11 replay): `isolated_database()`, but only on a local `stratai_test_<suffix>` copy.
+
+    The rule is database/target_guard.py's: checked on the URL before connecting, then confirmed by the server. The
+    bare `stratai_test` is refused, because per the Phase 6 closeout it may hold synced 2027 data (the protected
+    holdout). Phase 6 scripts keep `isolated_database()`, whose approved procedures run on the bare copy."""
+    from data.config import Settings
+    from database.target_guard import TargetRefused, check_target, verify_server
+
+    try:
+        target = check_target(str(Settings().database_url))
+    except TargetRefused as exc:
+        raise SystemExit(f"refusing database ({exc.code}): {exc.message}") from None
+    database = isolated_database()
+    try:
+        with database.cursor() as cursor:
+            verify_server(cursor, target)
+    except TargetRefused as exc:
+        database.close()
+        raise SystemExit(f"refusing database ({exc.code}): {exc.message}") from None
+    return database
 
 
 def load_frame():
@@ -77,4 +102,4 @@ def load_m6m7():
 
 
 __all__ = ["RESULTS_DIR", "FRAME_DIR", "REGISTRY_DIR", "write_once", "read_record", "provenance", "git_blob",
-           "file_sha256", "isolated_database", "load_frame", "load_m6m7"]
+           "file_sha256", "isolated_database", "strict_isolated_database", "load_frame", "load_m6m7"]

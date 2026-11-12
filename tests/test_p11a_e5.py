@@ -109,3 +109,58 @@ def test_an_event_without_an_approved_registered_configuration_is_not_evaluable(
 def test_strata_separate_championship_divisions_and_split_others_at_the_median():
     assert run_e5.stratum("Championship Division", 75, 40) == "championship_division"
     assert run_e5.stratum("Regional", 41, 40) == "large" and run_e5.stratum("District", 40, 40) == "small"
+
+
+def test_only_a_world_championship_division_is_a_championship_division():
+    assert run_e5.stratum("Championship Division", 10, 40) == "championship_division"  # by type, not size
+    for not_world in ("District Championship Division", "District Championship", "Championship Finals",
+                      "championship division", "Regional", "District"):
+        assert run_e5.stratum(not_world, 75, 40) == "large", not_world
+
+
+def test_assign_strata_uses_tba_types_reports_missing_ones_and_takes_the_median_without_divisions():
+    events = [("2024arc", 75), ("2024cur", 75),          # World divisions: large, but their own stratum
+              ("2024micmp1", 40),                        # DCMP division: an ordinary event
+              ("2024a", 30), ("2024b", 32), ("2024c", 50),
+              ("2024nopayload", 60), ("2024emptytype", 20)]
+    types = {"2024arc": "Championship Division", "2024cur": "Championship Division",
+             "2024micmp1": "District Championship Division", "2024a": "Regional", "2024b": "District",
+             "2024c": "Regional", "2024emptytype": ""}
+    strata, unclassified = run_e5.assign_strata(events, types)
+    # median over 2024micmp1, a, b, c = median(40, 30, 32, 50) = 36; the divisions (75, 75) would raise it to 45
+    assert strata == {"championship_division": ["2024arc", "2024cur"], "large": ["2024c", "2024micmp1"],
+                      "small": ["2024a", "2024b"]}
+    assert unclassified == ["2024emptytype", "2024nopayload"]
+    assert not {e for s in strata.values() for e in s} & set(unclassified)
+
+
+def test_assign_strata_with_nothing_classified_reports_everything():
+    strata, unclassified = run_e5.assign_strata([("2025x", 30), ("2025y", 40)], {})
+    assert strata == {} and unclassified == ["2025x", "2025y"]
+
+
+BARE = "postgresql://postgres@localhost:5432/stratai_test"
+
+
+def _no_connection(*args, **kwargs):
+    raise AssertionError("connected before the target check")
+
+
+def test_draw_sample_refuses_the_bare_stratai_test_before_connecting(monkeypatch):
+    import scripts.phase6_common as common
+
+    monkeypatch.setenv("DATABASE_URL", BARE)
+    monkeypatch.setattr(common, "isolated_database", _no_connection)
+    with pytest.raises(SystemExit, match="not_a_test_database"):
+        run_e5.main(["--draw-sample"])
+
+
+def test_a_run_refuses_the_bare_stratai_test_before_connecting(monkeypatch):
+    import scripts.phase6_common as common
+
+    monkeypatch.setenv("DATABASE_URL", BARE)
+    monkeypatch.setattr(common, "isolated_database", _no_connection)
+    monkeypatch.setattr(run_e5, "load_registered_protocol", lambda path: {"sha256": "x", "runs": []})
+    monkeypatch.setattr(run_e5, "check_run", lambda protocol, run_id: {"id": run_id, "events": []})
+    with pytest.raises(SystemExit, match="not_a_test_database"):
+        run_e5.main(["--protocol", str(PROTOCOL), "--run", "R1"])

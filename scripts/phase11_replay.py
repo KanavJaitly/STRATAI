@@ -29,7 +29,9 @@
   about the rules or the reconstruction, not an error to hide.
 
 **Safety and time.**
-- Runs only on an isolated `stratai_test` copy, in a read-only session (`scripts.phase6_common.isolated_database`).
+- Runs only on a local `stratai_test_<suffix>` copy, in a read-only session
+  (`scripts.phase6_common.strict_isolated_database`; database/target_guard.py's rule). The bare `stratai_test` is
+  refused: per the Phase 6 closeout it may hold synced 2027 data.
   Nothing is written to any database; the record is replayed in memory through the same log module the service
   uses.
 - The sample is fixed before any run: a seeded random draw of `--per-season` events per season among events with
@@ -210,9 +212,9 @@ def main(argv: list[str] | None = None) -> int:
     from api.ml_loading import load_epa_source, load_pinned_ranking_model, load_playoff_models
     from data.alliances import read_event_alliances
     from data.config import Settings
-    from scripts.phase6_common import isolated_database
+    from scripts.phase6_common import strict_isolated_database
 
-    database = isolated_database()  # refuses anything but a stratai_test copy; read-only
+    database = strict_isolated_database()  # only a local stratai_test_<suffix> copy (never the bare one); read-only
     settings = Settings()
     epa_source = load_epa_source(settings, database)
     ranking, playoff_models = load_pinned_ranking_model(settings), load_playoff_models(settings)
