@@ -102,7 +102,7 @@ def position_from_view(view: dl.DraftView, team_number: int) -> DraftPosition:
             if view.turns_before(other) is None:
                 continue
             members = tuple(alliance) or ((projected.get(other),) if projected.get(other) is not None else ())
-            if members and team_number not in members:
+            if team_number not in members:  # () = its captain cannot be determined yet (spec E3)
                 others.append((other, members))
         return _with_rules(view, DraftPosition(team_number, view.record_seq, "non_captain", None, (), 0, None,
                                                tuple(t for t in available if t != team_number), dict(unavailable),

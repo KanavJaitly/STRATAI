@@ -177,6 +177,8 @@ applies.
 - **A3.6:** matches with a disqualified team are excluded (`dq_affected`). Surrogate appearances are kept and recorded,
   as the labelled-dataset rules do.
 - **§7:** the A3 fit is cached per (snapshot id, policy).
+- **E3:** when the captain rule cannot name an alliance's captain, the non-captain view lists that alliance as
+  withheld, "outcome not determined". It was silently dropped before. This uses the existing destination shape.
 
 **Disclosures inside the existing schema:**
 - A3.5 (no opponent adjustment); A3.3/B5.3 (components treated as independent: the deviation is stated, not
@@ -213,7 +215,6 @@ D2.
 | B3/§10 `resilience_analysis` | a new analysis and output section; larger than this run's remaining budget |
 | C1 P6-M6 deterministic projection beside V₁ | needs the P6-M6 projection wired into the plan (engine-side code); deferred |
 | D3 scenario statements; G1 marginal-gain, overlap, uncertainty and missing-data statements | they should fire only past pre-declared thresholds (spec 802), which are HUMAN-GATED (Q3); building them without thresholds would add the "generic text" the spec forbids |
-| E3 "outcome not determined" when the declined-captain rule is null | small; deferred to keep the contract stable |
 | A6 recompute after each watch sync | touches `data.orchestrator` (Phase 2/5 code); deferred to avoid changing the live-sync path in an unattended run |
 | §14 `snapshot_incomplete` required-inputs manifest; rules and artifact shas in the snapshot | snapshot format change (new snapshot version); deferred |
 | §11 top-5/show-all, second-pick selector, backup-combinations panel | UI work; deferred |
