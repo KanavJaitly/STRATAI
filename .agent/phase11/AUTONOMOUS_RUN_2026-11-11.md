@@ -313,3 +313,31 @@ conditions as given).
   - **Fix:** the import moved into `under_load`, its only user (`getrusage`, lines 200 and 215). Behaviour on Unix is
     identical; the module now imports on any OS.
   - **Result:** zero-LLM tests 43 passed.
+- **Fixed (test plumbing): the Phase 9 LLM SDK baseline failures.**
+  - The tests: `tests/test_phase9_llm.py::test_the_credential_never_reaches_the_request_result_or_logs` and
+    `::test_real_sdk_errors_are_caught_by_class_name`.
+  - The failure: "ModuleNotFoundError: No module named 'anthropic'". The SDK is declared only in the optional
+    `requirements-briefing.txt` (`anthropic>=1.16,<2`), and it is not installed.
+  - **Decision:** `pytest.importorskip("anthropic", reason=...)` rather than installing the SDK.
+    - Both tests exercise the real SDK, which is meaningless without it, and with the SDK installed they run unchanged.
+    - Installing an LLM SDK into the environment is a choice the owners appear to have deliberately not made (the
+      LLM and data egress are off by default; the Mac baseline had the same failures). That call is theirs.
+  - **Result:** 91 passed, 2 skipped (with that reason).
+- **Not reproduced on this machine: "Phase 6 artifact paths".** Every Phase 6 test passed in the full run below. The
+  artifacts exist under `C:/Dev/StratAI-artifacts`, so no fix was needed or made.
+- **The first full run** (started before item 2; four parts plus `test_config` alone):
+
+  | Part | Passed | Failed | Skipped | Other | Time |
+  |---|---|---|---|---|---|
+  | 0 | 1,072 | 0 | 4 | | 7.7 min |
+  | 1 | 661 | 0 | 4 | | 6.3 min |
+  | 2 | 915 | 3 | | 1 xfailed | 33.4 min |
+  | 3 | 888 | 2 | | | 3.9 min |
+  | `test_config` | 10 | 0 | | | |
+
+  - **Part 2's three failures:** all in `test_phase7_contract.py`. They were a timing artifact: the process imported
+    `contract.py` while this run was editing it and relocking (each "changed" leaf is one of the new additive fields).
+    On the committed tree the file passes 15/15.
+  - **Part 3's two failures:** the SDK tests above.
+  - **This run is not a clean baseline,** because it overlapped this run's edits. The final run (item 6) is
+    authoritative.

@@ -157,7 +157,7 @@ def test_the_system_prompt_is_byte_stable_across_matches_so_it_can_be_cached():
 def test_the_credential_never_reaches_the_request_result_or_logs(monkeypatch, caplog):
     """The real client path (no client_factory): the env credential is present, the SDK class is replaced by a
     recorder, so the key's only route is through the code under test. It must appear in nothing it produces."""
-    import anthropic
+    anthropic = pytest.importorskip("anthropic", reason="the optional briefing SDK (requirements-briefing.txt) is not installed in this environment")
 
     built: list[dict[str, Any]] = []
     facts = report_facts(report_with_models())
@@ -370,7 +370,7 @@ def test_text_before_a_fallback_block_is_ignored_and_every_attempt_is_counted():
 
 
 def test_real_sdk_errors_are_caught_by_class_name():
-    import anthropic
+    anthropic = pytest.importorskip("anthropic", reason="the optional briefing SDK (requirements-briefing.txt) is not installed in this environment")
     import httpx2
 
     request = httpx2.Request("POST", "https://example.invalid/v1/messages")
