@@ -854,6 +854,13 @@ export interface P11AMonteCarloOut {
   seed_basis: string
 }
 
+export interface P11AParticipationOut {
+  matches_played: number
+  note: string
+  /** Qualification matches this team played as a surrogate. */
+  surrogate_matches: string[]
+}
+
 export interface P11APlanOut {
   as_of: string
   availability: P11AAvailabilityOut
@@ -915,6 +922,7 @@ export interface P11AProfileOut {
   last_updated?: string | null
   matches: P11AMatchOut[]
   matches_played: number
+  participation?: P11AParticipationOut | null
   prior: P11APriorOut | null
   prior_absent_reason: string | null
   provenance: P11AProvenanceOut

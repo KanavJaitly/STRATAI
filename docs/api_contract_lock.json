@@ -3645,6 +3645,16 @@
    "operations_added": [],
    "operations_removed": [],
    "reason": "P11A (autonomous run 2026-11-11): additive optional fields on the two P11A operations only, required by the spec: A3.2 prior mean/SD, A3.7 max |corr| and label reasons, B5.6 defense_effect_insufficient_data, B5.7 Monte Carlo record, A7 last_updated and scouting agreement, G2/B4 profile provenance (exclusions, config and spec sha256). No existing entry changed."
+  },
+  {
+   "added_leaves": 7,
+   "changed": [],
+   "command": "relock",
+   "date": "2026-11-11",
+   "decision": null,
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P11A (autonomous run 2026-11-11): additive optional profile.participation (spec A5: matches played, surrogate matches); two P11A operations only; no existing entry changed."
   }
  ],
  "schemas": {
@@ -7088,6 +7098,28 @@
    ],
    "type": "object"
   },
+  "P11AParticipationOut": {
+   "properties": {
+    "matches_played": {
+     "type": "integer"
+    },
+    "note": {
+     "type": "string"
+    },
+    "surrogate_matches": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "required": [
+    "matches_played",
+    "note",
+    "surrogate_matches"
+   ],
+   "type": "object"
+  },
   "P11APlanOut": {
    "properties": {
     "as_of": {
@@ -7492,6 +7524,16 @@
     },
     "matches_played": {
      "type": "integer"
+    },
+    "participation": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/P11AParticipationOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "prior": {
      "anyOf": [

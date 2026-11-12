@@ -288,6 +288,12 @@ class P11AAllianceFitOut(BaseModel):
     note: str
 
 
+class P11AParticipationOut(BaseModel):
+    matches_played: int
+    surrogate_matches: list[str] = Field(description="Qualification matches this team played as a surrogate.")
+    note: str
+
+
 class P11AExclusionOut(BaseModel):
     what: str | None = None
     match_key: str | None = None
@@ -330,6 +336,7 @@ class P11AProfileOut(BaseModel):
     alliance_fit: P11AAllianceFitOut | None
     alliance_fit_absent_reason: str | None
     strengths_and_weaknesses_absent_reason: str
+    participation: P11AParticipationOut | None = None
     last_updated: str | None = Field(default=None, description="The newest input time behind this profile (latest "
                                                                "match, ranking fetch or scouting summary; all at or "
                                                                "before as_of).")

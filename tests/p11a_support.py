@@ -102,6 +102,9 @@ def write_registry(directory, season: int = SEASON) -> None:
 @pytest.fixture(autouse=True)
 def synthetic_registry(tmp_path_factory, monkeypatch):
     """Import into a test module to register the SYNTHETIC season (never the real data/season_scoring)."""
+    from ml.alliance.snapshot import clear_fit_cache
+
+    clear_fit_cache()  # identical synthetic snapshots share a fit-cache key; a test that patches the estimator must refit
     directory = tmp_path_factory.mktemp("season_scoring")
     write_registry(directory)
     monkeypatch.setattr(scoring_config_module, "CONFIG_DIR", directory)

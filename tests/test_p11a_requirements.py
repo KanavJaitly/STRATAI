@@ -447,3 +447,35 @@ def test_the_profile_lists_exclusions_last_updated_and_the_config_behind_its_fit
     alone = team_profile(snap, snap.teams()[1])  # no alliance fit: no configuration was used
     assert alone["provenance"]["scoring_config_sha256"] is None
     assert alone["last_updated"] == max(r.time for r in snap.qual_rows)
+
+
+# --- §7 caching and A5 participation ------------------------------------------------------------------------------
+
+
+def test_section_7_the_fit_is_cached_per_snapshot_id_and_any_content_change_refits():
+    from ml.alliance.snapshot import clear_fit_cache
+
+    clear_fit_cache()
+    snap = snapshot(seed=5)
+    first = snap.fit()
+    assert snap.fit() is first  # the same snapshot id: no refit
+    changed = snapshot(seed=5)
+    changed.qual_rows = changed.qual_rows[:-2]
+    assert changed.snapshot_id() != snap.snapshot_id() and changed.fit() is not first
+    strict = planner.EstimatorPolicy(n_min=6)
+    assert snap.fit(strict) is not first  # another policy is another key
+
+
+def test_a5_the_profile_reports_participation_and_surrogate_matches():
+    from ml.alliance.contract import P11AProfileOut
+
+    snap = snapshot()
+    t = snap.teams()[4]
+    played = [r.match_key for r in snap.qual_rows if t in r.teams]
+    snap.provenance = {**snap.provenance, "surrogate_appearances": [
+        {"match_key": played[0], "color": "red", "team_number": t},
+        {"match_key": played[1], "color": "blue", "team_number": t + 1}]}
+    prof = team_profile(snap, t)
+    P11AProfileOut.model_validate(prof)
+    assert prof["participation"]["matches_played"] == len(played) == prof["matches_played"]
+    assert prof["participation"]["surrogate_matches"] == [played[0]]

@@ -95,6 +95,13 @@ def team_profile(snapshot: EventSnapshot, team: int, *, our_team: int | None = N
                  "status": "observed" if snapshot.ranks is not None and team in snapshot.ranks else "not_available",
                  "fetched_at": prov.get("ranking_fetched_at")},
         "matches_played": len(rows),
+        # spec A5: participation facts, never a failure rate
+        "participation": {
+            "matches_played": len(rows),
+            "surrogate_matches": sorted(s["match_key"] for s in prov.get("surrogate_appearances") or []
+                                        if s.get("team_number") == team),
+            "note": "Matches with a disqualified team are excluded from the snapshot (provenance.exclusions, "
+                    "dq_affected). Scheduled-but-unplayed matches are not in a snapshot."},
         "prior": prior, "prior_absent_reason": prior_reason,
         "scouting": scouting, "scouting_absent_reason": scouting_reason,
         "strengths_and_weaknesses_absent_reason": "not produced by any engine (Phase 16)",
