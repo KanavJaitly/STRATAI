@@ -43,7 +43,12 @@ regret / playoff association is labelled observational and confounded.
 
 ## Safeguards built in
 
-- **Database:** read-only session on an isolated `stratai_test` copy only (`scripts.phase6_common.isolated_database`).
+- **Database:** read-only session on a local `stratai_test_<suffix>` copy only
+  (`scripts.phase6_common.strict_isolated_database`, database/target_guard.py's rule), for `--draw-sample` and every
+  run.
+  - **The bare `stratai_test` is refused.** Per the Phase 6 closeout
+    (`.agent/phase6/decisions/P6_M10B_PREPARATION_CLOSEOUT_2026-10-11.md`), 2027 is synced into that copy, so it may
+    hold 2027 data.
 - **The 2027 holdout:**
   - refused in the sample;
   - refused in every run;

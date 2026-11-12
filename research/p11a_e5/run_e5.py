@@ -15,7 +15,9 @@ pools) and confounding (seed, captain strength, bracket, opponents) are not remo
   A draft is refused, so no result can be seen before the criteria are fixed (spec §20, pre-registration).
 - The run is longer than 45 minutes, or names a season outside 2024–2026. 2027 is the protected holdout and is
   never read.
-- The database is not an isolated stratai_test copy (`scripts.phase6_common.isolated_database`, read-only).
+- The database is not a local `stratai_test_<suffix>` copy (`scripts.phase6_common.strict_isolated_database`,
+  read-only; database/target_guard.py's rule). The bare `stratai_test` is refused: per the Phase 6 closeout it may
+  hold synced 2027 data. This applies to `--draw-sample` too.
 
 **Per event in the run's frozen sample:**
 1. The setup (`workspaces.live_draft.build_setup`), TBA's final alliances and outcomes (`data.alliances`), and the
@@ -270,16 +272,39 @@ def summarise(events: Sequence[Mapping[str, Any]], *, seed: int = 20261106, n_bo
 # --- the database run (UNVERIFIED here: no PostgreSQL) ---------------------------------------------------------------
 
 
+WORLD_DIVISION = "Championship Division"  # TBA event_type_string; "District Championship Division" is not one
+
+
 def stratum(event_type: str | None, teams: int, median_teams: float) -> str:
-    """The sampling stratum: championship divisions apart, other events split at the season's median team count."""
-    if event_type and "division" in event_type.lower():
+    """The sampling stratum, from TBA's `event_type_string`: World Championship divisions (exactly
+    "Championship Division") apart; every other event split at the season's median team count."""
+    if event_type == WORLD_DIVISION:
         return "championship_division"
     return "large" if teams > median_teams else "small"
 
 
-def draw_sample(database: Any, seasons: Sequence[int], per_stratum: int, seed: int) -> dict[str, list[str]]:
-    """A seeded stratified sample (season x stratum) of events with seeded alliances. Reads event metadata, alliance
-    presence and rosters only: no score, ranking or outcome, so it can be drawn before registration."""
+def assign_strata(events: Sequence[tuple[str, int]],
+                  event_types: Mapping[str, str | None]) -> tuple[dict[str, list[str]], list[str]]:
+    """One season's strata for its eligible events (event_key, team count), and the events left unclassified.
+
+    - An event's type is its current TBA event payload's `event_type_string` (`event_types`). `events.event_type` is
+      never populated (data/serving/repository.py), so it is not used.
+    - An event without a type is **unclassified** and left out of the strata; it is reported, never guessed.
+    - The median team count is taken over the classified events that are not World Championship divisions."""
+    classified = [(key, teams) for key, teams in events if event_types.get(key)]
+    unclassified = sorted(key for key, _ in events if not event_types.get(key))
+    others = [teams for key, teams in classified if event_types[key] != WORLD_DIVISION]
+    median = float(np.median(others)) if others else 0.0
+    strata: dict[str, list[str]] = {}
+    for key, teams in sorted(classified):
+        strata.setdefault(stratum(event_types[key], teams, median), []).append(key)
+    return strata, unclassified
+
+
+def draw_sample(database: Any, seasons: Sequence[int], per_stratum: int, seed: int) -> dict[str, Any]:
+    """A seeded stratified sample (season x stratum) of events with seeded alliances, plus `unclassified`: per season,
+    the eligible events with no TBA event type, left out. Reads TBA's event type, alliance presence and rosters only:
+    no score, ranking or outcome, so it can be drawn before registration."""
     import random
 
     from data.alliances import read_event_alliances
@@ -287,21 +312,24 @@ def draw_sample(database: Any, seasons: Sequence[int], per_stratum: int, seed: i
     if any(s not in ALLOWED_SEASONS for s in seasons):
         raise E5Refused("holdout", "only 2024-2026 may be sampled (2027 is the protected holdout)")
     rng = random.Random(seed)
-    out: dict[str, list[str]] = {}
+    out: dict[str, Any] = {}
+    unclassified: dict[str, list[str]] = {}
     for season in seasons:
         alliances = read_event_alliances(database, season)
         with database.cursor() as c:
-            c.execute("SELECT e.event_key, e.event_type, count(DISTINCT mt.team_number) FROM events e "
+            c.execute("SELECT e.event_key, count(DISTINCT mt.team_number) FROM events e "
                       "JOIN matches m ON m.event_key = e.event_key AND m.competition_level = 'qualification' "
                       "JOIN match_teams mt ON mt.match_key = m.match_key WHERE e.season = %s "
-                      "GROUP BY e.event_key, e.event_type", (season,))
+                      "GROUP BY e.event_key", (season,))
             rows = [r for r in c.fetchall() if len([a for a in alliances.get(r[0], []) if a.seed]) >= 2]
-        median = float(np.median([r[2] for r in rows])) if rows else 0.0
-        strata: dict[str, list[str]] = {}
-        for key, kind, teams in sorted(rows):
-            strata.setdefault(stratum(kind, teams, median), []).append(key)
+            c.execute("SELECT p.source_object_id, p.payload_json->>'event_type_string' FROM raw_source_payloads p "
+                      "JOIN events e ON e.event_key = p.source_object_id WHERE e.season = %s AND p.source = 'tba' "
+                      "AND p.source_object_type = 'event' AND p.is_current", (season,))
+            event_types = dict(c.fetchall())
+        strata, unclassified[str(season)] = assign_strata(rows, event_types)
         for name in sorted(strata):
             out[f"{season}/{name}"] = sorted(rng.sample(strata[name], min(per_stratum, len(strata[name]))))
+    out["unclassified"] = unclassified
     return out
 
 
@@ -343,9 +371,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, default=20261106)
     args = parser.parse_args(argv)
     if args.draw_sample:
-        from scripts.phase6_common import isolated_database
+        from scripts.phase6_common import strict_isolated_database
 
-        print(json.dumps(draw_sample(isolated_database(), ALLOWED_SEASONS, args.per_stratum, args.seed), indent=1))
+        print(json.dumps(draw_sample(strict_isolated_database(), ALLOWED_SEASONS, args.per_stratum, args.seed),
+                         indent=1))
         return 0
     if args.protocol is None or args.run is None:
         parser.error("--protocol and --run are required (or --draw-sample)")
@@ -360,10 +389,10 @@ def main(argv: list[str] | None = None) -> int:
     from data.alliances import read_event_alliance_outcomes, read_event_alliances
     from data.config import Settings
     from ml.alliance.snapshot import build_event_snapshot
-    from scripts.phase6_common import isolated_database
+    from scripts.phase6_common import strict_isolated_database
     from scripts.phase11_replay import _setup
 
-    database = isolated_database()  # refuses anything but an isolated stratai_test copy; read-only
+    database = strict_isolated_database()  # only a local stratai_test_<suffix> copy (never the bare one); read-only
     settings = Settings()
     epa_source, ranking = load_epa_source(settings, database), load_pinned_ranking_model(settings)
     deadline = time.monotonic() + float(run["budget_minutes"]) * 60
