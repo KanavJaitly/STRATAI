@@ -268,6 +268,14 @@ def _value_draws(model: _Model, lineup: np.ndarray, draws: dict[str, np.ndarray]
     return total + model.fouls
 
 
+def top_combinations(values: dict[tuple[int, int], float], k: int) -> list[dict[str, Any]]:
+    """D2: the k best complete alliances {us, c, d} over **every** pair, by unrounded V (ties by team numbers), so the
+    list is the global top k and its order never depends on rounding or on which first-pick card found a pair."""
+    unique = {tuple(sorted(pair)): v for pair, v in values.items()}
+    best = sorted(unique.items(), key=lambda kv: (-kv[1], kv[0]))[:k]
+    return [{"picks": list(pair), "expected_alliance_score": round(v, 1)} for pair, v in best]
+
+
 def build_plan(snapshot: EventSnapshot, position: DraftPosition, *, policy: EstimatorPolicy = EstimatorPolicy(),
                draws: int = DRAWS, scoring_dir: Path | None = None) -> dict[str, Any]:
     """The P11A plan for `position` from `snapshot`. Raises PlanWithheld with the exact reason when a gate is unmet."""
@@ -324,12 +332,12 @@ def build_plan(snapshot: EventSnapshot, position: DraftPosition, *, policy: Esti
     if len(members) + position.picks_remaining < 3:
         raise PlanWithheld("invalid_position", "an alliance needs three active robots")
     cards = []
+    values: dict[tuple[int, int], float] = {}
     if len(members) == 1 and position.picks_remaining >= 2:  # first pick, with conditional second picks
         pairs = list(itertools.combinations(available, 2))
         me = model.index[members[0]]
         lineups = np.array([[me, model.index[c], model.index[d]] for c, d in pairs]).reshape(-1, 3)
         batch = model.value(lineups) if pairs else np.empty(0)  # one vectorised pass over every {us, c, d}
-        values = {}
         for (c, d), v in zip(pairs, batch):
             values[(c, d)] = values[(d, c)] = float(v)
         for c in available:
@@ -381,17 +389,8 @@ def build_plan(snapshot: EventSnapshot, position: DraftPosition, *, policy: Esti
     for a, b in zip(out_cards, out_cards[1:]):
         comparisons.append({"a": a["team_number"], "b": b["team_number"],
                             **_compare(model, draw, a["lineup"], b["lineup"])})
-    combos = []
-    if stage == "first_pick":
-        seen = set()
-        for card in cards[:TOP_K]:
-            for v, d in card["seconds"][:3]:
-                key = tuple(sorted((card["team_number"], d)))
-                if key not in seen:
-                    seen.add(key)
-                    combos.append({"picks": [card["team_number"], d], "expected_alliance_score": round(v, 1)})
-        combos.sort(key=lambda x: -x["expected_alliance_score"])
-    return {**base, "stage": stage, "cards": out_cards, "comparisons": comparisons, "backup_combinations": combos[:5],
+    combos = top_combinations(values, 5) if stage == "first_pick" else []
+    return {**base, "stage": stage, "cards": out_cards, "comparisons": comparisons, "backup_combinations": combos,
             "combinations_note": None if len(combos) >= 3 or stage != "first_pick" else
             f"only {len(combos)} distinct combinations exist"}
 

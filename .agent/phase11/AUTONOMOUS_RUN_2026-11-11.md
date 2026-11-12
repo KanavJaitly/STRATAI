@@ -132,3 +132,52 @@ conditions as given).
 - **Tests:** `tests/test_p11a_tooling.py`, 28 tests.
   - Run with `tests/test_p11a_scoring_config.py` and `tests/test_migration_guard.py`: 68 passed, including the
     read-only DB test against `stratai_test_p11a`.
+
+### Item 2, batch 1: missing tests, and one defect fixed (D2)
+
+- **`tests/test_p11a_requirements.py`:** 17 tests, each naming the spec item it asserts.
+  - **Criterion 4:** V equals the configured component terms plus the declared fouls, for both `fouls` settings.
+  - **Criterion 8 / Scenario D:**
+    - seed 1 vs 8 horizons from `turn_order` ([0, 15] vs [7, 8]);
+    - each plan states its own `turns_before`.
+  - **Criterion 22 / Scenario R:**
+    - the capped value uses a′Σa with the cross-robot terms;
+    - dropping them is detectable;
+    - the capped expectation matches a 400k-draw Monte Carlo within 4 MC SE.
+  - **Criterion 23:** Δ is taken draw by draw from common draws (exact match). The common-draw interval is
+    narrower than with independent draws (7.07 vs 11.85 on the first run).
+  - **Criterion 19 / Scenario O:** two robots that share every match are both `weakly_identified`, with
+    max |corr| > 0.5, in every component.
+  - **Criterion 18 / Scenario N:**
+    - after a recorded backup, the backup is unavailable (`backup`) for every position;
+    - the captain has `no_remaining_turn`;
+    - a non-captain has no destinations, because backups exist only after every pick.
+  - **Scenario B uncapped:** V is the plain sum, and A now ranks above B (the reverse of the capped run).
+  - **Criterion 6:** after each of the top 5 first picks, the next-pick list equals that card's conditional list
+    exactly.
+  - **Criterion 13 (backend):** every card's profile has the same estimates as the card.
+  - **§9.4:** the optimizer equals brute force over every ordered pair (12 teams), in order and value.
+  - **Scenario H:** scouting changes no estimate or value; the defense value is shown, the missing feeding stays
+    null.
+  - **DM4 / Scenario J:** the offline CLI plan equals the served plan on the same snapshot, value for value. This
+    runs on any OS; the network-denied version stays macOS-only.
+  - **D2:** see the defect below.
+- **`tests/test_p11a_db.py`, Scenario M (database):**
+  - **What it does:** inserts a sentinel qualification match after `as_of` (a copy of the event's last match) inside
+    one transaction that is always rolled back, then checks:
+    - the snapshot id is unchanged;
+    - positive control: the sentinel is visible to a snapshot after its own time.
+  - **Passed** on `stratai_test_p11a` (44.6 s).
+  - **Why a DB test:** an earlier fake-cursor draft was discarded, because the fake applied the cutoff itself and so
+    tested nothing.
+- **Defect found and fixed: D2 `backup_combinations` was not the top 5 complete alliances.**
+  - **Cause:** the old code (`planner.py`, the block after `comparisons`) drew candidates only from the top 5 first-pick
+    cards × their top 3 seconds, and sorted by *rounded* values.
+  - **Probe on the unchanged code** (40 synthetic seeds):
+    - 22 differed from the brute-force top 5;
+    - seed 3 missed a top-5 alliance, `(9904, 9917)`;
+    - seed 1 had two near-ties out of order.
+  - **Fix:** `planner.top_combinations` ranks every pair by unrounded V, with ties by team numbers. The pair is
+    reported sorted; `picks` is an unordered `list[int]`, and no UI renders it.
+  - **Tests:** seeds 1, 3 and 8 against brute force, and a constructed case of disjoint best pairs.
+- **Result:** P11A pure tests 123 passed, 4 skipped (the macOS `sandbox-exec` tests).

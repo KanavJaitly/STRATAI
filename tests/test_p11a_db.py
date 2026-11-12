@@ -131,6 +131,56 @@ def test_real_data_historical_cutoff(readonly, real_event):
     assert all(p["end_date"] < snap.start_date for p in snap.priors.values())
 
 
+def test_real_data_scenario_M_a_later_sentinel_match_leaves_the_snapshot_unchanged(real_event):
+    """Spec §19 Scenario M / §8: a qualification match inserted after `as_of` (a copy of the event's last match, with a
+    new key and a later schedule) changes nothing. The sentinel lives only in one transaction that is always rolled
+    back: nothing is ever committed to the copy."""
+    import psycopg
+
+    from data.config import Settings
+    from database.connection import DatabaseConfig, SnapshotDatabase
+    from ml.alliance.snapshot import build_event_snapshot
+
+    event_key, _, times = real_event
+    as_of = _mid(times)
+    url = str(Settings().database_url)
+    with psycopg.connect(url) as conn:
+        try:
+            database = SnapshotDatabase(DatabaseConfig(Settings().database_url), conn)
+            with conn.cursor() as c:
+                c.execute("SELECT current_database()")
+                assert c.fetchone()[0].startswith("stratai_test_"), "the sentinel is written only to a test copy"
+            before = build_event_snapshot(database, event_key, as_of)
+            sentinel, later = f"{event_key}_qm9999", as_of + timedelta(minutes=10)
+            with conn.cursor() as c:
+                c.execute("SELECT match_key FROM matches WHERE event_key = %s AND competition_level = 'qualification' "
+                          "AND scheduled_time IS NOT NULL ORDER BY scheduled_time DESC LIMIT 1", (event_key,))
+                source = c.fetchone()[0]
+                c.execute("INSERT INTO matches (match_key, event_key, season, competition_level, set_number, "
+                          "match_number, scheduled_time, score_red, score_blue, winning_alliance) SELECT %s, event_key, "
+                          "season, competition_level, set_number, 9999, %s, score_red, score_blue, winning_alliance "
+                          "FROM matches WHERE match_key = %s", (sentinel, later, source))
+                c.execute("INSERT INTO match_teams (match_key, team_number, alliance_color, station_position) SELECT "
+                          "%s, team_number, alliance_color, station_position FROM match_teams WHERE match_key = %s",
+                          (sentinel, source))
+                c.execute("INSERT INTO raw_source_payloads (source, source_object_type, source_object_id, season, "
+                          "event_key, match_key, fetch_timestamp, payload_json, payload_checksum, schema_version, "
+                          "is_current) SELECT source, source_object_type, %s, season, event_key, %s, %s, payload_json "
+                          "|| jsonb_build_object('key', %s::text, 'post_result_time', %s::bigint), 'sentinel-' || "
+                          "payload_checksum, schema_version, true FROM raw_source_payloads WHERE source = 'tba' AND "
+                          "source_object_type = 'match' AND is_current AND source_object_id = %s",
+                          (sentinel, sentinel, later, sentinel, int(later.timestamp()), source))
+                c.execute("SELECT count(*) FROM matches WHERE match_key = %s", (sentinel,))
+                assert c.fetchone()[0] == 1  # the sentinel is really there, in this transaction
+            after = build_event_snapshot(database, event_key, as_of)
+            assert sentinel not in {r.match_key for r in after.qual_rows}
+            assert after.snapshot_id() == before.snapshot_id()  # outputs unchanged (the plan is a function of it)
+            whole = build_event_snapshot(database, event_key, later + timedelta(minutes=1))
+            assert sentinel in {r.match_key for r in whole.qual_rows}  # positive control: it is visible after it
+        finally:
+            conn.rollback()  # never committed
+
+
 def test_real_data_rankings_and_scouting_after_as_of_are_left_out(readonly, real_event):
     from data.rankings import read_event_ranks
     from ml.alliance.snapshot import build_event_snapshot
