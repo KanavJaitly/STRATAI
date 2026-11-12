@@ -75,6 +75,11 @@ class RobotDiagnostics:
     w_eff: float
     prior_kind: str  # "prior_event_individual" | "current_event_joint"
     labels: tuple[str, ...]
+    # spec A3.2 "reported with every output": the prior's mean and SD. For current_event_joint they are the event
+    # population's estimate mu_hat and sqrt(tau^2 + V_mu) (mu is integrated); for prior_event_individual, the prior.
+    prior_mean: float | None = None
+    prior_sd: float | None = None
+    label_reasons: tuple[str, ...] = ()  # spec A3.7: each label with the threshold comparison that set it
 
 
 @dataclass
@@ -198,9 +203,13 @@ def noise_diagnostics(A: np.ndarray, y: np.ndarray, fitted=None) -> NoiseDiagnos
 
 
 def posterior(A: np.ndarray, y: np.ndarray, teams: Sequence[int], sigma2: float, tau2: float,
-              individual: Mapping[int, tuple[float, float]] | None = None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+              individual: Mapping[int, tuple[float, float]] | None = None, *, with_population: bool = False
+              ) -> tuple[np.ndarray, ...]:
     """(mean, covariance, marginal prior variance) for the robots, with mu integrated when any robot uses the
-    population prior. `individual` maps team -> (prior mean, prior variance)."""
+    population prior. `individual` maps team -> (prior mean, prior variance).
+
+    With `with_population`, a fourth element is added: (mu_hat, V_mu), the event population mean's posterior mean and
+    variance, or None when every robot has an individual prior."""
     individual = dict(individual or {})
     n = len(teams)
     population = [i for i, t in enumerate(teams) if t not in individual]
@@ -226,7 +235,9 @@ def posterior(A: np.ndarray, y: np.ndarray, teams: Sequence[int], sigma2: float,
             prior_var[i] = tau2  # the between-team spread; mu itself is flat and integrated
     cov = np.linalg.inv(H)
     mean = cov @ b
-    return mean[:n], cov[:n, :n], prior_var
+    if not with_population:
+        return mean[:n], cov[:n, :n], prior_var
+    return mean[:n], cov[:n, :n], prior_var, ((float(mean[n]), float(cov[n, n])) if use_mu else None)
 
 
 def fit_component(component: str, rows: Sequence[Sequence[int]], y: Sequence[float], teams: Sequence[int], *,
@@ -244,7 +255,7 @@ def fit_component(component: str, rows: Sequence[Sequence[int]], y: Sequence[flo
     yv = np.asarray(y, dtype=float)
     fitted = _optimise(A, yv)
     s2, t2 = (float(v) for v in np.exp(fitted[0].x) * fitted[2])
-    mean, cov, prior_var = posterior(A, yv, teams, s2, t2, individual)
+    mean, cov, prior_var, population = posterior(A, yv, teams, s2, t2, individual, with_population=True)
     noise = noise_diagnostics(A, yv, fitted)
     ratio = s2 / max(float(np.var(yv)), 1e-9)
     fit = ComponentFit(component, teams, mean, cov, s2, t2, len(rows), noise.sigma2_at_bound, noise, ratio,
@@ -257,18 +268,39 @@ def fit_component(component: str, rows: Sequence[Sequence[int]], y: Sequence[flo
         rows_t = A[:, i] > 0
         partners = int((A[rows_t].sum(axis=0) > 0).sum() - 1) if rows_t.any() else 0
         w = float(1.0 - cov[i, i] / prior_var[i])
-        labels = []
+        labels, reasons = [], []
         if counts[i] < policy.n_min or w < policy.w_min:
             labels.append("prior_dominated")
-        if np.abs(corr[i]).max() > policy.max_abs_corr or partners < policy.min_partners:
+            if counts[i] < policy.n_min:
+                reasons.append(f"prior_dominated: n {int(counts[i])} < n_min {policy.n_min}")
+            if w < policy.w_min:
+                reasons.append(f"prior_dominated: w_eff {w:.2f} < w_min {policy.w_min}")
+        max_corr = float(np.abs(corr[i]).max())
+        if max_corr > policy.max_abs_corr or partners < policy.min_partners:
             labels.append("weakly_identified")
+            if max_corr > policy.max_abs_corr:
+                reasons.append(f"weakly_identified: max |corr| {max_corr:.2f} with team "
+                               f"{teams[int(np.abs(corr[i]).argmax())]} > {policy.max_abs_corr}")
+            if partners < policy.min_partners:
+                reasons.append(f"weakly_identified: {partners} distinct partners < {policy.min_partners}")
         if fit.degenerate:
             labels.append("fit_unreliable")
+            reasons.append("fit_unreliable: sigma^2 is on the optimizer's lower bound")
         if fit.screen_flagged:
             labels.append("collapse_screen_flagged")
+            reasons.append(f"collapse_screen_flagged: sigma^2/var(y) {ratio:.4f} < {policy.collapse_ratio} "
+                           "(non-authoritative)")
+        own = bool(individual) and t in individual
+        if own:
+            prior_mean, prior_sd = float(individual[t][0]), float(np.sqrt(prior_var[i]))
+        elif population is not None:
+            prior_mean, prior_sd = population[0], float(np.sqrt(t2 + population[1]))
+        else:
+            prior_mean = prior_sd = None
         fit.diagnostics.append(RobotDiagnostics(
-            t, int(counts[i]), partners, float(np.abs(corr[i]).max()), w,
-            "prior_event_individual" if individual and t in individual else "current_event_joint", tuple(labels)))
+            t, int(counts[i]), partners, max_corr, w,
+            "prior_event_individual" if own else "current_event_joint", tuple(labels),
+            prior_mean, prior_sd, tuple(reasons)))
     return fit
 
 

@@ -56,6 +56,15 @@ class P11AComponentOut(BaseModel):
     w_eff: float = Field(description="Share of the estimate that comes from this event's data (1 - posterior/prior "
                                      "variance); 1 - w_eff is the prior's influence.")
     labels: list[str]
+    prior_mean: float | None = Field(default=None, description="The prior's mean (spec A3.2). For current_event_joint: "
+                                                               "the event population mean estimated jointly from this "
+                                                               "event's matches.")
+    prior_sd: float | None = Field(default=None, description="The prior's SD. For current_event_joint: sqrt(tau^2 + "
+                                                             "V_mu), with V_mu the population mean's uncertainty.")
+    max_abs_corr: float | None = Field(default=None, description="Largest |correlation| of this estimate with another "
+                                                                 "robot's (spec A3.7).")
+    label_reasons: list[str] | None = Field(default=None, description="Each label with the threshold comparison that "
+                                                                      "set it (candidate thresholds, unapproved).")
 
 
 class P11ARobotOut(BaseModel):
@@ -145,6 +154,19 @@ class P11ADestinationOut(BaseModel):
     reason: str | None = None
 
 
+class P11AMonteCarloOut(BaseModel):
+    draws: int
+    seed_basis: str
+    p_delta_positive_mc_se_max: float = Field(description="Upper bound of the Monte Carlo SE of p_delta_positive.")
+    note: str
+
+
+class P11ADefenseEffectOut(BaseModel):
+    status: Literal["defense_effect_insufficient_data"]
+    points: Literal[0.0] = Field(description="Defense and feeding add no points until a measured effect exists.")
+    reason: str
+
+
 class P11AAvailabilityOut(BaseModel):
     confirmed_available: list[int]
     confirmed_unavailable: list[P11ATeamReason]
@@ -181,6 +203,8 @@ class P11APlanOut(BaseModel):
     destinations: list[P11ADestinationOut] | None = None
     invitation_likelihood: P11AWithheldOut | None = None
     note: str | None = None
+    monte_carlo: P11AMonteCarloOut | None = None
+    defense_effect: P11ADefenseEffectOut | None = None
 
 
 # --- the profile ------------------------------------------------------------------------------------------------------
@@ -248,6 +272,12 @@ class P11AScoutingOut(BaseModel):
     feeding: float | None = Field(description="Scouted feeding quality (0-5), not points.")
     feeding_n: int
     computed_at: str | None = None
+    defense_agreement: float | None = Field(default=None, description="Scout agreement on defense (team_metrics; "
+                                                                       "lower is closer agreement).")
+    feeding_agreement: float | None = Field(default=None, description="Scout agreement on feeding.")
+    defense_insufficient_data: bool | None = Field(default=None, description="Fewer observations than the minimum "
+                                                                             "(team_metrics).")
+    feeding_insufficient_data: bool | None = None
 
 
 class P11AAllianceFitOut(BaseModel):
@@ -258,12 +288,24 @@ class P11AAllianceFitOut(BaseModel):
     note: str
 
 
+class P11AExclusionOut(BaseModel):
+    what: str | None = None
+    match_key: str | None = None
+    color: str | None = None
+    team_number: int | None = None
+    reason: str
+    known_at: str | None = None
+
+
 class P11AProvenanceOut(BaseModel):
     source: str | None = None
     built_at: str | None = None
     ranking_fetched_at: str | None = None
     prior_events: list[str] = []
     snapshot_version: str | None = None
+    exclusions: list[P11AExclusionOut] | None = Field(default=None, description="What the snapshot left out, and why.")
+    scoring_config_sha256: str | None = Field(default=None, description="The configuration behind alliance_fit.")
+    game_spec_sha256: str | None = None
 
 
 class P11AProfileOut(BaseModel):
@@ -288,6 +330,9 @@ class P11AProfileOut(BaseModel):
     alliance_fit: P11AAllianceFitOut | None
     alliance_fit_absent_reason: str | None
     strengths_and_weaknesses_absent_reason: str
+    last_updated: str | None = Field(default=None, description="The newest input time behind this profile (latest "
+                                                               "match, ranking fetch or scouting summary; all at or "
+                                                               "before as_of).")
     provenance: P11AProvenanceOut
 
 

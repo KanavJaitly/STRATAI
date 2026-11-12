@@ -54,7 +54,9 @@ class FakeCursor:
             self._rows = [(key, color, (n * 3 + i + (0 if color == "red" else 6)) % 12 + 1)
                           for n, key in enumerate(params[0]) for color in ("red", "blue") for i in range(3)]
         elif "FROM team_metrics" in sql:
-            self._rows = [(1, 3.0, 4, None, 0, self.scouting_at), (2, 2.0, 3, 1.0, 2, T0)]
+            # the builder selects agreement and sufficiency too (spec A7, 2026-11-11): 10 columns
+            self._rows = [(1, 3.0, 4, None, 0, self.scouting_at, 0.5, None, False, True),
+                          (2, 2.0, 3, 1.0, 2, T0, 0.0, 0.0, False, False)]
         else:
             raise AssertionError(f"unexpected SQL: {sql[:60]}")
 

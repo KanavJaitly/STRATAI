@@ -218,7 +218,10 @@ def robot_estimates(fits: dict[str, ComponentFit], team: int) -> dict[str, Any]:
         diag = fit.diagnostics[i]
         out["components"][c] = {"estimate": round(float(fit.mean[i]), 2), "sd": round(float(np.sqrt(fit.cov[i, i])), 2),
                                 "kind": "estimated", "prior_kind": diag.prior_kind, "w_eff": round(diag.w_eff, 3),
-                                "labels": list(diag.labels)}
+                                "labels": list(diag.labels),
+                                "prior_mean": None if diag.prior_mean is None else round(diag.prior_mean, 2),
+                                "prior_sd": None if diag.prior_sd is None else round(diag.prior_sd, 2),
+                                "max_abs_corr": round(diag.max_abs_corr, 3), "label_reasons": list(diag.label_reasons)}
         out["labels"].update(diag.labels)
         out["n"] = diag.n
         out["partners"] = diag.partners
@@ -313,7 +316,16 @@ def build_plan(snapshot: EventSnapshot, position: DraftPosition, *, policy: Esti
                      "scoring_config_sha256": model.scoring.config_sha256,
                      "game_spec_sha256": model.scoring.game_spec_sha256},
         "known_limitations": list(LIMITATIONS) + ([PER_ROBOT_CAP_NOTE] if any(
-            r.per_robot_cap_points is not None for r in model.scoring.rules.values()) else [])}
+            r.per_robot_cap_points is not None for r in model.scoring.rules.values()) else []),
+        # spec B5.7: the Monte Carlo is seeded; its run count and error are recorded
+        "monte_carlo": {"draws": draws, "seed_basis": "sha256(snapshot_id:record_seq:team_number)",
+                        "p_delta_positive_mc_se_max": round(0.5 / np.sqrt(draws), 4),
+                        "note": "p_delta_positive is a share of the draws; its Monte Carlo SE is at most 0.5/sqrt(draws). "
+                                "The 80% interval ends are draw percentiles and carry Monte Carlo error too"},
+        # spec B5.6: defense and feeding add zero points until a measured effect exists (P6-M10 rule; P11A-Q8)
+        "defense_effect": {"status": "defense_effect_insufficient_data", "points": 0.0,
+                           "reason": "no measured effect of defense or feeding on points; scouted values are reported, "
+                                     "never converted to points"}}
     if position.team_number not in known:
         raise PlanWithheld("team_without_estimate", f"team {position.team_number} has no qualification data here")
     if position.mode == "no_remaining_turn":
