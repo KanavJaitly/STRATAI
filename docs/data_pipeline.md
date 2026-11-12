@@ -631,26 +631,27 @@ rule cited to its section) and made authoritative only by a different, named rev
 - **Constraints:** a partial unique index allows one `approved` version per season; a CHECK requires approved
   and superseded versions to have a reviewer.
 
-### 4.5 Team workspaces
+### 4.5 Team accounts (Team 11)
 
-Created by `0012_team_workspaces.sql` (`workspaces/`, `api/routes/auth.py`, `api/routes/workspace.py`,
-`api/routes/team_scouting.py`). The semantic reference is `docs/team_workspaces.md`. These tables hold team-private
-data and credentials only. They are never read by the data pipeline, never touch the public data tables, and change
-no D18 fingerprint. Every secret (session, invitation, reset and setup credential) is stored only as a hash.
+Created by `0012_team_workspaces.sql` and reshaped by `0015_single_team_auth.sql` for the single-team model
+(`workspaces/`, `api/routes/auth.py`, `api/routes/workspace.py`, `api/routes/team_scouting.py`). The semantic reference
+is `docs/team_workspaces.md`. These tables hold team-private data and credentials only. They are never read by the
+data pipeline, never touch the public data tables, and change no D18 fingerprint. Every secret (session token, reset
+code) is stored only as a hash.
 
 #### `workspaces`
 
-One FRC team's private area. Named `workspaces` because `teams` is the canonical FRC team list.
+The team's private area: exactly one row, team 11 (MORT), created verified by 0015. Named `workspaces` because
+`teams` is the canonical FRC team list.
 
 - **PK** `id`. **Columns:** `team_number`, `team_name`, `verification_status` ∈ {pending_verification, verified,
-  rejected}, `verification_note`, `verified_at`, `verified_by`, `setup_password_hash`, `settings` (JSON object),
-  `created_at`, `updated_at`.
-- **Constraints:** a partial unique index allows one pending or verified workspace per team number; a CHECK requires
-  a verified workspace to name its verifier.
+  rejected}, `verification_note`, `verified_at`, `verified_by`, `settings` (JSON object), `created_at`, `updated_at`.
+- **Constraints:** `workspaces_single_team`, a unique index on a constant, allows at most one row; a CHECK requires a
+  verified workspace to name its verifier.
 
 #### `users`
 
-One person's account, shared across every team they belong to.
+One person's account.
 
 - **PK** `id`; `UNIQUE (email)` (stored lower-cased). **Columns:** `email`, `full_name`, `auth_provider` ∈ {stratai,
   supabase}, `auth_subject`, `password_hash`, `status` ∈ {active, disabled}, `created_at`, `password_changed_at`.
@@ -659,25 +660,9 @@ One person's account, shared across every team they belong to.
 
 A person's role in one workspace.
 
-- **PK** `id`; `UNIQUE (workspace_id, user_id)`. **Columns:** `role` ∈ {admin, strategy, scouter}, `status` ∈
+- **PK** `id`; `UNIQUE (workspace_id, user_id)`. **Columns:** `role` ∈ {admin, base} (0015), `status` ∈
   {active, suspended, removed}, `display_name`, `invited_by_user_id`, `created_at`, `updated_at`, `last_login_at`.
 - **Trigger** `trg_keep_an_active_admin`: a workspace that has an active administrator keeps at least one.
-
-#### `invitations`
-
-A single-use, expiring invitation to join a workspace.
-
-- **PK** `id`; `UNIQUE (token_hash)`. **Columns:** `email`, `full_name`, `role`, `token_hash`, `status` ∈ {pending,
-  accepted, revoked}, `expires_at`, `invited_by_user_id`, `created_at`, `accepted_at`, `accepted_user_id`,
-  `revoked_at`. A partial unique index allows one pending invitation per email per workspace.
-
-#### `workspace_role_permissions`
-
-What the strategy and scouter roles may do in one workspace.
-
-- **PK** `(workspace_id, role, permission)`. **Columns:** `granted`, `updated_at`, `updated_by_user_id`.
-- **CHECKs:** `role` ∈ {strategy, scouter}, and `permission` is one of the configurable permissions, so an
-  administrative permission can never be stored for another role.
 
 #### `auth_sessions`
 
@@ -686,12 +671,13 @@ A server-side session, bound to one membership.
 - **PK** `id`; `UNIQUE (token_hash)`. **Columns:** `membership_id`, `created_at`, `last_seen_at`, `expires_at`,
   `revoked_at`.
 
-#### `password_reset_tokens`
+#### `password_reset_codes`
 
-A single-use password reset link.
+An emailed 6-digit password reset code (0015). It works once, until `expires_at` (15 minutes), and while
+`failed_attempts` is below 5.
 
-- **PK** `id`; `UNIQUE (token_hash)`. **Columns:** `membership_id`, `expires_at`, `used_at`, `issued_by_user_id`,
-  `created_at`.
+- **PK** `id`. **Columns:** `user_id`, `code_salt`, `code_hash` (SHA-256 of the salt and the code), `expires_at`,
+  `failed_attempts`, `used_at`, `created_at`. A partial index covers the live codes per user.
 
 #### `auth_attempts`
 
@@ -1213,10 +1199,11 @@ DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 | `0012_team_workspaces.sql` | Team workspaces: creates `workspaces`, `users`, `team_memberships`, `invitations`, `workspace_role_permissions`, `auth_sessions`, `password_reset_tokens`, `auth_attempts`, `activity_logs`, `scouting_assignments` and `workspace_scouting_reports` (section 4.5) |
 | `0013_live_alliance_selection.sql` | Phase 11: creates `draft_records` and `draft_actions` (each team's append-only live alliance-selection log) and adds `alliance_selection_record` to the `workspace_role_permissions` CHECK constraint (section 4.5; `docs/phase11.md`) |
 | `0014_draft_author_fk_deferred.sql` | Phase 11 fix: checks `draft_records_author_fk` and `draft_actions_author_fk` at commit (`DEFERRABLE INITIALLY DEFERRED`), so deleting a workspace cascades through its draft history as 0013 intends; removing an author without its workspace is still refused |
+| `0015_single_team_auth.sql` | Single-team accounts for Team 11: deletes every account and team-private row; drops `invitations`, `password_reset_tokens`, `workspace_role_permissions` and `workspaces.setup_password_hash`; roles become admin and base; creates `password_reset_codes`; creates the one workspace (team 11) and allows no second (section 4.5) |
 
 Migrations are plain SQL applied in filename order and recorded in `migrations_applied`.
 **There is no Alembic and none should be added.** To add one, create
-`database/migrations/0015_<name>.sql` and run `database/migrate.py`.
+`database/migrations/0016_<name>.sql` and run `database/migrate.py`.
 
 ### 8.7 Watching a live event
 

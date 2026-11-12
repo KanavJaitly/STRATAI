@@ -20,14 +20,8 @@ LOG2_N, BLOCK_SIZE, PARALLELISM = 15, 8, 3
 SALT_BYTES, KEY_BYTES = 16, 32
 MAX_MEMORY_BYTES = 128 * 1024 * 1024
 
-MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH = 12, 256
-# The most common long passwords; the length rule already rules out every shorter one.
-COMMON_PASSWORDS = frozenset({
-    "123456789012", "1234567890123", "12345678901234", "password1234", "password12345", "passwordpassword",
-    "qwertyuiopas", "qwerty123456", "111111111111", "000000000000", "abcdefghijkl", "abc123abc123",
-    "iloveyou1234", "letmeinletmein", "welcome12345", "administrator", "changemenow1", "robotics1234",
-    "frcrobotics1", "firstrobotics", "stratai12345", "scouting1234",
-})
+# At least 8 characters and no other rule (2026-11-11). The upper bound only keeps a hash from taking unbounded time.
+MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH = 8, 256
 
 
 def _b64(data: bytes) -> str:
@@ -81,14 +75,9 @@ def burn_verification_time(password: str) -> None:
     verify_password(password, _DUMMY_HASH)
 
 
-def check_password_policy(password: str, *, email: str | None = None) -> None:
-    """Refuse a password that is too short, too long, very common, or the account's own email address."""
+def check_password_policy(password: str) -> None:
+    """Refuse a password shorter than MIN_PASSWORD_LENGTH (or absurdly long). There is no other rule."""
     if not isinstance(password, str) or len(password) < MIN_PASSWORD_LENGTH:
         raise invalid_input(f"Passwords must have at least {MIN_PASSWORD_LENGTH} characters.")
     if len(password) > MAX_PASSWORD_LENGTH:
         raise invalid_input(f"Passwords may have at most {MAX_PASSWORD_LENGTH} characters.")
-    lowered = password.lower()
-    if lowered in COMMON_PASSWORDS or len(set(password)) < 4:
-        raise invalid_input("That password is too common or too simple. Choose a longer, less predictable one.")
-    if email and lowered == email.lower():
-        raise invalid_input("Your password must not be your email address.")

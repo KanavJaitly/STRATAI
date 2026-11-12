@@ -1,4 +1,4 @@
-"""The API side of team workspaces: the session cookie, CSRF check, client address, permission gates, and turning a
+"""The API side of team accounts: the session cookie, CSRF check, client address, permission gates, and turning a
 workspaces.errors.WorkspaceError into the error envelope.
 
 **The session cookie** (`stratai_session`) is HttpOnly, SameSite=Lax, Path=/, and Secure outside development. The
@@ -10,9 +10,9 @@ cannot add a custom header to a request without a CORS preflight, which this API
 SameSite=Lax this keeps another site from acting with a member's cookie.
 
 **Gates on the existing routes.** create_app attaches permission_gate(permission) to each existing router, so no
-existing handler changes. Under ACCESS_POLICY=open (the default) the gates admit everyone, exactly as before; under
-ACCESS_POLICY=members they require a signed-in member holding the router's permission (401 not_authenticated,
-403 permission_denied). The gate reads the cookie from the request instead of declaring a Cookie parameter, so it
+existing handler changes. Under ACCESS_POLICY=members (the default outside development) they require a signed-in
+member holding the router's permission (401 not_authenticated, 403 permission_denied); a base member holds only the
+event routes (workspaces/permissions.py). Under ACCESS_POLICY=open the gates admit everyone. The gate reads the cookie from the request instead of declaring a Cookie parameter, so it
 adds nothing to any locked operation's OpenAPI contract.
 """
 
@@ -75,7 +75,7 @@ def require_session(request: Request) -> SessionContext:
     context = current_session(request)
     if context is None:
         raise ApiError(status_code=HTTPStatus.UNAUTHORIZED, code=CODE_NOT_AUTHENTICATED,
-                       message="Sign in to your team's StratAI to continue.")
+                       message="Sign in to StratAI to continue.")
     return context
 
 
@@ -111,8 +111,8 @@ def permission_gate(permission: str) -> Callable[[Request], None]:
 
 def platform_gate(request: Request) -> None:
     """The gate for the platform-wide human-input routes (game manuals, rulesets, capability profiles). Their writes
-    keep the platform write token (they change data every team shares, so no team role may change them); under
-    ACCESS_POLICY=members their reads, and token-holding tools, need a signed-in member or that token."""
+    keep the platform write token; under ACCESS_POLICY=members their reads, and token-holding tools, need that token
+    or a signed-in member holding platform_inputs (administrators only)."""
     settings: Settings = request.app.state.settings
     if settings.access_policy != "members":
         return
@@ -122,7 +122,7 @@ def platform_gate(request: Request) -> None:
     expected = settings.human_inputs_write_token
     if supplied and expected and hmac.compare_digest(supplied.encode("utf-8"), expected.encode("utf-8")):
         return
-    require_session(request)
+    require_permission("platform_inputs")(request)
 
 
 def set_session_cookie(response: Response, token: str, settings: Settings) -> None:

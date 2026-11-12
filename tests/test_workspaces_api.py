@@ -1,28 +1,33 @@
-"""Team workspaces end to end, through the real API on an isolated stratai_test_<suffix> database.
+"""Team 11's accounts end to end, through the real API on an isolated stratai_test_<suffix> database.
 
-Covers registration and ownership verification, the first administrator, invitations, sign-in for every role,
-role and permission changes, suspension and removal, password change and recovery, sign-out and session expiry,
-refused administrative calls, cross-team isolation, privilege escalation, team scouting, and the existing routes
-under both access policies. Synthetic sentinel data only (season 9988, teams 9988xx, workspaces 9988x): nothing
-here is evidence about any real team.
+Covers sign-up with the team join code (right, wrong, closed, rate-limited per address and across all addresses),
+ADMIN_EMAILS, unique emails in any case, the 8-character password rule, sign-in, base members refused by every route
+but the events list and an event's page (the API, not only the web app), Team Management, the set_role command,
+password reset by emailed code (single use, 15-minute expiry, 5 wrong attempts, 3 codes per email per hour, every
+session ended), sign-out and session expiry, team scouting, and the access policies.
+
+Needs migration 0015 on the test database. Each test starts from no accounts: the cleanup deletes the team
+workspace (which cascades every membership, session, log and team-scouting row) and recreates it exactly as 0015
+does, because the database refuses to remove a workspace's last administrator any other way. Synthetic sentinel data
+only (season 9988, teams 9988xx): nothing here is evidence about any real team.
 """
 
 from __future__ import annotations
 
 import email as email_parser
+import re
 from datetime import datetime, timezone
 from email import policy as email_policy
 from pathlib import Path
 from typing import Iterator
 
-import psycopg
 import pytest
 from fastapi.testclient import TestClient
 
 from api import create_app
 from data.config import Settings
 from database.connection import Database, DatabaseConfig
-from scripts import workspace_operator
+from scripts import set_role
 from tests.test_live_epa import _isolated_db_name
 from workspaces import passwords
 from workspaces.sessions import COOKIE_NAME
@@ -32,24 +37,25 @@ pytestmark = pytest.mark.skipif(_isolated_db_name() is None, reason="needs an is
 SEASON, EVENT = 9988, "9988zzzscout"
 TEAMS = [998801, 998802, 998803, 998804, 998805, 998806]
 MATCHES = {f"{EVENT}_qm{n}": (TEAMS[:3], TEAMS[3:]) if n % 2 else (TEAMS[3:], TEAMS[:3]) for n in (1, 2, 3)}
-TEAM_A, TEAM_B, TEAM_C = 99881, 99882, 99883
-SETUP, PASSWORD = "setup passphrase 1", "member passphrase 1"
+JOIN_CODE, PASSWORD = "sentinel-join-code-9988", "member pass 1"
 DOMAIN = "@workspaces.test.invalid"
+ADMIN_EMAILS_ENV = f"ADA{DOMAIN.upper()}"  # ada signs up as an administrator; matched in any case
 CSRF = {"X-StratAI-CSRF": "1"}
+TEAM_WORKSPACE_SQL = ("INSERT INTO workspaces (team_number, team_name, verification_status, verified_at, verified_by) "
+                      "VALUES (11, 'MORT', 'verified', NOW(), 'migration 0015_single_team_auth')")
+BASE_PERMISSIONS = ["event_analysis", "qualification_forecast", "team_info"]
 
 
 def _db() -> Database:
     return Database(DatabaseConfig(Settings().database_url))
 
 
-def _clean_workspaces(db: Database) -> None:
+def _reset_accounts(db: Database) -> None:
     with db.cursor() as c:
-        c.execute("DELETE FROM workspaces WHERE team_number = ANY(%s)", ([TEAM_A, TEAM_B, TEAM_C],))
-        # Only accounts left without any membership: a test-domain account still in another workspace is not this
-        # module's to delete (and deleting a workspace's last administrator is refused by the database).
-        c.execute("DELETE FROM users u WHERE u.email LIKE %s AND NOT EXISTS "
-                  "(SELECT 1 FROM team_memberships m WHERE m.user_id = u.id)", (f"%{DOMAIN}",))
+        c.execute("DELETE FROM workspaces")
+        c.execute("DELETE FROM users WHERE email LIKE %s", (f"%{DOMAIN}",))
         c.execute("DELETE FROM auth_attempts")
+        c.execute(TEAM_WORKSPACE_SQL)
 
 
 @pytest.fixture(scope="module")
@@ -57,7 +63,7 @@ def canonical() -> Iterator[None]:
     db = _db()
 
     def drop() -> None:
-        _clean_workspaces(db)
+        _reset_accounts(db)
         with db.cursor() as c:
             c.execute("DELETE FROM match_teams WHERE match_key LIKE %s", (f"{EVENT}%",))
             c.execute("DELETE FROM matches WHERE event_key = %s", (EVENT,))
@@ -87,11 +93,14 @@ def _environment(monkeypatch, canonical) -> Iterator[None]:
     monkeypatch.setattr(passwords, "LOG2_N", 10)
     monkeypatch.setattr(passwords, "PARALLELISM", 1)
     monkeypatch.setenv("ENV", "development")
-    for name in ("ACCESS_POLICY", "PUBLIC_APP_URL", "DEV_OUTBOX_DIR", "SMTP_HOST", "SMTP_FROM"):
+    monkeypatch.setenv("TEAM_JOIN_CODE", JOIN_CODE)
+    monkeypatch.setenv("ADMIN_EMAILS", ADMIN_EMAILS_ENV)
+    for name in ("ACCESS_POLICY", "PUBLIC_APP_URL", "DEV_OUTBOX_DIR", "SMTP_HOST", "SMTP_FROM",
+                 "AUTH_TRUSTED_PROXY_HOPS"):
         monkeypatch.delenv(name, raising=False)
-    _clean_workspaces(_db())
+    _reset_accounts(_db())
     yield
-    _clean_workspaces(_db())
+    _reset_accounts(_db())
 
 
 def make_app(monkeypatch=None, **env: str):
@@ -101,62 +110,48 @@ def make_app(monkeypatch=None, **env: str):
     return create_app(Settings())
 
 
-def browser(app) -> TestClient:
+def browser(app, **headers: str) -> TestClient:
     """One person's browser: its own cookie jar."""
-    return TestClient(app, headers=CSRF)
+    return TestClient(app, headers={**CSRF, **headers})
 
 
 def email(name: str) -> str:
     return f"{name}{DOMAIN}"
 
 
-def register(c: TestClient, number: int = TEAM_A, name: str = "Sentinel Robotics") -> dict:
-    response = c.post("/auth/teams/register", json={"team_number": number, "team_name": name,
-                                                    "setup_password": SETUP})
-    assert response.status_code == 201, response.text
-    return response.json()
+def code(response) -> str:
+    return response.json()["error"]["code"]
 
 
-def first_admin(c: TestClient, number: int = TEAM_A, who: str = "ada") -> dict:
-    response = c.post("/auth/teams/initial-admin", json={
-        "team_number": number, "setup_password": SETUP, "full_name": who.title(), "email": email(who),
-        "password": PASSWORD})
-    assert response.status_code == 201, response.text
-    return response.json()
+def sign_up(c: TestClient, who: str, *, join_code: str = JOIN_CODE, password: str = PASSWORD, address: str | None = None):
+    return c.post("/auth/signup", json={"full_name": who.title(), "email": address or email(who),
+                                        "password": password, "join_code": join_code})
 
 
-def verify(number: int = TEAM_A) -> None:
-    assert workspace_operator.main(["verify", "--team", str(number), "--operator", "Test Operator",
-                                    "--note", "checked against the team's official contact"]) == 0
-
-
-def workspace(app, number: int = TEAM_A, admin: str = "ada") -> TestClient:
-    """A verified workspace with its first administrator signed in."""
-    c = browser(app)
-    register(c, number)
-    first_admin(c, number, admin)
-    verify(number)
-    return c
-
-
-def invite(admin: TestClient, who: str, role: str) -> str:
-    response = admin.post("/workspace/invitations", json={"email": email(who), "full_name": who.title(),
-                                                          "role": role})
-    assert response.status_code == 201, response.text
-    link = response.json()["invitation_link"]
-    assert link.startswith("/auth/invite#token=")
-    return link.split("#token=", 1)[1]
-
-
-def join(app, admin: TestClient, who: str, role: str) -> TestClient:
-    c = browser(app)
-    response = c.post("/auth/invitations/accept", json={"token": invite(admin, who, role), "password": PASSWORD})
+def member(app, who: str, **headers: str) -> TestClient:
+    """A browser signed in as a new member (admin when who is "ada", the one ADMIN_EMAILS entry)."""
+    c = browser(app, **headers)
+    response = sign_up(c, who)
     assert response.status_code == 201, response.text
     return c
 
 
-def login(c: TestClient, who: str, number: int = TEAM_A, password: str = PASSWORD):
-    return c.post("/auth/login", json={"team_number": number, "email": email(who), "password": password})
+def workspace(app, who: str = "ada") -> TestClient:
+    """The team's administrator, signed in (ada is the ADMIN_EMAILS entry). For other test modules."""
+    return member(app, who)
+
+
+def join(app, admin: TestClient, who: str, role: str = "base") -> TestClient:
+    """A new member with role (admin or base), signed in: signs up, then the administrator sets the role."""
+    c = member(app, who)
+    if role != "base":
+        response = admin.post(f"/workspace/members/{member_id(admin, who)}/role", json={"role": role})
+        assert response.status_code == 200, response.text
+    return c
+
+
+def login(c: TestClient, who: str, password: str = PASSWORD):
+    return c.post("/auth/login", json={"email": email(who), "password": password})
 
 
 def member_id(admin: TestClient, who: str) -> int:
@@ -164,367 +159,400 @@ def member_id(admin: TestClient, who: str) -> int:
     return next(m["membership_id"] for m in members if m["email"] == email(who))
 
 
-def code(response) -> str:
-    return response.json()["error"]["code"]
+# --- sign-up --------------------------------------------------------------------------------------------------
 
 
-# --- registration, ownership verification, the first administrator --------------------------------------------
-
-
-def test_registering_a_team_creates_a_pending_workspace_and_refuses_a_duplicate(monkeypatch):
+def test_sign_up_with_the_join_code_creates_a_signed_in_base_member():
     app = make_app()
     c = browser(app)
-    body = register(c)
-    assert body["verification_status"] == "pending_verification" and body["known_frc_team"] is False
-    again = c.post("/auth/teams/register", json={"team_number": TEAM_A, "team_name": "Impostors",
-                                                 "setup_password": SETUP})
-    assert again.status_code == 409 and code(again) == "team_already_registered"
-    bad = c.post("/auth/teams/register", json={"team_number": 0, "team_name": "x", "setup_password": SETUP})
-    assert bad.status_code == 422
-    weak = c.post("/auth/teams/register", json={"team_number": TEAM_B, "team_name": "x", "setup_password": "weak"})
-    assert weak.status_code == 422 and code(weak) == "invalid_input"
-
-
-def test_the_first_administrator_needs_the_setup_password_which_then_retires():
-    app = make_app()
-    c = browser(app)
-    register(c)
-    wrong = c.post("/auth/teams/initial-admin", json={"team_number": TEAM_A, "setup_password": "not the setup one",
-                                                      "full_name": "Eve", "email": email("eve"),
-                                                      "password": PASSWORD})
-    assert wrong.status_code == 401 and code(wrong) == "invalid_setup_credentials"
-    session = first_admin(c)
-    assert session["authenticated"] and session["role"] == "admin"
-    assert session["workspace"]["verification_status"] == "pending_verification"
-    assert "team_management" in session["permissions"]
+    response = sign_up(c, "bo")
+    assert response.status_code == 201
+    body = response.json()
+    assert body["authenticated"] is True and body["role"] == "base" and body["permissions"] == BASE_PERMISSIONS
+    assert body["workspace"]["team_number"] == 11 and body["user"]["email"] == email("bo")
     assert COOKIE_NAME in c.cookies
-    second = browser(app).post("/auth/teams/initial-admin", json={
-        "team_number": TEAM_A, "setup_password": SETUP, "full_name": "Eve", "email": email("eve"),
-        "password": PASSWORD})
-    assert second.status_code == 401 and code(second) == "invalid_setup_credentials"
+    assert c.get("/auth/session").json()["role"] == "base"  # the cookie is a real session
 
 
-def test_an_unverified_workspace_cannot_invite_or_scout_until_the_operator_verifies_it():
+def test_a_wrong_join_code_is_refused_clearly_and_creates_nothing():
     app = make_app()
+    response = sign_up(browser(app), "bo", join_code="not-the-code")
+    assert response.status_code == 403 and code(response) == "invalid_join_code"
+    assert "join code is not correct" in response.json()["error"]["message"]
+    with _db().cursor() as cursor:
+        cursor.execute("SELECT count(*) FROM users WHERE email = %s", (email("bo"),))
+        assert cursor.fetchone()[0] == 0
+
+
+def test_sign_up_is_closed_without_a_configured_join_code(monkeypatch):
+    monkeypatch.delenv("TEAM_JOIN_CODE")
+    app = make_app()
+    for attempt in ("", "anything"):
+        response = sign_up(browser(app), "bo", join_code=attempt)
+        assert response.status_code == 403 and code(response) == "signup_closed"
+    assert TestClient(app).get("/auth/session").json()["signup_open"] is False
+
+
+def test_an_email_in_admin_emails_signs_up_as_an_administrator_in_any_case():
+    app = make_app()
+    response = sign_up(browser(app), "ada", address=f"Ada{DOMAIN}")
+    assert response.status_code == 201
+    assert response.json()["role"] == "admin" and "team_management" in response.json()["permissions"]
+    assert response.json()["user"]["email"] == email("ada")  # stored lowercased
+
+
+def test_an_email_is_unique_whatever_its_case():
+    app = make_app()
+    member(app, "bo")
+    again = sign_up(browser(app), "bo", address=f"BO{DOMAIN.upper()}")
+    assert again.status_code == 409 and code(again) == "email_already_registered"
+
+
+def test_passwords_need_eight_characters_and_nothing_else():
+    app = make_app()
+    short = sign_up(browser(app), "bo", password="seven77")
+    assert short.status_code == 422 and "at least 8 characters" in short.json()["error"]["message"]
+    assert sign_up(browser(app), "bo", password="aaaaaaaa").status_code == 201
+
+
+def test_wrong_join_codes_are_rate_limited_per_address_even_against_the_right_code(monkeypatch):
+    app = make_app(monkeypatch, AUTH_TRUSTED_PROXY_HOPS="1")
+    here = {"X-Forwarded-For": "203.0.113.7"}
+    for _ in range(10):
+        assert sign_up(browser(app, **here), "bo", join_code="guess").status_code == 403
+    limited = sign_up(browser(app, **here), "bo")
+    assert limited.status_code == 429 and code(limited) == "rate_limited"
+    # Another address is unaffected, and correct sign-ups never count against anyone.
+    assert sign_up(browser(app, **{"X-Forwarded-For": "203.0.113.8"}), "bo").status_code == 201
+    for who in ("cy", "di", "ed"):
+        assert sign_up(browser(app, **{"X-Forwarded-For": "203.0.113.8"}), who).status_code == 201
+
+
+def test_wrong_join_codes_are_rate_limited_across_all_addresses(monkeypatch):
+    app = make_app(monkeypatch, AUTH_TRUSTED_PROXY_HOPS="1")
+    for n in range(50):  # 50 wrong codes, each from its own address: no per-address limit trips
+        response = sign_up(browser(app, **{"X-Forwarded-For": f"198.51.100.{n}"}), "bo", join_code=f"guess{n}")
+        assert response.status_code == 403, n
+    fresh = sign_up(browser(app, **{"X-Forwarded-For": "192.0.2.1"}), "bo")  # a new address, the right code
+    assert fresh.status_code == 429 and code(fresh) == "rate_limited"
+
+
+# --- sign-in --------------------------------------------------------------------------------------------------
+
+
+def test_sign_in_takes_only_email_and_password():
+    app = make_app()
+    member(app, "bo")
     c = browser(app)
-    register(c)
-    first_admin(c)
-    refused = c.post("/workspace/invitations", json={"email": email("sam"), "full_name": "Sam", "role": "scouter"})
-    assert refused.status_code == 403 and code(refused) == "workspace_not_verified"
-    report = c.post("/workspace/scouting/reports", json={"match_key": f"{EVENT}_qm1", "team_number": TEAMS[0],
-                                                         "defense_rating": 3})
-    assert report.status_code == 403 and code(report) == "workspace_not_verified"
-    # The admin can still configure the pending workspace.
-    assert c.get("/workspace/permissions").status_code == 200
-    verify()
-    assert c.get("/auth/session").json()["workspace"]["verification_status"] == "verified"
-    assert c.post("/workspace/invitations", json={"email": email("sam"), "full_name": "Sam",
-                                                  "role": "scouter"}).status_code == 201
-
-
-def test_rejecting_a_squatted_registration_ends_its_sessions_and_frees_the_number():
-    app = make_app()
-    squatter = browser(app)
-    register(squatter, TEAM_C, "Not Really Them")
-    first_admin(squatter, TEAM_C, "mallory")
-    assert workspace_operator.main(["reject", "--team", str(TEAM_C), "--operator", "Test Operator",
-                                    "--note", "the real team never registered"]) == 0
-    assert squatter.get("/workspace").status_code == 401
-    assert login(browser(app), "mallory", TEAM_C).status_code == 401
-    register(browser(app), TEAM_C, "The Real Team")  # the number is free again
-
-
-# --- invitations and sign-in ---------------------------------------------------------------------------------
-
-
-def test_invited_members_create_their_own_accounts_and_each_role_gets_its_dashboard():
-    app = make_app()
-    admin = workspace(app)
-    strategy = join(app, admin, "sol", "strategy")
-    scouter = join(app, admin, "sky", "scouter")
-    second_admin = join(app, admin, "ben", "admin")
-    roles = {who: c.get("/auth/session").json() for who, c in
-             (("sol", strategy), ("sky", scouter), ("ben", second_admin))}
-    assert roles["sol"]["role"] == "strategy" and "match_predictions" in roles["sol"]["permissions"]
-    assert "team_management" not in roles["sol"]["permissions"]
-    assert roles["sky"]["role"] == "scouter" and "scouting_submit" in roles["sky"]["permissions"]
-    assert "match_predictions" not in roles["sky"]["permissions"]
-    assert roles["ben"]["role"] == "admin" and "team_management" in roles["ben"]["permissions"]
-    # Each signs in again on a fresh browser with their own password; the role is found automatically.
-    for who, role in (("ada", "admin"), ("sol", "strategy"), ("sky", "scouter"), ("ben", "admin")):
-        response = login(browser(app), who)
-        assert response.status_code == 200 and response.json()["role"] == role, who
-
-
-def test_an_invitation_works_once_and_expires():
-    app = make_app()
-    admin = workspace(app)
-    token = invite(admin, "sky", "scouter")
-    preview = browser(app).post("/auth/invitations/preview", json={"token": token})
-    assert preview.status_code == 200 and preview.json()["role"] == "scouter"
-    assert preview.json()["team_number"] == TEAM_A and preview.json()["existing_account"] is False
-    assert browser(app).post("/auth/invitations/accept", json={"token": token, "password": PASSWORD}).status_code == 201
-    reused = browser(app).post("/auth/invitations/accept", json={"token": token, "password": PASSWORD})
-    assert reused.status_code == 410 and code(reused) == "invitation_invalid"
-    late = invite(admin, "lee", "scouter")
-    with _db().cursor() as c:
-        c.execute("UPDATE invitations SET expires_at = NOW() - interval '1 minute' WHERE email = %s", (email("lee"),))
-    expired = browser(app).post("/auth/invitations/accept", json={"token": late, "password": PASSWORD})
-    assert expired.status_code == 410 and code(expired) == "invitation_expired"
-    # Resending replaces the link: the new one works.
-    invitation_id = admin.get("/workspace/members").json()["invitations"][0]["invitation_id"]
-    fresh = admin.post(f"/workspace/invitations/{invitation_id}/resend").json()["invitation_link"].split("#token=")[1]
-    assert browser(app).post("/auth/invitations/accept", json={"token": fresh, "password": PASSWORD}).status_code == 201
-
-
-def test_one_person_can_join_a_second_team_only_by_proving_their_existing_password():
-    app = make_app()
-    admin_a, admin_b = workspace(app, TEAM_A, "ada"), workspace(app, TEAM_B, "bob")
-    join(app, admin_a, "sky", "scouter")
-    token = invite(admin_b, "sky", "strategy")
-    assert browser(app).post("/auth/invitations/preview", json={"token": token}).json()["existing_account"] is True
-    wrong = browser(app).post("/auth/invitations/accept", json={"token": token, "password": "another passphrase"})
-    assert wrong.status_code == 401 and code(wrong) == "existing_account_password_mismatch"
-    assert browser(app).post("/auth/invitations/accept", json={"token": token, "password": PASSWORD}).status_code == 201
-    assert login(browser(app), "sky", TEAM_A).json()["role"] == "scouter"
-    assert login(browser(app), "sky", TEAM_B).json()["role"] == "strategy"
+    response = c.post("/auth/login", json={"email": f"Bo{DOMAIN}", "password": PASSWORD})
+    assert response.status_code == 200 and response.json()["role"] == "base"
+    with_team = c.post("/auth/login", json={"team_number": 11, "email": email("bo"), "password": PASSWORD})
+    assert with_team.status_code == 422  # no team number field exists
 
 
 def test_failed_sign_ins_all_read_the_same_and_are_rate_limited():
     app = make_app()
-    workspace(app)
-    for attempt in (login(browser(app), "ada", password="wrong passphrase"),
-                    login(browser(app), "nobody"),
-                    login(browser(app), "ada", TEAM_B)):
+    member(app, "bo")
+    for attempt in (login(browser(app), "bo", password="wrong pass"), login(browser(app), "nobody")):
         assert attempt.status_code == 401 and code(attempt) == "invalid_credentials"
     for _ in range(4):
-        login(browser(app), "ada", password="wrong passphrase")
-    limited = login(browser(app), "ada")  # even the right password, once the account is locked out
+        login(browser(app), "bo", password="wrong pass")
+    limited = login(browser(app), "bo")  # even the right password, once the account is locked out
     assert limited.status_code == 429 and code(limited) == "rate_limited"
-
-
-def test_the_session_reports_a_database_without_the_team_account_tables(monkeypatch):
-    """Against a database lacking migration 0012 the web app is told so (accounts_available: false), instead of the
-    session check itself failing on the missing tables."""
-    import api.routes.auth as auth_routes
-
-    monkeypatch.setattr(auth_routes, "accounts_schema_present", lambda database: False)
-    app = make_app()
-    c = TestClient(app, cookies={COOKIE_NAME: "a-stale-cookie"})
-    answer = c.get("/auth/session")
-    assert answer.status_code == 200 and answer.json()["accounts_available"] is False
-    assert answer.json()["authenticated"] is False
-    monkeypatch.undo()
-    assert TestClient(app).get("/auth/session").json()["accounts_available"] is True  # the real check, 0012 applied
 
 
 def test_every_state_change_needs_the_csrf_header():
     app = make_app()
     bare = TestClient(app)
-    response = bare.post("/auth/login", json={"team_number": TEAM_A, "email": email("ada"), "password": PASSWORD})
-    assert response.status_code == 403 and code(response) == "csrf_check_failed"
+    for path, body in (("/auth/login", {"email": email("bo"), "password": PASSWORD}),
+                       ("/auth/signup", {"full_name": "Bo", "email": email("bo"), "password": PASSWORD,
+                                         "join_code": JOIN_CODE})):
+        response = bare.post(path, json=body)
+        assert response.status_code == 403 and code(response) == "csrf_check_failed"
 
 
-# --- authorization: admin routes, escalation, cross-team isolation ---------------------------------------------
+def test_the_removed_multi_team_routes_are_gone():
+    paths = set(make_app().openapi()["paths"])
+    for gone in ("/auth/teams/register", "/auth/teams/initial-admin", "/auth/invitations/preview",
+                 "/auth/invitations/accept", "/workspace/invitations", "/workspace/permissions",
+                 "/workspace/members/{membership_id}/password-reset"):
+        assert gone not in paths
+    assert "/auth/signup" in paths
 
 
-def test_non_administrators_and_strangers_cannot_reach_administrative_routes():
+def test_the_session_reports_a_database_without_the_account_tables(monkeypatch):
+    import api.routes.auth as auth_routes
+
+    monkeypatch.setattr(auth_routes, "accounts_schema_present", lambda database: False)
     app = make_app()
-    admin = workspace(app)
-    strategy, scouter = join(app, admin, "sol", "strategy"), join(app, admin, "sky", "scouter")
-    target = member_id(admin, "sky")
-    for c, expected in ((browser(app), 401), (scouter, 403), (strategy, 403)):
-        assert c.get("/workspace/members").status_code == expected
-        assert c.get("/workspace/activity").status_code == expected
-        assert c.get("/workspace/permissions").status_code == expected
-        assert c.post(f"/workspace/members/{target}/role", json={"role": "admin"}).status_code == expected
-        assert c.post("/workspace/invitations", json={"email": email("x"), "full_name": "X",
-                                                      "role": "admin"}).status_code == expected
-    assert scouter.get("/auth/session").json()["role"] == "scouter"  # nothing changed
+    answer = TestClient(app, cookies={COOKIE_NAME: "a-stale-cookie"}).get("/auth/session")
+    assert answer.status_code == 200 and answer.json()["accounts_available"] is False
+    monkeypatch.undo()
+    assert TestClient(app).get("/auth/session").json()["accounts_available"] is True  # the real check, 0015 applied
 
 
-def test_members_cannot_escalate_and_administrative_permissions_are_never_grantable():
-    app = make_app()
-    admin = workspace(app)
-    scouter = join(app, admin, "sky", "scouter")
-    own = scouter.post(f"/workspace/members/{member_id(admin, 'sky')}/role", json={"role": "admin"})
-    assert own.status_code == 403
-    assert scouter.post("/workspace/permissions", json={"role": "scouter",
-                                                        "grants": {"match_predictions": True}}).status_code == 403
-    reserved = admin.post("/workspace/permissions", json={"role": "scouter", "grants": {"team_management": True}})
-    assert reserved.status_code == 403 and code(reserved) == "permission_not_grantable"
-    with pytest.raises(psycopg.errors.CheckViolation), _db().cursor() as c:
-        c.execute("INSERT INTO workspace_role_permissions (workspace_id, role, permission, granted) "
-                  "SELECT id, 'scouter', 'team_management', TRUE FROM workspaces WHERE team_number = %s", (TEAM_A,))
-    with pytest.raises(psycopg.errors.CheckViolation), _db().cursor() as c:
-        c.execute("INSERT INTO workspace_role_permissions (workspace_id, role, permission, granted) "
-                  "SELECT id, 'admin', 'team_info', FALSE FROM workspaces WHERE team_number = %s", (TEAM_A,))
+# --- what a base member may reach -----------------------------------------------------------------------------
+
+# The only routes a base member may call: the events list and an event's page (plus their own session).
+BASE_ROUTES = {"/events", "/events/{event_key}/teams", "/events/{event_key}/matches", "/events/{event_key}/analysis",
+               "/events/{event_key}/qualification-forecast"}
+PUBLIC_ROUTES = {"/health", "/ready", "/auth/session"}
+PATH_VALUES = {"season": str(SEASON), "event_key": EVENT, "team_number": str(TEAMS[0]), "match_key": f"{EVENT}_qm1"}
 
 
-def test_one_team_cannot_see_or_change_another_teams_members_or_scouting():
-    app = make_app()
-    admin_a, admin_b = workspace(app, TEAM_A, "ada"), workspace(app, TEAM_B, "bob")
-    scout_a = join(app, admin_a, "sky", "scouter")
-    a_member = member_id(admin_a, "sky")
-    assert scout_a.post("/workspace/scouting/reports", json={"match_key": f"{EVENT}_qm1", "team_number": TEAMS[0],
-                                                             "defense_rating": 4}).status_code == 201
-    assignment = admin_a.post("/workspace/scouting/assignments", json={
-        "match_key": f"{EVENT}_qm2", "team_number": TEAMS[0], "membership_id": a_member}).json()["assignment_id"]
-    b_members = admin_b.get("/workspace/members").json()["members"]
-    assert [m["email"] for m in b_members] == [email("bob")]
-    for path, body in ((f"/workspace/members/{a_member}/role", {"role": "admin"}),
-                       (f"/workspace/members/{a_member}/status", {"status": "suspended"}),
-                       (f"/workspace/members/{a_member}/remove", None),
-                       (f"/workspace/members/{a_member}/password-reset", None),
-                       (f"/workspace/scouting/assignments/{assignment}/cancel", None)):
-        response = admin_b.post(path, json=body) if body else admin_b.post(path)
-        assert response.status_code == 404, path
-    assert admin_b.get("/workspace/scouting/reports", params={"mine": "false"}).json() == []
-    assert admin_b.get("/workspace/scouting/summary", params={"event_key": EVENT}).json()["teams"] == []
-    assert admin_b.post("/workspace/scouting/assignments", json={
-        "match_key": f"{EVENT}_qm2", "team_number": TEAMS[0], "membership_id": a_member}).status_code == 404
-    assert len(admin_a.get("/workspace/scouting/reports", params={"mine": "false"}).json()) == 1
-    assert "sky" not in str(admin_b.get("/workspace/activity").json())
+def _concrete(path: str) -> str:
+    return re.sub(r"\{(\w+)\}", lambda m: PATH_VALUES.get(m.group(1), "1"), path)
 
 
-# --- roles, permissions, suspension, removal ------------------------------------------------------------------
-
-
-def test_permission_changes_apply_on_the_members_next_request(monkeypatch):
+def test_a_base_member_is_refused_by_every_read_route_but_the_event_ones(monkeypatch):
+    """Enumerated from the live OpenAPI schema, so a route added later is covered without editing this test."""
     app = make_app(monkeypatch, ACCESS_POLICY="members")
-    admin = workspace(app)
-    scouter = join(app, admin, "sky", "scouter")
-    route = f"/predictions/matches/{EVENT}_qm1/win-probability"
-    assert scouter.get(route).status_code == 403
-    changed = admin.post("/workspace/permissions", json={"role": "scouter", "grants": {"match_predictions": True}})
-    assert changed.status_code == 200 and changed.json()["changed"] == {"match_predictions": {"from": False,
-                                                                                               "to": True}}
-    assert scouter.get(route).status_code not in (401, 403)  # past the gate (the model may not be loaded)
-    matrix = admin.get("/workspace/permissions").json()["permissions"]
-    row = next(r for r in matrix if r["permission"] == "match_predictions")
-    assert row["roles"]["scouter"]["granted"] is True and row["roles"]["admin"]["editable"] is False
+    base = member(app, "bo")
+    query = {"season": SEASON, "event_key": EVENT}
+    reads = sorted(path for path, operations in app.openapi()["paths"].items() if "get" in operations)
+    refused = [path for path in reads if path not in BASE_ROUTES | PUBLIC_ROUTES]
+    assert "/explorer/seasons" in refused and "/workspace" in refused and "/workspace/members" in refused
+    for path in refused:
+        response = base.get(_concrete(path), params=query)
+        assert response.status_code == 403, (path, response.status_code, response.text[:200])
+        assert code(response) == "permission_denied", path
+    for path in BASE_ROUTES:
+        response = base.get(_concrete(path), params=query)
+        assert response.status_code not in (401, 403), (path, response.text[:200])
 
 
-def test_role_changes_and_the_last_active_administrator_is_protected():
+def test_a_base_member_is_refused_by_admin_only_writes(monkeypatch):
+    app = make_app(monkeypatch, ACCESS_POLICY="members")
+    admin, base = member(app, "ada"), member(app, "bo")
+    ada = member_id(admin, "ada")
+    for path, body in (
+        (f"/workspace/members/{ada}/role", {"role": "base"}),
+        (f"/workspace/members/{ada}/remove", None),
+        ("/workspace/settings", {"team_name": "Hijacked"}),
+        ("/workspace/scouting/reports", {"match_key": f"{EVENT}_qm1", "team_number": TEAMS[0], "defense_rating": 3}),
+        ("/workspace/scouting/assignments", {"match_key": f"{EVENT}_qm1", "team_number": TEAMS[0],
+                                             "membership_id": ada}),
+        ("/workspace/alliance-selection/drafts", {"event_key": EVENT, "record_uid": "u", "action_id": "a"}),
+        (f"/strategy/matches/{EVENT}_qm1/assess", {"side": "red", "strategy": {}}),
+    ):
+        response = base.post(path, json=body)
+        assert response.status_code == 403, (path, response.text[:200])
+    own = base.post(f"/workspace/members/{member_id(admin, 'bo')}/role", json={"role": "admin"})
+    assert own.status_code == 403  # no self-promotion
+
+
+def test_an_administrator_reaches_the_admin_routes(monkeypatch):
+    app = make_app(monkeypatch, ACCESS_POLICY="members")
+    admin = member(app, "ada")
+    for path in ("/workspace", "/workspace/members", "/explorer/seasons", "/workspace/activity",
+                 f"/events/{EVENT}/analysis"):
+        assert admin.get(path).status_code not in (401, 403), path
+
+
+def test_members_access_requires_a_session(monkeypatch):
+    app = make_app(monkeypatch, ACCESS_POLICY="members")
+    anonymous = TestClient(app)
+    assert anonymous.get("/health").status_code == 200  # probes stay open
+    for path in ("/events", f"/events/{EVENT}", "/explorer/seasons"):
+        response = anonymous.get(path, params={"season": SEASON})
+        assert response.status_code in (401, 404, 405), path
+    events = anonymous.get("/events", params={"season": SEASON})
+    assert events.status_code == 401 and code(events) == "not_authenticated"
+    assert anonymous.get("/auth/session").json() == {"authenticated": False, "access_policy": "members",
+                                                     "email_delivery_configured": False, "signup_open": True,
+                                                     "accounts_available": True}
+
+
+def test_open_access_keeps_the_existing_routes_public_in_development():
     app = make_app()
-    admin = workspace(app)
-    join(app, admin, "sol", "strategy")
-    ada, sol = member_id(admin, "ada"), member_id(admin, "sol")
-    last = admin.post(f"/workspace/members/{ada}/role", json={"role": "scouter"})
+    anonymous = TestClient(app)
+    events = anonymous.get("/events", params={"season": SEASON})
+    assert events.status_code == 200 and EVENT in events.text
+
+
+# --- Team Management and the command line --------------------------------------------------------------------
+
+
+def test_an_administrator_changes_roles_and_the_change_applies_on_the_next_request(monkeypatch):
+    app = make_app(monkeypatch, ACCESS_POLICY="members")
+    admin, base = member(app, "ada"), member(app, "bo")
+    assert base.get("/explorer/seasons").status_code == 403
+    bo = member_id(admin, "bo")
+    assert admin.post(f"/workspace/members/{bo}/role", json={"role": "admin"}).json()["role"] == "admin"
+    assert base.get("/explorer/seasons").status_code == 200  # no new sign-in needed
+    assert admin.post(f"/workspace/members/{bo}/role", json={"role": "strategy"}).status_code == 422  # old roles gone
+
+
+def test_the_last_active_administrator_is_protected():
+    app = make_app()
+    admin = member(app, "ada")
+    member(app, "bo")
+    last = admin.post(f"/workspace/members/{member_id(admin, 'ada')}/role", json={"role": "base"})
     assert last.status_code == 409 and code(last) == "last_active_admin"
-    assert admin.post(f"/workspace/members/{sol}/role", json={"role": "admin"}).json()["role"] == "admin"
-    # With a second administrator, the first may step down; then the second is the last one.
-    assert admin.post(f"/workspace/members/{ada}/role", json={"role": "strategy"}).status_code == 200
-    with pytest.raises(psycopg.errors.CheckViolation), _db().cursor() as c:  # the database guard, independently
-        c.execute("UPDATE team_memberships SET status = 'suspended' WHERE id = %s", (sol,))
 
 
-def test_suspension_ends_sessions_at_once_and_reactivation_restores_sign_in():
+def test_removal_ends_access_at_once_and_keeps_the_email_taken():
     app = make_app()
-    admin = workspace(app)
-    scouter = join(app, admin, "sky", "scouter")
-    sky = member_id(admin, "sky")
-    assert admin.post(f"/workspace/members/{sky}/status", json={"status": "suspended"}).status_code == 200
-    assert scouter.get("/workspace").status_code == 401
-    refused = login(browser(app), "sky")
+    admin, base = member(app, "ada"), member(app, "bo")
+    assert admin.post(f"/workspace/members/{member_id(admin, 'bo')}/remove").status_code == 200
+    assert base.get("/auth/session").json()["authenticated"] is False
+    refused = login(browser(app), "bo")
     assert refused.status_code == 403 and code(refused) == "account_inactive"
-    assert admin.post(f"/workspace/members/{sky}/status", json={"status": "active"}).status_code == 200
-    assert login(browser(app), "sky").status_code == 200
-    self_suspend = admin.post(f"/workspace/members/{member_id(admin, 'ada')}/status", json={"status": "suspended"})
-    assert self_suspend.status_code == 403 and code(self_suspend) == "cannot_target_self"
+    assert email("bo") not in [m["email"] for m in admin.get("/workspace/members").json()["members"]]
+    again = sign_up(browser(app), "bo")
+    assert again.status_code == 409 and code(again) == "email_already_registered"
 
 
-def test_removal_ends_access_keeps_history_and_allows_a_later_reinvitation():
+def test_set_role_promotes_reactivates_and_refuses_what_it_should(capsys):
     app = make_app()
-    admin = workspace(app)
-    scouter = join(app, admin, "sky", "scouter")
-    sky = member_id(admin, "sky")
-    assert admin.post(f"/workspace/members/{sky}/remove").status_code == 200
-    assert scouter.get("/workspace").status_code == 401
-    assert login(browser(app), "sky").status_code == 403
-    assert email("sky") not in [m["email"] for m in admin.get("/workspace/members").json()["members"]]
-    back = browser(app).post("/auth/invitations/accept", json={"token": invite(admin, "sky", "strategy"),
-                                                               "password": PASSWORD})
-    assert back.status_code == 201 and back.json()["role"] == "strategy"
+    admin = member(app, "ada")
+    member(app, "bo")
+    assert set_role.main([f"BO{DOMAIN.upper()}", "admin"], database=_db()) == 0
+    assert login(browser(app), "bo").json()["role"] == "admin"
+    assert set_role.main([email("bo"), "base"], database=_db()) == 0
+    admin.post(f"/workspace/members/{member_id(admin, 'bo')}/remove")
+    assert login(browser(app), "bo").status_code == 403
+    assert set_role.main([email("bo"), "base"], database=_db()) == 0  # restores a removed member
+    assert login(browser(app), "bo").json()["role"] == "base"
+    assert set_role.main([email("nobody"), "admin"], database=_db()) == 1
+    assert "member_not_found" in capsys.readouterr().err
+    assert set_role.main([email("ada"), "base"], database=_db()) == 1  # the last active administrator
+    assert "last_active_admin" in capsys.readouterr().err
+    with pytest.raises(SystemExit):
+        set_role.main([email("bo"), "scouter"], database=_db())  # only admin or base
+    actions = [e["action"] for e in admin.get("/workspace/activity").json()["entries"]]
+    assert actions.count("role_changed") >= 2 and "member_reactivated" in actions
 
 
-def test_an_administrator_can_rename_a_member_and_change_team_settings():
-    app = make_app()
-    admin = workspace(app)
-    join(app, admin, "sky", "scouter")
-    assert admin.post(f"/workspace/members/{member_id(admin, 'sky')}/profile",
-                      json={"name": "Sky Walker"}).json()["name"] == "Sky Walker"
-    updated = admin.post("/workspace/settings", json={"team_name": "Sentinel Robotics 2",
-                                                      "default_event_key": EVENT,
-                                                      "scouting_instructions": "Watch the defense."})
-    assert updated.status_code == 200 and updated.json()["default_event_key"] == EVENT
-    bad = admin.post("/workspace/settings", json={"default_event_key": "0000nowhere"})
-    assert bad.status_code == 422
-    assert admin.get("/auth/session").json()["workspace"]["team_name"] == "Sentinel Robotics 2"
-
-
-# --- passwords, sign-out, session expiry -----------------------------------------------------------------------
+# --- passwords -----------------------------------------------------------------------------------------------
 
 
 def test_password_change_needs_the_current_password_and_ends_other_sessions():
     app = make_app()
-    admin = workspace(app)
-    other = browser(app)
-    assert login(other, "ada").status_code == 200
-    wrong = admin.post("/auth/password/change", json={"current_password": "not it at all",
-                                                      "new_password": "a brand new passphrase"})
+    first = member(app, "bo")
+    second = browser(app)
+    login(second, "bo")
+    wrong = first.post("/auth/password/change", json={"current_password": "nope", "new_password": "new pass 1"})
     assert wrong.status_code == 403 and code(wrong) == "current_password_incorrect"
-    ok = admin.post("/auth/password/change", json={"current_password": PASSWORD,
-                                                   "new_password": "a brand new passphrase"})
-    assert ok.status_code == 200
-    assert admin.get("/workspace").status_code == 200  # this session survives
-    assert other.get("/workspace").status_code == 401  # the other one ended
-    assert login(browser(app), "ada", password="a brand new passphrase").status_code == 200
+    assert first.post("/auth/password/change", json={"current_password": PASSWORD,
+                                                     "new_password": "new pass 1"}).status_code == 200
+    assert first.get("/auth/session").json()["authenticated"] is True
+    assert second.get("/auth/session").json()["authenticated"] is False
 
 
-def test_an_administrator_issued_reset_link_works_once_and_ends_the_members_sessions():
-    app = make_app()
-    admin = workspace(app)
-    scouter = join(app, admin, "sky", "scouter")
-    issued = admin.post(f"/workspace/members/{member_id(admin, 'sky')}/password-reset").json()
-    assert issued["emailed"] is False and issued["reset_link"].startswith("/auth/reset#token=")
-    token = issued["reset_link"].split("#token=")[1]
-    assert browser(app).post("/auth/password/reset", json={"token": token,
-                                                           "new_password": "reset passphrase 9"}).status_code == 200
-    assert scouter.get("/workspace").status_code == 401
-    reused = browser(app).post("/auth/password/reset", json={"token": token, "new_password": "reset passphrase 10"})
-    assert reused.status_code == 410 and code(reused) == "reset_link_invalid"
-    assert login(browser(app), "sky", password="reset passphrase 9").status_code == 200
-    actions = [e["action"] for e in admin.get("/workspace/activity").json()["entries"]]
-    assert "password_reset_issued" in actions and "password_reset_completed" in actions
-
-
-def test_self_service_recovery_emails_a_link_only_when_email_is_configured(monkeypatch, tmp_path: Path):
-    plain = make_app()
-    workspace(plain)
-    answer = browser(plain).post("/auth/password/forgot", json={"team_number": TEAM_A, "email": email("ada")})
-    assert answer.status_code == 202 and answer.json() == {"accepted": True, "email_delivery_configured": False}
+def _reset_app(monkeypatch, tmp_path: Path):
     outbox = tmp_path / "outbox"
-    app = make_app(monkeypatch, PUBLIC_APP_URL="http://localhost:5173", DEV_OUTBOX_DIR=str(outbox))
-    unknown = browser(app).post("/auth/password/forgot", json={"team_number": TEAM_A, "email": email("nobody")})
-    assert unknown.json() == {"accepted": True, "email_delivery_configured": True}  # the same answer
-    assert not outbox.exists()
-    browser(app).post("/auth/password/forgot", json={"team_number": TEAM_A, "email": email("ada")})
-    (message,) = list(outbox.glob("*.eml"))
-    body = email_parser.message_from_bytes(message.read_bytes(), policy=email_policy.default).get_content()
-    link = next(line for line in body.splitlines() if "#token=" in line)
-    assert link.startswith("http://localhost:5173/auth/reset#token=")
-    assert browser(app).post("/auth/password/reset", json={"token": link.split("#token=")[1],
-                                                           "new_password": "emailed passphrase 1"}).status_code == 200
-    assert login(browser(app), "ada", password="emailed passphrase 1").status_code == 200
+    return make_app(monkeypatch, DEV_OUTBOX_DIR=str(outbox)), outbox
+
+
+def _codes(outbox: Path) -> list[str]:
+    """Every code emailed so far, oldest first."""
+    found = []
+    # By write time: the outbox file names carry the time only to the second, then a random suffix.
+    messages = sorted(outbox.glob("*.eml"), key=lambda path: path.stat().st_mtime_ns) if outbox.exists() else []
+    for message in messages:
+        body = email_parser.message_from_bytes(message.read_bytes(), policy=email_policy.default).get_content()
+        found.append(re.search(r"Your code is: (\d{6})", body).group(1))
+    return found
+
+
+def _reset(c: TestClient, who: str, reset_code: str, new_password: str = "reset pass 1"):
+    return c.post("/auth/password/reset", json={"email": email(who), "code": reset_code,
+                                                "new_password": new_password})
+
+
+def test_a_reset_code_is_emailed_ends_every_session_and_signs_in(monkeypatch, tmp_path):
+    app, outbox = _reset_app(monkeypatch, tmp_path)
+    other_session = member(app, "bo")
+    asked = browser(app).post("/auth/password/forgot", json={"email": f"BO{DOMAIN.upper()}"})
+    assert asked.status_code == 202 and asked.json() == {"accepted": True, "email_delivery_configured": True}
+    (reset_code,) = _codes(outbox)
+    c = browser(app)
+    response = _reset(c, "bo", reset_code)
+    assert response.status_code == 200 and response.json()["authenticated"] is True
+    assert c.get("/auth/session").json()["user"]["email"] == email("bo")  # signed in by the reset
+    assert other_session.get("/auth/session").json()["authenticated"] is False  # every earlier session ended
+    assert login(browser(app), "bo", password="reset pass 1").status_code == 200
+    with _db().cursor() as cursor:  # only a salted hash is stored, never the code
+        cursor.execute("SELECT code_hash, code_salt FROM password_reset_codes")
+        for stored_hash, salt in cursor.fetchall():
+            assert reset_code not in (stored_hash, salt)
+
+
+def test_a_reset_code_works_once(monkeypatch, tmp_path):
+    app, outbox = _reset_app(monkeypatch, tmp_path)
+    member(app, "bo")
+    browser(app).post("/auth/password/forgot", json={"email": email("bo")})
+    (reset_code,) = _codes(outbox)
+    assert _reset(browser(app), "bo", reset_code).status_code == 200
+    again = _reset(browser(app), "bo", reset_code, "another pass")
+    assert again.status_code == 410 and code(again) == "reset_code_invalid"
+
+
+def test_a_reset_code_expires_after_fifteen_minutes(monkeypatch, tmp_path):
+    app, outbox = _reset_app(monkeypatch, tmp_path)
+    member(app, "bo")
+    browser(app).post("/auth/password/forgot", json={"email": email("bo")})
+    (reset_code,) = _codes(outbox)
+    with _db().cursor() as cursor:
+        cursor.execute("SELECT expires_at - created_at FROM password_reset_codes")
+        assert cursor.fetchone()[0].total_seconds() == 15 * 60
+        cursor.execute("UPDATE password_reset_codes SET expires_at = NOW() - interval '1 second'")
+    expired = _reset(browser(app), "bo", reset_code)
+    assert expired.status_code == 410 and code(expired) == "reset_code_invalid"
+    assert login(browser(app), "bo").status_code == 200  # the password is unchanged
+
+
+def test_a_reset_code_dies_after_five_wrong_attempts(monkeypatch, tmp_path):
+    app, outbox = _reset_app(monkeypatch, tmp_path)
+    member(app, "bo")
+    browser(app).post("/auth/password/forgot", json={"email": email("bo")})
+    (reset_code,) = _codes(outbox)
+    wrong = f"{(int(reset_code) + 1) % 1_000_000:06d}"
+    for attempt in range(5):
+        response = _reset(browser(app), "bo", wrong)
+        assert response.status_code == 410, attempt
+    with _db().cursor() as cursor:
+        cursor.execute("SELECT failed_attempts FROM password_reset_codes")
+        assert cursor.fetchone()[0] == 5
+    dead = _reset(browser(app), "bo", reset_code)  # the right code, too late
+    assert dead.status_code == 410 and code(dead) == "reset_code_invalid"
+    assert login(browser(app), "bo").status_code == 200
+
+
+def test_asking_again_retires_the_old_code_and_is_limited_to_three_per_email_per_hour(monkeypatch, tmp_path):
+    app, outbox = _reset_app(monkeypatch, tmp_path)
+    member(app, "bo")
+    for _ in range(3):
+        assert browser(app).post("/auth/password/forgot", json={"email": email("bo")}).status_code == 202
+    fourth = browser(app).post("/auth/password/forgot", json={"email": f"Bo{DOMAIN}"})  # any case is one email
+    assert fourth.status_code == 429 and code(fourth) == "rate_limited"
+    first, _, latest = _codes(outbox)
+    if first != latest:  # 1 in a million they coincide
+        assert _reset(browser(app), "bo", first).status_code == 410  # retired by the later request
+    assert _reset(browser(app), "bo", latest).status_code == 200
+
+
+def test_forgot_password_never_reveals_whether_an_account_exists(monkeypatch, tmp_path):
+    plain = make_app()
+    member(plain, "bo")
+    answer = browser(plain).post("/auth/password/forgot", json={"email": email("bo")})
+    assert answer.json() == {"accepted": True, "email_delivery_configured": False}
+    app, outbox = _reset_app(monkeypatch, tmp_path)
+    unknown = browser(app).post("/auth/password/forgot", json={"email": email("nobody")})
+    known = browser(app).post("/auth/password/forgot", json={"email": email("bo")})
+    assert unknown.status_code == known.status_code == 202 and unknown.json() == known.json()
+    assert len(_codes(outbox)) == 1  # only the real account was emailed
+
+
+# --- sessions, scouting, activity ----------------------------------------------------------------------------
 
 
 def test_sign_out_and_session_expiry_end_access():
     app = make_app()
-    admin = workspace(app)
+    admin = member(app, "ada")
     assert admin.post("/auth/logout").json() == {"authenticated": False}
     assert admin.get("/workspace").status_code == 401
-    assert admin.get("/auth/session").json()["authenticated"] is False
     for column, value in (("expires_at", "NOW() - interval '1 minute'"),
                           ("last_seen_at", "NOW() - interval '100 hours'")):
         c = browser(app)
@@ -535,118 +563,69 @@ def test_sign_out_and_session_expiry_end_access():
         assert c.get("/workspace").status_code == 401, column
 
 
-# --- team scouting ------------------------------------------------------------------------------------------------
-
-
-def test_assignments_reports_and_the_teams_own_summary():
+def test_administrators_keep_team_scouting_and_base_members_cannot_use_it():
     app = make_app()
-    admin = workspace(app)
-    strategy, scouter = join(app, admin, "sol", "strategy"), join(app, admin, "sky", "scouter")
-    sky = member_id(admin, "sky")
-    scouts = strategy.get("/workspace/scouting/scouts")
-    assert scouts.status_code == 200 and {s["name"] for s in scouts.json()} == {"Ada", "Sol", "Sky"}
-    assert all(set(s) == {"membership_id", "name", "role"} for s in scouts.json())  # no emails or account details
-    assert scouter.get("/workspace/scouting/scouts").status_code == 403
-    created = strategy.post("/workspace/scouting/assignments", json={"match_key": f"{EVENT}_qm1",
-                                                                     "team_number": TEAMS[0], "membership_id": sky})
+    admin, base = member(app, "ada"), member(app, "bo")
+    ada = member_id(admin, "ada")
+    created = admin.post("/workspace/scouting/assignments", json={"match_key": f"{EVENT}_qm1",
+                                                                  "team_number": TEAMS[0], "membership_id": ada})
     assert created.status_code == 201
-    assignment = created.json()["assignment_id"]
-    assert scouter.post("/workspace/scouting/assignments", json={
-        "match_key": f"{EVENT}_qm1", "team_number": TEAMS[1], "membership_id": sky}).status_code == 403
-    mine = scouter.get("/workspace/scouting/assignments").json()
-    assert [a["assignment_id"] for a in mine] == [assignment] and mine[0]["alliance_color"] == "red"
-    invalid = scouter.post("/workspace/scouting/reports", json={"match_key": f"{EVENT}_qm1", "team_number": TEAMS[0],
-                                                                "defense_rating": 7})
-    assert invalid.status_code == 422
-    neither = scouter.post("/workspace/scouting/reports", json={"match_key": f"{EVENT}_qm1",
-                                                                "team_number": TEAMS[0]})
-    assert neither.status_code == 422
-    absent = scouter.post("/workspace/scouting/reports", json={"match_key": f"{EVENT}_qm1", "team_number": 998899,
-                                                               "defense_rating": 2})
-    assert absent.status_code == 422
-    done = scouter.post("/workspace/scouting/reports", json={"match_key": f"{EVENT}_qm1", "team_number": TEAMS[0],
-                                                             "defense_rating": 4, "feeding_rating": 2,
-                                                             "assignment_id": assignment})
+    done = admin.post("/workspace/scouting/reports", json={"match_key": f"{EVENT}_qm1", "team_number": TEAMS[0],
+                                                           "defense_rating": 4, "assignment_id":
+                                                               created.json()["assignment_id"]})
     assert done.status_code == 201
-    assert scouter.get("/workspace/scouting/assignments").json() == []  # completed, so no longer open
-    assert scouter.post("/workspace/scouting/reports", json={"match_key": f"{EVENT}_qm2", "team_number": TEAMS[0],
-                                                             "defense_rating": 2}).status_code == 201
-    # The scouter sees their own reports, not the team's summary; strategy sees both.
-    assert len(scouter.get("/workspace/scouting/reports").json()) == 2
-    assert scouter.get("/workspace/scouting/summary", params={"event_key": EVENT}).status_code == 403
-    summary = strategy.get("/workspace/scouting/summary", params={"event_key": EVENT}).json()
-    (team,) = summary["teams"]
-    assert team["team_number"] == TEAMS[0] and team["reports"] == 2
-    assert team["profile"]["defense_score"] == 3.0 and team["profile"]["defense_insufficient_data"] is False
-    assert team["profile"]["feeding_insufficient_data"] is True  # one feeding rating is below the minimum
-    other = join(app, admin, "lee", "scouter")
-    stolen = other.post("/workspace/scouting/reports", json={"match_key": f"{EVENT}_qm1", "team_number": TEAMS[0],
-                                                             "defense_rating": 1, "assignment_id": assignment})
-    assert stolen.status_code == 403 and code(stolen) == "not_your_assignment"
+    summary = admin.get("/workspace/scouting/summary", params={"event_key": EVENT}).json()
+    assert summary["teams"][0]["team_number"] == TEAMS[0]
+    for path in ("/workspace/scouting/assignments", "/workspace/scouting/reports", "/workspace/scouting/scouts"):
+        assert base.get(path).status_code == 403, path
+    with _db().cursor() as cursor:  # team scouting never reaches the shared scouting tables
+        cursor.execute("SELECT count(*) FROM scouting_observations WHERE event_key = %s", (EVENT,))
+        assert cursor.fetchone()[0] == 0
 
 
-def test_team_scouting_never_reaches_the_shared_scouting_tables():
+def test_the_activity_log_records_sign_ups_and_administrative_actions():
     app = make_app()
-    admin = workspace(app)
-    scouter = join(app, admin, "sky", "scouter")
-    scouter.post("/workspace/scouting/reports", json={"match_key": f"{EVENT}_qm1", "team_number": TEAMS[0],
-                                                      "defense_rating": 5})
-    with _db().cursor() as c:
-        c.execute("SELECT count(*) FROM scouting_observations WHERE event_key = %s", (EVENT,))
-        assert c.fetchone()[0] == 0
-        c.execute("SELECT count(*) FROM raw_source_payloads WHERE source_object_id LIKE %s", (f"{EVENT}%",))
-        assert c.fetchone()[0] == 0
-
-
-# --- activity log and analytics ---------------------------------------------------------------------------------
-
-
-def test_the_activity_log_records_every_administrative_action():
-    app = make_app()
-    admin = workspace(app)
-    join(app, admin, "sky", "scouter")
-    sky = member_id(admin, "sky")
-    admin.post(f"/workspace/members/{sky}/role", json={"role": "strategy"})
-    admin.post(f"/workspace/members/{sky}/status", json={"status": "suspended"})
-    admin.post(f"/workspace/members/{sky}/remove")
-    admin.post("/workspace/permissions", json={"role": "scouter", "grants": {"team_analytics": True}})
-    admin.post("/workspace/settings", json={"team_name": "Renamed"})
-    log = admin.get("/workspace/activity").json()
-    actions = {entry["action"] for entry in log["entries"]}
-    assert {"workspace_registered", "initial_admin_created", "workspace_verified", "member_invited",
-            "invitation_accepted", "account_created", "role_changed", "member_suspended", "member_removed",
-            "permissions_changed", "settings_changed"} <= actions
-    change = next(e for e in log["entries"] if e["action"] == "role_changed")
-    assert change["actor"] == "Ada" and change["target"] == "Sky" and change["details"] == {"from": "scouter",
-                                                                                          "to": "strategy"}
-    only = admin.get("/workspace/activity", params={"action": "member_removed"}).json()["entries"]
-    assert [e["action"] for e in only] == ["member_removed"]
+    admin = member(app, "ada")
+    member(app, "bo")
+    bo = member_id(admin, "bo")
+    admin.post(f"/workspace/members/{bo}/role", json={"role": "admin"})
+    admin.post(f"/workspace/members/{bo}/remove")
+    entries = admin.get("/workspace/activity").json()["entries"]
+    actions = [e["action"] for e in entries]
+    assert actions.count("account_created") == 2
+    assert {"role_changed", "member_removed"} <= set(actions)
+    created = [e for e in entries if e["action"] == "account_created"]
+    assert {e["details"]["role"] for e in created} == {"admin", "base"}
     analytics = admin.get("/workspace/analytics").json()
-    assert analytics["members_by_role"]["admin"]["active"] == 1
+    assert set(analytics["members_by_role"]) == {"admin", "base"} and "pending_invitations" not in analytics
 
 
-# --- existing StratAI features under both access policies -----------------------------------------------------
+def test_forgot_password_does_the_same_work_for_any_account_and_sends_after_answering(monkeypatch, tmp_path):
+    """The response path never looks the account up: it checks the format and the limits, answers, and leaves the
+    lookup and the email to a background task, so its timing cannot reveal whether the account exists."""
+    import workspaces.accounts as accounts_module
+
+    app, _ = _reset_app(monkeypatch, tmp_path)
+    member(app, "bo")
+    scheduled: list[str] = []
+    monkeypatch.setattr(accounts_module, "send_reset_code", lambda database, settings, to: scheduled.append(to))
+    answers = [browser(app).post("/auth/password/forgot", json={"email": email(who)}) for who in ("bo", "nobody")]
+    assert [a.status_code for a in answers] == [202, 202] and answers[0].json() == answers[1].json()
+    assert scheduled == [email("bo"), email("nobody")]  # the same work for an existing and a missing account
+    with _db().cursor() as cursor:
+        cursor.execute("SELECT count(*) FROM password_reset_codes")
+        assert cursor.fetchone()[0] == 0  # nothing account-specific happened in the request
 
 
-def test_open_access_keeps_every_existing_route_public():
-    app = make_app()
-    anonymous = TestClient(app)
-    assert anonymous.get("/health").status_code == 200
-    events = anonymous.get("/events", params={"season": SEASON})
-    assert events.status_code == 200 and EVENT in events.text
-    assert anonymous.get(f"/events/{EVENT}/matches").status_code == 200
+def test_a_failed_reset_email_never_reaches_the_caller(monkeypatch, tmp_path):
+    import workspaces.mailer as mailer_module
 
+    app, _ = _reset_app(monkeypatch, tmp_path)
+    member(app, "bo")
 
-def test_members_access_requires_a_session_and_the_routes_permission(monkeypatch):
-    app = make_app(monkeypatch, ACCESS_POLICY="members")
-    assert TestClient(app).get("/health").status_code == 200  # probes stay open
-    anonymous = TestClient(app).get("/events", params={"season": SEASON})
-    assert anonymous.status_code == 401 and code(anonymous) == "not_authenticated"
-    admin = workspace(app)
-    scouter = join(app, admin, "sky", "scouter")
-    assert scouter.get("/events", params={"season": SEASON}).status_code == 200  # team_info
-    assert scouter.get(f"/events/{EVENT}/analysis").status_code == 403  # event_analysis is off for scouters
-    assert admin.get(f"/events/{EVENT}/analysis").status_code not in (401, 403)
-    assert TestClient(app).get("/auth/session").json() == {"authenticated": False, "access_policy": "members",
-                                                           "email_delivery_configured": False,
-                                                           "accounts_available": True}
+    def broken(*args, **kwargs):
+        raise RuntimeError("smtp down")
+
+    monkeypatch.setattr(mailer_module, "send", broken)
+    answer = browser(app).post("/auth/password/forgot", json={"email": email("bo")})
+    assert answer.status_code == 202 and answer.json()["accepted"] is True

@@ -4,13 +4,14 @@ import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-d
 import { describe, expect, it } from 'vitest'
 
 import { Shell } from './App'
+import { SignedInAs } from './test/auth'
 import { SessionProvider } from './state/session'
 import { axeViolations } from './test/dashboard'
 import { EVENTS } from './test/dashboardFixtures'
 import { mockApi } from './test/mockApi'
 
 function renderShell(url: string) {
-  return render(<SessionProvider><MemoryRouter initialEntries={[url]}><Shell /></MemoryRouter></SessionProvider>)
+  return render(<SessionProvider><MemoryRouter initialEntries={[url]}><SignedInAs><Shell /></SignedInAs></MemoryRouter></SessionProvider>)
 }
 
 describe('app shell', () => {
@@ -35,7 +36,7 @@ describe('app shell', () => {
   it.each([['/game', '/inputs/game'], ['/profiles', '/inputs/profiles'], ['/review', '/inputs/review']])(
     'redirects %s to its page under /inputs, replacing the history entry', async (old, target) => {
       mockApi({})
-      const router = createMemoryRouter([{ path: '*', element: <SessionProvider><Shell /></SessionProvider> }],
+      const router = createMemoryRouter([{ path: '*', element: <SessionProvider><SignedInAs><Shell /></SignedInAs></SessionProvider> }],
         { initialEntries: ['/status', old], initialIndex: 1 })
       render(<RouterProvider router={router} />)
       expect(await screen.findByRole('link', { name: 'Inputs overview' })).toBeInTheDocument()
@@ -53,7 +54,7 @@ describe('app shell', () => {
       items: items.map((artifact) => ({ artifact, state: 'missing', provided: false, detail: null })),
       done_means: { done_means: 'DM1', met: false, missing_records: [], within_5_days: null, elapsed_hours: null,
         blocked_on: [] } } })
-    const router = createMemoryRouter([{ path: '*', element: <SessionProvider><Shell /></SessionProvider> }],
+    const router = createMemoryRouter([{ path: '*', element: <SessionProvider><SignedInAs><Shell /></SignedInAs></SessionProvider> }],
       { initialEntries: ['/inputs'] })
     render(<RouterProvider router={router} />)
     await userEvent.click(await screen.findByRole('link', { name: 'Official game manual (PDF)' }))

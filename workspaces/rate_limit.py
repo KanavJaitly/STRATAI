@@ -2,7 +2,7 @@
 
 Attempts are recorded in auth_attempts on their own connection and committed at once, never inside the caller's
 transaction: a refused login raises, which rolls the caller's transaction back, and the failure must survive that
-or the limit would never trip. Subjects (an IP address; a team number and email) are stored only as hashes.
+or the limit would never trip. Subjects (an IP address, an email) are stored only as hashes.
 
 Two subjects per credential check: the account (the real protection against guessing one person's password) and
 the client address (against spraying many accounts). Behind the Vercel and Render proxies every request can come
@@ -32,13 +32,18 @@ class Limit:
 LIMITS: dict[str, Limit] = {
     "login_account": Limit(5, timedelta(minutes=15)),
     "login_ip": Limit(100, timedelta(minutes=15)),
-    "setup_team": Limit(5, timedelta(minutes=15)),
-    "register_ip": Limit(10, timedelta(hours=1), count_all=True),
+    # Wrong team join codes: per address, and across every address at once, so the code cannot be guessed by
+    # spreading attempts over many addresses. Only wrong codes count; a team signing up together is never slowed.
+    "signup_code_ip": Limit(10, timedelta(minutes=15)),
+    "signup_code_global": Limit(50, timedelta(hours=1)),
+    # Reset codes: 3 per email per hour (each code allows 5 tries, so at most 15 guesses an hour per account).
     "reset_request_account": Limit(3, timedelta(hours=1), count_all=True),
     "reset_request_ip": Limit(30, timedelta(hours=1), count_all=True),
-    "token_ip": Limit(30, timedelta(minutes=15)),
+    "reset_code_ip": Limit(30, timedelta(minutes=15)),
     "password_check_user": Limit(5, timedelta(minutes=15)),
 }
+# The subject of the global scopes: one shared bucket.
+GLOBAL_SUBJECT = "all"
 RETENTION = timedelta(days=2)
 PRUNE_PROBABILITY = 0.02
 

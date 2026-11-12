@@ -1,307 +1,252 @@
-# Team workspaces: accounts, roles and team-private data
+# Team accounts: FRC Team 11 (MORT)
 
-Each FRC team gets its own StratAI workspace on the same site. A workspace has its own members, roles, permissions,
-settings, activity log and private scouting. Every person signs in with their own account. There is no shared team
-password and no choosing a name from a list.
+StratAI serves one team, FRC Team 11 (MORT). Everyone signs in with their own account, and the whole site is behind
+sign-in. There are two roles, **admin** and **base**.
 
-Introduced 2026-11-02 with migration `0012_team_workspaces.sql`.
+History:
+- **2026-11-02:** team workspaces for many teams, with migration `0012_team_workspaces.sql`. It covered registration
+  with a setup password, operator verification, invitations, and three configurable roles.
+- **2026-11-11:** replaced by the single-team model here, with migration `0015_single_team_auth.sql`. The decision
+  is in RUNNING_NOTES.md (Design Decisions Log, 2026-11-11).
 
 ## 1. Architecture
 
 | Part | Responsibility | Where |
 |---|---|---|
-| Accounts and sessions | Individual accounts, password hashing, sessions, password changes and resets | `workspaces/accounts.py`, `workspaces/sessions.py`, `workspaces/passwords.py` |
-| PostgreSQL | Teams, memberships, roles, permissions, invitations, activity log, team scouting | migration 0012; `docs/data_pipeline.md` section 4.5 |
-| FastAPI | Session verification and every authorization decision, on the server | `api/session.py`, `api/routes/auth.py`, `api/routes/workspace.py`, `api/routes/team_scouting.py` |
-| React web app | Registration, sign-in, invitations, the Admin Dashboard, role dashboards, navigation | `frontend/src/auth/`, `frontend/src/workspace/` |
+| Accounts and sessions | Sign-up with the join code, sign-in, password hashing, sessions, password change, reset codes | `workspaces/accounts.py`, `workspaces/sessions.py`, `workspaces/passwords.py` |
+| Roles | The two roles and what each may do, fixed in code | `workspaces/permissions.py` |
+| Rate limits | Every credential check and every email-sending request | `workspaces/rate_limit.py` |
+| PostgreSQL | Users, memberships, sessions, reset codes, activity log, team scouting, live draft | migrations 0012-0015 |
+| FastAPI | Session verification and every authorization decision, on the server | `api/session.py`, `api/app.py`, `api/routes/auth.py`, `api/routes/workspace.py` |
+| React web app | Sign-in pages, the sign-in gate, role-aware navigation, the Admin Dashboard | `frontend/src/auth/`, `frontend/src/App.tsx`, `frontend/src/workspace/` |
+| Command line | Setting a role by hand | `scripts/set_role.py` |
 
-### Why the authentication is built in, not Supabase Auth
+**One workspace, kept internally.** The workspace layer from 0012 stays. Every team-private row carries
+`workspace_id`, and a session is bound to a membership. Migration 0015 creates exactly one workspace, team 11's, and
+every account is a membership in it. A unique index on a constant (`workspaces_single_team`) allows no second row.
+Keeping the layer left the team scouting and live-draft code unchanged. Nobody types a team number anywhere.
 
-No part of StratAI used Supabase: the database is a plain PostgreSQL (local, or Render's), and there was no Supabase
-project, URL or key. Adding it would mean:
-- an external account and project;
-- service keys on the API;
-- network calls on every sign-in;
-- a second user store to keep in step with `team_memberships`.
+The authentication stays built in: stdlib scrypt for passwords, and server-side sessions in the same PostgreSQL, with
+no external provider. Row-level security is still not used. The reasons are unchanged from 0012: the API connects as
+one role, and locally that role is a superuser.
 
-None of that could be tested in isolation, and Supabase's row-level security keys on Supabase's own JWT claims, which
-a non-Supabase PostgreSQL never sees. The built-in provider needs no new dependency and no external service:
-- **Passwords:** stdlib scrypt.
-- **Sessions:** server-side, in the same PostgreSQL.
+## 2. Roles
 
-`users.auth_provider` and `users.auth_subject` exist so a later move to an external provider can map its users onto
-the same memberships without a schema change.
+| | admin | base |
+|---|---|---|
+| Events list (`/`) and an event's page (`/events/:eventKey`), read-only | yes | yes |
+| Their own account (`/account`): name, email, role, change password, log out | yes | yes |
+| Everything else: team, match and report pages, strategy lab, alliance selection, live draft, drive team and scouting dashboards, historical explorer, system status, game manuals, rulesets, human inputs | yes | no |
+| Members page: see members, change a role, suspend, remove | yes | no |
 
-### Why there is no row-level security
+What a base member holds is fixed in code (`ROLE_GRANTS` in `workspaces/permissions.py`): `team_info`,
+`event_analysis` and `qualification_forecast`. Those are exactly the routes the two event pages call:
+- `GET /events`
+- `GET /events/{key}/teams`
+- `GET /events/{key}/matches`
+- `GET /events/{key}/analysis`
+- `GET /events/{key}/qualification-forecast`
 
-Tenant isolation is enforced in the application, by construction, and tested:
-- The workspace is taken only from the server-side session, never from a path, query or body.
-- Every query on team-private data filters on it.
-- An id from another workspace is therefore simply "not found".
+An administrator holds every permission. Nothing is configurable per team, so no administrator action can widen what
+base sees.
 
-The database adds what it can enforce for every connection:
-- **Composite foreign keys:** a report's author, and an assignment's scout, must be members of the same workspace.
-- **CHECK constraints:** administrative permissions can never be stored for another role.
-- **A trigger:** a workspace always keeps an active administrator.
-- **Unique indexes:** one active workspace per team number; one pending invitation per email.
+Where base is refused:
+- **API.** Every other route answers base with `403 permission_denied`. `tests/test_workspaces_api.py` checks this
+  for every GET route in the live OpenAPI schema, so a route added later is covered automatically.
+- **Web app.**
+  - Base sees only *Events* in the navigation.
+  - Any other page shows "Your role does not include this page" and loads none of its data.
+  - On an event page, team, match and report entries appear as plain text, not links, and the alliance-selection and
+    strategy-lab buttons are hidden.
 
-PostgreSQL row-level security was considered and not used:
-- The API connects as one role.
-- Locally that role is a superuser, which bypasses every policy.
-- A forced policy on the owning role would break `pg_dump` and `pg_restore` of the public deployment dump.
+**Adding a role later:**
+1. Add the role to `ROLES` and `ROLE_LABELS`.
+2. Give it an entry in `ROLE_GRANTS`.
+3. Extend the role CHECK constraint on `team_memberships` in a migration.
+4. Add its page allow-list to `pageAllowed` in `frontend/src/auth/roles.ts`.
 
-So RLS would have looked like a protection without being one.
+A team must keep at least one active administrator. A demotion, suspension or removal that would leave none is
+refused, by the application and again by a database trigger.
 
-## 2. Roles and permissions
+## 3. Signing up, signing in, and roles
 
-Three roles.
-- **Administrators** always hold every permission.
-- **The drive team / strategy role and the scouter role** hold what their team's administrators configure, starting
-  from these defaults.
+- **Sign-up** (`/auth/signup`, `POST /auth/signup`): full name, email, password and the **team join code**.
+  - The join code is the `TEAM_JOIN_CODE` environment setting. It is compared in constant time and checked before
+    anything else, so only someone who already has it can learn whether an email is taken.
+  - A wrong code answers `403 invalid_join_code`. If no code is configured, sign-up is closed (`403 signup_closed`).
+  - Emails are unique in any case. They are stored lowercased (`409 email_already_registered`).
+  - The password needs at least 8 characters. There is no other rule.
+  - A new account is a **base** member, unless its email is in `ADMIN_EMAILS` (comma-separated, any case), which
+    makes it an **admin**. The person is signed in at once.
+- **Sign-in** (`/auth/login`): email and password only. Failures all read `invalid_credentials` and take the same
+  time.
+- **After sign-in:** an administrator lands on the Admin Dashboard (`/team`) and a base member on the events (`/`). A
+  `?next=` target is followed only if that role may open it.
+- **Changing a role:**
+  - In the web app: Team Management (`/team`, tab *Team Management*).
+  - From the command line, on a machine with the deployment's `DATABASE_URL`. On Render, use the API service's Shell:
 
-| Permission | Administrator | Drive team / strategy | Scouter |
-|---|---|---|---|
-| `team_info`: events, rosters, schedules, historical seasons | yes | yes | yes |
-| `match_predictions`: win probability, rankings, alliance synergy | yes | yes | configurable (off) |
-| `team_analytics`: team metrics and strength | yes | yes | configurable (off) |
-| `event_analysis` | yes | yes | configurable (off) |
-| `qualification_forecast` | yes | yes | configurable (off) |
-| `alliance_selection`: candidates, pick lists and the live draft board | yes | yes | configurable (off) |
-| `alliance_selection_record`: recording live alliance-selection actions (Phase 11, migration 0013) | yes | configurable (off) | configurable (off) |
-| `strategy_tools`: strategy lab, pre-match report, briefing | yes | yes | configurable (off) |
-| `scouting_forms`: scouting forms, own assignments and submissions | yes | yes | yes |
-| `scouting_submit` | yes | configurable (off) | yes |
-| `scouting_view`: all of the team's scouting and its summary | yes | yes | configurable (off) |
-| `scouting_assign`: assigning scouts to matches | yes | yes | configurable (off) |
-| `team_management`: members, invitations, roles, suspension, removal | yes | never | never |
-| `manage_permissions` | yes | never | never |
-| `team_settings` | yes | never | never |
-| `activity_log` | yes | never | never |
+    ```
+    python -m scripts.set_role someone@example.com admin
+    python -m scripts.set_role someone@example.com base
+    ```
 
-"Configurable" means a team's administrator can switch the permission on or off for that role (the default is in
-brackets). "Never" is enforced in four places, so no member can grant themselves more:
-- `workspaces/permissions.py`;
-- `set_role_permissions`;
-- the API;
-- the database CHECK constraint.
+    This also restores a suspended or removed member. A removed member's email stays taken, so they cannot sign up
+    again. The change is recorded in the activity log as done from the command line.
+- **Removing** a member ends their sessions at once, cancels their open scouting assignments, and keeps their past
+  scouting attributed to them.
+- `ADMIN_EMAILS` applies only at sign-up. To promote someone who already has an account, use Team Management or
+  `scripts.set_role`.
 
-A team may have several administrators. A change that would leave no active administrator (a demotion, suspension or
-removal) is refused, by the application and again by the database trigger.
+## 4. Passwords and reset codes
 
-## 3. Team registration and ownership verification
+- **Changing your password** (`/account`) needs your current password, and ends your other sessions.
+- **Forgot password** (`/auth/forgot`, then `/auth/reset`):
+  1. Enter your email. If it belongs to an active member and email is configured, StratAI emails a **6-digit code**.
+     The answer, and how long it takes, are the same either way: the account lookup and the email run in a background task after the answer is sent. So it never reveals whether an account exists.
+  2. Enter your email, the code and a new password. On success, every session you hold ends and you are signed in.
+- **The code:**
+  - works once, for 15 minutes;
+  - is dead after 5 wrong tries;
+  - is retired when you ask for a new one.
+- **Storage:** only a salted SHA-256 of the code is stored (`password_reset_codes`).
+- **Requests are limited** to 3 codes per email per hour, so asking again cannot get around the 5-try limit. At most
+  that is 15 guesses an hour against a million possible codes.
+- **Delivery** uses the existing mailer: SMTP when `SMTP_HOST` and `SMTP_FROM` are set, or, in development only,
+  files written to `DEV_OUTBOX_DIR`. Without either, no code can be sent. The page says so and suggests asking an
+  administrator. There is no administrator-issued reset; an administrator can only change the person's role or remove
+  them.
 
-A team number and name are public, so registering them proves nothing.
+## 5. The whole site is behind sign-in
 
-1. **Register.** On the web app, choose *Login / Register to Your Team's StratAI*, then *Register a New Team*. Enter
-   the team number, the team name and a one-time **setup password**. The workspace is created as
-   `pending_verification`. Only one pending or verified workspace may exist per team number.
-2. **First administrator.** With the setup password, the registrant creates their own account (full name, email,
-   password). They become the first administrator and are signed in to the Admin Dashboard. The setup password then
-   stops working; it is never a team login.
-3. **Pending.** The administrator can configure the workspace (permissions, settings), but cannot invite members or
-   hold scouting until the team is verified.
-4. **Verification by a StratAI operator.** This step is not automated, and is never assumed or simulated.
-   - The operator confirms out of band that the registrant speaks for the team. Acceptable checks:
-     - an email from an address listed for the team on FIRST's official team information or the team's own website;
-     - confirmation from the team's lead mentor through a contact the operator already trusts;
-     - a verification phrase posted on the team's official website or social account.
-   - Then, on a machine with the deployment's `DATABASE_URL`:
+**Web app.** Only these pages open without signing in:
+- `/auth/login`
+- `/auth/signup`
+- `/auth/forgot`
+- `/auth/reset`
+- `/auth`, which just forwards to `/auth/login`
 
-   ```
-   python -m scripts.workspace_operator list --status pending_verification
-   python -m scripts.workspace_operator verify --team 1676 --operator "Your Name" --note "how ownership was checked"
-   python -m scripts.workspace_operator reject --team 1676 --operator "Your Name" --note "why"
-   ```
+Anything else sends a visitor to `/auth/login?next=...`. Until the session is known, no page renders, so none starts a
+request.
 
-   - The verdict, the operator and the note are recorded on the workspace and in its activity log.
-   - Rejecting a workspace ends all its sessions and frees the number for the real team.
-   - There is deliberately no HTTP route for this, so no web credential can verify a team.
+**API: `ACCESS_POLICY`.** Each analytics router carries a permission gate (`api/app.py`):
 
-**What still needs a person:** someone must act as the StratAI operator and decide which checks are enough. Until a
-workspace is verified, its team cannot invite members.
+| Routes | Permission | base? |
+|---|---|---|
+| events, rosters, schedules | `team_info` | yes |
+| event analysis | `event_analysis` | yes |
+| qualification forecast | `qualification_forecast` | yes |
+| historical season explorer | `season_explorer` | no |
+| team metrics and strength | `team_analytics` | no |
+| predictions | `match_predictions` | no |
+| alliance selection | `alliance_selection` | no |
+| strategy, pre-match report, briefing | `strategy_tools` | no |
+| game manuals, rulesets, capability profiles, human inputs | `platform_inputs` (or the platform write token) | no |
 
-## 4. Members, invitations and passwords
+The two policies:
+- **`members`** requires a signed-in member who holds the route's permission. Otherwise the route answers 401
+  `not_authenticated` or 403 `permission_denied`. This is the default whenever `ENV` is `production` or `staging`,
+  and `render.yaml` also sets it explicitly. The health probes (`/health`, `/ready`) and `GET /auth/session` stay
+  open.
+- **`open`** lets anyone read the analytics routes. It is the default only in development, where the API test suite
+  runs without signing in.
 
-- **Inviting:** an administrator adds a member (full name, email, role). StratAI creates an invitation that works
-  **once** and **expires** (`INVITATION_TTL_HOURS`, default 7 days).
-  - If email is configured, the link is emailed; otherwise the administrator copies it and sends it themselves.
-  - The token is in the link's `#fragment`, which browsers never send to any server.
-  - Resending replaces the link, and the old one stops working.
-- **Accepting:** the invited person opens the link and chooses their password. If they already have a StratAI
-  account (from another team), they enter that password instead; their account is never replaced.
-- **Signing in:** team number, email and their own password. The role is found automatically, and each role lands on
-  its own dashboard:
+The `/workspace/...` routes always need a session, whatever the policy.
 
-  | Role | Lands on |
-  |---|---|
-  | Administrator | `/team` |
-  | Drive team | `/drive-team` |
-  | Scouter | `/scouting` |
-
-- **Suspending** a member ends their sessions at once and refuses sign-in until they are reactivated.
-- **Removing** a member does three things:
-  - it ends their sessions and cancels their open assignments;
-  - their past scouting stays attributed to them;
-  - they can be invited back.
-- **Passwords:**
-  - **Changing yours** needs your current password and ends your other sessions.
-  - **"Forgot password"** emails a single-use, 60-minute link if email is configured. The answer is the same whether
-    or not the account exists.
-  - **Without email,** an administrator can issue a reset link from Team Management. That is recorded in the activity
-    log.
-  - **A reset** ends every session of that person.
-
-## 5. The dashboards
-
-All three live in the existing StratAI shell and navigation, and link into the existing event, match and team pages.
-What each shows follows the member's permissions.
-
-- **Admin Dashboard** (`/team`), with these tabs:
-  - Overview;
-  - Team Management: the member table with search, role and status filters, and sorting by role, name or last
-    login; plus adding, inviting, changing roles, editing, suspending, reactivating, removing, resending and revoking;
-  - Permissions: the matrix above;
-  - Analytics: membership, sign-ins, invitations and scouting activity;
-  - Team Settings: team name, default event, scouting instructions;
-  - Activity Log: actor, action, affected member, details and time, filterable.
-  - The Overview links to live alliance selection (`/alliance-selection/live`, Phase 11) for the default event.
-- **Drive team dashboard** (`/drive-team`), for the chosen event:
-  - event analysis, match predictions, team comparisons, qualification forecast, alliance selection, live alliance
-    selection (Phase 11, `docs/phase11.md`) and the strategy lab, each shown only with its permission;
-  - the team's own scouting summary;
-  - scouting assignments.
-- **Scouting dashboard** (`/scouting`):
-  - the team's instructions;
-  - your upcoming assignments;
-  - the scouting form (defense and feeding, 0–5, and notes);
-  - the event's teams;
-  - your submission history.
+**Contract lock.** The gates add nothing to any operation's OpenAPI contract: `python -m scripts.phase7_contract_lock
+check` reports no change under either policy. Under `members`, locked operations do answer 401 and 403 at runtime.
+That was the documented cost of turning `members` on, and it was decided on 2026-11-11 (RUNNING_NOTES.md). The public
+read-only demo ends with it.
 
 ## 6. Team scouting stays with the team
 
-Team scouting is stored in `workspace_scouting_reports`, never in the shared `scouting_observations`.
-- **Why separate:** the shared table feeds the `team_metrics` every visitor and every other team can read, so one
-  team's scouting there would reach its rivals.
-- **Same rules:** a report passes the same scouting validation (`data.metrics.normalizer`).
-- **Same summary method:** the team's summary uses the same `aggregate_defense_feeding`. Defense and feeding come
-  only from what scouts recorded. Below two ratings, a value is shown as insufficient, never estimated.
+Team scouting is stored in `workspace_scouting_reports`, never in the shared `scouting_observations`. It passes the
+same validation (`data.metrics.normalizer`) and uses the same summary method (`aggregate_defense_feeding`). Defense and
+feeding come only from what scouts recorded. Since 2026-11-11, scouting is an administrator tool.
 
-Feeding team scouting into the shared defense/feeding metrics would need a product decision: what may be shared,
-and with whom.
-
-## 7. The existing StratAI routes: `ACCESS_POLICY`
-
-Each existing router carries a permission gate:
-
-| Routes | Permission |
-|---|---|
-| events, rosters, schedules, explorer | `team_info` |
-| team metrics and strength | `team_analytics` |
-| predictions | `match_predictions` |
-| event analysis | `event_analysis` |
-| qualification forecast | `qualification_forecast` |
-| alliance selection | `alliance_selection` |
-| strategy, pre-match report, briefing | `strategy_tools` |
-
-There are two modes:
-- **`ACCESS_POLICY=open`** (the default) keeps today's behaviour: the public analytics stay readable by anyone. That
-  preserves the hosted public demo and the locked API contract (`docs/api_contract_lock.json`) exactly.
-- **`ACCESS_POLICY=members`** requires a signed-in member holding the route's permission (401 `not_authenticated`,
-  403 `permission_denied`). The health probes stay open.
-
-In open mode, hiding a page from a role in the web app is a convenience, not a protection: the data is public.
-Team-private routes (`/workspace/...`) always require a session in both modes.
-
-**Turning on `members` is a decision for you.** It adds 401 and 403 responses to operations whose contracts are
-locked (P7-DM2), so it needs a relock with a recorded decision, and it ends the public read-only demo.
-
-The platform-wide human-input routes (game manuals, rulesets, capability profiles, coach inputs) keep the platform
-write token (`HUMAN_INPUTS_WRITE_TOKEN`). They change data every team shares, so no team role may change them.
-
-## 8. Security measures
+## 7. Security measures
 
 - **Passwords:**
   - scrypt (N=2^15, r=8, p=3) with a per-password salt and constant-time comparison;
-  - at least 12 characters, not common, not the email;
-  - re-hashed on sign-in if the cost is raised.
+  - at least 8 characters, at most 256 (the upper bound keeps hashing time bounded);
+  - re-hashed at sign-in if the cost is raised.
+- **Join code:**
+  - an environment secret (`SecretStr`, never printed);
+  - compared with `hmac.compare_digest`;
+  - never in the repository, which is public.
 - **Sessions:**
-  - a 256-bit random token in an `HttpOnly`, `SameSite=Lax`, `Secure` cookie (not `Secure` in development); only its
-    hash is stored;
-  - lifetime `SESSION_TTL_HOURS` (14 days) and idle limit `SESSION_IDLE_HOURS` (72 hours);
-  - re-resolved on every request, so suspension, removal, role and permission changes apply at once;
-  - sign-out ends the session on the server.
-- **CSRF:** every state-changing `/auth` and `/workspace` request needs `X-StratAI-CSRF: 1`. Together with
-  `SameSite=Lax` and CORS refusing credentialed cross-origin requests, another site cannot act with a member's cookie.
-- **Rate limits** (`workspaces/rate_limit.py`), on:
-  - sign-in: 5 failures per account per 15 minutes, plus a looser per-address limit;
-  - the setup password;
-  - registration;
-  - reset requests;
-  - token use;
-  - password checks.
-- **No account enumeration:** failed sign-ins all answer `invalid_credentials` and take the same time, and reset
-  requests always answer the same.
-- **Secrets stay out of URLs and logs:** invitation and reset tokens travel only in request bodies and URL fragments,
-  so they never reach a server log. Request logging records the path only.
-- **Server-side authorization:** every rule is checked in the API and again in `workspaces/`; the web app's hiding
-  is only a convenience. No secret is ever sent to the web app.
+  - a 256-bit random token in an `HttpOnly`, `SameSite=Lax` cookie, `Secure` outside development; only its hash is
+    stored;
+  - a lifetime of `SESSION_TTL_HOURS` and an idle limit of `SESSION_IDLE_HOURS`;
+  - re-resolved on every request, so suspension, removal and role changes apply at once.
+- **CSRF:** every state-changing `/auth` and `/workspace` request needs `X-StratAI-CSRF: 1`.
+- **Rate limits** (`workspaces/rate_limit.py`):
 
-## 9. Configuration
+  | Scope | Limit | What counts |
+  |---|---|---|
+  | `login_account` | 5 per email per 15 min | failures |
+  | `login_ip` | 100 per address per 15 min | failures |
+  | `signup_code_ip` | 10 per address per 15 min | wrong join codes only |
+  | `signup_code_global` | 50 across all addresses per hour | wrong join codes only |
+  | `reset_request_account` | 3 per email per hour | every request |
+  | `reset_request_ip` | 30 per address per hour | every request |
+  | `reset_code_ip` | 30 per address per 15 min | wrong or dead codes |
+  | `password_check_user` | 5 per account per 15 min | wrong current passwords |
 
-Every setting is optional with a safe default (`data/config.py`). Secrets go in the environment, never in a
-committed file.
+  Only wrong join codes count, so a team signing up together at a meeting is never slowed. The global limit means
+  someone guessing the code from many addresses locks sign-up for everyone for up to an hour. That is the intended
+  trade-off: change the code if it happens.
+- **Secrets stay out of URLs and logs.** The join code, passwords and reset codes travel only in request bodies.
+  Request logging records the path only.
+
+## 8. Configuration
+
+Secrets go in the environment, never in a committed file (`data/config.py`, `.env.example`).
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `ACCESS_POLICY` | `open` | `open` or `members` (section 7) |
-| `SESSION_COOKIE_SECURE` | unset: secure unless `ENV=development` | send the session cookie only over HTTPS |
-| `SESSION_TTL_HOURS` | `336` | session lifetime |
-| `SESSION_IDLE_HOURS` | `72` | idle limit |
-| `INVITATION_TTL_HOURS` | `168` | how long an invitation link works |
-| `PASSWORD_RESET_TTL_MINUTES` | `60` | how long a reset link works |
-| `PUBLIC_APP_URL` | unset | the web app's address, for links in emails; email is off without it |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` (secret), `SMTP_FROM`, `SMTP_STARTTLS` | unset, `587`, unset, unset, unset, `true` | outgoing email |
+| `ACCESS_POLICY` | `members` outside development, `open` in development | section 5 |
+| `TEAM_JOIN_CODE` (secret) | unset: sign-up closed | the code new members type |
+| `ADMIN_EMAILS` | empty | comma-separated emails that sign up as admin |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` (secret), `SMTP_FROM`, `SMTP_STARTTLS` | unset, `587`, unset, unset, unset, `true` | outgoing email for reset codes |
 | `DEV_OUTBOX_DIR` | unset | development only: write emails to this folder instead of sending them |
-| `AUTH_TRUSTED_PROXY_HOPS` | `0` | proxies in front of the API, for per-address rate limits (for example `2` behind Vercel and Render) |
+| `PUBLIC_APP_URL` | unset | the web app's address, mentioned in reset emails |
+| `AUTH_TRUSTED_PROXY_HOPS` | `0` | proxies in front of the API, so rate limits see the client address (hosted: Vercel then Render) |
+| `SESSION_COOKIE_SECURE` | secure unless `ENV=development` | send the session cookie only over HTTPS |
+| `SESSION_TTL_HOURS`, `SESSION_IDLE_HOURS` | `336`, `72` | session lifetime and idle limit |
 
-## 10. Running it locally
+## 9. Running it locally
 
 ```
-python database/migrate.py          # applies 0012 (and 0013-0014, Phase 11) to the database DATABASE_URL names
-python -m api                       # the API on http://127.0.0.1:8000
+python database/migrate.py            # applies every pending migration, through 0015, to DATABASE_URL's database
+python -m api                         # the API on http://127.0.0.1:8000
 cd frontend && npm ci && npm run dev  # the web app on http://localhost:5173 (proxies /api to the API)
 ```
 
-Two things to check when testing locally:
-- **Restart `python -m api` after updating the code.** It loads the code once and never reloads it. An API started
-  before team accounts existed, or from another checkout, has no `/auth` routes, so registration answers
-  `404 not_found` ("The requested resource was not found"). The sign-in pages then say "This StratAI server does
-  not have team accounts yet".
-- **Point the API at a disposable database.** `.env` names the serving `stratai` database. For testing, set
-  `DATABASE_URL` to a `stratai_test_<suffix>` copy with 0012 applied, and `ENV=development` so the session cookie
-  works over plain http. If the database lacks 0012, the sign-in pages say "Team accounts are not set up on this
-  server's database".
+Before testing locally, set these:
+- **A disposable database.** Point `DATABASE_URL` at a `stratai_test_<suffix>` copy, never the serving `stratai`.
+  0015 deletes every account.
+- **The environment:**
+  - `ENV=development`, so the session cookie works over plain http;
+  - `TEAM_JOIN_CODE=<anything>`, so sign-up is open;
+  - `ADMIN_EMAILS=<your email>`, so your sign-up makes you an admin;
+  - `DEV_OUTBOX_DIR=./.outbox`, to read reset codes from files.
+- **Members-only locally (optional):** development defaults to `ACCESS_POLICY=open`. Set `ACCESS_POLICY=members` to
+  test members-only behaviour exactly as hosted.
+- **Restart `python -m api` after updating the code.** It never reloads. An older API has no `/auth/signup`, and the
+  sign-in pages say "This StratAI server does not have accounts yet".
 
-For local email testing, set `ENV=development`, `PUBLIC_APP_URL=http://localhost:5173` and
-`DEV_OUTBOX_DIR=./.outbox`. Verify a local test team with `python -m scripts.workspace_operator verify ...`.
-
-Tests (database-backed tests run only on an isolated `stratai_test_<suffix>` copy, per the test-database guard):
+Tests (database-backed tests run only on an isolated `stratai_test` copy, per the test-database guard):
 
 ```
-python -m pytest tests/test_workspaces_units.py tests/test_workspaces_api.py tests/test_frontend_workspace_contract.py
-cd frontend && npx vitest run src/auth
+python -m pytest tests/test_workspaces_units.py tests/test_workspaces_api.py tests/test_phase11_live_draft_api.py
+cd frontend && npx vitest run src/auth src/workspace
 ```
 
-## 11. Known limitations
+## 10. Known limitations
 
-- **Verification needs a person** acting as the StratAI operator (section 3).
-- **Email needs an SMTP account.** Without one, invitations are delivered by hand, and self-service password reset is
-  unavailable (an administrator issues a reset link instead).
+- **Email needs an SMTP account.** Without one, a forgotten password cannot be reset by email.
 - **No multi-factor authentication** and no single sign-on.
+- **The global wrong-code limit can be used to block sign-up for an hour.** Change the code if that happens.
 - **Per-address rate limits are coarse behind proxies** unless `AUTH_TRUSTED_PROXY_HOPS` is set.
-- **Team scouting does not feed the shared metrics** (section 6). The scouting form records the two measures the
-  existing scouting model defines, defense and feeding; game-specific fields would need a season's scouting design.
-- **`ACCESS_POLICY=members` is available but not on** (section 7).
-- **The hosted public demo:** migration 0012 adds tables only and changes no D18 fingerprint, but the public
-  deployment's database must still have it applied before accounts work there. The public dump script empties every
-  account and team table (`scripts/deploy_public_dump.py`).
+- **Changing `TEAM_JOIN_CODE` does not affect existing accounts.** It only gates new sign-ups.

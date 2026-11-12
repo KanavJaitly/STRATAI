@@ -165,9 +165,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # that setting exists for. It defaults to "", so the team metrics endpoint
     # is served at the path the milestone documents it at.
     #
-    # Each existing router carries the gate for the permission it serves (api.session.permission_gate). Under the
-    # default ACCESS_POLICY=open the gates admit everyone, as before; under ACCESS_POLICY=members they require a
-    # signed-in member with that permission. The gates add nothing to any operation's OpenAPI contract.
+    # Each existing router carries the gate for the permission it serves (api.session.permission_gate). Under
+    # ACCESS_POLICY=members (the default outside development) they require a signed-in member with that permission;
+    # a base member holds only team_info, event_analysis and qualification_forecast (the events list and an event's
+    # page). Under ACCESS_POLICY=open they admit everyone. The gates add nothing to any operation's OpenAPI contract.
     def gated(permission: str) -> list[Any]:
         return [Depends(permission_gate(permission))]
 
@@ -189,7 +190,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(manual_manager_router, prefix=settings.api_prefix,  # game manuals, rulesets, readiness
                        dependencies=[Depends(platform_gate)])
     app.include_router(explorer_router, prefix=settings.api_prefix,  # historical season explorer (read-only)
-                       dependencies=gated("team_info"))
+                       dependencies=gated("season_explorer"))
     briefing_router = _briefing_router()
     if briefing_router is not None:  # Phase 9 (P9-M4): optional and downstream only (P9-Q1)
         app.include_router(briefing_router, prefix=settings.api_prefix, dependencies=gated("strategy_tools"))

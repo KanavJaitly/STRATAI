@@ -4,6 +4,7 @@ import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { ScheduledMatchOut } from '../api/generated'
+import { PageLink } from '../auth/guards'
 import { Absent } from './display'
 import { teamPath } from './routing'
 import type { TabDef } from './useTab'
@@ -63,7 +64,7 @@ export function TabPanel({ id, children }: { id: string; children: ReactNode }) 
 }
 
 export function TeamChip({ team, eventKey, tone }: { team: number; eventKey: string; tone?: 'red' | 'blue' }) {
-  return <Link to={teamPath(eventKey, team)} className={`chip${tone ? ` chip-${tone}` : ''}`}>{team}</Link>
+  return <PageLink to={teamPath(eventKey, team)} className={`chip${tone ? ` chip-${tone}` : ''}`}>{team}</PageLink>
 }
 
 /** One alliance as team chips, labelled with its colour in text (colour is never the only signal). */

@@ -1,5 +1,5 @@
-// The drive team / strategy dashboard and the scouter dashboard, plus /home, which sends a signed-in member to their
-// role's dashboard. Both live in the same shell and navigation as every other StratAI page and link into the existing
+// The drive team / strategy dashboard and the scouting dashboard (administrators only since the single-team change),
+// plus /home, which sends a signed-in member to their role's home. Both live in the same shell and navigation as every other StratAI page and link into the existing
 // event, match and team pages; what each shows follows the member's permissions (and the API enforces them).
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
@@ -15,12 +15,11 @@ import { useAuth } from '../auth/authState'
 import { homeFor } from '../auth/roles'
 import { EventChooser, EventName } from './EventChooser'
 import { seasonOf, useEventName } from './events'
-import { VerificationBanner } from './TeamManagementPage'
 
 export function HomeRedirect() {
   const { ready, signedIn, role } = useAuth()
   if (!ready) return <p className="muted" role="status">Checking your sign-in…</p>
-  return <Navigate to={signedIn ? homeFor(role) : '/auth'} replace />
+  return <Navigate to={signedIn ? homeFor(role) : '/auth/login'} replace />
 }
 
 /** The event a dashboard works on: the one chosen on the page, else the team's default event. */
@@ -75,7 +74,6 @@ export function DriveTeamDashboardPage() {
   return (
     <div>
       <PageHeader title="Drive team dashboard" subtitle={`Team ${session.workspace?.team_number} · strategy tools`} />
-      <VerificationBanner />
       <EventSection eventKey={eventKey} onChange={setEventKey} />
       {!eventKey ? <p className="notice notice-info">Choose an event to open its tools.</p> : (
         <>
@@ -230,7 +228,6 @@ export function ScoutingDashboardPage() {
   return (
     <div>
       <PageHeader title="Scouting dashboard" subtitle={`Team ${session.workspace?.team_number} · ${session.user?.name}`} />
-      <VerificationBanner />
       {instructions && <div className="notice notice-info"><strong>From your team:</strong> {instructions}</div>}
       <section className="card">
         <h2>Your upcoming assignments</h2>
