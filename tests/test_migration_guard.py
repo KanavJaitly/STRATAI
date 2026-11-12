@@ -107,8 +107,9 @@ def test_a_fresh_empty_database_gets_every_migration():
     assert migrate.plan_pending(FILES, None, 0) == tuple(NAMES)
 
 
-def test_a_restored_copy_through_0012_has_only_0013_pending():
-    assert migrate.plan_pending(FILES, NAMES[:12], 40) == (NAMES[12],)
+def test_a_restored_copy_through_0012_has_0013_and_0014_pending():
+    assert migrate.plan_pending(FILES, NAMES[:12], 40) == ("0013_live_alliance_selection.sql",
+                                                         "0014_draft_author_fk_deferred.sql")
     assert migrate.plan_pending(FILES, NAMES, 40) == ()
 
 
