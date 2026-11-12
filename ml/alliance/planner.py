@@ -104,6 +104,8 @@ class DraftPosition:
     available: tuple[int, ...]  # confirmed available
     unavailable: dict[int, str] = field(default_factory=dict)  # confirmed unavailable -> reason
     other_alliances: tuple[tuple[int, tuple[int, ...]], ...] = ()  # (seed, members incl. projected captain)
+    ruleset_sha256: str | None = None  # spec H4: the selection rules behind the record (None for manual entry)
+    rules_source: str | None = None  # "approved_ruleset" | "manual_entry"
 
 
 class PlanWithheld(Exception):
@@ -314,7 +316,8 @@ def build_plan(snapshot: EventSnapshot, position: DraftPosition, *, policy: Esti
         "fit_diagnostics": fit_diagnostics(model.fits, policy),
         "versions": {"estimator": ESTIMATOR_VERSION, "planner": PLANNER_VERSION,
                      "scoring_config_sha256": model.scoring.config_sha256,
-                     "game_spec_sha256": model.scoring.game_spec_sha256},
+                     "game_spec_sha256": model.scoring.game_spec_sha256,
+                     "ruleset_sha256": position.ruleset_sha256, "rules_source": position.rules_source},
         "known_limitations": list(LIMITATIONS) + ([PER_ROBOT_CAP_NOTE] if any(
             r.per_robot_cap_points is not None for r in model.scoring.rules.values()) else []),
         # spec B5.7: the Monte Carlo is seeded; its run count and error are recorded

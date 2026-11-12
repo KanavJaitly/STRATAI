@@ -479,3 +479,39 @@ def test_a5_the_profile_reports_participation_and_surrogate_matches():
     P11AProfileOut.model_validate(prof)
     assert prof["participation"]["matches_played"] == len(played) == prof["matches_played"]
     assert prof["participation"]["surrogate_matches"] == [played[0]]
+
+
+# --- H4: the plan names its selection rules ----------------------------------------------------------------------
+
+
+def test_h4_the_plan_names_the_ruleset_it_was_computed_under():
+    log = Log(setup())
+    log.captain(1, 1)
+    pos = alliance_plan.position_from_view(log.view(), 1)
+    assert (pos.ruleset_sha256, pos.rules_source) == ("ab" * 32, "approved_ruleset")
+    plan = build_plan(snapshot(truth={i: v for i, v in enumerate(truths(24, 7).values(), start=1)}), pos)
+    assert plan["versions"]["ruleset_sha256"] == "ab" * 32 and plan["versions"]["rules_source"] == "approved_ruleset"
+
+
+# --- criterion 21 / Scenario Q: the joint model is never more certain than the plug-in -----------------------------
+
+
+@pytest.mark.parametrize("seed", [3, 19])
+def test_criterion_21_joint_posterior_sd_is_at_least_the_plug_ins_for_every_robot(seed):
+    """The plug-in treats this event's estimated population mean as a known prior (prohibited, spec A3.2 (iii)); the
+    joint model integrates it. Integrating an unknown can only widen the posterior, robot by robot."""
+    from ml.alliance.estimator import design, posterior
+
+    snap = snapshot(seed=seed, matches_per_team=6)  # short schedule: the prior matters
+    fits = snap.fit()
+    rows = [list(r.teams) for r in snap.qual_rows]
+    for c in COMPONENTS:
+        fit = fits[c]
+        A, y = design(rows, fit.teams), np.array([getattr(r, c) for r in snap.qual_rows])
+        _, _, _, population = posterior(A, y, fit.teams, fit.sigma2, fit.tau2, with_population=True)
+        mu_hat = population[0]
+        plug = {t: (mu_hat, fit.tau2) for t in fit.teams}  # the plug-in: mu_hat as if it were known
+        _, plug_cov, _ = posterior(A, y, fit.teams, fit.sigma2, fit.tau2, plug)
+        joint_sd, plug_sd = np.sqrt(np.diag(fit.cov)), np.sqrt(np.diag(plug_cov))
+        assert np.all(joint_sd >= plug_sd - 1e-9), (c, float((plug_sd - joint_sd).max()))
+        assert np.any(joint_sd > plug_sd + 1e-6)  # and the difference is real, not zero
