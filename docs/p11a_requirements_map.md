@@ -168,6 +168,58 @@ applies.
 
 ---
 
+## 4. What this run built (2026-11-11, branch `p11a/autonomous`; commits in the run log)
+
+**Behaviour changes:**
+- **D2:** `backup_combinations` is now the global top 5 complete alliances over every pair, by unrounded V
+  (`planner.top_combinations`). It was drawn from the top 5 cards × 3 seconds and sorted by rounded values; on 22 of
+  40 synthetic events it differed from brute force.
+- **A3.6:** matches with a disqualified team are excluded (`dq_affected`). Surrogate appearances are kept and recorded,
+  as the labelled-dataset rules do.
+- **§7:** the A3 fit is cached per (snapshot id, policy).
+
+**Disclosures inside the existing schema:**
+- A3.5 (no opponent adjustment); A3.3/B5.3 (components treated as independent: the deviation is stated, not
+  resolved); B5.2(b);
+- B5.1 (the per-robot cap on means, when configured);
+- A3.2 (the card sentence "prior estimated from this event's own matches").
+
+**Additive optional fields** (two relocks, 0 changed leaves in total):
+- A3.2: `prior_mean`, `prior_sd`.
+- A3.7: `max_abs_corr`, `label_reasons`.
+- B5.7: `monte_carlo`.
+- B5.6: `defense_effect` = `defense_effect_insufficient_data`.
+- A7: `last_updated` and scouting agreement.
+- G2/B4: profile provenance `exclusions`, `scoring_config_sha256`, `game_spec_sha256`.
+- A5: `participation`.
+- H4: `ruleset_sha256` and `rules_source` in the plan's `versions` (free-form; no relock).
+
+**Web:**
+- G2/G3, criterion 13: a card opens its own profile in one tap, with the full reasons.
+- §11: markers on cards.
+- Criterion 12: the stale state is tested.
+
+**Tests for previously unasserted criteria and scenarios:** 4, 6, 8/D, 13, 18/N, 19/O, 21/Q (the plug-in half), 22/R,
+23/S (common random numbers), B uncapped, H, J/DM4 (offline == online), M (database sentinel), §9.4 (brute force),
+D2.
+
+**Tooling (item 3):** the GameSpec row copy, the draft config checker, and the independent-reviewer rule.
+
+### MISSING-BUILDABLE items not built in this run (scope; none is gated)
+
+| Item | Why not now |
+|---|---|
+| B2 per-component gap vs playoff peers, capped overlap | needs a definition of "playoff peers" (spec 490–491 names the median but not the peer set); low value until a configuration exists |
+| B3/§10 `resilience_analysis` | a new analysis and output section; larger than this run's remaining budget |
+| C1 P6-M6 deterministic projection beside V₁ | needs the P6-M6 projection wired into the plan (engine-side code); deferred |
+| D3 scenario statements; G1 marginal-gain, overlap, uncertainty and missing-data statements | they should fire only past pre-declared thresholds (spec 802), which are HUMAN-GATED (Q3); building them without thresholds would add the "generic text" the spec forbids |
+| E3 "outcome not determined" when the declined-captain rule is null | small; deferred to keep the contract stable |
+| A6 recompute after each watch sync | touches `data.orchestrator` (Phase 2/5 code); deferred to avoid changing the live-sync path in an unattended run |
+| §14 `snapshot_incomplete` required-inputs manifest; rules and artifact shas in the snapshot | snapshot format change (new snapshot version); deferred |
+| §11 top-5/show-all, second-pick selector, backup-combinations panel | UI work; deferred |
+| A1 catalogue and `season_not_supported` | depends on the catalogue design; game-specific parts are HUMAN-GATED |
+| B6 outcome rule with synthetic δ/π (criterion 23) | the contract pins `outcome: unresolved`; serving any other outcome needs δ, π approved |
+
 ## 5. Definition of success, acceptance criteria, scenarios (§17–19)
 
 | ID | Status | Test / evidence | Missing / gate |
