@@ -30,6 +30,7 @@ from dataclasses import dataclass
 from typing import Any
 
 SERVING_DATABASE = "stratai"
+BARE_TEST_DATABASE = "stratai_test"
 TEST_DATABASE = re.compile(r"^stratai_test_[a-z0-9]+(?:_[a-z0-9]+)*$")
 LOOPBACK_NAMES = frozenset({"localhost", "127.0.0.1", "::1"})
 
@@ -68,8 +69,11 @@ def _host_is_local(host: str) -> bool:
     return host == "" or host.startswith("/") or host.lower() in LOOPBACK_NAMES or _is_loopback_ip(host)
 
 
-def check_target(url: str, environ: Mapping[str, str] | None = None) -> Target:
-    """The target if it is a local `stratai_test_<suffix>` database; TargetRefused otherwise. Makes no connection."""
+def check_target(url: str, environ: Mapping[str, str] | None = None, *, allow_bare_test: bool = False) -> Target:
+    """The target if it is a local `stratai_test_<suffix>` database; TargetRefused otherwise. Makes no connection.
+
+    `allow_bare_test` also accepts the bare `stratai_test`. It is for read-only callers only (the P11A GameSpec export,
+    reading a row a person entered through the web app there); every writer keeps the default."""
     from psycopg.conninfo import conninfo_to_dict
 
     env = os.environ if environ is None else environ
@@ -95,7 +99,7 @@ def check_target(url: str, environ: Mapping[str, str] | None = None) -> Target:
     dbname = str(dbname)
     if dbname == SERVING_DATABASE:
         raise TargetRefused("serving_database", "the serving database 'stratai' is refused")
-    if not TEST_DATABASE.fullmatch(dbname):
+    if not (TEST_DATABASE.fullmatch(dbname) or (allow_bare_test and dbname == BARE_TEST_DATABASE)):
         raise TargetRefused("not_a_test_database", f"{dbname!r} is not a stratai_test_<suffix> database")
     port = str(params.get("port") or env.get("PGPORT") or "5432")
     return Target(hosts, port, dbname, params.get("user") or env.get("PGUSER"))
@@ -113,4 +117,4 @@ def verify_server(cursor: Any, target: Target) -> dict[str, Any]:
     return {"current_database": database, "server_address": address or "unix socket", "server_version": version}
 
 
-__all__ = ["SERVING_DATABASE", "TEST_DATABASE", "Target", "TargetRefused", "check_target", "verify_server"]
+__all__ = ["BARE_TEST_DATABASE", "SERVING_DATABASE", "TEST_DATABASE", "Target", "TargetRefused", "check_target", "verify_server"]

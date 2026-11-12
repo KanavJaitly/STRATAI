@@ -96,3 +96,39 @@ conditions as given).
    - criterion 12 (stale-state test);
    - G2 / criterion 13 (card → profile link);
    - §11 (weak-identification / prior-dominated markers).
+
+### Item 3: tooling for the human steps (built before item 2, committed first so the working tree stays small; it is independent of item 2)
+
+- **(a) `scripts/p11a_gamespec_copy.py`:** export, import and verify one **approved** `game_spec_versions` row.
+  - **Byte-for-byte:**
+    - `spec_json` is carried as PostgreSQL's own JSONB text form.
+    - Timestamps are carried to the microsecond (printed in UTC).
+    - `manual_id` and `based_on_id` point at the source database. They are recorded in the file and imported as NULL.
+  - **Checks:**
+    - export: the row's `spec_sha256` equals `GameSpec.sha256()`;
+    - import: the file's `row_sha256` and the spec sha256, before writing;
+    - after inserting: the stored text and sha256 are read back and compared, or the transaction rolls back.
+  - **Guards (database/target_guard.py, checked before connecting and confirmed by the server):**
+    - the serving `stratai`, other names and remote hosts are refused;
+    - import writes only to a local `stratai_test_<suffix>`, with `--confirm-database`;
+    - export/verify may read the bare `stratai_test`, through a new opt-in `allow_bare_test` (default unchanged).
+      Reason: the web app's human-input pages run there (`scripts/local_test_env.py:50`).
+  - **Decision:** no test writes an `approved` row to any database, even a synthetic one, because the ground rules
+    forbid setting approval fields. The import's SQL path is tested against a fake connection that checks the exact
+    inserted values and the read-back refusal. The one DB test only reads: an export from `stratai_test_p11a`, which
+    holds no approved spec (`no_approved_spec`).
+  - **Limitation:** if a human approves a spec on the serving database, this tool cannot export it, because it refuses
+    `stratai`. How that row reaches a test copy is the owners' decision.
+- **(b) `scripts/p11a_check_scoring_config.py` plus `scoring_config.check_draft`:**
+  - It validates a configuration of any status against a GameSpec without approval, lists every problem, and prints
+    `content_sha256`.
+  - The spec is either an approved-row export or a plain GameSpec file (reported as `game_spec_approved: false`).
+  - `ResolvedScoring.resolve` now shares `_resolved_rules` with it. Behaviour is unchanged: same codes, same order of
+    checks, and existing tests unchanged.
+- **(c) Independent reviewer:** `require_approved` refuses (`scoring_config_not_approved`) a configuration whose
+  `review.reviewer` equals `source.entered_by`, ignoring case and spacing.
+  - Every scoring path goes through `require_approved`.
+  - The synthetic fixtures already differ ("test" vs "Synthetic Reviewer"), so no existing test changed.
+- **Tests:** `tests/test_p11a_tooling.py`, 28 tests.
+  - Run with `tests/test_p11a_scoring_config.py` and `tests/test_migration_guard.py`: 68 passed, including the
+    read-only DB test against `stratai_test_p11a`.

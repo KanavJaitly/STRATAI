@@ -18,7 +18,10 @@
 **Approval.**
 - A configuration is usable for scoring only when `status == "approved"` with a named, qualified reviewer whose
   verified sha256 equals the content's sha256.
+- The reviewer must not be the person who entered it (`source.entered_by`; compared ignoring case and spacing).
 - `require_approved` refuses anything else (`scoring_config_not_approved`); nothing is ever approved here.
+- `check_draft` validates a configuration of any status against a GameSpec, for the people entering and reviewing it.
+  It reports; it approves nothing and is never used for scoring.
 
 **The scoring math.** The alliance component points S are modelled as normal, with mean m and variance v: estimation
 plus match-level residual (the predictive distribution, spec B5.1).
@@ -152,10 +155,90 @@ def require_approved(config: SeasonScoringConfig | None, season: int) -> SeasonS
     if config.status != "approved" or config.review is None:
         raise ScoringConfigError("scoring_config_not_approved",
                                  f"the {season} scoring configuration is {config.status}, not approved")
+    if not reviewer_is_independent(config):
+        raise ScoringConfigError("scoring_config_not_approved",
+                                 f"the {season} configuration was reviewed by the person who entered it; approval "
+                                 "needs a reviewer other than source.entered_by")
     if config.review.verified_sha256 != config.content_sha256():
         raise ScoringConfigError("scoring_config_not_approved",
                                  f"the {season} configuration's content differs from what its reviewer verified")
     return config
+
+
+def _same_person(a: str, b: str) -> bool:
+    return " ".join(a.split()).casefold() == " ".join(b.split()).casefold()
+
+
+def reviewer_is_independent(config: SeasonScoringConfig) -> bool | None:
+    """True when the reviewer is not `source.entered_by` (ignoring case and spacing); None when there is no review."""
+    if config.review is None:
+        return None
+    return not _same_person(config.review.reviewer, config.source.entered_by)
+
+
+def _action_references(config: SeasonScoringConfig) -> list[tuple[str, str, str]]:
+    """(component, role, action_id) for every GameSpec action the configuration names."""
+    refs = []
+    for r in config.rules:
+        if r.cap_action_id is not None:
+            refs.append((r.component, "cap_action_id", r.cap_action_id))
+        if r.per_robot_cap_action_id is not None:
+            refs.append((r.component, "per_robot_cap_action_id", r.per_robot_cap_action_id))
+        refs.extend((r.component, "bonus_action_id", b.bonus_action_id) for b in r.bonuses)
+    return refs
+
+
+def _reference_problems(config: SeasonScoringConfig, spec: GameSpec) -> list[str]:
+    """Every action reference the GameSpec cannot satisfy (unknown action, or an action of another period)."""
+    actions = {a.action_id: a for a in spec.scoring_actions}
+    problems = []
+    for component, role, action_id in _action_references(config):
+        action = actions.get(action_id)
+        if action is None:
+            problems.append(f"{component}.{role}: GameSpec has no scoring action {action_id!r}")
+        elif action.period != component:
+            problems.append(f"{component}.{role}: {action_id} is a {action.period} action, not {component}")
+    return problems
+
+
+def _resolved_rules(config: SeasonScoringConfig, spec: GameSpec) -> dict[str, ResolvedRule]:
+    """Every point value resolved from the GameSpec (game_spec_mismatch on the first reference it cannot satisfy)."""
+    problems = _reference_problems(config, spec)
+    if problems:
+        raise ScoringConfigError("game_spec_mismatch", problems[0])
+    points = {a.action_id: float(a.points) for a in spec.scoring_actions}
+    return {r.component: ResolvedRule(
+        r.component,
+        None if r.cap_action_id is None else r.cap_count * points[r.cap_action_id],
+        None if r.per_robot_cap_action_id is None else r.per_robot_cap_count * points[r.per_robot_cap_action_id],
+        tuple((b.threshold_points, points[b.bonus_action_id]) for b in r.bonuses)) for r in config.rules}
+
+
+def check_draft(config: SeasonScoringConfig, spec: GameSpec) -> dict[str, object]:
+    """A report on a configuration of any status against a GameSpec, for the people entering and reviewing it.
+
+    It does not require approval and approves nothing: it is never used for scoring (`require_approved` is). It lists
+    every problem rather than stopping at the first, and gives the `content_sha256` a reviewer would verify."""
+    problems = []
+    if spec.season != config.season:
+        problems.append(f"the GameSpec is for {spec.season}, the configuration for {config.season}")
+    if spec.sha256() != config.game_spec_sha256:
+        problems.append(f"game_spec_sha256 {config.game_spec_sha256} is not this GameSpec's sha256 {spec.sha256()}")
+    problems.extend(_reference_problems(config, spec))
+    resolved = None if problems else {
+        c: {"cap_points": r.cap_points, "per_robot_cap_points": r.per_robot_cap_points,
+            "bonuses": [{"threshold_points": t, "bonus_points": b} for t, b in r.bonuses]}
+        for c, r in _resolved_rules(config, spec).items()}
+    review = config.review
+    return {
+        "valid_against_spec": not problems, "problems": problems,
+        "season": config.season, "status": config.status, "content_sha256": config.content_sha256(),
+        "game_spec_sha256": spec.sha256(), "resolved_rules": resolved,
+        "review": None if review is None else {
+            "reviewer": review.reviewer,
+            "verified_sha256_matches_content": review.verified_sha256 == config.content_sha256(),
+            "reviewer_independent_of_entered_by": reviewer_is_independent(config)},
+        "note": "a report only: approval is a human act, recorded in the file by its reviewer"}
 
 
 @dataclass(frozen=True)
@@ -183,26 +266,8 @@ class ResolvedScoring:
             raise ScoringConfigError("game_spec_mismatch", f"the GameSpec is for {spec.season}")
         if spec.sha256() != approved.game_spec_sha256:
             raise ScoringConfigError("game_spec_mismatch", "the configuration references a different GameSpec")
-        actions = {a.action_id: a for a in spec.scoring_actions}
-
-        def points(action_id: str, component: str) -> float:
-            action = actions.get(action_id)
-            if action is None:
-                raise ScoringConfigError("game_spec_mismatch", f"GameSpec has no scoring action {action_id!r}")
-            if action.period != component:
-                raise ScoringConfigError("game_spec_mismatch",
-                                         f"{action_id} is a {action.period} action, not {component}")
-            return float(action.points)
-
-        rules = {}
-        for r in approved.rules:
-            rules[r.component] = ResolvedRule(
-                r.component,
-                None if r.cap_action_id is None else r.cap_count * points(r.cap_action_id, r.component),
-                None if r.per_robot_cap_action_id is None else
-                r.per_robot_cap_count * points(r.per_robot_cap_action_id, r.component),
-                tuple((b.threshold_points, points(b.bonus_action_id, r.component)) for b in r.bonuses))
-        return cls(approved.season, approved.content_sha256(), approved.game_spec_sha256, approved.fouls, rules)
+        return cls(approved.season, approved.content_sha256(), approved.game_spec_sha256, approved.fouls,
+                   _resolved_rules(approved, spec))
 
 
 def expected_component_points(rule: ResolvedRule, mean: np.ndarray | float, var: np.ndarray | float) -> np.ndarray:
@@ -236,4 +301,5 @@ def alliance_component_mean(rule: ResolvedRule, robot_means: np.ndarray) -> np.n
 
 __all__ = ["COMPONENTS", "CONFIG_DIR", "ComponentRule", "ConfigReview", "ConfigSource", "ResolvedRule",
            "ResolvedScoring", "ScoringConfigError", "SeasonScoringConfig", "ThresholdBonus",
-           "alliance_component_mean", "expected_component_points", "find_config", "load_config", "require_approved"]
+           "alliance_component_mean", "check_draft", "expected_component_points", "find_config", "load_config",
+           "require_approved", "reviewer_is_independent"]
