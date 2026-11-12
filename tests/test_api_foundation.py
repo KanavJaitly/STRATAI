@@ -330,17 +330,15 @@ SEASON_PAGES_PATHS: frozenset[str] = frozenset({
     "/explorer/teams/{team_number}/seasons/{season}",
 })
 
-# Team workspaces (2026-11-02, docs/team_workspaces.md): accounts and sign-in under /auth; Team Management and
-# each team's private scouting under /workspace, where the workspace always comes from the caller's session.
+# Team accounts (2026-11-02; single team since 2026-11-11, docs/team_workspaces.md): sign-up, sign-in and passwords
+# under /auth; Team Management and the team's private scouting under /workspace, where the workspace always comes
+# from the caller's session.
 WORKSPACE_PATHS: frozenset[str] = frozenset({
-    "/auth/session", "/auth/teams/register", "/auth/teams/initial-admin", "/auth/login", "/auth/logout",
-    "/auth/password/change", "/auth/password/forgot", "/auth/password/reset", "/auth/invitations/preview",
-    "/auth/invitations/accept",
-    "/workspace", "/workspace/members", "/workspace/invitations", "/workspace/invitations/{invitation_id}/resend",
-    "/workspace/invitations/{invitation_id}/revoke", "/workspace/members/{membership_id}/role",
+    "/auth/session", "/auth/signup", "/auth/login", "/auth/logout",
+    "/auth/password/change", "/auth/password/forgot", "/auth/password/reset",
+    "/workspace", "/workspace/members", "/workspace/members/{membership_id}/role",
     "/workspace/members/{membership_id}/status", "/workspace/members/{membership_id}/profile",
-    "/workspace/members/{membership_id}/remove", "/workspace/members/{membership_id}/password-reset",
-    "/workspace/permissions", "/workspace/settings", "/workspace/activity", "/workspace/analytics",
+    "/workspace/members/{membership_id}/remove", "/workspace/settings", "/workspace/activity", "/workspace/analytics",
     "/workspace/scouting/scouts", "/workspace/scouting/assignments",
     "/workspace/scouting/assignments/{assignment_id}/cancel",
     "/workspace/scouting/reports", "/workspace/scouting/summary",

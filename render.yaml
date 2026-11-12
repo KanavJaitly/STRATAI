@@ -32,3 +32,11 @@ services:
       # TBA, and this deployment runs no sync, so a non-secret placeholder is enough.
       - key: TBA_API_KEY
         value: unused-by-api
+      # Team accounts (docs/team_workspaces.md). Every analytics route needs a signed-in member.
+      - key: ACCESS_POLICY
+        value: members
+      # Secrets: set these in the Render dashboard, never here (the repository is public).
+      - key: TEAM_JOIN_CODE
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false

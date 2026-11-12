@@ -1,20 +1,28 @@
-"""Accounts: team registration, the first administrator, login, passwords and invitation acceptance.
+"""Accounts for FRC Team 11 (MORT): sign-up with the team join code, sign-in, passwords and reset codes.
 
-**Registration and ownership.** A team number and name are public, so registering one proves nothing. A new
-workspace starts as pending_verification. Its registrant sets a one-time setup password, uses it to create the
-first administrator account, and is signed in to a workspace that can configure itself but cannot invite members
-or hold scouting until a StratAI operator verifies the team (scripts/workspace_operator.py; the out-of-band check
-is docs/team_workspaces.md section 3). Verification is never assumed or simulated. Only one pending or verified
-workspace may exist per team number; a rejected registration frees the number for the real team.
+**One team.** StratAI serves one team. Migration 0015 creates its one workspace (team 11), and every account is a
+membership in it. Nobody types a team number anywhere.
 
-**One account per person.** Every member signs in with their own email and password; there is no shared team
-login. A person may belong to several teams' workspaces with one account; each sign-in names the team, and the
-session is bound to that one membership.
+**Sign-up.** A new member gives their name, email, a password and the team join code (TEAM_JOIN_CODE, an
+environment secret, compared in constant time). The code is checked before anything else, so only people who
+already have it learn anything (for example that an email is taken). Wrong codes are rate-limited per client
+address and across all addresses at once. New accounts are base members, unless their email is in ADMIN_EMAILS,
+and are signed in at once.
+
+**Password reset by code.** "Forgot password" emails a 6-digit code. Only a salted hash is stored. A code works
+once, for RESET_CODE_TTL, and dies after RESET_CODE_MAX_ATTEMPTS wrong tries; asking for a new code retires the old
+one, and at most 3 codes per email are sent per hour, so the attempt limit cannot be reset by asking again. The
+answer to "forgot password" never says whether the email has an account, and takes the same time either way: the
+account lookup and the email happen in a background task, after the answer is sent.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+import hashlib
+import hmac
+import logging
+import secrets
+from datetime import timedelta
 from http import HTTPStatus
 from typing import Any
 
@@ -31,11 +39,15 @@ from workspaces.passwords import (
     needs_rehash,
     verify_password,
 )
-from workspaces.permissions import ROLE_LABELS, default_role_grants
+from workspaces.permissions import ADMIN, BASE, ROLE_LABELS
 from workspaces.sessions import SessionContext, create_session, revoke_user_sessions
-from workspaces.tokens import new_token, token_hash
 
-ACTIVE_WORKSPACE_STATUSES = ("pending_verification", "verified")
+logger = logging.getLogger(__name__)
+
+TEAM_NUMBER = 11
+RESET_CODE_TTL = timedelta(minutes=15)
+RESET_CODE_MAX_ATTEMPTS = 5
+RESET_CODE_DIGITS = 6
 
 
 # --- input checks ---------------------------------------------------------------------------------------------
@@ -60,146 +72,90 @@ def clean_name(value: Any, what: str = "Full name", limit: int = 120) -> str:
     return cleaned
 
 
-def check_team_number(team_number: Any) -> int:
-    if isinstance(team_number, bool) or not isinstance(team_number, int) or not 1 <= team_number <= 99999:
-        raise invalid_input("Enter your FRC team number (1 to 99999).")
-    return team_number
-
-
-# --- registration ---------------------------------------------------------------------------------------------
-
-
-def register_workspace(database: Database, *, team_number: int, team_name: str, setup_password: str,
-                       client_ip: str) -> dict[str, Any]:
-    """Create a pending workspace for team_number. Refuses a number that already has a pending or verified one."""
-    team_number = check_team_number(team_number)
-    team_name = clean_name(team_name, "Team name", 100)
-    check_password_policy(setup_password)
-    rate_limit.check(database, "register_ip", client_ip)
-    rate_limit.record(database, "register_ip", client_ip, succeeded=True)
-    setup_hash = hash_password(setup_password)
-    try:
-        with database.cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO workspaces (team_number, team_name, setup_password_hash) VALUES (%s, %s, %s) "
-                "RETURNING id, created_at", (team_number, team_name, setup_hash))
-            workspace_id, created_at = cursor.fetchone()
-            for role, grants in default_role_grants().items():
-                for permission, granted in grants.items():
-                    cursor.execute("INSERT INTO workspace_role_permissions (workspace_id, role, permission, granted) "
-                                   "VALUES (%s, %s, %s, %s)", (workspace_id, role, permission, granted))
-            activity.record(cursor, workspace_id=workspace_id, actor_user_id=None, actor_label="Registrant",
-                            action="workspace_registered", details={"team_number": team_number,
-                                                                    "team_name": team_name})
-            cursor.execute("SELECT name FROM teams WHERE team_number = %s", (team_number,))
-            known = cursor.fetchone()
-    except psycopg.errors.UniqueViolation:
-        raise conflict("team_already_registered",
-                       f"Team {team_number} already has a StratAI workspace (verified or awaiting verification). "
-                       "If your team did not create it, contact the StratAI operator, who can review and reject it.")
-    return {"team_number": team_number, "team_name": team_name, "verification_status": "pending_verification",
-            "created_at": created_at, "known_frc_team": known is not None,
-            "frc_team_name": known[0] if known else None}
-
-
-def _locked_active_workspace(cursor: Any, team_number: int) -> tuple | None:
-    cursor.execute(
-        "SELECT id, team_name, verification_status, setup_password_hash FROM workspaces "
-        "WHERE team_number = %s AND verification_status IN ('pending_verification', 'verified') FOR UPDATE",
-        (team_number,))
-    return cursor.fetchone()
-
-
-def _find_or_create_user(cursor: Any, *, email: str, full_name: str, password: str) -> tuple[int, bool]:
-    """The account for email: an existing one only if password is its password; otherwise a new one.
-
-    Returns (user_id, created). An existing account's password is never replaced here: joining another team with
-    the same email means proving you own that account."""
-    cursor.execute("SELECT id, password_hash, status FROM users WHERE email = %s FOR UPDATE", (email,))
+def team_workspace_id(cursor: Any) -> int:
+    """The id of the team's one workspace (created by migration 0015)."""
+    cursor.execute("SELECT id FROM workspaces WHERE team_number = %s", (TEAM_NUMBER,))
     row = cursor.fetchone()
-    if row is not None:
-        user_id, stored, status = row
-        if status != "active" or not verify_password(password, stored):
-            raise WorkspaceError(HTTPStatus.UNAUTHORIZED, "existing_account_password_mismatch",
-                                 "A StratAI account already uses this email. Enter that account's password to "
-                                 "join with it, or use a different email.")
-        return user_id, False
-    check_password_policy(password, email=email)
-    cursor.execute("INSERT INTO users (email, full_name, password_hash, password_changed_at) "
-                   "VALUES (%s, %s, %s, NOW()) RETURNING id", (email, full_name, hash_password(password)))
-    return cursor.fetchone()[0], True
+    if row is None:
+        raise conflict("team_workspace_missing",
+                       "This server's database has no team workspace. Apply the latest migrations "
+                       "(database/migrate.py).")
+    return row[0]
 
 
-def create_initial_admin(database: Database, settings: Settings, *, team_number: int, setup_password: str,
-                         full_name: str, email: str, password: str, client_ip: str) -> str:
-    """Create the workspace's first administrator with the setup password, retire that password, and sign them in.
+def role_for_email(settings: Settings, email: str) -> str:
+    """admin for an email listed in ADMIN_EMAILS (any case), otherwise base."""
+    return ADMIN if email.lower() in settings.admin_emails else BASE
 
-    Returns the new session token."""
-    team_number = check_team_number(team_number)
+
+# --- sign-up --------------------------------------------------------------------------------------------------
+
+
+def join_code_matches(settings: Settings, supplied: Any) -> bool:
+    """Whether supplied is the team join code, compared in constant time. False when no code is configured."""
+    if settings.team_join_code is None or not isinstance(supplied, str):
+        return False
+    expected = settings.team_join_code.get_secret_value().strip().encode("utf-8")
+    return hmac.compare_digest(supplied.strip().encode("utf-8"), expected)
+
+
+def signup(database: Database, settings: Settings, *, full_name: str, email: str, password: str, join_code: str,
+           client_ip: str) -> str:
+    """Create a member account with the team join code and sign it in. Returns the new session token."""
+    if settings.team_join_code is None:
+        raise forbidden("signup_closed", "Sign-up is not open on this server: no team join code is configured.")
+    rate_limit.check(database, "signup_code_global", rate_limit.GLOBAL_SUBJECT)
+    rate_limit.check(database, "signup_code_ip", client_ip)
+    if not join_code_matches(settings, join_code):
+        rate_limit.record(database, "signup_code_ip", client_ip, succeeded=False)
+        rate_limit.record(database, "signup_code_global", rate_limit.GLOBAL_SUBJECT, succeeded=False)
+        raise forbidden("invalid_join_code",
+                        "That team join code is not correct. Ask one of the team's administrators for it.")
     full_name = clean_name(full_name)
     email = normalize_email(email)
-    subject = str(team_number)
-    rate_limit.check(database, "setup_team", subject)
-    rate_limit.check(database, "login_ip", client_ip)
+    check_password_policy(password)
+    role = role_for_email(settings, email)
+    password_hash = hash_password(password)
     try:
         with database.connection() as conn, conn.cursor() as cursor:
-            workspace = _locked_active_workspace(cursor, team_number)
-            if workspace is None or workspace[3] is None:
-                burn_verification_time(setup_password)
-                raise WorkspaceError(HTTPStatus.UNAUTHORIZED, "invalid_setup_credentials",
-                                     "The team number or setup password is not correct, or this team's first "
-                                     "administrator already exists (sign in instead).")
-            workspace_id, _, _, setup_hash = workspace
-            if not verify_password(setup_password, setup_hash):
-                raise WorkspaceError(HTTPStatus.UNAUTHORIZED, "invalid_setup_credentials",
-                                     "The team number or setup password is not correct, or this team's first "
-                                     "administrator already exists (sign in instead).")
-            user_id, created = _find_or_create_user(cursor, email=email, full_name=full_name, password=password)
-            cursor.execute("INSERT INTO team_memberships (workspace_id, user_id, role, display_name) "
-                           "VALUES (%s, %s, 'admin', %s) RETURNING id", (workspace_id, user_id, full_name))
+            workspace_id = team_workspace_id(cursor)
+            cursor.execute("INSERT INTO users (email, full_name, password_hash, password_changed_at) "
+                           "VALUES (%s, %s, %s, NOW()) RETURNING id", (email, full_name, password_hash))
+            user_id = cursor.fetchone()[0]
+            cursor.execute("INSERT INTO team_memberships (workspace_id, user_id, role) VALUES (%s, %s, %s) "
+                           "RETURNING id", (workspace_id, user_id, role))
             membership_id = cursor.fetchone()[0]
-            cursor.execute("UPDATE workspaces SET setup_password_hash = NULL, updated_at = NOW() WHERE id = %s",
-                           (workspace_id,))
-            if created:
-                activity.record(cursor, workspace_id=workspace_id, actor_user_id=user_id, actor_label=full_name,
-                                action="account_created", target_user_id=user_id, target_label=full_name)
             activity.record(cursor, workspace_id=workspace_id, actor_user_id=user_id, actor_label=full_name,
-                            action="initial_admin_created", target_user_id=user_id, target_label=full_name,
-                            details={"email": email})
+                            action="account_created", target_user_id=user_id, target_label=full_name,
+                            details={"role": role})
             token = create_session(cursor, membership_id, settings)
-    except WorkspaceError as refused:
-        if refused.code in ("invalid_setup_credentials", "existing_account_password_mismatch"):
-            rate_limit.record(database, "setup_team", subject, succeeded=False)
-            rate_limit.record(database, "login_ip", client_ip, succeeded=False)
-        raise
+    except psycopg.errors.UniqueViolation:
+        raise conflict("email_already_registered",
+                       "An account already uses this email. Sign in instead, or use \"Forgot password\".") from None
     return token
 
 
 # --- login ----------------------------------------------------------------------------------------------------
 
 
-def login(database: Database, settings: Settings, *, team_number: int, email: str, password: str,
-          client_ip: str) -> str:
-    """Check one member's own credentials for one team's workspace and open a session. Returns its token.
+def login(database: Database, settings: Settings, *, email: str, password: str, client_ip: str) -> str:
+    """Check a member's email and password and open a session. Returns its token.
 
     Every failure that does not prove knowledge of the password reads the same (invalid_credentials) and takes the
-    same time, so the response never reveals which teams or emails have accounts."""
+    same time, so the response never reveals which emails have accounts."""
     if not isinstance(password, str) or not password:
         raise invalid_credentials()
     try:
-        team_number = check_team_number(team_number)
         email = normalize_email(email)
     except WorkspaceError:
         raise invalid_credentials() from None
-    account = f"{team_number}:{email}"
-    rate_limit.check(database, "login_account", account)
+    rate_limit.check(database, "login_account", email)
     rate_limit.check(database, "login_ip", client_ip)
     with database.connection() as conn, conn.cursor() as cursor:
         cursor.execute(
             "SELECT m.id, m.status, u.id, u.password_hash, u.status FROM workspaces w "
             "JOIN team_memberships m ON m.workspace_id = w.id JOIN users u ON u.id = m.user_id "
-            "WHERE w.team_number = %s AND w.verification_status IN ('pending_verification', 'verified') "
-            "AND u.email = %s", (team_number, email))
+            "WHERE w.team_number = %s AND u.email = %s", (TEAM_NUMBER, email))
         row = cursor.fetchone()
         if row is None:
             burn_verification_time(password)
@@ -209,17 +165,17 @@ def login(database: Database, settings: Settings, *, team_number: int, email: st
             ok = verify_password(password, stored)
         if not ok:
             conn.rollback()
-            rate_limit.record(database, "login_account", account, succeeded=False)
+            rate_limit.record(database, "login_account", email, succeeded=False)
             rate_limit.record(database, "login_ip", client_ip, succeeded=False)
             raise invalid_credentials()
         if membership_status != "active" or user_status != "active":
             raise forbidden("account_inactive",
-                            "This account is suspended or no longer a member of this team's workspace. "
-                            "Ask one of your team's administrators.")
+                            "This account is suspended or was removed from the team. Ask one of the team's "
+                            "administrators.")
         if needs_rehash(stored):
             cursor.execute("UPDATE users SET password_hash = %s WHERE id = %s", (hash_password(password), user_id))
         token = create_session(cursor, membership_id, settings)
-    rate_limit.clear(database, "login_account", account)
+    rate_limit.clear(database, "login_account", email)
     return token
 
 
@@ -228,7 +184,7 @@ def login(database: Database, settings: Settings, *, team_number: int, email: st
 
 def change_password(database: Database, context: SessionContext, *, current_password: str,
                     new_password: str) -> None:
-    """Change the signed-in person's password. Ends their other sessions, in every team."""
+    """Change the signed-in person's password. Ends their other sessions."""
     subject = str(context.user_id)
     rate_limit.check(database, "password_check_user", subject)
     with database.connection() as conn, conn.cursor() as cursor:
@@ -238,7 +194,7 @@ def change_password(database: Database, context: SessionContext, *, current_pass
             conn.rollback()
             rate_limit.record(database, "password_check_user", subject, succeeded=False)
             raise forbidden("current_password_incorrect", "Your current password is not correct.")
-        check_password_policy(new_password, email=context.email)
+        check_password_policy(new_password)
         if verify_password(new_password, stored):
             raise invalid_input("Choose a new password that differs from your current one.")
         cursor.execute("UPDATE users SET password_hash = %s, password_changed_at = NOW() WHERE id = %s",
@@ -249,169 +205,115 @@ def change_password(database: Database, context: SessionContext, *, current_pass
                         target_label=context.name)
 
 
-def issue_reset_token(cursor: Any, settings: Settings, *, membership_id: int,
-                      issued_by_user_id: int | None) -> tuple[str, datetime]:
-    """A new single-use reset token for a membership, inside the caller's transaction. Earlier unused tokens for
-    the same membership stop working."""
-    cursor.execute("UPDATE password_reset_tokens SET used_at = NOW() WHERE membership_id = %s AND used_at IS NULL",
-                   (membership_id,))
-    token = new_token()
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.password_reset_ttl_minutes)
-    cursor.execute("INSERT INTO password_reset_tokens (membership_id, token_hash, expires_at, issued_by_user_id) "
-                   "VALUES (%s, %s, %s, %s)", (membership_id, token_hash(token), expires_at, issued_by_user_id))
-    return token, expires_at
+def new_reset_code() -> str:
+    """A uniformly random 6-digit code (leading zeros kept)."""
+    return f"{secrets.randbelow(10 ** RESET_CODE_DIGITS):0{RESET_CODE_DIGITS}d}"
 
 
-def reset_link_path(token: str) -> str:
-    # In the URL fragment, which browsers never send to a server, so the token stays out of every access log.
-    return f"/auth/reset#token={token}"
+def reset_code_hash(salt: str, code: str) -> str:
+    """The stored form of a reset code: SHA-256 over the row's random salt and the code."""
+    return hashlib.sha256(f"{salt}:{code}".encode("utf-8")).hexdigest()
 
 
-def request_password_reset(database: Database, settings: Settings, *, team_number: int, email: str,
-                           client_ip: str) -> dict[str, Any]:
-    """Email a reset link if this is an active member and email is configured. The answer is the same either way,
-    so it never reveals whether an account exists."""
+def request_password_reset(database: Database, settings: Settings, *, email: str,
+                           client_ip: str) -> tuple[dict[str, Any], str | None]:
+    """The answer to "forgot password", and the email to send a code to afterwards (or None).
+
+    Only the email's format and the rate limits are checked here: whether the account exists is looked up by
+    send_reset_code, which the API runs as a background task after answering. So the answer, and the time it takes,
+    are the same whether or not the account exists."""
     configured = mailer.email_channel(settings) is not None
     answer = {"accepted": True, "email_delivery_configured": configured}
     try:
-        team_number = check_team_number(team_number)
         email = normalize_email(email)
     except WorkspaceError:
-        return answer
-    account = f"{team_number}:{email}"
+        return answer, None
     rate_limit.check(database, "reset_request_ip", client_ip)
-    rate_limit.check(database, "reset_request_account", account)
+    rate_limit.check(database, "reset_request_account", email)
     rate_limit.record(database, "reset_request_ip", client_ip, succeeded=True)
-    rate_limit.record(database, "reset_request_account", account, succeeded=True)
-    if not configured:
-        return answer
-    with database.cursor() as cursor:
-        cursor.execute(
-            "SELECT m.id, w.team_number, w.team_name FROM workspaces w JOIN team_memberships m "
-            "ON m.workspace_id = w.id JOIN users u ON u.id = m.user_id WHERE w.team_number = %s "
-            "AND w.verification_status IN ('pending_verification', 'verified') AND u.email = %s "
-            "AND m.status = 'active' AND u.status = 'active'", (team_number, email))
-        row = cursor.fetchone()
-        if row is None:
-            return answer
-        membership_id, number, name = row
-        token, _ = issue_reset_token(cursor, settings, membership_id=membership_id, issued_by_user_id=None)
-    link = mailer.absolute_link(settings, reset_link_path(token))
-    mailer.send(settings, to=email, subject=f"Reset your StratAI password (team {number})",
-                body=f"Someone asked to reset the StratAI password for {email} in team {number} ({name}).\n\n"
-                     f"To choose a new password, open this link within {settings.password_reset_ttl_minutes} "
-                     f"minutes:\n{link}\n\nIf you did not ask for this, ignore this email; your password is "
-                     "unchanged.\n")
-    return answer
+    rate_limit.record(database, "reset_request_account", email, succeeded=True)
+    return answer, (email if configured else None)
 
 
-def reset_password(database: Database, *, token: str, new_password: str, client_ip: str) -> None:
-    """Set a new password with a reset token: single use, unexpired. Ends every session the person holds."""
-    rate_limit.check(database, "token_ip", client_ip)
+def send_reset_code(database: Database, settings: Settings, email: str) -> None:
+    """Create a reset code for email and send it, if email belongs to an active member; otherwise do nothing.
+
+    Runs after the response has been sent (api/routes/auth.py), so nothing here can change what the caller sees or
+    how long it waits. A failure is logged without the address and never raised."""
+    try:
+        code = new_reset_code()
+        salt = secrets.token_hex(16)
+        with database.cursor() as cursor:
+            cursor.execute(
+                "SELECT u.id FROM users u JOIN team_memberships m ON m.user_id = u.id JOIN workspaces w "
+                "ON w.id = m.workspace_id WHERE w.team_number = %s AND u.email = %s AND u.status = 'active' "
+                "AND m.status = 'active'", (TEAM_NUMBER, email))
+            row = cursor.fetchone()
+            if row is None:
+                return
+            user_id = row[0]
+            cursor.execute("UPDATE password_reset_codes SET used_at = NOW() WHERE user_id = %s AND used_at IS NULL",
+                           (user_id,))
+            cursor.execute("INSERT INTO password_reset_codes (user_id, code_salt, code_hash, expires_at) "
+                           "VALUES (%s, %s, %s, NOW() + %s)",
+                           (user_id, salt, reset_code_hash(salt, code), RESET_CODE_TTL))
+        minutes = int(RESET_CODE_TTL.total_seconds() // 60)
+        where = f" at {settings.public_app_url.rstrip('/')}/auth/reset" if settings.public_app_url else ""
+        mailer.send(settings, to=email, subject="Your StratAI password reset code",
+                    body=f"Someone asked to reset the StratAI password for {email}.\n\n"
+                         f"Your code is: {code}\n\nEnter it{where} within {minutes} minutes. It works once.\n\n"
+                         "If you did not ask for this, ignore this email; your password is unchanged.\n")
+    except Exception as exc:  # a background task: nobody is waiting for the error
+        logger.warning("password reset code not sent: %s", type(exc).__name__)
+
+
+def _invalid_reset_code() -> WorkspaceError:
+    return WorkspaceError(HTTPStatus.GONE, "reset_code_invalid",
+                          "That code is not correct, has expired or was already used. Ask for a new code.")
+
+
+def reset_password(database: Database, settings: Settings, *, email: str, code: str, new_password: str,
+                   client_ip: str) -> str:
+    """Set a new password with an emailed reset code, end every session the person holds, and sign them in.
+    Returns the new session token."""
+    rate_limit.check(database, "reset_code_ip", client_ip)
+    check_password_policy(new_password)
+    try:
+        email = normalize_email(email)
+    except WorkspaceError:
+        raise _invalid_reset_code() from None
+    supplied = code.strip() if isinstance(code, str) else ""
     with database.connection() as conn, conn.cursor() as cursor:
         cursor.execute(
-            "SELECT t.id, m.id, m.workspace_id, u.id, u.email, COALESCE(m.display_name, u.full_name) "
-            "FROM password_reset_tokens t JOIN team_memberships m ON m.id = t.membership_id "
-            "JOIN users u ON u.id = m.user_id WHERE t.token_hash = %s AND t.used_at IS NULL "
-            "AND t.expires_at > NOW() FOR UPDATE OF t", (token_hash(token or ""),))
+            "SELECT c.id, c.code_salt, c.code_hash, u.id, m.id, m.workspace_id, "
+            "COALESCE(m.display_name, u.full_name) FROM password_reset_codes c JOIN users u ON u.id = c.user_id "
+            "JOIN team_memberships m ON m.user_id = u.id JOIN workspaces w ON w.id = m.workspace_id "
+            "WHERE w.team_number = %s AND u.email = %s AND u.status = 'active' AND m.status = 'active' "
+            "AND c.used_at IS NULL AND c.expires_at > NOW() AND c.failed_attempts < %s "
+            "ORDER BY c.created_at DESC LIMIT 1 FOR UPDATE OF c",
+            (TEAM_NUMBER, email, RESET_CODE_MAX_ATTEMPTS))
         row = cursor.fetchone()
         if row is None:
             conn.rollback()
-            rate_limit.record(database, "token_ip", client_ip, succeeded=False)
-            raise WorkspaceError(HTTPStatus.GONE, "reset_link_invalid",
-                                 "This password reset link is invalid, expired or already used. Ask for a new one.")
-        token_id, membership_id, workspace_id, user_id, email, name = row
-        check_password_policy(new_password, email=email)
-        cursor.execute("UPDATE password_reset_tokens SET used_at = NOW() WHERE id = %s", (token_id,))
+            rate_limit.record(database, "reset_code_ip", client_ip, succeeded=False)
+            raise _invalid_reset_code()
+        code_id, salt, stored_hash, user_id, membership_id, workspace_id, name = row
+        if not hmac.compare_digest(reset_code_hash(salt, supplied), stored_hash):
+            # Kept even though the request fails: the attempt count is what stops a code being guessed.
+            cursor.execute("UPDATE password_reset_codes SET failed_attempts = failed_attempts + 1 WHERE id = %s",
+                           (code_id,))
+            conn.commit()
+            rate_limit.record(database, "reset_code_ip", client_ip, succeeded=False)
+            raise _invalid_reset_code()
+        cursor.execute("UPDATE password_reset_codes SET used_at = NOW() WHERE id = %s", (code_id,))
         cursor.execute("UPDATE users SET password_hash = %s, password_changed_at = NOW() WHERE id = %s",
                        (hash_password(new_password), user_id))
         revoke_user_sessions(cursor, user_id)
         activity.record(cursor, workspace_id=workspace_id, actor_user_id=user_id, actor_label=name,
                         action="password_reset_completed", target_user_id=user_id, target_label=name)
-
-
-# --- invitations ----------------------------------------------------------------------------------------------
-
-
-def invitation_link_path(token: str) -> str:
-    return f"/auth/invite#token={token}"
-
-
-_INVITATION_SQL = """
-SELECT i.id, i.workspace_id, i.email, i.full_name, i.role, i.status, i.expires_at, w.team_number, w.team_name,
-       w.verification_status
-FROM invitations i JOIN workspaces w ON w.id = i.workspace_id
-WHERE i.token_hash = %s
-"""
-
-
-def _usable_invitation(row: tuple | None) -> tuple:
-    if row is None or row[5] != "pending" or row[9] != "verified":
-        raise WorkspaceError(HTTPStatus.GONE, "invitation_invalid",
-                             "This invitation link is not valid: it was already used, revoked or replaced by a "
-                             "newer one. Ask your team's administrator for a new invitation.")
-    if row[6] <= datetime.now(timezone.utc):
-        raise WorkspaceError(HTTPStatus.GONE, "invitation_expired",
-                             "This invitation has expired. Ask your team's administrator to resend it.")
-    return row
-
-
-def preview_invitation(database: Database, *, token: str, client_ip: str) -> dict[str, Any]:
-    """What an invitation offers, for the acceptance page."""
-    rate_limit.check(database, "token_ip", client_ip)
-    with database.cursor() as cursor:
-        cursor.execute(_INVITATION_SQL, (token_hash(token or ""),))
-        row = cursor.fetchone()
-        try:
-            _usable_invitation(row)
-        except WorkspaceError:
-            rate_limit.record(database, "token_ip", client_ip, succeeded=False)
-            raise
-        cursor.execute("SELECT 1 FROM users WHERE email = %s", (row[2],))
-        existing = cursor.fetchone() is not None
-    return {"team_number": row[7], "team_name": row[8], "email": row[2], "full_name": row[3], "role": row[4],
-            "role_label": ROLE_LABELS[row[4]], "expires_at": row[6], "existing_account": existing}
-
-
-def accept_invitation(database: Database, settings: Settings, *, token: str, full_name: str, password: str,
-                      client_ip: str) -> str:
-    """Accept an invitation: create the account (or join with an existing one by its password), make the
-    membership, spend the invitation, and sign in. Returns the session token."""
-    rate_limit.check(database, "token_ip", client_ip)
-    try:
-        with database.connection() as conn, conn.cursor() as cursor:
-            cursor.execute(_INVITATION_SQL + " FOR UPDATE OF i", (token_hash(token or ""),))
-            row = _usable_invitation(cursor.fetchone())
-            invitation_id, workspace_id, email, invited_name, role = row[:5]
-            name = clean_name(full_name or invited_name)
-            user_id, created = _find_or_create_user(cursor, email=email, full_name=name, password=password)
-            cursor.execute("SELECT id, status FROM team_memberships WHERE workspace_id = %s AND user_id = %s "
-                           "FOR UPDATE", (workspace_id, user_id))
-            existing = cursor.fetchone()
-            if existing is not None and existing[1] != "removed":
-                raise conflict("already_member", "This account is already a member of this team's workspace.")
-            if existing is None:
-                cursor.execute("INSERT INTO team_memberships (workspace_id, user_id, role, display_name) "
-                               "VALUES (%s, %s, %s, %s) RETURNING id", (workspace_id, user_id, role, name))
-                membership_id = cursor.fetchone()[0]
-            else:
-                membership_id = existing[0]
-                cursor.execute("UPDATE team_memberships SET status = 'active', role = %s, display_name = %s, "
-                               "updated_at = NOW() WHERE id = %s", (role, name, membership_id))
-            cursor.execute("UPDATE invitations SET status = 'accepted', accepted_at = NOW(), accepted_user_id = %s "
-                           "WHERE id = %s", (user_id, invitation_id))
-            if created:
-                activity.record(cursor, workspace_id=workspace_id, actor_user_id=user_id, actor_label=name,
-                                action="account_created", target_user_id=user_id, target_label=name)
-            activity.record(cursor, workspace_id=workspace_id, actor_user_id=user_id, actor_label=name,
-                            action="invitation_accepted", target_user_id=user_id, target_label=name,
-                            details={"role": role, "email": email})
-            token_out = create_session(cursor, membership_id, settings)
-    except WorkspaceError as refused:
-        if refused.code in ("invitation_invalid", "invitation_expired", "existing_account_password_mismatch"):
-            rate_limit.record(database, "token_ip", client_ip, succeeded=False)
-        raise
-    return token_out
+        token = create_session(cursor, membership_id, settings)
+    rate_limit.clear(database, "login_account", email)
+    return token
 
 
 def session_summary(context: SessionContext) -> dict[str, Any]:
@@ -419,13 +321,5 @@ def session_summary(context: SessionContext) -> dict[str, Any]:
     return {"authenticated": True, "user": {"id": context.user_id, "name": context.name, "email": context.email},
             "workspace": {"team_number": context.team_number, "team_name": context.team_name,
                           "verification_status": context.verification_status},
-            "role": context.role, "role_label": ROLE_LABELS[context.role],
+            "role": context.role, "role_label": ROLE_LABELS.get(context.role, context.role),
             "permissions": sorted(context.permissions)}
-
-
-def seed_missing_permissions(cursor: Any, workspace_id: int) -> None:
-    """Add a stored row for any configurable permission a workspace has none for (a permission added later)."""
-    for role, grants in default_role_grants().items():
-        for permission, granted in grants.items():
-            cursor.execute("INSERT INTO workspace_role_permissions (workspace_id, role, permission, granted) "
-                           "VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING", (workspace_id, role, permission, granted))

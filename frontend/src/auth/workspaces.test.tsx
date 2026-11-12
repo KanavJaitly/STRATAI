@@ -5,15 +5,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { Shell } from '../App'
 import { SessionProvider } from '../state/session'
+import { ADMIN_PERMISSIONS, ADMIN_SESSION, BASE_SESSION } from '../test/auth'
 import { axeViolations } from '../test/dashboard'
-import { EVENTS } from '../test/dashboardFixtures'
+import { EVENT, EVENTS, TEAMS } from '../test/dashboardFixtures'
 import { apiError, mockApi } from '../test/mockApi'
 import { clearSeasonEvents } from '../workspace/events'
 import { AuthProvider } from './AuthContext'
 import type { SessionInfo } from './api'
+import { landingFor, pageAllowed } from './roles'
 
-// Team workspaces in the web app: the landing button, registration, sign-in and role redirects, invitations, the
-// Admin Dashboard, permissions, the role dashboards and the members-only policy. Synthetic fixture data only.
+// Team 11's accounts in the web app: the whole site behind sign-in, sign-up with the join code, sign-in and the role
+// landing pages, password reset by code, what a base member may see, and Team Management. Synthetic data only.
 
 // The synthetic season's events, for the event chooser and the headings that name the chosen event.
 const SEASON_EVENTS = { 'GET /explorer/seasons/2099/events': [
@@ -21,50 +23,33 @@ const SEASON_EVENTS = { 'GET /explorer/seasons/2099/events': [
     end_date: '2099-03-03', city: 'Testville', state_prov: 'NJ', country: 'USA', district: 'fma',
     district_name: 'FIRST Mid-Atlantic', matches: 1, matches_played: 0, teams: 6 }] }
 
-const SIGNED_OUT: SessionInfo = { authenticated: false, access_policy: 'open', email_delivery_configured: false }
-const ALL_ADMIN = ['team_info', 'match_predictions', 'team_analytics', 'event_analysis', 'qualification_forecast',
-  'alliance_selection', 'strategy_tools', 'scouting_forms', 'scouting_submit', 'scouting_view', 'scouting_assign',
-  'team_management', 'manage_permissions', 'team_settings', 'activity_log']
+const SIGNED_OUT: SessionInfo = { authenticated: false, access_policy: 'members', email_delivery_configured: true,
+  signup_open: true }
 
-function signedIn(role: 'admin' | 'strategy' | 'scouter', permissions: string[],
-  status: 'verified' | 'pending_verification' = 'verified'): SessionInfo {
-  return { authenticated: true, access_policy: 'open', email_delivery_configured: false,
-    user: { id: 1, name: role === 'admin' ? 'Ada Admin' : 'Sam Scout', email: `${role}@example.test` },
-    workspace: { team_number: 9999, team_name: 'Synthetic Robotics', verification_status: status }, role,
-    role_label: role, permissions }
-}
-const ADMIN = signedIn('admin', ALL_ADMIN)
-const STRATEGY = signedIn('strategy', ['team_info', 'match_predictions', 'team_analytics', 'event_analysis',
-  'qualification_forecast', 'alliance_selection', 'strategy_tools', 'scouting_forms', 'scouting_view',
-  'scouting_assign'])
-const SCOUTER = signedIn('scouter', ['team_info', 'scouting_forms', 'scouting_submit'])
-
-const OVERVIEW = { team_number: 9999, team_name: 'Synthetic Robotics', verification_status: 'verified',
+const OVERVIEW = { team_number: 11, team_name: 'MORT', verification_status: 'verified',
   verified_at: '2026-11-01T10:00:00Z', created_at: '2026-11-01T09:00:00Z',
   settings: { default_event_key: '2099synth', scouting_instructions: 'Watch the defense closely.' },
-  active_members: 3, role: 'admin', role_label: 'Administrator', permissions: ALL_ADMIN }
-const ANALYTICS = { members_by_role: { admin: { active: 1, suspended: 0 }, strategy: { active: 1, suspended: 0 },
-  scouter: { active: 1, suspended: 0 } }, active_last_7_days: 3, never_signed_in: 0, pending_invitations: 1,
-  expired_invitations: 0, scouting: { reports: 4, reports_last_7_days: 2, events: 1, open_assignments: 1,
-    completed_assignments: 1, top_scouts: [{ name: 'Sam Scout', reports: 4 }] } }
+  active_members: 2, role: 'admin', role_label: 'Administrator', permissions: ADMIN_PERMISSIONS }
+const ANALYTICS = { members_by_role: { admin: { active: 1, suspended: 0 }, base: { active: 1, suspended: 0 } },
+  active_last_7_days: 2, never_signed_in: 0, scouting: { reports: 4, reports_last_7_days: 2, events: 1,
+    open_assignments: 1, completed_assignments: 1, top_scouts: [{ name: 'Ada Admin', reports: 4 }] } }
 const MEMBERS = {
   members: [
-    { membership_id: 1, user_id: 1, name: 'Ada Admin', email: 'ada@example.test', role: 'admin', role_label: 'Administrator',
-      status: 'active', invitation_status: 'accepted', last_login_at: '2026-11-01T10:00:00Z',
+    { membership_id: 1, user_id: 1, name: 'Ada Admin', email: 'ada@example.test', role: 'admin',
+      role_label: 'Administrator', status: 'active', last_login_at: '2026-11-01T10:00:00Z',
       joined_at: '2026-11-01T09:00:00Z', is_self: true },
-    { membership_id: 2, user_id: 2, name: 'Sam Scout', email: 'sam@example.test', role: 'scouter', role_label: 'Scouter',
-      status: 'active', invitation_status: 'accepted', last_login_at: null, joined_at: '2026-11-01T09:30:00Z',
-      is_self: false },
+    { membership_id: 2, user_id: 2, name: 'Bo Base', email: 'bo@example.test', role: 'base', role_label: 'Member',
+      status: 'active', last_login_at: null, joined_at: '2026-11-01T09:30:00Z', is_self: false },
   ],
-  invitations: [{ invitation_id: 7, email: 'pat@example.test', name: 'Pat Pending', role: 'strategy',
-    role_label: 'Drive team / strategy', expires_at: '2099-01-01T00:00:00Z', invited_at: '2026-11-01T11:00:00Z',
-    invited_by: 'Ada Admin', invitation_status: 'pending' }],
 }
 const MATCHES = { as_of: '2026-11-01T00:00:00Z', event_key: '2099synth', validation: {}, matches: [
   { match_key: '2099synth_qm1', competition_level: 'qualification', set_number: 1, match_number: 1,
     scheduled_time: '2099-03-01T10:00:00Z', red_team_numbers: [9001, 9002, 9003], blue_team_numbers: [9004, 9005, 9006],
     result: null, result_withheld_reason: 'not_played' },
 ] }
+// What the admin landing page (/team) and the events page (/) read.
+const LANDING = { 'GET /workspace': OVERVIEW, 'GET /workspace/analytics': ANALYTICS, 'GET /events': EVENTS,
+  ...SEASON_EVENTS }
 
 function renderApp(url: string) {
   return render(
@@ -74,253 +59,321 @@ function renderApp(url: string) {
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); clearSeasonEvents() })
 
-describe('signed out', () => {
-  it('shows the Login / Register button on the landing page and opens the two choices', async () => {
-    mockApi({ 'GET /auth/session': SIGNED_OUT, 'GET /events': EVENTS })
-    renderApp('/?season=2099')
-    const buttons = await screen.findAllByRole('link', { name: "Login / Register to Your Team's StratAI" })
-    expect(buttons.length).toBeGreaterThanOrEqual(1)
-    await userEvent.click(buttons[0])
-    expect(await screen.findByRole('heading', { name: 'Register a New Team' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Log In to an Existing Team' })).toBeInTheDocument()
+describe('roles', () => {
+  it('lets a base member open only the events list, an event page and their account', () => {
+    for (const path of ['/', '/?season=2026', '/events/2026njfla', '/events/2026njfla?tab=teams', '/account']) {
+      expect(pageAllowed('base', path)).toBe(true)
+    }
+    for (const path of ['/team', '/explorer', '/status', '/inputs', '/events/2026njfla/teams/11',
+      '/events/2026njfla/alliance-selection', '/matches/2026njfla_qm1', '/report/2026njfla_qm1', '/drive-team']) {
+      expect(pageAllowed('base', path)).toBe(false)
+      expect(pageAllowed('admin', path)).toBe(true)
+    }
   })
 
-  it('has no accessibility violations on the sign-in choice', async () => {
-    mockApi({ 'GET /auth/session': SIGNED_OUT })
-    const { container } = renderApp('/auth')
-    await screen.findByRole('heading', { name: 'Register a New Team' })
-    expect(await axeViolations(container, { region: true })).toEqual([])
-  })
-
-  it('says so when the API answering predates team accounts (its /auth/session is a 404)', async () => {
-    mockApi({}) // every route unmocked: GET /auth/session answers the unmatched-route 404, as an older API does
-    renderApp('/auth/register')
-    expect(await screen.findByText(/This StratAI server does not have team accounts yet/)).toBeInTheDocument()
-    expect(screen.getByText(/running\s+an older version of StratAI/)).toBeInTheDocument()
-  })
-
-  it("says so when the server's database lacks the team-account migration", async () => {
-    mockApi({ 'GET /auth/session': { ...SIGNED_OUT, accounts_available: false } })
-    renderApp('/auth/login')
-    expect(await screen.findByText(/Team accounts are not set up on this server/)).toBeInTheDocument()
-    expect(screen.getByText('0012_team_workspaces.sql')).toBeInTheDocument()
-  })
-
-  it('shows no such notice when the server is ready for accounts', async () => {
-    mockApi({ 'GET /auth/session': { ...SIGNED_OUT, accounts_available: true } })
-    renderApp('/auth/register')
-    expect(await screen.findByRole('heading', { name: 'Register a new team' })).toBeInTheDocument()
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-  })
-
-  it('sends a visitor to sign in when the server is members-only', async () => {
-    mockApi({ 'GET /auth/session': { ...SIGNED_OUT, access_policy: 'members' } })
-    renderApp('/events/2099synth')
-    expect(await screen.findByRole('heading', { name: 'Log in to your team' })).toBeInTheDocument()
+  it('follows next after sign-in only when the role may open it', () => {
+    expect(landingFor('admin', null)).toBe('/team')
+    expect(landingFor('base', null)).toBe('/')
+    expect(landingFor('base', '/events/2099synth')).toBe('/events/2099synth')
+    expect(landingFor('base', '/team')).toBe('/')
+    expect(landingFor('admin', '/explorer')).toBe('/explorer')
+    expect(landingFor('admin', '//evil.example')).toBe('/team')
   })
 })
 
-describe('registration', () => {
-  it('registers a team, creates the first administrator and opens the Admin Dashboard', async () => {
-    const api = mockApi({
-      'GET /auth/session': SIGNED_OUT,
-      'POST /auth/teams/register': { status: 201, body: { team_number: 9999, team_name: 'Synthetic Robotics',
-        verification_status: 'pending_verification', known_frc_team: false, frc_team_name: null } },
-      'POST /auth/teams/initial-admin': { status: 201, body: signedIn('admin', ALL_ADMIN, 'pending_verification') },
-      'GET /workspace': { ...OVERVIEW, verification_status: 'pending_verification' },
-      'GET /workspace/analytics': ANALYTICS,
+describe('signed out', () => {
+  it.each(['/', '/events/2099synth', '/team', '/explorer', '/status', '/account'])(
+    'sends a visitor at %s to sign in, with next', async (path) => {
+      mockApi({ 'GET /auth/session': SIGNED_OUT })
+      renderApp(path)
+      expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+      const nav = screen.getByRole('navigation', { name: 'Main' })
+      expect(within(nav).queryAllByRole('link')).toEqual([])
     })
-    renderApp('/auth/register')
-    const user = userEvent.setup()
-    await user.type(await screen.findByLabelText('FRC team number'), '9999')
-    await user.type(screen.getByLabelText('Team name'), 'Synthetic Robotics')
-    await user.type(screen.getByLabelText(/^Team setup password/), 'setup passphrase 1')
-    await user.type(screen.getByLabelText('Confirm the setup password'), 'setup passphrase 1')
-    await user.click(screen.getByRole('button', { name: 'Register team' }))
-    expect(await screen.findByText(/is registered and/)).toBeInTheDocument()
-    await user.type(screen.getByLabelText('Full name'), 'Ada Admin')
-    await user.type(screen.getByLabelText('Email address'), 'ada@example.test')
-    await user.type(screen.getByLabelText(/^Password/), 'admin passphrase 1')
-    await user.type(screen.getByLabelText('Confirm password'), 'admin passphrase 1')
-    await user.click(screen.getByRole('button', { name: /Create account/ }))
-    expect(await screen.findByRole('heading', { name: 'Admin Dashboard' })).toBeInTheDocument()
-    expect(screen.getAllByText(/Pending verification/).length).toBeGreaterThan(0)
-    const admin = api.writes().find((c) => c.path === '/auth/teams/initial-admin')!
-    expect(admin.body).toEqual({ team_number: 9999, setup_password: 'setup passphrase 1', full_name: 'Ada Admin',
-      email: 'ada@example.test', password: 'admin passphrase 1' })
-    for (const write of api.writes()) expect(write.headers['X-StratAI-CSRF']).toBe('1')
+
+  it('forwards /auth to the sign-in page', async () => {
+    mockApi({ 'GET /auth/session': SIGNED_OUT })
+    renderApp('/auth')
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
   })
 
-  it('refuses mismatched setup passwords before calling the API', async () => {
-    const api = mockApi({ 'GET /auth/session': SIGNED_OUT })
-    renderApp('/auth/register')
+  it('has no accessibility violations on the sign-in page', async () => {
+    mockApi({ 'GET /auth/session': SIGNED_OUT })
+    const { container } = renderApp('/auth/login')
+    await screen.findByRole('heading', { name: 'Log in' })
+    expect(await axeViolations(container, { region: true })).toEqual([])
+  })
+
+  it('says so when the API answering predates accounts (its /auth/session is a 404)', async () => {
+    mockApi({}) // every route unmocked: GET /auth/session answers the unmatched-route 404, as an older API does
+    renderApp('/auth/login')
+    expect(await screen.findByText(/This StratAI server does not have accounts yet/)).toBeInTheDocument()
+  })
+
+  it("says so when the server's database lacks the account migrations", async () => {
+    mockApi({ 'GET /auth/session': { ...SIGNED_OUT, accounts_available: false } })
+    renderApp('/auth/signup')
+    expect(await screen.findByText(/Accounts are not set up on this server/)).toBeInTheDocument()
+    expect(screen.getByText('0015_single_team_auth.sql')).toBeInTheDocument()
+  })
+
+  it('has no registration, invitation or team-number fields anywhere', async () => {
+    mockApi({ 'GET /auth/session': SIGNED_OUT })
+    for (const path of ['/auth/login', '/auth/signup', '/auth/forgot', '/auth/reset']) {
+      const { unmount } = renderApp(path)
+      await screen.findByRole('main')
+      await waitFor(() => expect(screen.queryByText(/Checking your sign-in/)).not.toBeInTheDocument())
+      expect(screen.queryByLabelText(/team number/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/Register/)).not.toBeInTheDocument()
+      unmount()
+    }
+    for (const path of ['/auth/register', '/auth/invite']) {
+      const { unmount } = renderApp(path)
+      expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument() // not a public page
+      unmount()
+    }
+  })
+})
+
+describe('sign-up', () => {
+  async function fill(code: string, password = 'eight888', confirm = password) {
     const user = userEvent.setup()
-    await user.type(await screen.findByLabelText('FRC team number'), '9999')
-    await user.type(screen.getByLabelText('Team name'), 'X')
-    await user.type(screen.getByLabelText(/^Team setup password/), 'setup passphrase 1')
-    await user.type(screen.getByLabelText('Confirm the setup password'), 'setup passphrase 2')
-    await user.click(screen.getByRole('button', { name: 'Register team' }))
-    expect(await screen.findByText('The two passwords do not match.')).toBeInTheDocument()
+    await user.type(await screen.findByLabelText('Full name'), 'Bo Base')
+    await user.type(screen.getByLabelText('Email address'), 'Bo@Example.test')
+    await user.type(screen.getByLabelText(/^Password/), password)
+    await user.type(screen.getByLabelText('Confirm password'), confirm)
+    await user.type(screen.getByLabelText(/^Team join code/), code)
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+  }
+
+  it('creates the account with the join code, signs in and opens the events for a base member', async () => {
+    const api = mockApi({ 'GET /auth/session': SIGNED_OUT, 'POST /auth/signup': { status: 201, body: BASE_SESSION },
+      ...LANDING })
+    renderApp('/auth/signup')
+    await fill('the-code')
+    expect(await screen.findByRole('heading', { name: 'Events' })).toBeInTheDocument()
+    const signup = api.writes().find((c) => c.path === '/auth/signup')!
+    expect(signup.body).toEqual({ full_name: 'Bo Base', email: 'Bo@Example.test', password: 'eight888',
+      join_code: 'the-code' })
+    expect(signup.headers['X-StratAI-CSRF']).toBe('1')
+  })
+
+  it('opens the Admin Dashboard when the API makes the account an administrator (ADMIN_EMAILS)', async () => {
+    mockApi({ 'GET /auth/session': SIGNED_OUT, 'POST /auth/signup': { status: 201, body: ADMIN_SESSION }, ...LANDING })
+    renderApp('/auth/signup')
+    await fill('the-code')
+    expect(await screen.findByRole('heading', { name: 'Admin Dashboard' })).toBeInTheDocument()
+  })
+
+  it('shows a clear error for a wrong join code', async () => {
+    mockApi({ 'GET /auth/session': SIGNED_OUT, 'POST /auth/signup': apiError(403, 'invalid_join_code',
+      "That team join code is not correct. Ask one of the team's administrators for it.") })
+    renderApp('/auth/signup')
+    await fill('wrong-code')
+    expect(await screen.findByText(/That team join code is not correct/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Create your account' })).toBeInTheDocument()
+  })
+
+  it('checks the password (8 characters, matching) before calling the API', async () => {
+    const api = mockApi({ 'GET /auth/session': SIGNED_OUT })
+    renderApp('/auth/signup')
+    await fill('the-code', 'seven77')
+    expect(await screen.findByText('Use at least 8 characters.')).toBeInTheDocument()
     expect(api.writes()).toEqual([])
+  })
+
+  it('says sign-up is closed when no join code is configured', async () => {
+    mockApi({ 'GET /auth/session': { ...SIGNED_OUT, signup_open: false } })
+    renderApp('/auth/signup')
+    expect(await screen.findByText(/Sign-up is not open on this server/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create account' })).toBeDisabled()
   })
 })
 
 describe('sign-in', () => {
-  it.each([
-    ['admin', ADMIN, 'Admin Dashboard'],
-    ['strategy', STRATEGY, 'Drive team dashboard'],
-    ['scouter', SCOUTER, 'Scouting dashboard'],
-  ])('sends a %s to their own dashboard', async (_role, session, heading) => {
-    mockApi({
-      'GET /auth/session': SIGNED_OUT, 'POST /auth/login': session,
-      'GET /workspace': OVERVIEW, ...SEASON_EVENTS, 'GET /workspace/analytics': ANALYTICS,
-      'GET /workspace/scouting/assignments': [], 'GET /workspace/scouting/reports': [],
-      'GET /workspace/scouting/summary': { event_key: '2099synth', teams: [], source: '', method: '' },
-      'GET /workspace/scouting/scouts': [], 'GET /events/2099synth/matches': MATCHES,
-      'GET /events/2099synth/teams': { event_key: '2099synth', teams: [], validation: {} },
-    })
-    renderApp('/auth/login')
+  async function logIn() {
     const user = userEvent.setup()
-    await user.type(await screen.findByLabelText('FRC team number'), '9999')
-    await user.type(screen.getByLabelText('Email address'), 'x@example.test')
-    await user.type(screen.getByLabelText('Password'), 'member passphrase 1')
+    await user.type(await screen.findByLabelText('Email address'), 'x@example.test')
+    await user.type(screen.getByLabelText('Password'), 'member passphrase')
     await user.click(screen.getByRole('button', { name: 'Log in' }))
+  }
+
+  it.each([
+    ['an administrator', ADMIN_SESSION, 'Admin Dashboard'],
+    ['a base member', BASE_SESSION, 'Events'],
+  ])('sends %s to their home page, with email and password only', async (_who, session, heading) => {
+    const api = mockApi({ 'GET /auth/session': SIGNED_OUT, 'POST /auth/login': session, ...LANDING })
+    renderApp('/auth/login')
+    await logIn()
     expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument()
+    expect(api.writes()[0].body).toEqual({ email: 'x@example.test', password: 'member passphrase' })
+  })
+
+  it("does not follow next to a page a base member's role cannot open", async () => {
+    mockApi({ 'GET /auth/session': SIGNED_OUT, 'POST /auth/login': BASE_SESSION, ...LANDING })
+    renderApp('/auth/login?next=%2Fteam')
+    await logIn()
+    expect(await screen.findByRole('heading', { name: 'Events' })).toBeInTheDocument()
   })
 
   it('shows the API refusal for wrong credentials', async () => {
     mockApi({ 'GET /auth/session': SIGNED_OUT,
-      'POST /auth/login': apiError(401, 'invalid_credentials', 'The team number, email or password is not correct.') })
+      'POST /auth/login': apiError(401, 'invalid_credentials', 'The email or password is not correct.') })
     renderApp('/auth/login')
-    const user = userEvent.setup()
-    await user.type(await screen.findByLabelText('FRC team number'), '9999')
-    await user.type(screen.getByLabelText('Email address'), 'x@example.test')
-    await user.type(screen.getByLabelText('Password'), 'wrong passphrase 1')
-    await user.click(screen.getByRole('button', { name: 'Log in' }))
+    await logIn()
     expect(await screen.findByRole('alert')).toHaveTextContent('invalid_credentials')
-  })
-
-  it('accepts an invitation from the link fragment and opens the role dashboard', async () => {
-    const api = mockApi({
-      'GET /auth/session': SIGNED_OUT,
-      'POST /auth/invitations/preview': { team_number: 9999, team_name: 'Synthetic Robotics', email: 'sam@example.test',
-        full_name: 'Sam Scout', role: 'scouter', role_label: 'Scouter', expires_at: '2099-01-01T00:00:00Z',
-        existing_account: false },
-      'POST /auth/invitations/accept': { status: 201, body: SCOUTER },
-      'GET /workspace': OVERVIEW, ...SEASON_EVENTS, 'GET /workspace/scouting/assignments': [], 'GET /workspace/scouting/reports': [],
-      'GET /events/2099synth/matches': MATCHES, 'GET /events/2099synth/teams': { event_key: '2099synth', teams: [],
-        validation: {} },
-    })
-    renderApp('/auth/invite#token=secret-token-value')
-    expect(await screen.findByText(/You are invited to team/)).toBeInTheDocument()
-    const user = userEvent.setup()
-    await user.type(screen.getByLabelText(/^Choose a password/), 'scout passphrase 1')
-    await user.type(screen.getByLabelText('Confirm password'), 'scout passphrase 1')
-    await user.click(screen.getByRole('button', { name: 'Create my account' }))
-    expect(await screen.findByRole('heading', { name: 'Scouting dashboard' })).toBeInTheDocument()
-    expect(api.calls.find((c) => c.path === '/auth/invitations/preview')!.body).toEqual({ token: 'secret-token-value' })
-    // The token travels only in request bodies, never in a URL.
-    expect(api.calls.every((c) => !c.path.includes('secret-token-value') && !c.query.toString().includes('secret'))).toBe(true)
   })
 })
 
-describe('navigation and permissions', () => {
-  it('shows Team Management only to administrators and blocks it for a scouter', async () => {
-    mockApi({ 'GET /auth/session': SCOUTER, 'GET /workspace': OVERVIEW, ...SEASON_EVENTS, 'GET /workspace/scouting/assignments': [],
-      'GET /workspace/scouting/reports': [] })
-    renderApp('/team')
-    expect(await screen.findByText(/Your role does not include this page/)).toBeInTheDocument()
-    const nav = screen.getByRole('navigation', { name: 'Main' })
-    expect(within(nav).queryByRole('link', { name: 'Team Management' })).not.toBeInTheDocument()
-    expect(within(nav).getByRole('link', { name: 'Scouting' })).toBeInTheDocument()
-    expect(within(nav).queryByRole('link', { name: 'Inputs overview' })).not.toBeInTheDocument()
+describe('password reset by code', () => {
+  it('asks for a code by email, then sets a new password with it and signs in', async () => {
+    const api = mockApi({ 'GET /auth/session': SIGNED_OUT,
+      'POST /auth/password/forgot': { status: 202, body: { accepted: true, email_delivery_configured: true } },
+      'POST /auth/password/reset': BASE_SESSION, ...LANDING })
+    renderApp('/auth/forgot')
+    const user = userEvent.setup()
+    await user.type(await screen.findByLabelText('Email address'), 'bo@example.test')
+    await user.click(screen.getByRole('button', { name: 'Send code' }))
+    expect(await screen.findByText(/a 6-digit code is on its way/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Enter the code' }))
+    expect(await screen.findByLabelText('Email address')).toHaveValue('bo@example.test')
+    await user.type(screen.getByLabelText(/^6-digit code/), '012345')
+    await user.type(screen.getByLabelText(/^New password/, { selector: 'input' }), 'new pass 1')
+    await user.type(screen.getByLabelText('Confirm new password'), 'new pass 1')
+    await user.click(screen.getByRole('button', { name: 'Set new password' }))
+    expect(await screen.findByRole('heading', { name: 'Events' })).toBeInTheDocument()
+    expect(api.writes().map((c) => c.body)).toEqual([
+      { email: 'bo@example.test' },
+      { email: 'bo@example.test', code: '012345', new_password: 'new pass 1' },
+    ])
+    // The code travels only in a request body, never in a URL.
+    expect(api.calls.every((c) => !c.path.includes('012345') && !c.query.toString().includes('012345'))).toBe(true)
   })
 
-  it('gives an administrator the Team Management tab and the full navigation', async () => {
-    mockApi({ 'GET /auth/session': ADMIN, 'GET /workspace': OVERVIEW, ...SEASON_EVENTS, 'GET /workspace/analytics': ANALYTICS })
+  it('refuses a code that is not 6 digits before calling the API', async () => {
+    const api = mockApi({ 'GET /auth/session': SIGNED_OUT })
+    renderApp('/auth/reset')
+    const user = userEvent.setup()
+    await user.type(await screen.findByLabelText('Email address'), 'bo@example.test')
+    await user.type(screen.getByLabelText(/^6-digit code/), '123')
+    await user.type(screen.getByLabelText(/^New password/, { selector: 'input' }), 'new pass 1')
+    await user.type(screen.getByLabelText('Confirm new password'), 'new pass 1')
+    await user.click(screen.getByRole('button', { name: 'Set new password' }))
+    expect(await screen.findByText('Enter the 6-digit code from the email.')).toBeInTheDocument()
+    expect(api.writes()).toEqual([])
+  })
+
+  it('shows the refusal for a wrong, expired or used code', async () => {
+    mockApi({ 'GET /auth/session': SIGNED_OUT, 'POST /auth/password/reset': apiError(410, 'reset_code_invalid',
+      'That code is not correct, has expired or was already used. Ask for a new code.') })
+    renderApp('/auth/reset')
+    const user = userEvent.setup()
+    await user.type(await screen.findByLabelText('Email address'), 'bo@example.test')
+    await user.type(screen.getByLabelText(/^6-digit code/), '999999')
+    await user.type(screen.getByLabelText(/^New password/, { selector: 'input' }), 'new pass 1')
+    await user.type(screen.getByLabelText('Confirm new password'), 'new pass 1')
+    await user.click(screen.getByRole('button', { name: 'Set new password' }))
+    expect(await screen.findByText(/has expired or was already used/)).toBeInTheDocument()
+  })
+})
+
+describe('what a base member sees', () => {
+  it('shows only Events in the navigation, and no write-token bar', async () => {
+    mockApi({ 'GET /auth/session': BASE_SESSION, ...LANDING })
+    renderApp('/?season=2099')
+    expect(await screen.findByRole('heading', { name: 'Events' })).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Events'])
+    expect(screen.queryByLabelText('Write token')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Account' })).toBeInTheDocument()
+  })
+
+  it.each(['/team', '/explorer', '/status', '/inputs', '/drive-team', `/events/${EVENT}/strategy-lab`,
+    `/matches/${EVENT}_qm1`])('refuses %s without loading it', async (path) => {
+    const api = mockApi({ 'GET /auth/session': BASE_SESSION })
+    renderApp(path)
+    expect(await screen.findByText(/Your role does not include this page/)).toBeInTheDocument()
+    // Nothing of the page is requested (the app-wide write-access probe of the session bar is not page data).
+    expect(api.calls.map((c) => c.path).filter((path) => path !== '/human-inputs/write-access'))
+      .toEqual(['/auth/session'])
+  })
+
+  it("shows an event's teams as plain text, with no links to pages it cannot open", async () => {
+    mockApi({ 'GET /auth/session': BASE_SESSION, 'GET /events': EVENTS, [`GET /events/${EVENT}/teams`]: TEAMS })
+    renderApp(`/events/${EVENT}?tab=teams`)
+    const team = String(TEAMS.teams[0].team_number)
+    expect(await screen.findByText(team)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: team })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Alliance selection' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Strategy lab' })).not.toBeInTheDocument()
+  })
+})
+
+describe('administrators', () => {
+  it('get the Admin Dashboard and the full navigation', async () => {
+    mockApi({ 'GET /auth/session': ADMIN_SESSION, ...LANDING })
     renderApp('/team')
     expect(await screen.findByRole('heading', { name: 'Admin Dashboard' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Main' })
-    for (const name of ['Events', 'Team Management', 'Drive team', 'Scouting', 'Inputs overview']) {
+    for (const name of ['Events', 'Team Management', 'Drive team', 'Scouting', 'System status', 'Historical seasons',
+      'Inputs overview']) {
       expect(within(nav).getByRole('link', { name })).toBeInTheDocument()
     }
-    expect(screen.getByText(/Ada Admin/)).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Permissions' })).not.toBeInTheDocument()
+  })
+
+  it('see an event with its team links', async () => {
+    mockApi({ 'GET /auth/session': ADMIN_SESSION, 'GET /events': EVENTS, [`GET /events/${EVENT}/teams`]: TEAMS })
+    renderApp(`/events/${EVENT}?tab=teams`)
+    const team = String(TEAMS.teams[0].team_number)
+    expect(await screen.findByRole('link', { name: team })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Alliance selection' })).toBeInTheDocument()
   })
 })
 
 describe('Team Management', () => {
-  it('lists members and invitations, filters them, and invites a member with a copyable link', async () => {
-    const api = mockApi({
-      'GET /auth/session': ADMIN, 'GET /workspace/members': MEMBERS,
-      'POST /workspace/invitations': { status: 201, body: { invitation_id: 8, email: 'new@example.test',
-        name: 'New Scout', role: 'scouter', expires_at: '2099-01-01T00:00:00Z',
-        invitation_link: '/auth/invite#token=abc', emailed: false, email_channel: null } },
-    })
+  it('lists the members, filters them, and says how new members join', async () => {
+    mockApi({ 'GET /auth/session': ADMIN_SESSION, 'GET /workspace/members': MEMBERS })
     renderApp('/team?tab=members')
     const table = await screen.findByRole('table')
-    expect(within(table).getByText('Sam Scout')).toBeInTheDocument()
-    expect(within(table).getByText('Pat Pending')).toBeInTheDocument()
+    expect(within(table).getByText('Bo Base')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '/auth/signup' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Add Team Member|Reset password|invitation/i })).not.toBeInTheDocument()
     const user = userEvent.setup()
-    await user.type(screen.getByLabelText('Search'), 'pat')
-    expect(within(table).queryByText('Sam Scout')).not.toBeInTheDocument()
-    await user.clear(screen.getByLabelText('Search'))
-    await user.click(screen.getByRole('button', { name: 'Add Team Member' }))
-    const form = screen.getByRole('form', { name: 'Add team member' })
-    await user.type(within(form).getByLabelText('Full name'), 'New Scout')
-    await user.type(within(form).getByLabelText('Email address'), 'new@example.test')
-    await user.click(within(form).getByRole('button', { name: 'Send invitation' }))
-    const link = await screen.findByLabelText('Link')
-    expect((link as HTMLInputElement).value).toBe(`${window.location.origin}/auth/invite#token=abc`)
-    expect(api.writes().find((c) => c.path === '/workspace/invitations')!.body).toEqual({
-      full_name: 'New Scout', email: 'new@example.test', role: 'scouter' })
+    await user.type(screen.getByLabelText('Search'), 'ada')
+    expect(within(table).queryByText('Bo Base')).not.toBeInTheDocument()
   })
 
-  it('changes a role and suspends a member after confirmation', async () => {
-    const api = mockApi({ 'GET /auth/session': ADMIN, 'GET /workspace/members': MEMBERS,
-      'POST /workspace/members/2/role': { membership_id: 2, role: 'strategy' },
-      'POST /workspace/members/2/status': { membership_id: 2, status: 'suspended' } })
+  it('changes a role, and removes a member after confirmation', async () => {
+    const api = mockApi({ 'GET /auth/session': ADMIN_SESSION, 'GET /workspace/members': MEMBERS,
+      'POST /workspace/members/2/role': { membership_id: 2, role: 'admin' },
+      'POST /workspace/members/2/remove': { membership_id: 2, status: 'removed' } })
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderApp('/team?tab=members')
     const user = userEvent.setup()
-    await user.selectOptions(await screen.findByLabelText('Role of Sam Scout'), 'strategy')
-    await waitFor(() => expect(api.writes().some((c) => c.path === '/workspace/members/2/role')).toBe(true))
-    await user.click(screen.getByRole('button', { name: 'Suspend' }))
-    await waitFor(() => expect(api.writes().find((c) => c.path === '/workspace/members/2/status')!.body)
-      .toEqual({ status: 'suspended' }))
-    expect(screen.queryByLabelText('Role of Ada Admin')).toBeInTheDocument()
-  })
-
-  it('saves only the permissions that changed, and never offers administrative ones to other roles', async () => {
-    const matrix = { roles: [], permissions: [
-      { permission: 'match_predictions', description: 'Match predictions', admin_only: false,
-        roles: { admin: { granted: true, editable: false }, strategy: { granted: true, editable: true },
-          scouter: { granted: false, editable: true } } },
-      { permission: 'team_management', description: 'Team Management', admin_only: true,
-        roles: { admin: { granted: true, editable: false }, strategy: { granted: false, editable: false },
-          scouter: { granted: false, editable: false } } },
-    ] }
-    const api = mockApi({ 'GET /auth/session': ADMIN, 'GET /workspace/permissions': matrix,
-      'POST /workspace/permissions': { role: 'scouter', changed: {} } })
-    renderApp('/team?tab=permissions')
-    const user = userEvent.setup()
-    expect(await screen.findByLabelText('Scouter: Team Management')).toBeDisabled()
-    expect(screen.getByLabelText('Administrator: Match predictions')).toBeDisabled()
-    await user.click(screen.getByLabelText('Scouter: Match predictions'))
-    await user.click(screen.getByRole('button', { name: 'Save changes' }))
-    await waitFor(() => expect(api.writes()).toHaveLength(1))
-    expect(api.writes()[0].body).toEqual({ role: 'scouter', grants: { match_predictions: true } })
+    const roles = await screen.findByLabelText('Role of Bo Base')
+    expect(within(roles).getAllByRole('option').map((o) => o.textContent)).toEqual(['Administrator', 'Member'])
+    await user.selectOptions(roles, 'admin')
+    await waitFor(() => expect(api.writes().find((c) => c.path === '/workspace/members/2/role')!.body)
+      .toEqual({ role: 'admin' }))
+    await user.click(screen.getByRole('button', { name: 'Remove' }))
+    await waitFor(() => expect(api.writes().some((c) => c.path === '/workspace/members/2/remove')).toBe(true))
+    // An administrator cannot change their own role here.
+    expect(screen.queryByLabelText('Role of Ada Admin')).not.toBeInTheDocument()
   })
 })
 
-describe('role dashboards', () => {
-  it('lets a scouter submit a report for an assignment', async () => {
+describe('admin dashboards', () => {
+  it('let an administrator submit a scouting report for an assignment', async () => {
     const assignment = { assignment_id: 5, event_key: '2099synth', match_key: '2099synth_qm1',
       competition_level: 'qualification', set_number: 1, match_number: 1, scheduled_time: '2099-03-01T10:00:00Z',
-      team_number: 9002, alliance_color: 'red', assigned_user_id: 2, assigned_to: 'Sam Scout', status: 'assigned',
+      team_number: 9002, alliance_color: 'red', assigned_user_id: 1, assigned_to: 'Ada Admin', status: 'assigned',
       created_at: '2026-11-01T00:00:00Z', report_submitted: false }
     const api = mockApi({
-      'GET /auth/session': SCOUTER, 'GET /workspace': OVERVIEW, ...SEASON_EVENTS,
+      'GET /auth/session': ADMIN_SESSION, 'GET /workspace': OVERVIEW, ...SEASON_EVENTS,
       'GET /workspace/scouting/assignments': [assignment], 'GET /workspace/scouting/reports': [],
+      'GET /workspace/scouting/scouts': [], 'GET /workspace/scouting/summary': { event_key: '2099synth', teams: [],
+        source: '', method: '' },
       'GET /events/2099synth/matches': MATCHES,
       'GET /events/2099synth/teams': { event_key: '2099synth', teams: [{ team_number: 9002, name: 'Synthetic Two',
         city: null, country: null, rookie_year: null, state_province: null }], validation: {} },
@@ -336,14 +389,5 @@ describe('role dashboards', () => {
     await waitFor(() => expect(api.writes()).toHaveLength(1))
     expect(api.writes()[0].body).toEqual({ match_key: '2099synth_qm1', team_number: 9002, defense_rating: 4,
       feeding_rating: null, notes: null, assignment_id: 5 })
-  })
-
-  it('shows the drive team only the tools its permissions include', async () => {
-    mockApi({ 'GET /auth/session': { ...STRATEGY, permissions: ['team_info', 'event_analysis'] },
-      'GET /workspace': OVERVIEW, ...SEASON_EVENTS })
-    renderApp('/drive-team')
-    expect(await screen.findByRole('link', { name: /Event analysis/ })).toHaveAttribute('href', '/events/2099synth')
-    expect(screen.queryByRole('link', { name: /Alliance selection/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: /scouting at/ })).not.toBeInTheDocument()
   })
 })

@@ -1,14 +1,13 @@
-"""Outgoing email for invitations and password resets.
+"""Outgoing email: password-reset codes.
 
 Three outcomes, reported to the caller so the interface can say what happened:
 - "smtp": sent through the configured SMTP server (SMTP_HOST and SMTP_FROM, optionally SMTP_USERNAME/PASSWORD).
 - "dev_outbox": ENV=development and DEV_OUTBOX_DIR is set, so the message was written there as a .eml file
   instead (for local testing; never honoured outside development).
-- None: no email is configured. Nothing is sent. An invitation's link is still returned to the administrator who
-  created it, to deliver themselves.
-Links in emails need PUBLIC_APP_URL (the web app's address); without it no email is sent.
+- None: no email is configured. Nothing is sent, so a forgotten password cannot be reset by email (an administrator
+  can still change the person's role or remove them; there is no administrator-issued reset).
 
-Message bodies are never logged: they contain single-use links.
+Message bodies are never logged: they contain single-use codes.
 """
 
 from __future__ import annotations
@@ -32,8 +31,6 @@ SMTP_TIMEOUT_SECONDS = 10
 
 def email_channel(settings: Settings) -> Channel | None:
     """How email would be delivered under settings, or None if it would not be."""
-    if not settings.public_app_url:
-        return None
     if settings.smtp_host and settings.smtp_from:
         return "smtp"
     if settings.env == "development" and settings.dev_outbox_dir:
@@ -41,19 +38,11 @@ def email_channel(settings: Settings) -> Channel | None:
     return None
 
 
-def absolute_link(settings: Settings, path: str) -> str:
-    """path ("/auth/invite#token=...") under PUBLIC_APP_URL, or path itself when that is not configured (the web
-    app then prefixes its own origin)."""
-    if not settings.public_app_url:
-        return path
-    return settings.public_app_url.rstrip("/") + path
-
-
 def send(settings: Settings, *, to: str, subject: str, body: str) -> Channel | None:
     """Deliver one plain-text email. Returns the channel used, or None if email is not configured or failed.
 
     A delivery failure is logged (without the body) and reported as None rather than raised: the request that
-    caused it has already succeeded, and the administrator can still copy the link."""
+    caused it has already succeeded, and its answer must not reveal whether an email was sent."""
     channel = email_channel(settings)
     if channel is None:
         return None

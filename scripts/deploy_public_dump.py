@@ -54,11 +54,16 @@ PUBLIC_SOURCES = ("tba", "statbotics")
 # Children before parents (game_spec_versions references game_manuals), so no delete needs to cascade.
 EMPTIED_TABLES = ("game_spec_versions", "game_manuals", "season_rulesets", "capability_profiles",
                   "human_review_artifacts", "scouting_observations", "scouting_access_codes")
-# Team workspaces (migration 0012): every account, session, membership, invitation, log and team scouting row is
-# private. All are emptied; each must be empty afterwards.
-WORKSPACE_TABLES = ("workspace_scouting_reports", "scouting_assignments", "activity_logs", "auth_sessions",
-                    "password_reset_tokens", "invitations", "workspace_role_permissions", "team_memberships",
-                    "workspaces", "users", "auth_attempts")
+# Team accounts (migrations 0012, 0015): every account, session, membership, reset code, log and team scouting row is
+# private. All are emptied; each must be empty afterwards, except workspaces, which keeps exactly the one team
+# workspace (team 11) that migration 0015 creates and sign-up needs. The 0012-only tables are listed for an older
+# source; a table the source lacks is skipped.
+WORKSPACE_TABLES = ("workspace_scouting_reports", "scouting_assignments", "draft_actions", "draft_records",
+                    "activity_logs", "auth_sessions", "password_reset_codes", "password_reset_tokens", "invitations",
+                    "workspace_role_permissions", "team_memberships", "workspaces", "users", "auth_attempts")
+# Recreated after the scrub, on a source with migration 0015 (the same row 0015 inserts).
+TEAM_WORKSPACE_SQL = ("INSERT INTO workspaces (team_number, team_name, verification_status, verified_at, verified_by) "
+                      "VALUES (11, 'MORT', 'verified', NOW(), 'migration 0015_single_team_auth')")
 WORKSPACE_SCRUB_ORDER = ("workspace_scouting_reports", "scouting_assignments", "workspaces", "users",
                          "auth_attempts")
 SCRUB = [
@@ -159,16 +164,25 @@ def main(argv: list[str] | None = None) -> int:
                 raise RuntimeError(f"refusing to scrub: not connected to {SCRATCH_DB}")
             for statement in SCRUB:
                 conn.execute(statement, params)
-            # Accounts, sessions and team scouting (migration 0012), on a source new enough to have them. Deleting
-            # the workspaces cascades their memberships, sessions, invitations and logs in one statement.
+            # Accounts, sessions and team scouting (migrations 0012, 0015), on a source new enough to have them.
+            # Deleting the workspaces cascades their memberships, sessions, logs, scouting and drafts in one statement.
             present = [t for t in WORKSPACE_TABLES
                        if conn.execute("SELECT to_regclass(%s)", (f"public.{t}",)).fetchone()[0] is not None]
             for table in WORKSPACE_SCRUB_ORDER:
                 if table in present:
                     conn.execute(f"DELETE FROM {table}")
+            single_team = "password_reset_codes" in present
+            if single_team:
+                conn.execute(TEAM_WORKSPACE_SQL)
             left = {check: conn.execute(check, params).fetchone()[0] for check in CHECKS}
             left.update({f"SELECT count(*) FROM {t}": conn.execute(f"SELECT count(*) FROM {t}").fetchone()[0]
-                         for t in present})
+                         for t in present if not (single_team and t == "workspaces")})
+            if single_team:
+                # Exactly the team workspace, and nothing else, may remain.
+                left["SELECT count(*) FROM workspaces WHERE team_number <> 11"] = conn.execute(
+                    "SELECT count(*) FROM workspaces WHERE team_number <> 11").fetchone()[0]
+                if conn.execute("SELECT count(*) FROM workspaces WHERE team_number = 11").fetchone()[0] != 1:
+                    raise RuntimeError("the team 11 workspace was not recreated after the scrub")
         dirty = {check: count for check, count in left.items() if count}
         if dirty:
             for check, count in dirty.items():
