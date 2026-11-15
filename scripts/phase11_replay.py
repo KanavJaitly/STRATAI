@@ -1,6 +1,7 @@
 """Phase 11 verification: replay real past alliance selections through the live draft record (P11-DM1, P11-DM2).
 
     python -m scripts.phase11_replay [--per-season 2] [--seed 20261104] [--budget-minutes 40] [--output PATH]
+    python -m scripts.phase11_replay --events 2024njfla [--output PATH]
 
 **What it does, per sampled event:**
 1. Builds the record's setup from the event's real data. That is exactly what `workspaces.live_draft.build_setup`
@@ -12,10 +13,16 @@
 3. After every action, asserts the following:
    - The available pool contains no team on an alliance, and no declined team where the decline rule applies.
    - For each alliance captain's workspace, no recommendation lists an unavailable team. Recommendations come from
-     `workspaces.draft_recommendations.recommend`, which runs the real engine and then P11-FB1 on the real ordering.
+     `workspaces.draft_recommendations.recommend`, which runs the real engine and then the served fallback (P11-FB2
+     since 2026-11-14; P11-FB1 before).
 4. At the end, asserts the following:
    - The recorded alliances equal TBA's.
    - Every prefix of the log replays to the state the record had at that point (P11-DM2).
+5. **The FB1/FB2 comparison (descriptive; P11-FB2 record §10).** For every real pick, where the picked team stood in
+   the list advising the picking alliance just before the pick: under the served rule (FB2) and under P11-FB1 (now a
+   pure function, `fallback_lists`, on the same ordering). Each is `primary`, `backup_<k>`, `unlisted`, or
+   `withheld:<code>`. Real teams pick for reasons no rule sees, so this describes agreement with human picks; it does
+   not measure pick quality, and it is not a validation of either rule.
 
 **What cannot be reconstructed, and is reported, never guessed:**
 - TBA records final alliances, not pick timing. The pick order is the serpentine order the rules give.
@@ -99,6 +106,37 @@ def reconstruct(alliances: Sequence[Any], rules: dl.DraftRules) -> tuple[list[tu
     return actions, notes
 
 
+def position(listed: Sequence[int] | None, team: int, withheld: str | None = None) -> str:
+    """Where `team` stands in a primary-first list: primary, backup_<k>, unlisted, or withheld:<code>."""
+    if listed is None:
+        return f"withheld:{withheld or 'unknown'}"
+    if listed and listed[0] == team:
+        return "primary"
+    return f"backup_{listed.index(team)}" if team in listed else "unlisted"
+
+
+def summarize_positions(picks: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    """Counts of each rule's positions for the actual picks: overall and per season."""
+    def counts(rows: Sequence[dict[str, Any]], rule: str) -> dict[str, Any]:
+        out: dict[str, Any] = {"picks": len(rows), "primary": 0, "backup": 0, "unlisted": 0, "withheld": 0,
+                               "by_position": {}}
+        for row in rows:
+            where = row[rule]
+            out["by_position"][where] = out["by_position"].get(where, 0) + 1
+            key = "backup" if where.startswith("backup_") else "withheld" if where.startswith("withheld") else where
+            out[key] += 1
+        listed = out["primary"] + out["backup"]
+        scored = len(rows) - out["withheld"]
+        out["listed_share"] = round(listed / scored, 4) if scored else None
+        out["by_position"] = dict(sorted(out["by_position"].items()))
+        return out
+
+    seasons = sorted({row["season"] for row in picks})
+    return {"overall": {rule: counts(picks, rule) for rule in ("fb1", "fb2")},
+            "by_season": {season: {rule: counts([r for r in picks if r["season"] == season], rule)
+                                   for rule in ("fb1", "fb2")} for season in seasons}}
+
+
 def _setup(database: Any, event_key: str) -> dl.DraftSetup:
     from workspaces.live_draft import build_setup
 
@@ -119,7 +157,25 @@ def replay_event(database: Any, event_key: str, alliances: Sequence[Any], *, epa
     timings: list[float] = []
     sources: dict[str, int] = {}
     views = [dl.replay(entries)]
+    latest: dict[int, tuple[list[int] | None, str | None, str | None]] = {}  # captain -> (served list, source, why)
+    picks: list[dict[str, Any]] = []
     for number, (type_, seed, team) in enumerate(actions, start=2):
+        before = views[-1]
+        if type_ == dl.PICK and before.alliances[seed - 1]:
+            captain = before.alliances[seed - 1][0]
+            served, source, why = latest.get(captain, (None, None, "not_computed"))
+            try:
+                fb1 = rec.fb1_lists_at(database, event_key, before, captain, datetime.now(timezone.utc),
+                                       epa_source=epa_source, ranking=ranking)
+                fb1_why = None if fb1 is not None else "not_selecting"
+            except Exception as exc:  # the ordering's own refusal is a result
+                fb1, fb1_why = None, getattr(exc, "code", type(exc).__name__)
+            picks.append({"event_key": event_key, "season": int(event_key[:4]), "seq": number, "seed": seed,
+                          "captain": captain, "team": team, "served_source": source,
+                          "fb2": position(served if source == rec.SOURCE_FB2 else None, team,
+                                          why if source != rec.SOURCE_ENGINE else "engine_served"),
+                          "fb1": position(fb1, team, fb1_why), "fb2_list": served if source == rec.SOURCE_FB2
+                          else None, "fb1_list": fb1})
         entry = dl.LogEntry(f"r{number}", number, type_, {"seed": seed, "team": team}, author_label="replay")
         _, violation = dl.check_append(entries, entry)
         if violation is not None:
@@ -147,6 +203,8 @@ def replay_event(database: Any, event_key: str, alliances: Sequence[Any], *, epa
             sources[out.source or f"withheld:{out.withheld[0] if out.withheld else '?'}"] = sources.get(
                 out.source or f"withheld:{out.withheld[0] if out.withheld else '?'}", 0) + 1
             listed = [c.team_number for c in ([out.primary] if out.primary else []) + out.backups]
+            latest[captain] = (listed if out.status == "current" else None, out.source,
+                               out.withheld[0] if out.withheld else None)
             bad = set(listed) - set(available)
             if bad or set(listed) & set(unavailable):
                 problems.append(f"seq {number}: team {captain}'s recommendations list unavailable team(s) "
@@ -175,7 +233,7 @@ def replay_event(database: Any, event_key: str, alliances: Sequence[Any], *, epa
     warm = timings[len(captains):] if len(timings) > len(captains) else timings  # the first pass per event is cold
     return {"event_key": event_key, "actions": len(actions), "notes": notes, "missing": list(setup.missing),
             "rules_source": setup.rules.source, "overridden": overridden, "problems": problems,
-            "recommendation_sources": sources,
+            "recommendation_sources": sources, "pick_positions": picks,
             "recommend_seconds": {"cold_first": round(timings[0], 4) if timings else None,
                                   "warm_p95": round(statistics.quantiles(warm, n=20)[-1], 4) if len(warm) >= 2
                                   else None, "count": len(timings)},
@@ -203,6 +261,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--budget-minutes", type=float, default=40.0)
     parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument("--events", nargs="+", default=None,
+                        help="replay these events instead of drawing the seeded sample")
     args = parser.parse_args(argv)
     if not 0 < args.budget_minutes <= MAX_BUDGET_MINUTES:
         parser.error(f"--budget-minutes must be in (0, {MAX_BUDGET_MINUTES}] (CLAUDE.md verification limit)")
@@ -217,7 +277,7 @@ def main(argv: list[str] | None = None) -> int:
     epa_source = load_epa_source(settings, database)
     ranking, playoff_models = load_pinned_ranking_model(settings), load_playoff_models(settings)
     deadline = time.monotonic() + args.budget_minutes * 60
-    sample = choose_sample(database, SEASONS, args.per_season, args.seed)
+    sample = list(args.events) if args.events else choose_sample(database, SEASONS, args.per_season, args.seed)
     results, partial = [], False
     for event_key in sample:
         if time.monotonic() > deadline:
@@ -235,8 +295,12 @@ def main(argv: list[str] | None = None) -> int:
                 continue
             results.append({"event_key": event_key, "passed": False,
                             "problems": [f"{type(exc).__name__}: {getattr(exc, 'message', exc)}"]})
+    all_picks = [p for r in results for p in r.get("pick_positions", [])]
     record = {"kind": "p11_replay", "run_at": datetime.now(timezone.utc).isoformat(), "seed": args.seed,
               "per_season": args.per_season, "seasons": list(SEASONS), "sample": sample,
+              "explicit_events": bool(args.events), "database": _database_name(database),
+              "fallback_comparison": {"note": "descriptive; P11-FB2 record section 10; not a validation",
+                                      **summarize_positions(all_picks)},
               "budget_minutes": args.budget_minutes, "partial": partial,
               "epa_source_loaded": epa_source is not None, "ranking_model_loaded": ranking is not None,
               "events": results, "skipped": sum(1 for r in results if r.get("skipped")),
@@ -248,6 +312,12 @@ def main(argv: list[str] | None = None) -> int:
     print(json.dumps({"output": str(output), "passed": record["passed"], "partial": partial,
                       "events": [(r["event_key"], r["passed"]) for r in results]}))
     return 0 if record["passed"] else 1
+
+
+def _database_name(database: Any) -> str | None:
+    with database.cursor() as cursor:
+        cursor.execute("SELECT current_database()")
+        return cursor.fetchone()[0]
 
 
 if __name__ == "__main__":

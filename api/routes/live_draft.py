@@ -19,8 +19,9 @@
   `team_declined`). Sending it again with `override_reason` records it as an override.
 
 **The recommendations** come from the P6-M7 engine when it serves. Otherwise they come from the pre-declared
-fallback rule P11-FB1 (`not_validated`, no probability, with the engine's refusal beside it). Every response
-carries the record sequence it reflects. The locked alliance-selection operations are not changed.
+fallback rule P11-FB2 (`not_validated`, no probability, with the engine's refusal beside it; it replaced P11-FB1 on
+2026-11-14). Every response carries the record sequence it reflects. The locked alliance-selection operations are not
+changed.
 """
 
 from __future__ import annotations
@@ -249,6 +250,27 @@ class DraftSummaryOut(BaseModel):
     complete: bool
 
 
+class ProjectedScoreOut(BaseModel):
+    """P11-FB2: the projected alliance score with this team (never adjusted for reliability or fit)."""
+
+    value: float
+    robots: list[int] = Field(description="The robots the projection counts, this team included (at most three).")
+    fouls_included: bool
+    method: str = Field(description="How the per-robot strengths were estimated (P11-FB2 §2.3).")
+    validation: Validation
+
+
+class ComponentFitOut(BaseModel):
+    """P11-FB2: one component's estimate for this team, its reliability-adjusted value, your alliance's gap against
+    the event's playoff-level benchmark, and how much of that gap the team fills."""
+
+    component: str
+    estimate: float
+    effective: float
+    gap: float
+    filled: float
+
+
 class RecommendedOut(BaseModel):
     team_number: int
     ordering_position: int | None = Field(description="Position in the P5-M4 strength ordering (fallback only).")
@@ -256,6 +278,16 @@ class RecommendedOut(BaseModel):
     reach_finals: StrategyOdds | None
     configuration: list[int] | None
     profile: CandidateOut | None
+    projected_alliance_score: ProjectedScoreOut | None = Field(
+        default=None, description="P11-FB2 only: the projected alliance score with this team, not validated.")
+    projection_members: list[int] | None = Field(
+        default=None, description="P11-FB2 only: the alliance members the projection assumes (recorded members, or "
+                                  "your team as projected captain); no later pick is assumed.")
+    fit: list[ComponentFitOut] | None = Field(default=None, description="P11-FB2 only: gap filling per component.")
+    qualification_rank: int | None = Field(default=None, description="P11-FB2 only: the record's final rank.")
+    decline_flag: str | None = Field(default=None, description="P11-FB2 only: 'May decline (projected captain of "
+                                                               "alliance N).' Informs only; never changes the order.")
+    reasons: list[str] | None = Field(default=None, description="P11-FB2 only: the fixed-template reasons.")
 
 
 class CodeMessage(BaseModel):
@@ -275,7 +307,7 @@ class RecommendationsOut(BaseModel):
     status: Literal["current", "withheld"]
     withheld: CodeMessage | None
     value_kind: Literal["model_prediction"] = "model_prediction"
-    source: Literal["engine_p6_m7", "fallback_p11_fb1"] | None
+    source: Literal["engine_p6_m7", "fallback_p11_fb1", "fallback_p11_fb2"] | None
     validation: Validation | None
     engine_refusal: CodeMessage | None = Field(description="Why the P6-M7 engine did not serve (fallback only).")
     seed: int | None
@@ -288,6 +320,9 @@ class RecommendationsOut(BaseModel):
     movement: list[str]
     provenance: dict[str, Any]
     timing_ms: dict[str, float]
+    candidate_projections: list[RecommendedOut] | None = Field(
+        default=None, description="P11-FB2 only: every available team's projection and reasons, ranked candidates "
+                                  "first (in order), then excluded teams, then teams with no estimate.")
 
 
 # --- routes ------------------------------------------------------------------------------------------------------------
@@ -377,20 +412,43 @@ def post_setup(body: SetupBody, record_id: int = Path(ge=1), database: Database 
                 manual_rules=None if body.manual_rules is None else body.manual_rules.model_dump())
 
 
-def _recommended(candidate: draft_recommendations.Candidate, status: str | None) -> RecommendedOut:
+_FB2_METHOD = {"components": "P11A A3 per-robot estimates of auto, teleop and endgame (current-event prior)",
+               "total": "P11A A3 per-robot estimates of the total score (current-event prior)",
+               "epa_components": "EPA components (the P5-M4 switch point has not passed)"}
+
+
+def _recommended(candidate: draft_recommendations.Candidate, status: str | None,
+                 mode: str | None = None) -> RecommendedOut:
     engine = candidate.p_win_event is not None
+    card = candidate.fb2
+    projected = None
+    if card is not None and card.projected is not None:
+        projected = ProjectedScoreOut(
+            value=round(card.projected, 1), robots=list(card.robots), fouls_included=card.fouls_included,
+            method=_FB2_METHOD.get(mode or "", mode or "P11-FB2"),
+            validation=Validation(status="not_validated", reasons=[
+                "a sum of per-robot estimates; only alliance totals are observed, so no robot estimate is validated, "
+                "and no interval is shown (not calibrated)"]))
     return RecommendedOut(
         team_number=candidate.team_number, ordering_position=candidate.ordering_position,
         win_event=_odds(candidate.p_win_event, status) if engine else None,
         reach_finals=_odds(candidate.p_reach_finals, status) if engine and candidate.p_reach_finals is not None
         else None,
         configuration=list(candidate.configuration) if candidate.configuration else None,
-        profile=None if candidate.profile is None else _candidate(candidate.profile))
+        profile=None if candidate.profile is None else _candidate(candidate.profile),
+        projected_alliance_score=projected,
+        projection_members=None if card is None else list(card.members),
+        fit=None if card is None else [ComponentFitOut(component=f.component, estimate=round(f.estimate, 2),
+                                                       effective=round(f.effective, 2), gap=round(f.gap, 2),
+                                                       filled=round(f.filled, 2)) for f in card.fits],
+        qualification_rank=None if card is None else card.qualification_rank,
+        decline_flag=None if card is None else card.decline_flag,
+        reasons=None if card is None else list(card.reasons))
 
 
 @router.get("/drafts/{record_id}/recommendations", response_model=RecommendationsOut, dependencies=_VIEWS,
             summary="The team's primary and backup picks for the record's current state (P11-Q1)",
-            description="From the P6-M7 engine when it serves; otherwise the pre-declared fallback rule P11-FB1, "
+            description="From the P6-M7 engine when it serves; otherwise the pre-declared fallback rule P11-FB2, "
                         "served not_validated with no probability and with the engine's refusal. Withheld, with the "
                         "reason, when the record needs review, the team is not selecting, or an input is missing.",
             responses=error_responses({**_READ, 404: ["draft_not_found"]}))
@@ -407,6 +465,7 @@ def get_recommendations(record_id: int = Path(ge=1), database: Database = Depend
         except SelectionTimeUnavailable:
             out.provenance["selection_moment"] = None
     status = out.validation_status
+    mode = out.provenance.get("mode") if out.source == draft_recommendations.SOURCE_FB2 else None
     return RecommendationsOut(
         record_id=record_id, record_seq=out.record_seq, computed_at=out.computed_at, status=out.status,
         withheld=None if out.withheld is None else CodeMessage(code=out.withheld[0], message=out.withheld[1]),
@@ -415,10 +474,11 @@ def get_recommendations(record_id: int = Path(ge=1), database: Database = Depend
         engine_refusal=None if out.engine_refusal is None else CodeMessage(code=out.engine_refusal[0],
                                                                            message=out.engine_refusal[1]),
         seed=out.seed, selecting_as=out.selecting_as, turns_before=out.turns_before,
-        primary=None if out.primary is None else _recommended(out.primary, status),
-        backups=[_recommended(c, status) for c in out.backups], unranked_available=out.unranked_available,
+        primary=None if out.primary is None else _recommended(out.primary, status, mode),
+        backups=[_recommended(c, status, mode) for c in out.backups], unranked_available=out.unranked_available,
         excluded=[ExcludedOut(team_number=t, reason=r) for t, r in out.excluded], movement=out.movement,
-        provenance=out.provenance, timing_ms=out.timing_ms)
+        provenance=out.provenance, timing_ms=out.timing_ms,
+        candidate_projections=[_recommended(c, status, mode) for c in out.projections] if out.projections else None)
 
 
 __all__ = ["RULE_CODES", "router", "draft_log"]

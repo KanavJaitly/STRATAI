@@ -390,19 +390,29 @@ export interface RecommendedTeam {
   reach_finals: { display: string | null; validation: { status: string; reasons: string[] } } | null
   configuration: number[] | null
   profile: Record<string, unknown> | null
+  // P11-FB2 only (decision P11_FB2_DECISION_2026-11-14.md): the projection and its fixed-template reasons.
+  projected_alliance_score?: { value: number; robots: number[]; fouls_included: boolean; method: string;
+    validation: { status: string; reasons: string[] } } | null
+  projection_members?: number[] | null
+  fit?: { component: string; estimate: number; effective: number; gap: number; filled: number }[] | null
+  qualification_rank?: number | null
+  decline_flag?: string | null
+  reasons?: string[] | null
 }
 
 export interface DraftRecommendations {
   record_id: number; record_seq: number; computed_at: string; status: 'current' | 'withheld'
   withheld: { code: string; message: string } | null
   value_kind: 'model_prediction'
-  source: 'engine_p6_m7' | 'fallback_p11_fb1' | null
+  source: 'engine_p6_m7' | 'fallback_p11_fb1' | 'fallback_p11_fb2' | null
   validation: { status: string; reasons: string[] } | null
   engine_refusal: { code: string; message: string } | null
   seed: number | null; selecting_as: 'on_alliance' | 'projected_captain' | null; turns_before: number | null
   primary: RecommendedTeam | null; backups: RecommendedTeam[]; unranked_available: number[]
   excluded: { team_number: number; reason: string }[]; movement: string[]
   provenance: Record<string, unknown>; timing_ms: Record<string, number>
+  /** P11-FB2 only: every available team's projection and reasons (ranked candidates first, in order). */
+  candidate_projections?: RecommendedTeam[] | null
 }
 
 /** A stable id for an entry, created here so that a retried write is idempotent (and, in Phase 12, local-first). */

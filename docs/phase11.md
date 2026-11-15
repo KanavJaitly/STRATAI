@@ -78,7 +78,11 @@ The two sources are tried in a fixed order and never mixed.
    - It runs for the alliance the team is on, or is projected to captain, at the record's state.
    - Its ranking is served with its own status (`validated_playoff_success`, with its scope).
    - Today it refuses at every event (`playoff_models_not_accepted`), because the PX gates are unmet.
-2. **The fallback rule P11-FB1**, frozen in the decision record before implementation.
+2. **The fallback rule P11-FB2** (since 2026-11-14), frozen in
+   `.agent/phase11/decisions/P11_FB2_DECISION_2026-11-14.md` before any code or measurement. It ranks the available
+   teams by what each adds to the alliance being built; see "P11-FB2" below.
+3. **P11-FB1** (2026-11-04 to 2026-11-14; no longer served), frozen in the decision record before implementation.
+   It stays in the code as a pure function (`fallback_lists`), for the tests and the FB1/FB2 comparison.
    - It ranks the available teams by the P5-M4 team-strength ordering at the selection moment.
    - **Primary** is the first team. **Backups** are the next `max(3, m)`, where `m` is the other alliances' picks
      before your next turn. If at most `m` teams are picked and nobody declines, at least one listed team is left
@@ -87,10 +91,45 @@ The two sources are tried in a fixed order and never mixed.
      captain an alliance that acts before your next turn.
    - It is served `not_validated`. It shows no probability, and it carries the engine's refusal.
 
+### P11-FB2: the alliance-aware fallback (`workspaces/draft_fb2.py`)
+
+Decided by Kanav on 2026-11-14 (Sven's countersignature pending); `not_validated`, no probability. Kanav's 2024njfla
+replay informed the design, so that event is not independent evidence about it.
+
+- **Per-robot strengths at the event**, strictly before the selection moment:
+  - from the P11A A3 estimator, copied unchanged (`ml/alliance/estimator.py`, `p11a-a3-v1`, sha256 `47b6cc…`), with
+    the current-event population prior only;
+  - fitted on the qualification alliance rows, with auto, teleop and endgame from the P5-M7 adapter (fouls excluded);
+  - DQ'd alliances are left out.
+  - **Fallbacks, frozen:** without enough breakdowns (or an unsupported season, or a degenerate fit), one total-score
+    component (fouls included). Without that either, FB2 is withheld (`fb2_projection_unavailable`); FB1 is never
+    served instead. Before the P5-M4 switch point, EPA components.
+  - P11A's scoring configurations, `data/season_scoring/` and E5 are not used. P11A stays disabled.
+- **Gap filling:**
+  - `B_c` is the median per-robot `s_c` among the event's top 24 by total.
+  - Your alliance's `gap_c = max(0, B_c − members' mean s_c)`.
+  - A candidate fills `min(max(eff_c, 0), gap_c)`.
+- **Reliability and consistency:** `ρ = reliability/100 × (1 − 0.25 × (1 − consistency/100))`, from Phase 3 at the
+  selection moment. When either is absent, its factor is 1, and the card says so.
+- **Rank score** `R = members' total + Σ_c s_c·ρ + 0.5 × fit`. Ties go to the projected score, then qualification rank,
+  then team number.
+- **Projected alliance score** (shown, never adjusted): the members plus the candidate (the best three of four), with
+  no later pick assumed. It is labelled `not_validated` and has no interval.
+- **Informational only:**
+  - defense ("Defense: no scouting" when there is too little);
+  - the decline flag ("May decline (projected captain of alliance N).").
+- **Unchanged from FB1:** the exclusions, the backups `max(3, m)` and the movement text.
+- **Every card** carries fixed-template reasons (record §5), including qualification rank and, for a team ranked in
+  the lower half, why it is still listed. `candidate_projections` gives every available team's card, so the profile
+  drawer shows any team's projection with your alliance.
+- **Speed on 2024njfla** (`stratai_test_p11fu`): cold 442 ms (ordering 365 ms, estimates 76 ms); warm p95 4.7 ms over
+  27 states.
+
 **What every response carries:**
 - the record sequence it reflects;
 - the movement explanation, as fixed templates ("Team T was picked by alliance 3.", "Team S is now first.");
-- its provenance (rule, ordering policy and as-of, model sha256);
+- its provenance (rule, ordering policy and as-of, model sha256; for FB2 also the estimator version, mode, benchmark,
+  members, gaps and the selection moment);
 - its timings.
 
 **Withheld, with the exact reason:**

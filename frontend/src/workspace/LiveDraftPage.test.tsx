@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { Shell } from '../App'
 import { AuthProvider } from '../auth/AuthContext'
-import type { DraftRecommendations, DraftRecord, SessionInfo } from '../auth/api'
+import type { DraftRecommendations, DraftRecord, RecommendedTeam, SessionInfo } from '../auth/api'
 import { SessionProvider } from '../state/session'
 import { EPA, EVENTS, measure, strengthView } from '../test/dashboardFixtures'
 import { axeViolations } from '../test/dashboard'
@@ -421,5 +421,74 @@ describe('team profiles on the live draft page', () => {
     const drawer = await screen.findByRole('dialog', { name: 'Team 23' })
     await within(drawer).findByText(/Average alliance score by event/)
     expect(await axeViolations(container)).toEqual([])
+  })
+})
+
+// --- P11-FB2 cards and projections (synthetic) ----------------------------------------------------------------------
+
+function fb2Card(team: number, rank: number, value: number, extra: Partial<RecommendedTeam> = {}): RecommendedTeam {
+  return { team_number: team, ordering_position: 30 - team, win_event: null, reach_finals: null, configuration: null,
+    profile: null, qualification_rank: rank, decline_flag: null, projection_members: [1],
+    projected_alliance_score: { value, robots: [1, team], fouls_included: false,
+      method: 'P11A A3 per-robot estimates of auto, teleop and endgame (current-event prior)',
+      validation: { status: 'not_validated', reasons: ['a sum of per-robot estimates; no interval is shown'] } },
+    fit: [{ component: 'auto', estimate: 16, effective: 16, gap: 6, filled: 6 },
+      { component: 'teleop', estimate: 18, effective: 18, gap: 0, filled: 0 },
+      { component: 'endgame', estimate: 6, effective: 6, gap: 0, filled: 0 }],
+    reasons: [`Projected alliance score ${value.toFixed(1)} with teams 1, ${team} (no fouls; not validated).`,
+      'Fills 6.0 of a 6.0-pt auto gap.', 'Defense: no scouting.', `Qualification rank ${rank} of 24.`],
+    ...extra }
+}
+
+const FB2_RECS = recs({ source: 'fallback_p11_fb2',
+  validation: { status: 'not_validated', reasons: ['P11-FB2: ranks available teams by what each adds to your alliance'] },
+  primary: fb2Card(20, 20, 76, { reasons: ['Projected alliance score 76.0 with teams 1, 20 (no fouls; not validated).',
+    'Qualification rank 20 of 24.', 'Ranked in the lower half, but its estimated contribution is 1 of 24 at this '
+    + 'event; qualification rank also reflects partners, schedule and ranking points.'] }),
+  backups: [fb2Card(5, 5, 70, { decline_flag: 'May decline (projected captain of alliance 5).' }), fb2Card(6, 6, 69),
+    fb2Card(7, 7, 68)],
+  candidate_projections: [fb2Card(20, 20, 76), fb2Card(5, 5, 70), fb2Card(6, 6, 69), fb2Card(7, 7, 68),
+    fb2Card(23, 23, 50)],
+  provenance: { rule: 'P11-FB2', selection_moment: MOMENT } })
+
+describe('P11-FB2 on the live draft page', () => {
+  it('labels FB2 not validated and shows each card’s rank, projection, decline flag and reasons', async () => {
+    mockApi({ 'GET /auth/session': STRATEGY, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
+      [`GET ${BASE}/5`]: draft({ can_record: false }), [`GET ${BASE}/5/recommendations`]: FB2_RECS })
+    renderAt(URL)
+    const picks = await screen.findByRole('region', { name: 'Your picks' })
+    expect(await within(picks).findByText(/Fallback rule P11-FB2: available teams ranked by what each adds/))
+      .toBeInTheDocument()
+    expect(within(picks).getAllByText('not validated').length).toBeGreaterThanOrEqual(5) // the rule and every projection
+    expect(within(picks).getByText('· rank 20', { exact: false, selector: 'span' })).toBeInTheDocument()
+    const why = within(picks).getByRole('list', { name: 'Why team 20' })
+    expect(within(why).getByText(/Ranked in the lower half/)).toBeInTheDocument()
+    expect(within(picks).getByText('May decline (projected captain of alliance 5).')).toBeInTheDocument()
+    expect(within(picks).getByText('Why 5')).toBeInTheDocument() // backups keep their reasons one tap away
+    expect(within(picks).queryByText(/P\(win event\) \d/)).not.toBeInTheDocument()
+  })
+
+  it('shows any available team’s projection with your alliance in its profile, and says when there is none', async () => {
+    mockApi({ 'GET /auth/session': ADMIN, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
+      [`GET ${BASE}/5`]: draft(), [`GET ${BASE}/5/recommendations`]: FB2_RECS, ...profileRoutes(23),
+      ...profileRoutes(1) })
+    const { container } = renderAt(URL)
+    const grid = await screen.findByRole('group', { name: 'Available teams' })
+    await within(await screen.findByRole('region', { name: 'Your picks' })).findByText(/Fallback rule P11-FB2/)
+    await userEvent.click(within(grid).getByRole('button', { name: 'Team 23 profile' }))
+    let drawer = await screen.findByRole('dialog', { name: 'Team 23' })
+    expect(within(drawer).getByText('50.0')).toBeInTheDocument()
+    expect(within(drawer).getByText(/Assumes your alliance as it stands \(1\) plus this team, and no later pick/))
+      .toBeInTheDocument()
+    expect(within(drawer).getByRole('table', { name: /estimate and gap filled per component/ })).toBeInTheDocument()
+    expect(within(drawer).getByText('Not in your current primary and backups.')).toBeInTheDocument()
+    await within(drawer).findByText(/Average alliance score by event/)
+    expect(await axeViolations(container)).toEqual([])
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Close' }))
+    await userEvent.click(within(screen.getByRole('region', { name: 'Alliances' }))
+      .getByRole('button', { name: 'Team 1 profile' }))
+    drawer = await screen.findByRole('dialog', { name: 'Team 1' })
+    expect(within(drawer).getByText('Not available: this team is not available to pick, so it has no projection.'))
+      .toBeInTheDocument()
   })
 })
