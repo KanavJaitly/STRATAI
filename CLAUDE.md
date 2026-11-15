@@ -176,9 +176,12 @@ observations gets no rating, never one synthesized from its scoring.
 
 ## Current Development Phase
 
-**Phase 11 (Live alliance selection): VERIFIED ON AN ISOLATED COPY, NOT ACCEPTED (2026-11-09)** (`.agent/phase11/PHASE_STATUS.md`,
-`docs/phase11.md`). Spec: `docs/P11-P19Phases.md` §5. That document is PROPOSED; Phase 11 was started on the owner's
-instruction. The implementation is on main (3757d2a); the verification and fixes are on PR #44 (not merged).
+**Phase 11 (Live alliance selection): ACCEPTED WITH LIMITATIONS (2026-11-15, Kanav Jaitly and Sven Morais)**
+(`.agent/phase11/P11_ACCEPTANCE.md`; `.agent/phase11/PHASE_STATUS.md`, `docs/phase11.md`). Spec: `docs/P11-P19Phases.md`
+§5. That document is PROPOSED and is not approved by this acceptance; Phase 11 was started on the owner's
+instruction. The implementation is on main (3757d2a); the verification and fixes merged as PR #44 (2026-11-09) and the
+follow-ups (team profiles, P11-FB2) as PR #46 (2026-11-15). Not accepted: P11A, FB2 as validated, or migrations on any
+deployment.
 - **Built:**
   - each team's append-only live draft record (`workspaces/draft_log.py`, `live_draft.py`; migration 0013);
   - its recommendations (`workspaces/draft_recommendations.py`);
@@ -197,7 +200,7 @@ instruction. The implementation is on main (3757d2a); the verification and fixes
   Three defects were fixed: workspace deletion (migration 0014), the replay's backup-robot comparison, and the live
   page's header. The full backend suite has 9 failures, all environment or baseline, 0 regressions. Acceptance is the
   owners' decision.
-- **Follow-up (2026-11-14/15, branch `phase11/live-draft-followups`, not pushed):** team profile drawer on the live
+- **Follow-up (2026-11-14/15; merged as PR #46 on 2026-11-15):** team profile drawer on the live
   page (Part A), and **P11-FB2** (alliance-aware fallback, frozen before build; decided by Kanav, Sven's countersignature
   pending; `not_validated`) served instead of P11-FB1. Records: `.agent/phase11/decisions/P11_FB2_DECISION_2026-11-14.md`,
   `P11_FU_CONTRACT_2026-11-14.md`, `.agent/phase11/results/P11_FB2_COMPARISON_2026-11-15.md`.
