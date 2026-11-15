@@ -1,0 +1,2508 @@
+{
+ "kind": "p11_replay",
+ "run_at": "2026-11-15T05:22:41.847946+00:00",
+ "seed": 20261104,
+ "per_season": 2,
+ "seasons": [
+  2024,
+  2025,
+  2026
+ ],
+ "sample": [
+  "2024lake",
+  "2024txbel",
+  "2025miket",
+  "2025misjo",
+  "2026nhdur",
+  "2026onwat"
+ ],
+ "explicit_events": false,
+ "database": "stratai_test_p11fu",
+ "fallback_comparison": {
+  "note": "descriptive; P11-FB2 record section 10; not a validation",
+  "overall": {
+   "fb1": {
+    "picks": 96,
+    "primary": 23,
+    "backup": 34,
+    "unlisted": 39,
+    "withheld": 0,
+    "by_position": {
+     "backup_1": 15,
+     "backup_2": 3,
+     "backup_3": 16,
+     "primary": 23,
+     "unlisted": 39
+    },
+    "listed_share": 0.5938
+   },
+   "fb2": {
+    "picks": 96,
+    "primary": 32,
+    "backup": 35,
+    "unlisted": 29,
+    "withheld": 0,
+    "by_position": {
+     "backup_1": 14,
+     "backup_2": 10,
+     "backup_3": 11,
+     "primary": 32,
+     "unlisted": 29
+    },
+    "listed_share": 0.6979
+   }
+  },
+  "by_season": {
+   "2024": {
+    "fb1": {
+     "picks": 32,
+     "primary": 8,
+     "backup": 13,
+     "unlisted": 11,
+     "withheld": 0,
+     "by_position": {
+      "backup_1": 9,
+      "backup_3": 4,
+      "primary": 8,
+      "unlisted": 11
+     },
+     "listed_share": 0.6562
+    },
+    "fb2": {
+     "picks": 32,
+     "primary": 12,
+     "backup": 9,
+     "unlisted": 11,
+     "withheld": 0,
+     "by_position": {
+      "backup_1": 2,
+      "backup_2": 6,
+      "backup_3": 1,
+      "primary": 12,
+      "unlisted": 11
+     },
+     "listed_share": 0.6562
+    }
+   },
+   "2025": {
+    "fb1": {
+     "picks": 32,
+     "primary": 9,
+     "backup": 8,
+     "unlisted": 15,
+     "withheld": 0,
+     "by_position": {
+      "backup_1": 4,
+      "backup_3": 4,
+      "primary": 9,
+      "unlisted": 15
+     },
+     "listed_share": 0.5312
+    },
+    "fb2": {
+     "picks": 32,
+     "primary": 9,
+     "backup": 11,
+     "unlisted": 12,
+     "withheld": 0,
+     "by_position": {
+      "backup_1": 4,
+      "backup_2": 2,
+      "backup_3": 5,
+      "primary": 9,
+      "unlisted": 12
+     },
+     "listed_share": 0.625
+    }
+   },
+   "2026": {
+    "fb1": {
+     "picks": 32,
+     "primary": 6,
+     "backup": 13,
+     "unlisted": 13,
+     "withheld": 0,
+     "by_position": {
+      "backup_1": 2,
+      "backup_2": 3,
+      "backup_3": 8,
+      "primary": 6,
+      "unlisted": 13
+     },
+     "listed_share": 0.5938
+    },
+    "fb2": {
+     "picks": 32,
+     "primary": 11,
+     "backup": 15,
+     "unlisted": 6,
+     "withheld": 0,
+     "by_position": {
+      "backup_1": 8,
+      "backup_2": 2,
+      "backup_3": 5,
+      "primary": 11,
+      "unlisted": 6
+     },
+     "listed_share": 0.8125
+    }
+   }
+  }
+ },
+ "budget_minutes": 40.0,
+ "partial": false,
+ "epa_source_loaded": true,
+ "ranking_model_loaded": true,
+ "events": [
+  {
+   "event_key": "2024lake",
+   "actions": 24,
+   "notes": [
+    "alliance 3: TBA lists [2556] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb2": 137,
+    "withheld:team_not_selecting": 19,
+    "withheld:no_remaining_turn": 36
+   },
+   "pick_positions": [
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 3,
+     "seed": 1,
+     "captain": 3478,
+     "team": 4738,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_3",
+     "fb2_list": [
+      4738,
+      9084,
+      4107,
+      4065
+     ],
+     "fb1_list": [
+      6424,
+      9084,
+      8044,
+      4738
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 5,
+     "seed": 2,
+     "captain": 4065,
+     "team": 9084,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_1",
+     "fb2_list": [
+      9084,
+      4107,
+      2383,
+      2992
+     ],
+     "fb1_list": [
+      6424,
+      9084,
+      8044,
+      2992
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 7,
+     "seed": 3,
+     "captain": 2183,
+     "team": 8044,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "backup_1",
+     "fb2_list": [
+      4107,
+      2383,
+      2992,
+      6424
+     ],
+     "fb1_list": [
+      6424,
+      8044,
+      2992,
+      2383
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 9,
+     "seed": 4,
+     "captain": 4107,
+     "team": 2992,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "backup_1",
+     "fb2_list": [
+      2383,
+      2992,
+      6424,
+      3616
+     ],
+     "fb1_list": [
+      6424,
+      2992,
+      2383,
+      4336
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 11,
+     "seed": 5,
+     "captain": 6424,
+     "team": 2383,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      2383,
+      3616,
+      5472,
+      456
+     ],
+     "fb1_list": [
+      2383,
+      4336,
+      5472,
+      3039
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 13,
+     "seed": 6,
+     "captain": 1421,
+     "team": 364,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      3616,
+      5472,
+      456,
+      8808
+     ],
+     "fb1_list": [
+      4336,
+      5472,
+      3039,
+      5665
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 15,
+     "seed": 7,
+     "captain": 5665,
+     "team": 456,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "unlisted",
+     "fb2_list": [
+      3616,
+      5472,
+      456,
+      8808
+     ],
+     "fb1_list": [
+      4336,
+      5472,
+      3039,
+      4531
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 17,
+     "seed": 8,
+     "captain": 4531,
+     "team": 8808,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "unlisted",
+     "fb2_list": [
+      3616,
+      5472,
+      8808,
+      4336
+     ],
+     "fb1_list": [
+      4336,
+      5472,
+      3039,
+      6017
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 18,
+     "seed": 8,
+     "captain": 4531,
+     "team": 3616,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "unlisted",
+     "fb2_list": [
+      3616,
+      5472,
+      4336,
+      2283
+     ],
+     "fb1_list": [
+      4336,
+      5472,
+      3039,
+      6017
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 19,
+     "seed": 7,
+     "captain": 5665,
+     "team": 5472,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_1",
+     "fb2_list": [
+      5472,
+      4336,
+      2283,
+      1912
+     ],
+     "fb1_list": [
+      4336,
+      5472,
+      3039,
+      6017
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 20,
+     "seed": 6,
+     "captain": 1421,
+     "team": 3039,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "backup_1",
+     "fb2_list": [
+      4336,
+      2283,
+      1912,
+      2556
+     ],
+     "fb1_list": [
+      4336,
+      3039,
+      6017,
+      2556
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 21,
+     "seed": 5,
+     "captain": 6424,
+     "team": 4336,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      4336,
+      2283,
+      1912,
+      2556
+     ],
+     "fb1_list": [
+      4336,
+      6017,
+      2556,
+      1912
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 22,
+     "seed": 4,
+     "captain": 4107,
+     "team": 2283,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_3",
+     "fb2_list": [
+      2283,
+      1912,
+      2556,
+      5526
+     ],
+     "fb1_list": [
+      6017,
+      2556,
+      1912,
+      2283
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 23,
+     "seed": 3,
+     "captain": 2183,
+     "team": 6017,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "primary",
+     "fb2_list": [
+      1912,
+      2556,
+      5526,
+      5276
+     ],
+     "fb1_list": [
+      6017,
+      2556,
+      1912,
+      3606
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 24,
+     "seed": 2,
+     "captain": 4065,
+     "team": 5526,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "unlisted",
+     "fb2_list": [
+      1912,
+      2556,
+      5526,
+      5276
+     ],
+     "fb1_list": [
+      2556,
+      1912,
+      3606,
+      3468
+     ]
+    },
+    {
+     "event_key": "2024lake",
+     "season": 2024,
+     "seq": 25,
+     "seed": 1,
+     "captain": 3478,
+     "team": 1912,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_1",
+     "fb2_list": [
+      1912,
+      2556,
+      5276,
+      6184
+     ],
+     "fb1_list": [
+      2556,
+      1912,
+      3606,
+      3468
+     ]
+    }
+   ],
+   "recommend_seconds": {
+    "cold_first": 0.808,
+    "warm_p95": 0.006,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2024txbel",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb2": 139,
+    "withheld:team_not_selecting": 17,
+    "withheld:no_remaining_turn": 36
+   },
+   "pick_positions": [
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 3,
+     "seed": 1,
+     "captain": 3847,
+     "team": 5414,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      5414,
+      418,
+      5892,
+      3679
+     ],
+     "fb1_list": [
+      5414,
+      418,
+      5892,
+      3679
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 5,
+     "seed": 2,
+     "captain": 5892,
+     "team": 9418,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "backup_3",
+     "fb2_list": [
+      418,
+      3679,
+      3561,
+      9418
+     ],
+     "fb1_list": [
+      418,
+      3679,
+      3561,
+      9418
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 7,
+     "seed": 3,
+     "captain": 418,
+     "team": 8019,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "backup_3",
+     "fb2_list": [
+      3679,
+      3561,
+      8019,
+      5503
+     ],
+     "fb1_list": [
+      3679,
+      3561,
+      9121,
+      8019
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 9,
+     "seed": 4,
+     "captain": 3679,
+     "team": 3561,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      3561,
+      5503,
+      9121,
+      6369
+     ],
+     "fb1_list": [
+      3561,
+      9121,
+      6369,
+      3802
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 11,
+     "seed": 5,
+     "captain": 9121,
+     "team": 6369,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "primary",
+     "fb2_list": [
+      5503,
+      6369,
+      8598,
+      8827
+     ],
+     "fb1_list": [
+      6369,
+      3802,
+      8749,
+      5503
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 13,
+     "seed": 6,
+     "captain": 8507,
+     "team": 8749,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "backup_1",
+     "fb2_list": [
+      5503,
+      8598,
+      8827,
+      3802
+     ],
+     "fb1_list": [
+      3802,
+      8749,
+      5503,
+      8598
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 15,
+     "seed": 7,
+     "captain": 2583,
+     "team": 9140,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      5503,
+      8598,
+      8827,
+      3802
+     ],
+     "fb1_list": [
+      3802,
+      5503,
+      8598,
+      8879
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 17,
+     "seed": 8,
+     "captain": 8598,
+     "team": 8625,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      5503,
+      8827,
+      3802,
+      8879
+     ],
+     "fb1_list": [
+      3802,
+      5503,
+      8879,
+      9506
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 18,
+     "seed": 8,
+     "captain": 8598,
+     "team": 3802,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "primary",
+     "fb2_list": [
+      5503,
+      8827,
+      3802,
+      8879
+     ],
+     "fb1_list": [
+      3802,
+      5503,
+      8879,
+      9506
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 19,
+     "seed": 7,
+     "captain": 2583,
+     "team": 5726,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      5503,
+      8827,
+      8879,
+      2789
+     ],
+     "fb1_list": [
+      5503,
+      8879,
+      9506,
+      8827
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 20,
+     "seed": 6,
+     "captain": 8507,
+     "team": 8879,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "backup_1",
+     "fb2_list": [
+      5503,
+      8827,
+      8879,
+      2789
+     ],
+     "fb1_list": [
+      5503,
+      8879,
+      9506,
+      8827
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 21,
+     "seed": 5,
+     "captain": 9121,
+     "team": 5503,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      5503,
+      8827,
+      2789,
+      9448
+     ],
+     "fb1_list": [
+      5503,
+      9506,
+      8827,
+      9448
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 22,
+     "seed": 4,
+     "captain": 3679,
+     "team": 8827,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_1",
+     "fb2_list": [
+      8827,
+      2789,
+      9448,
+      5103
+     ],
+     "fb1_list": [
+      9506,
+      8827,
+      9448,
+      5052
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 23,
+     "seed": 3,
+     "captain": 418,
+     "team": 6357,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      2789,
+      9448,
+      5103,
+      4332
+     ],
+     "fb1_list": [
+      9506,
+      9448,
+      5052,
+      4364
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 24,
+     "seed": 2,
+     "captain": 5892,
+     "team": 8114,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      2789,
+      9448,
+      5103,
+      4332
+     ],
+     "fb1_list": [
+      9506,
+      9448,
+      5052,
+      4364
+     ]
+    },
+    {
+     "event_key": "2024txbel",
+     "season": 2024,
+     "seq": 25,
+     "seed": 1,
+     "captain": 3847,
+     "team": 9054,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      2789,
+      9448,
+      5103,
+      4332
+     ],
+     "fb1_list": [
+      9506,
+      9448,
+      5052,
+      4364
+     ]
+    }
+   ],
+   "recommend_seconds": {
+    "cold_first": 0.5984,
+    "warm_p95": 0.0053,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025miket",
+   "actions": 24,
+   "notes": [],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb2": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "pick_positions": [
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 3,
+     "seed": 1,
+     "captain": 5460,
+     "team": 2137,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "unlisted",
+     "fb2_list": [
+      2137,
+      27,
+      494,
+      70
+     ],
+     "fb1_list": [
+      27,
+      910,
+      2145,
+      70
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 5,
+     "seed": 2,
+     "captain": 494,
+     "team": 27,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      27,
+      70,
+      2145,
+      910
+     ],
+     "fb1_list": [
+      27,
+      910,
+      2145,
+      70
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 7,
+     "seed": 3,
+     "captain": 1498,
+     "team": 910,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "primary",
+     "fb2_list": [
+      70,
+      2145,
+      910,
+      9245
+     ],
+     "fb1_list": [
+      910,
+      2145,
+      70,
+      573
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 9,
+     "seed": 4,
+     "captain": 9776,
+     "team": 2145,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "primary",
+     "fb2_list": [
+      70,
+      2145,
+      9245,
+      8193
+     ],
+     "fb1_list": [
+      2145,
+      70,
+      573,
+      245
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 11,
+     "seed": 5,
+     "captain": 573,
+     "team": 245,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "backup_1",
+     "fb2_list": [
+      70,
+      9245,
+      8193,
+      7784
+     ],
+     "fb1_list": [
+      70,
+      245,
+      9245,
+      894
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 13,
+     "seed": 6,
+     "captain": 70,
+     "team": 9648,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      9245,
+      8193,
+      7784,
+      7491
+     ],
+     "fb1_list": [
+      9245,
+      894,
+      4998,
+      7784
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 15,
+     "seed": 7,
+     "captain": 7784,
+     "team": 3534,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      9245,
+      8193,
+      7491,
+      5641
+     ],
+     "fb1_list": [
+      9245,
+      894,
+      4998,
+      8193
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 17,
+     "seed": 8,
+     "captain": 9245,
+     "team": 1,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      8193,
+      7491,
+      5641,
+      1504
+     ],
+     "fb1_list": [
+      894,
+      4998,
+      8193,
+      6067
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 18,
+     "seed": 8,
+     "captain": 9245,
+     "team": 1504,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "unlisted",
+     "fb2_list": [
+      8193,
+      7491,
+      5641,
+      1504
+     ],
+     "fb1_list": [
+      894,
+      4998,
+      8193,
+      6067
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 19,
+     "seed": 7,
+     "captain": 7784,
+     "team": 894,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "primary",
+     "fb2_list": [
+      8193,
+      7491,
+      5641,
+      9207
+     ],
+     "fb1_list": [
+      894,
+      4998,
+      8193,
+      6067
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 20,
+     "seed": 6,
+     "captain": 70,
+     "team": 5084,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "backup_3",
+     "fb2_list": [
+      8193,
+      7491,
+      5641,
+      9207
+     ],
+     "fb1_list": [
+      4998,
+      8193,
+      6067,
+      5084
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 21,
+     "seed": 5,
+     "captain": 573,
+     "team": 7491,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "backup_3",
+     "fb2_list": [
+      8193,
+      7491,
+      5641,
+      9207
+     ],
+     "fb1_list": [
+      4998,
+      8193,
+      6067,
+      7491
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 22,
+     "seed": 4,
+     "captain": 9776,
+     "team": 7195,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      8193,
+      5641,
+      9207,
+      9757
+     ],
+     "fb1_list": [
+      4998,
+      8193,
+      6067,
+      10667
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 23,
+     "seed": 3,
+     "captain": 1498,
+     "team": 9757,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "unlisted",
+     "fb2_list": [
+      8193,
+      5641,
+      9207,
+      9757
+     ],
+     "fb1_list": [
+      4998,
+      8193,
+      6067,
+      10667
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 24,
+     "seed": 2,
+     "captain": 494,
+     "team": 5150,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      8193,
+      5641,
+      9207,
+      6067
+     ],
+     "fb1_list": [
+      4998,
+      8193,
+      6067,
+      10667
+     ]
+    },
+    {
+     "event_key": "2025miket",
+     "season": 2025,
+     "seq": 25,
+     "seed": 1,
+     "captain": 5460,
+     "team": 4998,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "primary",
+     "fb2_list": [
+      8193,
+      5641,
+      9207,
+      6067
+     ],
+     "fb1_list": [
+      4998,
+      8193,
+      6067,
+      10667
+     ]
+    }
+   ],
+   "recommend_seconds": {
+    "cold_first": 0.6785,
+    "warm_p95": 0.0046,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2025misjo",
+   "actions": 24,
+   "notes": [
+    "alliance 1: TBA lists [6588] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb2": 100,
+    "withheld:team_not_selecting": 56,
+    "withheld:no_remaining_turn": 36
+   },
+   "pick_positions": [
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 3,
+     "seed": 1,
+     "captain": 2767,
+     "team": 3620,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "unlisted",
+     "fb2_list": [
+      3620,
+      6548,
+      5675,
+      2054
+     ],
+     "fb1_list": [
+      2054,
+      2611,
+      1076,
+      6570
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 5,
+     "seed": 2,
+     "captain": 5675,
+     "team": 6548,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "unlisted",
+     "fb2_list": [
+      6548,
+      2054,
+      1076,
+      5843
+     ],
+     "fb1_list": [
+      2054,
+      2611,
+      1076,
+      6570
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 7,
+     "seed": 3,
+     "captain": 2054,
+     "team": 1076,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_1",
+     "fb2_list": [
+      1076,
+      5843,
+      6570,
+      2620
+     ],
+     "fb1_list": [
+      2611,
+      1076,
+      6570,
+      2959
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 9,
+     "seed": 4,
+     "captain": 5843,
+     "team": 2611,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "primary",
+     "fb2_list": [
+      6570,
+      2620,
+      2611,
+      3658
+     ],
+     "fb1_list": [
+      2611,
+      6570,
+      2959,
+      4237
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 11,
+     "seed": 5,
+     "captain": 2620,
+     "team": 6570,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      6570,
+      3658,
+      10473,
+      5927
+     ],
+     "fb1_list": [
+      6570,
+      2959,
+      4237,
+      5927
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 13,
+     "seed": 6,
+     "captain": 5927,
+     "team": 3658,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_3",
+     "fb2_list": [
+      3658,
+      10473,
+      10666,
+      6877
+     ],
+     "fb1_list": [
+      2959,
+      4237,
+      10473,
+      3658
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 15,
+     "seed": 7,
+     "captain": 6528,
+     "team": 2959,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "primary",
+     "fb2_list": [
+      10473,
+      10666,
+      6877,
+      2959
+     ],
+     "fb1_list": [
+      2959,
+      4237,
+      10473,
+      6114
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 17,
+     "seed": 8,
+     "captain": 10473,
+     "team": 6877,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "unlisted",
+     "fb2_list": [
+      10666,
+      6877,
+      9758,
+      5610
+     ],
+     "fb1_list": [
+      4237,
+      6114,
+      10666,
+      5610
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 18,
+     "seed": 8,
+     "captain": 10473,
+     "team": 74,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      10666,
+      9758,
+      5610,
+      5559
+     ],
+     "fb1_list": [
+      4237,
+      6114,
+      10666,
+      5610
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 19,
+     "seed": 7,
+     "captain": 6528,
+     "team": 6114,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "backup_1",
+     "fb2_list": [
+      10666,
+      9758,
+      5610,
+      5559
+     ],
+     "fb1_list": [
+      4237,
+      6114,
+      10666,
+      5610
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 20,
+     "seed": 6,
+     "captain": 5927,
+     "team": 5056,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "backup_3",
+     "fb2_list": [
+      10666,
+      9758,
+      5610,
+      5559
+     ],
+     "fb1_list": [
+      4237,
+      10666,
+      5610,
+      5056
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 21,
+     "seed": 5,
+     "captain": 2620,
+     "team": 10666,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_1",
+     "fb2_list": [
+      10666,
+      9758,
+      5610,
+      5559
+     ],
+     "fb1_list": [
+      4237,
+      10666,
+      5610,
+      4956
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 22,
+     "seed": 4,
+     "captain": 5843,
+     "team": 9758,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "unlisted",
+     "fb2_list": [
+      9758,
+      5610,
+      5559,
+      7811
+     ],
+     "fb1_list": [
+      4237,
+      5610,
+      4956,
+      5227
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 23,
+     "seed": 3,
+     "captain": 2054,
+     "team": 4237,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "primary",
+     "fb2_list": [
+      5610,
+      5559,
+      7811,
+      4237
+     ],
+     "fb1_list": [
+      4237,
+      5610,
+      4956,
+      5227
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 24,
+     "seed": 2,
+     "captain": 5675,
+     "team": 5559,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "unlisted",
+     "fb2_list": [
+      5610,
+      5559,
+      7811,
+      9638
+     ],
+     "fb1_list": [
+      5610,
+      4956,
+      5227,
+      4216
+     ]
+    },
+    {
+     "event_key": "2025misjo",
+     "season": 2025,
+     "seq": 25,
+     "seed": 1,
+     "captain": 2767,
+     "team": 7210,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "unlisted",
+     "fb2_list": [
+      5610,
+      7811,
+      9638,
+      7210
+     ],
+     "fb1_list": [
+      5610,
+      4956,
+      5227,
+      4216
+     ]
+    }
+   ],
+   "recommend_seconds": {
+    "cold_first": 0.7598,
+    "warm_p95": 0.006,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026nhdur",
+   "actions": 24,
+   "notes": [
+    "alliance 1: TBA lists [9443] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb2": 130,
+    "withheld:team_not_selecting": 26,
+    "withheld:no_remaining_turn": 36
+   },
+   "pick_positions": [
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 3,
+     "seed": 1,
+     "captain": 238,
+     "team": 1058,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "backup_3",
+     "fb2_list": [
+      133,
+      1058,
+      6324,
+      8046
+     ],
+     "fb1_list": [
+      6324,
+      133,
+      8046,
+      1058
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 5,
+     "seed": 2,
+     "captain": 6324,
+     "team": 133,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      133,
+      8046,
+      1922,
+      7674
+     ],
+     "fb1_list": [
+      133,
+      8046,
+      1922,
+      58
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 7,
+     "seed": 3,
+     "captain": 8046,
+     "team": 1922,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      1922,
+      7674,
+      4761,
+      2648
+     ],
+     "fb1_list": [
+      1922,
+      58,
+      4761,
+      2523
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 9,
+     "seed": 4,
+     "captain": 4761,
+     "team": 172,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      7674,
+      2648,
+      58,
+      4925
+     ],
+     "fb1_list": [
+      58,
+      2523,
+      509,
+      7674
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 11,
+     "seed": 5,
+     "captain": 58,
+     "team": 2648,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "backup_3",
+     "fb2_list": [
+      7674,
+      2648,
+      4925,
+      69
+     ],
+     "fb1_list": [
+      2523,
+      509,
+      7674,
+      2648
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 13,
+     "seed": 6,
+     "captain": 4473,
+     "team": 4925,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "backup_3",
+     "fb2_list": [
+      7674,
+      4925,
+      69,
+      4564
+     ],
+     "fb1_list": [
+      2523,
+      509,
+      7674,
+      4925
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 15,
+     "seed": 7,
+     "captain": 7674,
+     "team": 4564,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "unlisted",
+     "fb2_list": [
+      69,
+      4564,
+      4546,
+      11336
+     ],
+     "fb1_list": [
+      2523,
+      509,
+      69,
+      11336
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 17,
+     "seed": 8,
+     "captain": 9055,
+     "team": 811,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "unlisted",
+     "fb2_list": [
+      69,
+      4546,
+      11336,
+      811
+     ],
+     "fb1_list": [
+      2523,
+      509,
+      69,
+      11336
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 18,
+     "seed": 8,
+     "captain": 9055,
+     "team": 69,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_2",
+     "fb2_list": [
+      69,
+      4546,
+      11336,
+      8410
+     ],
+     "fb1_list": [
+      2523,
+      509,
+      69,
+      11336
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 19,
+     "seed": 7,
+     "captain": 7674,
+     "team": 5902,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      4546,
+      11336,
+      8410,
+      3597
+     ],
+     "fb1_list": [
+      2523,
+      509,
+      11336,
+      4546
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 20,
+     "seed": 6,
+     "captain": 4473,
+     "team": 1350,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      4546,
+      11336,
+      8410,
+      3597
+     ],
+     "fb1_list": [
+      2523,
+      509,
+      11336,
+      4546
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 21,
+     "seed": 5,
+     "captain": 58,
+     "team": 4546,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_3",
+     "fb2_list": [
+      4546,
+      11336,
+      8410,
+      3597
+     ],
+     "fb1_list": [
+      2523,
+      509,
+      11336,
+      4546
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 22,
+     "seed": 4,
+     "captain": 4761,
+     "team": 11336,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_2",
+     "fb2_list": [
+      11336,
+      8410,
+      3597,
+      1512
+     ],
+     "fb1_list": [
+      2523,
+      509,
+      11336,
+      8410
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 23,
+     "seed": 3,
+     "captain": 8046,
+     "team": 509,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "backup_1",
+     "fb2_list": [
+      8410,
+      3597,
+      1512,
+      2523
+     ],
+     "fb1_list": [
+      2523,
+      509,
+      8410,
+      1307
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 24,
+     "seed": 2,
+     "captain": 6324,
+     "team": 3597,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "backup_3",
+     "fb2_list": [
+      8410,
+      3597,
+      1512,
+      2523
+     ],
+     "fb1_list": [
+      2523,
+      8410,
+      1307,
+      3597
+     ]
+    },
+    {
+     "event_key": "2026nhdur",
+     "season": 2026,
+     "seq": 25,
+     "seed": 1,
+     "captain": 238,
+     "team": 1512,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "backup_3",
+     "fb2_list": [
+      8410,
+      1512,
+      2523,
+      2712
+     ],
+     "fb1_list": [
+      2523,
+      8410,
+      1307,
+      1512
+     ]
+    }
+   ],
+   "recommend_seconds": {
+    "cold_first": 0.6194,
+    "warm_p95": 0.0063,
+    "count": 192
+   },
+   "passed": true
+  },
+  {
+   "event_key": "2026onwat",
+   "actions": 24,
+   "notes": [
+    "alliance 8: TBA lists [5408] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb2": 135,
+    "withheld:team_not_selecting": 21,
+    "withheld:no_remaining_turn": 36
+   },
+   "pick_positions": [
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 3,
+     "seed": 1,
+     "captain": 4946,
+     "team": 4678,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      4678,
+      2200,
+      610,
+      9098
+     ],
+     "fb1_list": [
+      4678,
+      3683,
+      610,
+      2200
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 5,
+     "seed": 2,
+     "captain": 2200,
+     "team": 610,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_1",
+     "fb2_list": [
+      610,
+      9098,
+      3683,
+      2702
+     ],
+     "fb1_list": [
+      3683,
+      610,
+      2702,
+      9098
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 7,
+     "seed": 3,
+     "captain": 9098,
+     "team": 5409,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "unlisted",
+     "fb2_list": [
+      3683,
+      2702,
+      4917,
+      5409
+     ],
+     "fb1_list": [
+      3683,
+      2702,
+      4976,
+      4917
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 9,
+     "seed": 4,
+     "captain": 3683,
+     "team": 2702,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      2702,
+      4917,
+      4976,
+      2609
+     ],
+     "fb1_list": [
+      2702,
+      4976,
+      4917,
+      772
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 11,
+     "seed": 5,
+     "captain": 8089,
+     "team": 2609,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "unlisted",
+     "fb2_list": [
+      4917,
+      4976,
+      2609,
+      11227
+     ],
+     "fb1_list": [
+      4976,
+      4917,
+      772,
+      3756
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 13,
+     "seed": 6,
+     "captain": 4976,
+     "team": 4917,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      4917,
+      11227,
+      1334,
+      772
+     ],
+     "fb1_list": [
+      4917,
+      772,
+      3756,
+      4940
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 15,
+     "seed": 7,
+     "captain": 772,
+     "team": 11227,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "unlisted",
+     "fb2_list": [
+      11227,
+      1334,
+      3756,
+      5870
+     ],
+     "fb1_list": [
+      3756,
+      4940,
+      5912,
+      5408
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 17,
+     "seed": 8,
+     "captain": 1334,
+     "team": 2386,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "unlisted",
+     "fb2_list": [
+      3756,
+      5870,
+      2386,
+      4617
+     ],
+     "fb1_list": [
+      3756,
+      4940,
+      5912,
+      5408
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 18,
+     "seed": 8,
+     "captain": 1334,
+     "team": 5870,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "unlisted",
+     "fb2_list": [
+      3756,
+      5870,
+      4617,
+      6875
+     ],
+     "fb1_list": [
+      3756,
+      4940,
+      5912,
+      5408
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 19,
+     "seed": 7,
+     "captain": 772,
+     "team": 5912,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "backup_2",
+     "fb2_list": [
+      3756,
+      4617,
+      6875,
+      9263
+     ],
+     "fb1_list": [
+      3756,
+      4940,
+      5912,
+      5408
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 20,
+     "seed": 6,
+     "captain": 4976,
+     "team": 9263,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "unlisted",
+     "fb2_list": [
+      3756,
+      4617,
+      6875,
+      9263
+     ],
+     "fb1_list": [
+      3756,
+      4940,
+      5408,
+      6725
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 21,
+     "seed": 5,
+     "captain": 8089,
+     "team": 6854,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "unlisted",
+     "fb2_list": [
+      3756,
+      4617,
+      6875,
+      6854
+     ],
+     "fb1_list": [
+      3756,
+      4940,
+      5408,
+      6725
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 22,
+     "seed": 4,
+     "captain": 3683,
+     "team": 3756,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      3756,
+      4617,
+      6875,
+      5408
+     ],
+     "fb1_list": [
+      3756,
+      4940,
+      5408,
+      6725
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 23,
+     "seed": 3,
+     "captain": 9098,
+     "team": 10514,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      4617,
+      6875,
+      5408,
+      7058
+     ],
+     "fb1_list": [
+      4940,
+      5408,
+      6725,
+      6875
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 24,
+     "seed": 2,
+     "captain": 2200,
+     "team": 6875,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "backup_3",
+     "fb2_list": [
+      4617,
+      6875,
+      5408,
+      7058
+     ],
+     "fb1_list": [
+      4940,
+      5408,
+      6725,
+      6875
+     ]
+    },
+    {
+     "event_key": "2026onwat",
+     "season": 2026,
+     "seq": 25,
+     "seed": 1,
+     "captain": 4946,
+     "team": 4308,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "backup_3",
+     "fb2_list": [
+      4617,
+      5408,
+      7058,
+      4308
+     ],
+     "fb1_list": [
+      4940,
+      5408,
+      6725,
+      4308
+     ]
+    }
+   ],
+   "recommend_seconds": {
+    "cold_first": 0.5095,
+    "warm_p95": 0.0061,
+    "count": 192
+   },
+   "passed": true
+  }
+ ],
+ "skipped": 0,
+ "passed": true
+}

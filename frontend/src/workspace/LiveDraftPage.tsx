@@ -362,7 +362,7 @@ function ProjectionPart({ team, recs }: { team: number; recs: RecState }) {
           {' '}<span className="badge badge-warn">{projected.validation.status.replaceAll('_', ' ')}</span></p>
         <p className="muted">Assumes your alliance as it stands ({(card.projection_members ?? []).join(', ')}) plus
           this team, and no later pick. {projected.method}; {projected.fouls_included ? 'fouls included'
-            : 'fouls excluded'}. {projected.validation.reasons.join(' ')}</p>
+            : 'fouls excluded'}. {projected.validation.reasons.join(' ')}.</p>
         {card.fit && card.fit.length > 0 && (
           <div className="table-scroll">
             <table className="grid compact">
@@ -504,8 +504,7 @@ function RecommendationPanel({ draft, recs }: { draft: DraftRecord; recs: RecSta
           {data.primary && <RecommendedRow label="Primary" team={data.primary} primary />}
           {data.backups.length > 0 && (
             <ol className="backup-list" aria-label="Backup picks">
-              {data.backups.map((t, i) => <li key={t.team_number}>
-                <RecommendedRow label={`Backup ${i + 1}`} team={t} /></li>)}
+              {data.backups.map((t) => <li key={t.team_number}><RecommendedRow label="Backup" team={t} /></li>)}
             </ol>)}
           {data.movement.length > 0 && <ul className="movement small">{data.movement.map((m) => <li key={m}>{m}</li>)}</ul>}
           {(data.source === 'fallback_p11_fb1' || data.source === 'fallback_p11_fb2') && (

@@ -248,3 +248,22 @@ history entries.
 | Every route as each role and another team, CSRF, concurrency, append-only, idempotency | `tests/test_phase11_live_draft_api.py` | written; **not run**: no PostgreSQL on the build machine |
 | Real past events replayed action by action (seeded sample, ≤ 45 min) | `python -m scripts.phase11_replay` | harness fixture-tested; **not run** on real data |
 | The page: recording, override, stale, withheld, start with manual rules, permission, axe | `frontend/src/workspace/LiveDraftPage.test.tsx` | passing |
+| P11-FB2 rules: estimates, modes, benchmark, gaps, ρ, ties, decline flag, defense, templates; the estimator copy | `tests/test_phase11_fb2.py` | fixtures + one read-only real-event loader test, passing (2026-11-15) |
+| Team profiles: drawer from every surface, focus trap, Escape, polling, as-of, full profile and back, axe | `frontend/src/workspace/LiveDraftPage.test.tsx` | passing (2026-11-15) |
+| FB1 vs FB2 on replayed real selections (descriptive), P11-DM1 under FB2 | `.agent/phase11/results/P11_FB2_COMPARISON_2026-11-15.md` | run on `stratai_test_p11fu`; DM1 holds (6/6, 29/29, 2024njfla) |
+| Tablet (820 × 1180, touch, Chrome): drawer, info buttons, back with selection and scroll restored, axe with contrast | Playwright script, outside the repo | 24 of 24 checks, twice (2026-11-15) |
+
+### FB1 vs FB2 (descriptive, 2026-11-15)
+
+**Not a validation.** These numbers describe how often each rule listed the team actually picked, not pick quality.
+Kanav's 2024njfla replay informed FB2.
+
+On replays of real selections, with the Phase 11 samples (seed 20261104) on `stratai_test_p11fu`, FB2's four-team
+list held the actual pick more often than FB1's:
+- **Wide sample (472 picks):** 62.1% against 51.7%. As primary: 128 against 103.
+- **Prescribed sample (96 picks):** 69.8% against 59.4%.
+
+2024 is about level, and 2025 and 2026 favour FB2. At 2024njfla, MORT's picks were 1218 (FB1 unlisted, FB2 backup 3)
+and 2577 (FB1 backup 3, FB2 primary). FB2 was not tuned afterwards. Details:
+`.agent/phase11/results/P11_FB2_COMPARISON_2026-11-15.md`.
+

@@ -99,7 +99,7 @@ a.button.button-secondary { background: transparent; color: var(--accent); font-
 
 /* Phase 11 follow-up: team profiles on the live draft page. Each pool tile keeps its own select button and gets a
    separate, touch-sized profile button beside it; every other team number is a button that opens the drawer. */
-.team-grid { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
+.team-grid { grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); }
 .team-tile-wrap { display: flex; gap: 4px; min-width: 0; }
 .team-tile-wrap .team-tile { flex: 1 1 auto; min-width: 0; }
 .tile-info { flex: 0 0 44px; min-height: 64px; border: 1px solid var(--border); border-radius: 8px;
