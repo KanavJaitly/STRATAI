@@ -1,6 +1,12 @@
 # Phase 11: live alliance selection
 
-**Status (2026-11-04): implemented; NOT accepted.**
+**Status (2026-11-15): ACCEPTED WITH LIMITATIONS** by Kanav Jaitly and Sven Morais.
+- Record: `.agent/phase11/P11_ACCEPTANCE.md`.
+- Scope: manual draft tracking, the dynamic picklist (the P6-M7 engine, else P11-FB2) and the live-page team profiles.
+- Not accepted here: P11A, `docs/P11-P19Phases.md`, FB2 as validated (it is `not_validated`), or migrations on any
+  deployment.
+
+Earlier status, kept: **Status (2026-11-04): implemented; NOT accepted.**
 - Fixture-tested, and verified against the local API contract.
 - Not verified on an isolated real-data copy, and not accepted by a human.
 - Spec: `docs/P11-P19Phases.md` §5. Decisions: `.agent/phase11/decisions/`. State: `.agent/phase11/PHASE_STATUS.md`.

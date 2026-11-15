@@ -4,11 +4,16 @@
 phase: 11
 title: Live alliance selection (manual draft tracking and a dynamic picklist)
 spec: docs/P11-P19Phases.md §5 (document status PROPOSED; Phase 11 started on the owner's instruction, 2026-11-04)
-status: VERIFIED ON AN ISOLATED REAL-DATA COPY, NOT ACCEPTED (2026-11-09)
+status: ACCEPTED WITH LIMITATIONS (2026-11-15; Kanav Jaitly and Sven Morais; P11_ACCEPTANCE.md)
+status_history:
+  - 2026-11-09: VERIFIED ON AN ISOLATED REAL-DATA COPY, NOT ACCEPTED
+  - 2026-11-15: ACCEPTED WITH LIMITATIONS (P11_ACCEPTANCE.md, write-once)
 committed: >-
   2026-11-04 implementation on main (3757d2a). 2026-11-09 verification and fixes on branch phase11/verification
   (PR #44), committed and pushed on Sven's authorization; not merged.
-current_stage: awaiting human acceptance (the owners' decision)
+  Correction (2026-11-15): PR #44 was merged on 2026-11-09; the note above was stale. The follow-up (team profiles,
+  P11-FB2) is PR #46, squash-merged into main on 2026-11-15 (a218765).
+current_stage: accepted (2026-11-15). Remaining items are owner decisions outside Phase 11's acceptance (below).
 
 follow_up_2026-11-14 (Kanav's request after his 2024njfla replay; branch phase11/live-draft-followups, not pushed):
   part_a_team_profiles: >-
@@ -37,6 +42,10 @@ follow_up_2026-11-14 (Kanav's request after his 2024njfla replay; branch phase11
     checks, twice, axe clean with contrast.
   open: Sven's countersignature on P11-FB2 and the contract record; acceptance (owners); FB2's total-score and EPA
     modes were not exercised on real data (all 31 events used components); no P11_ACCEPTANCE.md exists to annotate.
+  update (2026-11-15): merged as PR #46 (a218765). Acceptance recorded in P11_ACCEPTANCE.md. The countersignature
+    lines are still blank in both records; Kanav instructed to proceed as if signed, and the agent did not fill
+    them in. tests/test_phase9_llm.py: 93 of 93 with the anthropic SDK installed, so the suite's 2 failures were
+    the missing SDK only. The FB2 total-score and EPA modes remain unit-tested only (an accepted limitation).
 
 verification_environment (2026-11-09, Sven's machine):
   database: >-
@@ -76,8 +85,8 @@ human_decisions:
   recorded: decisions/P11_Q1_Q4_DECISIONS_2026-11-04.md (Q1 = b with P11-FB1 frozen; Q2 configurable/off; Q3 <= 2 s p95; Q4 alliance_selection)
   implementation_notes: decisions/P11_IMPLEMENTATION_NOTES_2026-11-04.md
   commit_push: authorized by Sven, 2026-11-09 (PR #44)
+  acceptance: Kanav Jaitly and Sven Morais, 2026-11-15 (P11_ACCEPTANCE.md: ACCEPTED WITH LIMITATIONS)
   open:
-    - human acceptance of Phase 11
     - approval of docs/P11-P19Phases.md as a whole (only Phase 11 was started)
     - whether to add Phase 11-19 entries to docs/ROADMAP.md (§14)
     - applying 0014 to the local serving database (at 0013 since the incident below), and 0012-0014 to any deployment
@@ -138,6 +147,7 @@ last_verification (2026-11-09, Sven's machine, DATABASE_URL -> isolated stratai_
   audits: phase7_contract_lock check unchanged; phase9_zero_llm_audit ok (no unclassified operations)
 
 next_steps:
-  1. Human acceptance (Kanav and Sven).
-  2. Merge PR #44, then, when authorized, apply 0012-0014 to a deployment.
+  1. Human acceptance (Kanav and Sven). DONE 2026-11-15 (P11_ACCEPTANCE.md).
+  2. Merge PR #44 (DONE 2026-11-09), then, when authorized, apply 0012-0014 to a deployment.
+  3. Bring the local serving database stratai from 0013 to 0014, with a backup, on the owner's "apply".
 ```
