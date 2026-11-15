@@ -427,7 +427,7 @@ def _recommended(candidate: draft_recommendations.Candidate, status: str | None,
             value=round(card.projected, 1), robots=list(card.robots), fouls_included=card.fouls_included,
             method=_FB2_METHOD.get(mode or "", mode or "P11-FB2"),
             validation=Validation(status="not_validated", reasons=[
-                "a sum of per-robot estimates; only alliance totals are observed, so no robot estimate is validated, "
+                "A sum of per-robot estimates; only alliance totals are observed, so no robot estimate is validated, "
                 "and no interval is shown (not calibrated)"]))
     return RecommendedOut(
         team_number=candidate.team_number, ordering_position=candidate.ordering_position,

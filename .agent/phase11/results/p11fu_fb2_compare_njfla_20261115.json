@@ -1,0 +1,485 @@
+{
+ "kind": "p11_replay",
+ "run_at": "2026-11-15T05:22:16.633869+00:00",
+ "seed": 20261104,
+ "per_season": 2,
+ "seasons": [
+  2024,
+  2025,
+  2026
+ ],
+ "sample": [
+  "2024njfla"
+ ],
+ "explicit_events": true,
+ "database": "stratai_test_p11fu",
+ "fallback_comparison": {
+  "note": "descriptive; P11-FB2 record section 10; not a validation",
+  "overall": {
+   "fb1": {
+    "picks": 16,
+    "primary": 3,
+    "backup": 8,
+    "unlisted": 5,
+    "withheld": 0,
+    "by_position": {
+     "backup_1": 6,
+     "backup_2": 1,
+     "backup_3": 1,
+     "primary": 3,
+     "unlisted": 5
+    },
+    "listed_share": 0.6875
+   },
+   "fb2": {
+    "picks": 16,
+    "primary": 7,
+    "backup": 8,
+    "unlisted": 1,
+    "withheld": 0,
+    "by_position": {
+     "backup_1": 2,
+     "backup_2": 4,
+     "backup_3": 2,
+     "primary": 7,
+     "unlisted": 1
+    },
+    "listed_share": 0.9375
+   }
+  },
+  "by_season": {
+   "2024": {
+    "fb1": {
+     "picks": 16,
+     "primary": 3,
+     "backup": 8,
+     "unlisted": 5,
+     "withheld": 0,
+     "by_position": {
+      "backup_1": 6,
+      "backup_2": 1,
+      "backup_3": 1,
+      "primary": 3,
+      "unlisted": 5
+     },
+     "listed_share": 0.6875
+    },
+    "fb2": {
+     "picks": 16,
+     "primary": 7,
+     "backup": 8,
+     "unlisted": 1,
+     "withheld": 0,
+     "by_position": {
+      "backup_1": 2,
+      "backup_2": 4,
+      "backup_3": 2,
+      "primary": 7,
+      "unlisted": 1
+     },
+     "listed_share": 0.9375
+    }
+   }
+  }
+ },
+ "budget_minutes": 40.0,
+ "partial": false,
+ "epa_source_loaded": true,
+ "ranking_model_loaded": true,
+ "events": [
+  {
+   "event_key": "2024njfla",
+   "actions": 24,
+   "notes": [
+    "alliance 8: TBA lists [8075] after the 3 selected teams (joined after selection, e.g. a playoff backup); not part of the draft, not replayed"
+   ],
+   "missing": [],
+   "rules_source": "approved_ruleset",
+   "overridden": [],
+   "problems": [],
+   "recommendation_sources": {
+    "fallback_p11_fb2": 131,
+    "withheld:team_not_selecting": 25,
+    "withheld:no_remaining_turn": 36
+   },
+   "pick_positions": [
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 3,
+     "seed": 1,
+     "captain": 1676,
+     "team": 222,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "primary",
+     "fb2_list": [
+      8513,
+      222,
+      223,
+      219
+     ],
+     "fb1_list": [
+      222,
+      1811,
+      223,
+      3142
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 5,
+     "seed": 2,
+     "captain": 11,
+     "team": 1218,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "unlisted",
+     "fb2_list": [
+      8513,
+      223,
+      219,
+      1218
+     ],
+     "fb1_list": [
+      1811,
+      223,
+      3142,
+      4361
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 7,
+     "seed": 3,
+     "captain": 4361,
+     "team": 219,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "unlisted",
+     "fb2_list": [
+      8513,
+      223,
+      219,
+      1811
+     ],
+     "fb1_list": [
+      1811,
+      223,
+      3142,
+      8513
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 9,
+     "seed": 4,
+     "captain": 3142,
+     "team": 8513,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_2",
+     "fb2_list": [
+      8513,
+      223,
+      1811,
+      1279
+     ],
+     "fb1_list": [
+      1811,
+      223,
+      8513,
+      56
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 11,
+     "seed": 5,
+     "captain": 8117,
+     "team": 223,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_1",
+     "fb2_list": [
+      223,
+      1811,
+      1279,
+      56
+     ],
+     "fb1_list": [
+      1811,
+      223,
+      56,
+      1279
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 13,
+     "seed": 6,
+     "captain": 56,
+     "team": 1672,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_3",
+     "fb1": "unlisted",
+     "fb2_list": [
+      1811,
+      1279,
+      6016,
+      1672
+     ],
+     "fb1_list": [
+      1811,
+      1279,
+      75,
+      6016
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 15,
+     "seed": 7,
+     "captain": 1279,
+     "team": 75,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "backup_1",
+     "fb2_list": [
+      1811,
+      6016,
+      75,
+      428
+     ],
+     "fb1_list": [
+      1811,
+      75,
+      6016,
+      428
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 17,
+     "seed": 8,
+     "captain": 1811,
+     "team": 8771,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "unlisted",
+     "fb2_list": [
+      6016,
+      428,
+      8771,
+      193
+     ],
+     "fb1_list": [
+      6016,
+      428,
+      41,
+      193
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 18,
+     "seed": 8,
+     "captain": 1811,
+     "team": 428,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_1",
+     "fb1": "backup_1",
+     "fb2_list": [
+      6016,
+      428,
+      193,
+      41
+     ],
+     "fb1_list": [
+      6016,
+      428,
+      41,
+      193
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 19,
+     "seed": 7,
+     "captain": 1279,
+     "team": 41,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "backup_2",
+     "fb1": "backup_1",
+     "fb2_list": [
+      6016,
+      193,
+      41,
+      5732
+     ],
+     "fb1_list": [
+      6016,
+      41,
+      193,
+      5624
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 20,
+     "seed": 6,
+     "captain": 56,
+     "team": 6016,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      6016,
+      193,
+      5732,
+      9116
+     ],
+     "fb1_list": [
+      6016,
+      193,
+      5624,
+      5732
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 21,
+     "seed": 5,
+     "captain": 8117,
+     "team": 193,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "primary",
+     "fb2_list": [
+      193,
+      9116,
+      5732,
+      5624
+     ],
+     "fb1_list": [
+      193,
+      5624,
+      5732,
+      9116
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 22,
+     "seed": 4,
+     "captain": 3142,
+     "team": 5732,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_1",
+     "fb2_list": [
+      5732,
+      9116,
+      2577,
+      5624
+     ],
+     "fb1_list": [
+      5624,
+      5732,
+      9116,
+      752
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 23,
+     "seed": 3,
+     "captain": 4361,
+     "team": 9116,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_1",
+     "fb2_list": [
+      9116,
+      2577,
+      5624,
+      752
+     ],
+     "fb1_list": [
+      5624,
+      9116,
+      752,
+      8704
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 24,
+     "seed": 2,
+     "captain": 11,
+     "team": 2577,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "primary",
+     "fb1": "backup_3",
+     "fb2_list": [
+      2577,
+      5624,
+      752,
+      8704
+     ],
+     "fb1_list": [
+      5624,
+      752,
+      8704,
+      2577
+     ]
+    },
+    {
+     "event_key": "2024njfla",
+     "season": 2024,
+     "seq": 25,
+     "seed": 1,
+     "captain": 1676,
+     "team": 5438,
+     "served_source": "fallback_p11_fb2",
+     "fb2": "unlisted",
+     "fb1": "unlisted",
+     "fb2_list": [
+      5624,
+      752,
+      8704,
+      6945
+     ],
+     "fb1_list": [
+      5624,
+      752,
+      8704,
+      3340
+     ]
+    }
+   ],
+   "recommend_seconds": {
+    "cold_first": 0.5991,
+    "warm_p95": 0.0074,
+    "count": 192
+   },
+   "passed": true
+  }
+ ],
+ "skipped": 0,
+ "passed": true
+}
