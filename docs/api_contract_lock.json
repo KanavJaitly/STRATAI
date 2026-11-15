@@ -3423,6 +3423,16 @@
    "operations_added": [],
    "operations_removed": [],
    "reason": "Phase 11 review fix: UnavailableOut.reason gains projected_captain (captain_may_accept_higher_alliance=False applied to the pool); Phase 11 entries only"
+  },
+  {
+   "added_leaves": 2,
+   "changed": [],
+   "command": "relock",
+   "date": "2026-11-14",
+   "decision": ".agent/phase11/decisions/P11_FU_CONTRACT_2026-11-14.md approved by Kanav 2026-11-14",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P11 follow-up Part A: additive optional HistoryOut.team_number and HistoryOut.seed, for the live page's team profile links"
   }
  ],
  "schemas": {
@@ -5538,6 +5548,16 @@
     "recorded_by": {
      "type": "string"
     },
+    "seed": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
     "seq": {
      "type": "integer"
     },
@@ -5554,6 +5574,16 @@
       },
       {
        "type": "string"
+      }
+     ]
+    },
+    "team_number": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
       }
      ]
     },

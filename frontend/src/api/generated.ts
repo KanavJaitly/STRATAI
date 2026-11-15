@@ -527,10 +527,14 @@ export interface HistoryOut {
   override_reason: string | null
   recorded_at: string | null
   recorded_by: string
+  /** The alliance the entry is about, when it names one. */
+  seed?: number | null
   seq: number
   source: string
   summary: string
   superseded_by: string | null
+  /** The team the entry is about (a draft action's, or a correction's replacement's); null for other entries. */
+  team_number?: number | null
   type: string
 }
 
