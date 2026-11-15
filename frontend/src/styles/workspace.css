@@ -96,3 +96,41 @@ a.button.button-secondary { background: transparent; color: var(--accent); font-
 .history-list li.superseded { opacity: 0.6; text-decoration: line-through; }
 .row-current { background: var(--selected); }
 .link-button { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0 6px; font: inherit; }
+
+/* Phase 11 follow-up: team profiles on the live draft page. Each pool tile keeps its own select button and gets a
+   separate, touch-sized profile button beside it; every other team number is a button that opens the drawer. */
+.team-grid { grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); }
+.team-tile-wrap { display: flex; gap: 4px; min-width: 0; }
+.team-tile-wrap .team-tile { flex: 1 1 auto; min-width: 0; }
+.tile-info { flex: 0 0 44px; min-height: 64px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface, transparent); color: var(--muted); font: inherit; font-weight: 700; font-style: italic;
+  cursor: pointer; padding: 0; }
+.tile-info:hover, .tile-info:focus-visible { color: var(--text); border-color: var(--accent); }
+.team-link { text-decoration: underline; text-underline-offset: 2px; }
+.team-link-touch { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.back-link { margin: 0 0 8px; }
+
+/* The drawer slides over the page; the board underneath stays mounted and keeps polling. */
+.profile-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 40; }
+.profile-drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 41; width: min(520px, 100vw);
+  overflow-y: auto; overscroll-behavior: contain; padding: 0 16px 24px; background: var(--surface-raised, var(--surface));
+  border-left: 1px solid var(--border); box-shadow: -12px 0 32px rgba(0, 0, 0, 0.4); }
+.profile-drawer h3 { margin: 18px 0 6px; font-size: 1rem; }
+.drawer-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 12px 0 8px; background: var(--surface-raised, var(--surface)); border-bottom: 1px solid var(--border); }
+.drawer-head h2 { margin: 0; }
+.drawer-close { min-height: 44px; min-width: 44px; }
+.drawer-board-status p { margin: 4px 0; }
+.drawer-foot { margin-top: 20px; }
+.drawer-foot .button { display: inline-flex; align-items: center; min-height: 44px; }
+@media (prefers-reduced-motion: no-preference) {
+  .profile-drawer { animation: profile-drawer-in 160ms ease-out; }
+}
+@keyframes profile-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* P11-FB2 cards: rank, projected score, decline flag, and the fixed-template reasons. */
+.recommended-row p { margin: 2px 0; }
+.recommended-row .reasons { margin: 2px 0 8px 0; }
+.recommended-row ul.reasons, .recommended-row .reasons ul { padding-left: 1.1rem; margin: 2px 0; }
+.recommended-row details.reasons summary { min-height: 32px; display: inline-flex; align-items: center; cursor: pointer; }
+.decline-flag { color: var(--warn-fg, inherit); }

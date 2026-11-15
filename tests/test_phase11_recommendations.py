@@ -1,7 +1,9 @@
-"""Phase 11: the live draft record's recommendations (workspaces.draft_recommendations; P11-Q1, P11-FB1).
+"""Phase 11: the live draft record's recommendations (workspaces.draft_recommendations; P11-Q1, P11-FB2).
 
-The engine and the ordering are replaced by fakes, so no database is needed. Synthetic events only (teams ranked by
-number; the fake ordering is a fixed permutation): nothing here is evidence about any real team.
+The engine, the ordering and FB2's event estimates are replaced by fakes, so no database is needed. Synthetic events
+only (teams ranked by number; the fake ordering is a fixed permutation, and the fake FB2 estimates follow it, so FB2
+lists teams in the same order): nothing here is evidence about any real team. FB2's own rules are tested in
+tests/test_phase11_fb2.py; FB1, no longer served, keeps its pure-function tests at the end of this file.
 """
 
 from __future__ import annotations
@@ -16,6 +18,7 @@ from ml.playoffs.selection import PickRecommendation, RankedPick, turn_order
 from ml.playoffs.service import PickListResult, PlayoffModelsNotAccepted
 from ml.views.event_analysis import M5V2Required
 from tests.test_phase11_draft_log import Log, setup
+from workspaces import draft_fb2 as fb2
 from workspaces import draft_log as dl
 from workspaces import draft_recommendations as rec
 
@@ -28,6 +31,22 @@ class FakeEpa:
 
 def ordering(teams) -> rec.Ordering:
     return rec.Ordering(tuple(teams), "raw_epa", "validated", {}, NOW, "selection_moment", ())
+
+
+def fake_fb2(database, event_key, ordering):
+    """FB2's event estimates for a fake ordering: strength falls with ordering position, the same in every component,
+    and every team ordered has an estimate (so FB2 lists teams in the ordering's order); no Phase 3 inputs."""
+    n = len(ordering.teams)
+    values = {t: {c: float(n - i) * w for c, w in zip(fb2.COMPONENTS, (1.0, 3.0, 1.0))}
+              for i, t in enumerate(ordering.teams)}
+    estimates = fb2.EventEstimates(fb2.MODE_COMPONENTS, fb2.COMPONENTS, values, {},
+                                   fb2.benchmark(values, fb2.COMPONENTS), None, 48)
+    return fb2.Fb2Context(estimates, fb2.TeamInputs({}))
+
+
+@pytest.fixture(autouse=True)
+def fb2_estimates(monkeypatch):
+    monkeypatch.setattr(rec, "fb2_context", fake_fb2)
 
 
 @pytest.fixture
@@ -55,10 +74,12 @@ def test_when_the_engine_refuses_the_fallback_is_served_not_validated_with_the_r
     log = Log(setup())
     log.captain(1, 1)
     out = recommend(log, team=1)
-    assert out.status == "current" and out.source == rec.SOURCE_FALLBACK
+    assert out.status == "current" and out.source == rec.SOURCE_FB2 == "fallback_p11_fb2"
     assert out.validation_status == "not_validated"
     assert out.engine_refusal == ("playoff_models_not_accepted", "PX gates not passed: PX-1, PX-2, PX-4")
-    assert any(r.startswith("P11-FB1") for r in out.validation_reasons)
+    assert any(r.startswith("P11-FB2") for r in out.validation_reasons)
+    assert out.provenance["rule"] == "P11-FB2" and out.provenance["decision"].endswith("P11_FB2_DECISION_2026-11-14.md")
+    assert all(c.fb2 is not None and c.fb2.reasons for c in [out.primary, *out.backups])
     assert out.primary.team_number == 24 and out.primary.p_win_event is None  # no probability, ever
     assert all(c.p_win_event is None for c in out.backups)
 
@@ -146,6 +167,29 @@ def test_a_team_that_is_not_selecting_gets_no_recommendation(engine_refuses, str
     assert recommend(log, team=20).withheld[0] == "team_not_selecting"
 
 
+def test_fb2_without_a_projection_is_withheld_with_the_reason_never_fb1(engine_refuses, strength, monkeypatch):
+    monkeypatch.setattr(rec, "fb2_context", lambda *a: fb2.Fb2Context(None, fb2.TeamInputs({}), "only 5 alliance rows"))
+    log = Log(setup())
+    log.captain(1, 1)
+    out = recommend(log, team=1)
+    assert out.status == "withheld" and out.withheld[0] == "fb2_projection_unavailable"
+    assert "only 5 alliance rows" in out.withheld[1] and out.primary is None and out.source is None
+
+
+def test_every_available_team_has_a_projection_card(engine_refuses, monkeypatch):
+    monkeypatch.setattr(rec, "event_ordering", lambda *a, **k: ordering([24, 23, 22, 21, 20, 3, 2]))
+    log = Log(setup())
+    log.captain(1, 1)
+    out = recommend(log, team=5)  # projected captain of alliance 5: teams 2-4 captain earlier alliances
+    available, _ = log.view().availability()
+    cards = {c.team_number: c.fb2 for c in out.projections}
+    assert set(cards) == set(available)  # every available team, the advising team included (excluded: your team)
+    assert cards[5].reasons[0] == "Not recommended: your team."
+    assert cards[3].reasons[0] == "Not recommended: projected to captain alliance 3 before your turn."
+    assert cards[19].reasons == ("No estimate at this event, so never recommended.",)
+    assert [c.team_number for c in out.projections[:5]] == [24, 23, 22, 21, 20]
+
+
 def test_an_ordering_refusal_withholds_the_fallback_rather_than_guessing(engine_refuses, monkeypatch):
     def refuse(*a, **k):
         raise M5V2Required("2030test")
@@ -216,7 +260,7 @@ def test_when_captains_may_not_join_higher_alliances_no_projected_captain_is_off
 
 
 def test_an_ordering_before_the_selection_moment_is_withheld_not_computed_at_now(engine_refuses, monkeypatch):
-    """Review finding 5: P11-FB1 orders at the selection moment only."""
+    """Review finding 5: the fallback (P11-FB1, now P11-FB2) orders at the selection moment only."""
     from datetime import timedelta
 
     monkeypatch.setattr(rec, "event_selection_moment", lambda database, event_key: NOW + timedelta(hours=1))
@@ -226,3 +270,16 @@ def test_an_ordering_before_the_selection_moment_is_withheld_not_computed_at_now
     out = rec.recommend(None, "2030test", log.view(), None, 1, epa_source=FakeEpa(), ranking=None,
                         playoff_models=None, now=lambda: NOW)
     assert out.status == "withheld" and out.withheld[0] == "selection_time_unavailable"
+
+
+# --- P11-FB1: no longer served; kept as a pure function for the FB1/FB2 comparison ----------------------------------
+
+
+def test_fb1_still_ranks_by_the_ordering_with_its_backups_and_exclusions():
+    log = Log(setup())
+    log.captain(1, 1)
+    log.pick(1, 2)
+    view = log.view()
+    ranked, unranked, excluded = rec.fallback_lists(view, 4, 5, list(range(24, 0, -1)))
+    assert ranked[0] == 24 and len(ranked) == 1 + max(3, view.turns_before(4))
+    assert dict(excluded)[3] == "projected to captain alliance 2 before your turn" and unranked == []

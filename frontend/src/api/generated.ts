@@ -275,6 +275,15 @@ export interface CompareSide {
   strategy: Strategy
 }
 
+/** P11-FB2: one component's estimate for this team, its reliability-adjusted value, your alliance's gap against the event's playoff-level benchmark, and how much of that gap the team fills. */
+export interface ComponentFitOut {
+  component: string
+  effective: number
+  estimate: number
+  filled: number
+  gap: number
+}
+
 export interface CorrectionBody {
   action_id?: string | null
   override_reason?: string | null
@@ -527,10 +536,14 @@ export interface HistoryOut {
   override_reason: string | null
   recorded_at: string | null
   recorded_by: string
+  /** The alliance the entry is about, when it names one. */
+  seed?: number | null
   seq: number
   source: string
   summary: string
   superseded_by: string | null
+  /** The team the entry is about (a draft action's, or a correction's replacement's); null for other entries. */
+  team_number?: number | null
   type: string
 }
 
@@ -754,6 +767,17 @@ export interface ProfileEditBody {
   payload: Record<string, unknown>
 }
 
+/** P11-FB2: the projected alliance score with this team (never adjusted for reliability or fit). */
+export interface ProjectedScoreOut {
+  fouls_included: boolean
+  /** How the per-robot strengths were estimated (P11-FB2 §2.3). */
+  method: string
+  /** The robots the projection counts, this team included (at most three). */
+  robots: number[]
+  validation: Validation
+  value: number
+}
+
 export interface QualificationForecastResponse {
   as_of: string
   epa: EpaSourceInfo
@@ -828,6 +852,8 @@ export interface RecommendResponse {
 
 export interface RecommendationsOut {
   backups: RecommendedOut[]
+  /** P11-FB2 only: every available team's projection and reasons, ranked candidates first (in order), then excluded teams, then teams with no estimate. */
+  candidate_projections?: RecommendedOut[] | null
   computed_at: string
   /** Why the P6-M7 engine did not serve (fallback only). */
   engine_refusal: CodeMessage | null
@@ -840,7 +866,7 @@ export interface RecommendationsOut {
   record_seq: number
   seed: number | null
   selecting_as: "on_alliance" | "projected_captain" | null
-  source: "engine_p6_m7" | "fallback_p11_fb1" | null
+  source: "engine_p6_m7" | "fallback_p11_fb1" | "fallback_p11_fb2" | null
   status: "current" | "withheld"
   timing_ms: Record<string, number>
   /** Other alliances' picks before this alliance's next turn. */
@@ -853,10 +879,22 @@ export interface RecommendationsOut {
 
 export interface RecommendedOut {
   configuration: number[] | null
+  /** P11-FB2 only: 'May decline (projected captain of alliance N).' Informs only; never changes the order. */
+  decline_flag?: string | null
+  /** P11-FB2 only: gap filling per component. */
+  fit?: ComponentFitOut[] | null
   /** Position in the P5-M4 strength ordering (fallback only). */
   ordering_position: number | null
   profile: CandidateOut | null
+  /** P11-FB2 only: the projected alliance score with this team, not validated. */
+  projected_alliance_score?: ProjectedScoreOut | null
+  /** P11-FB2 only: the alliance members the projection assumes (recorded members, or your team as projected captain); no later pick is assumed. */
+  projection_members?: number[] | null
+  /** P11-FB2 only: the record's final rank. */
+  qualification_rank?: number | null
   reach_finals: StrategyOdds | null
+  /** P11-FB2 only: the fixed-template reasons. */
+  reasons?: string[] | null
   team_number: number
   /** Engine only: P(the alliance wins the event), displayed. */
   win_event: StrategyOdds | null

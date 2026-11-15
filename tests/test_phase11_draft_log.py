@@ -407,3 +407,17 @@ def test_a_superseded_setup_is_shown_as_superseded_in_the_history():
     history = log.view().history
     assert [h.in_effect for h in history] == [False, True]
     assert history[0].superseded_by == history[1].entry.action_id
+
+
+def test_history_entries_name_their_team_for_the_live_page_profiles():
+    """Phase 11 follow-up: each history entry carries the team (and alliance) it is about, so the live page can open
+    that team's profile; entries about no single team carry none."""
+    log = Log(setup())
+    log.captain(1, 1)
+    wrong = log.pick(1, 3)
+    log.add("correct", {"target_action_id": wrong, "replacement": {"type": "pick", "seed": 1, "team": 4}})
+    log.add("correct", {"target_action_id": wrong, "replacement": None})
+    log.add("undo", {"target_action_id": wrong})
+    history = {h["seq"]: (h["type"], h["team_number"], h["seed"]) for h in dl.view_json(log.view())["history"]}
+    assert history == {1: ("configure", None, None), 2: ("captain", 1, 1), 3: ("pick", 3, 1),
+                       4: ("correct", 4, 1), 5: ("correct", None, None), 6: ("undo", None, None)}
