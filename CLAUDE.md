@@ -197,6 +197,10 @@ instruction. The implementation is on main (3757d2a); the verification and fixes
   Three defects were fixed: workspace deletion (migration 0014), the replay's backup-robot comparison, and the live
   page's header. The full backend suite has 9 failures, all environment or baseline, 0 regressions. Acceptance is the
   owners' decision.
+- **Follow-up (2026-11-14/15, branch `phase11/live-draft-followups`, not pushed):** team profile drawer on the live
+  page (Part A), and **P11-FB2** (alliance-aware fallback, frozen before build; decided by Kanav, Sven's countersignature
+  pending; `not_validated`) served instead of P11-FB1. Records: `.agent/phase11/decisions/P11_FB2_DECISION_2026-11-14.md`,
+  `P11_FU_CONTRACT_2026-11-14.md`, `.agent/phase11/results/P11_FB2_COMPARISON_2026-11-15.md`.
 
 **Phase 10 (Polish, Backtesting, Hardening): IN PROGRESS (2026-10-21)** (`.agent/phase10/PHASE_STATUS.md`). Spec:
 `docs/P10Milestones.md`, an agent working freeze pending ratification. Not committed.

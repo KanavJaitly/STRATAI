@@ -10,6 +10,34 @@ committed: >-
   (PR #44), committed and pushed on Sven's authorization; not merged.
 current_stage: awaiting human acceptance (the owners' decision)
 
+follow_up_2026-11-14 (Kanav's request after his 2024njfla replay; branch phase11/live-draft-followups, not pushed):
+  part_a_team_profiles: >-
+    Every team number on /alliance-selection/live opens a profile drawer (page stays mounted; selection, pending
+    action, scroll, polling and stale indicator kept); pool tiles get a separate 44 px info button; "View full profile"
+    and back restore the selected tile and scroll (router state, never browser storage). Reads only locked operations,
+    as of the selection moment. HistoryOut.team_number/seed added (additive). Commit 32174a0.
+  part_b_fb2: >-
+    P11-FB2 frozen (6450d8a) before the build (57fc462, fddc989) and served instead of FB1 when the engine refuses;
+    FB1 kept as a pure function. Decided by Kanav; Sven's countersignature pending; NOT accepted, NOT validated.
+    Records: decisions/P11_FB2_DECISION_2026-11-14.md, decisions/P11_FU_CONTRACT_2026-11-14.md (source gains
+    fallback_p11_fb2: the one approved changed leaf; 24 additive leaves; relocked).
+  investigation_5624: no data defect. 5624 was FB1's primary at MORT's SECOND pick (week-1 event, EPA withheld, M5 v2
+    ranked schedule-dependent alliance averages); 2577's 0-point qm30 is real; 5624's qm12 DQ partner changes <0.1.
+  comparison (descriptive, not validation; results/P11_FB2_COMPARISON_2026-11-15.md): >-
+    stratai_test_p11fu, Phase 11 samples (seed 20261104). Actual pick listed: wide 472 picks FB2 62.1% vs FB1 51.7%;
+    prescribed 96 picks 69.8% vs 59.4%. 2024njfla: 1218 FB1 unlisted / FB2 backup 3; 2577 FB1 backup 3 / FB2 primary.
+    FB2 not tuned afterwards. P11-DM1 holds under FB2 (6/6, 29/29, 2024njfla). Same samples and identical per-event
+    outcomes as the 2026-11-09 stratai_test_p11 runs (that database is not on this machine).
+  timing (P11-Q3): cold first call <= 1.545 s (wide), warm p95 <= 0.012 s.
+  checks (2026-11-15, stratai_test_p11fu): >-
+    backend full suite in 4 parts (~32 min): 3,404 passed, 4 skipped, 1 xfailed, 2 failed - both
+    tests/test_phase9_llm.py needing the anthropic SDK, not installed here (baseline; 0 regressions). The suite does
+    not pass. Frontend: vitest 249 passed, tsc 0, oxlint 8 baseline warnings, build 0. Contract lock check clean.
+    Zero-LLM audit ok (after b153103, the Windows import fix also on p11a). Real Chrome at 820x1180 touch: 24/24
+    checks, twice, axe clean with contrast.
+  open: Sven's countersignature on P11-FB2 and the contract record; acceptance (owners); FB2's total-score and EPA
+    modes were not exercised on real data (all 31 events used components); no P11_ACCEPTANCE.md exists to annotate.
+
 verification_environment (2026-11-09, Sven's machine):
   database: >-
     stratai_test_p11, a template clone of stratai_test_handoff (the D18 handoff restore: 2024-2026, 608 events),
