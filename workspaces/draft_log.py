@@ -607,6 +607,21 @@ def check_append(entries: Sequence[LogEntry], new: LogEntry) -> tuple[DraftView,
     return view, None
 
 
+def _entry_team_seed(entry: LogEntry) -> tuple[int | None, int | None]:
+    """The team (and alliance) a history entry is about: a draft action's own, or a correction's replacement's. None
+    for entries about no single team (configure, undo, close, reopen) or a payload without one."""
+    payload: Any = entry.payload
+    if entry.type == CORRECT:
+        payload = payload.get("replacement") if isinstance(payload, Mapping) else None
+    elif entry.type not in DRAFT_TYPES:
+        return None, None
+    if not isinstance(payload, Mapping):
+        return None, None
+    team, seed = payload.get("team"), payload.get("seed")
+    return (team if isinstance(team, int) and not isinstance(team, bool) else None,
+            seed if isinstance(seed, int) and not isinstance(seed, bool) else None)
+
+
 def view_json(view: DraftView, *, team_number: int | None = None) -> dict[str, Any]:
     """The board and history as the API serves them. Every team is labelled with its source: recorded (observed),
     or projected from the rules and ranks."""
@@ -650,7 +665,8 @@ def view_json(view: DraftView, *, team_number: int | None = None) -> dict[str, A
         "history": [{"action_id": h.entry.action_id, "seq": h.entry.seq, "type": h.entry.type,
                      "summary": h.summary, "override_reason": h.entry.override_reason, "in_effect": h.in_effect,
                      "superseded_by": h.superseded_by, "recorded_by": h.entry.author_label,
-                     "recorded_at": h.entry.recorded_at, "source": h.entry.source, "mode": h.entry.mode}
+                     "recorded_at": h.entry.recorded_at, "source": h.entry.source, "mode": h.entry.mode,
+                     "team_number": _entry_team_seed(h.entry)[0], "seed": _entry_team_seed(h.entry)[1]}
                     for h in view.history],
         "team_number": team_number,
     }

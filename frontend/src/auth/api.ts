@@ -356,6 +356,8 @@ export interface DraftEffectiveAction {
 export interface DraftHistoryItem {
   action_id: string; seq: number; type: string; summary: string; override_reason: string | null; in_effect: boolean
   superseded_by: string | null; recorded_by: string; recorded_at: string | null; source: string; mode: string
+  /** The team (and alliance) the entry is about; absent or null for entries about no single team. */
+  team_number?: number | null; seed?: number | null
 }
 
 export interface DraftRecord {

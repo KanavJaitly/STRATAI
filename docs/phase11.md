@@ -166,6 +166,39 @@ Applying 0013 and 0014 to a deployed database is a separate, authorized step (§
 - **History:** undo last, correct any action, and every superseded entry kept.
 - **Updates:** the page polls every 2 s while visible.
 
+### Team profiles on the live draft page (follow-up, 2026-11-14)
+
+Every team number on the page opens that team's profile in a slide-over drawer: the primary and backups, the
+unranked list, the pool tiles, the alliances table (including projected captains), the unavailable chips and the
+history entries.
+- **Nothing on the page unmounts.** The selected tile, a pending action or override form, the scroll position, the
+  record, the recommendations and the 2 s polling all carry on. The drawer repeats the board's record version and the
+  picks' freshness (current or stale), so they stay visible while it is open.
+- **Pool tiles** keep their select button and get a separate profile button beside it, 44 × 64 px, so a tap on the
+  tile still selects.
+- **The drawer** is a modal dialog (`role="dialog"`, `aria-modal`): focus moves to its Close button, Tab stays inside
+  it, and Escape, Close or a tap outside it closes it and returns focus to the number that opened it. It is axe-clean
+  in the tests.
+- **What it shows**, all from locked read operations the team page already uses (no new operation):
+  - qualification rank (from the record's setup) and where the team stands on the board;
+  - the won–lost–tied record, the alliance score in each match (chart and table), from `GET /events/{event}/matches`;
+  - EPA total/auto/teleop/endgame with its source or the reason it is withheld; average score, SD, Phase 3
+    consistency and reliability, each with n or its absent reason; defense and feeding, or "not enough scouting";
+    all from `GET /teams/{team}/events/{event}/strength`;
+  - the average alliance score at each of the team's events this season (the same strength operation at each
+    earlier event);
+  - why the team is or is not in your picks, and its projected score with your alliance (Part B; under P11-FB1 there
+    is none, and the drawer says so).
+- **As of the selection moment.** Every read passes `as_of` = the record's selection moment (one minute after the last
+  scheduled qualification match), which the recommendations response now reports in `provenance.selection_moment`.
+  Before that moment, or when it is unknown, the reads are as of now and the drawer says so.
+- **"View full profile"** goes to `/events/{event}/teams/{team}?from=live-draft&event={event}&as_of={moment}`. The
+  team page then shows "← Back to live alliance selection" top left; nothing else in its header changes. The selected
+  tile and scroll position travel in router state, never browser storage: the live page stamps its own history entry
+  before leaving, so the back link and the browser's back button restore the same board.
+- **Contract:** `HistoryOut` gains optional `team_number` and `seed` (additive; decision
+  `.agent/phase11/decisions/P11_FU_CONTRACT_2026-11-14.md`, relocked).
+
 ## Verification (P11-DM1 … DM3)
 
 | Check | Where | State (2026-11-04) |

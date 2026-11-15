@@ -37,6 +37,7 @@ from api.dependencies import get_database, get_epa_source, get_playoff_models, g
 from api.routes.alliance_selection import CandidateOut, _candidate, _odds
 from api.session import call, require_csrf, require_permission, require_session
 from database.connection import Database
+from ml.playoffs.service import SelectionTimeUnavailable, event_selection_moment
 from workspaces import draft_log, draft_recommendations, live_draft
 from workspaces.sessions import SessionContext
 
@@ -206,6 +207,9 @@ class HistoryOut(BaseModel):
     recorded_at: datetime | None
     source: str
     mode: str
+    team_number: int | None = Field(default=None, description="The team the entry is about (a draft action's, or a "
+                                                               "correction's replacement's); null for other entries.")
+    seed: int | None = Field(default=None, description="The alliance the entry is about, when it names one.")
 
 
 class DraftOut(BaseModel):
@@ -397,6 +401,11 @@ def get_recommendations(record_id: int = Path(ge=1), database: Database = Depend
     row, (view, previous) = call(live_draft.load_view_with_previous, database, context, record_id)
     out = draft_recommendations.recommend(database, row[2], view, previous, context.team_number,
                                           epa_source=epa_source, ranking=ranking, playoff_models=playoff_models)
+    if "selection_moment" not in out.provenance:  # the team profiles read every view strictly before this moment
+        try:
+            out.provenance["selection_moment"] = event_selection_moment(database, row[2]).isoformat()
+        except SelectionTimeUnavailable:
+            out.provenance["selection_moment"] = None
     status = out.validation_status
     return RecommendationsOut(
         record_id=record_id, record_seq=out.record_seq, computed_at=out.computed_at, status=out.status,

@@ -1,16 +1,17 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 
 import { dashboardApi } from '../../api/dashboard'
 import type { EventMatchesResponse, ScoutingView, TeamMetricsResponse, TeamStrengthView, Validation } from '../../api/generated'
 import { useResource } from '../../components/useResource'
 import { AsOfControl } from '../asOf'
 import { BarChart, type ChartPoint } from '../charts'
+import { teamResults } from '../teamResults'
 import { AllianceTeams, PageHeader } from '../common'
 import { Absent, EpaSourceNote, MeasureValue, ResourceView, ValidationBadge, When } from '../display'
 import { useAsOf } from '../asOfParams'
 import { ResultCell } from '../common'
 import { formatNumber } from '../labels'
-import { matchLabel, matchPath, seasonOf } from '../routing'
+import { FROM_LIVE_DRAFT, liveDraftPath, matchLabel, matchPath, seasonOf } from '../routing'
 
 export function TeamPage() {
   const params = useParams()
@@ -22,10 +23,12 @@ export function TeamPage() {
   const metrics = useResource((s) => dashboardApi.teamMetrics(team, eventKey, s), `metrics:${team}:${eventKey}`, valid)
   const matches = useResource((s) => dashboardApi.eventMatches(eventKey, asOf, s), `matches:${eventKey}:${asOf}`, valid)
   const season = seasonOf(eventKey)
+  const back = <BackToLiveDraft />
 
-  if (!valid) return <PageHeader title="Team not found" subtitle={`“${params.team}” is not a team number.`} />
+  if (!valid) return <>{back}<PageHeader title="Team not found" subtitle={`“${params.team}” is not a team number.`} /></>
   return (
     <>
+      {back}
       <PageHeader title={`Team ${team}`}
         crumbs={[{ to: season ? `/?season=${season}` : '/', label: season ? `${season} events` : 'Events' },
           { to: `/events/${encodeURIComponent(eventKey)}`, label: eventKey }]}
@@ -41,6 +44,21 @@ export function TeamPage() {
         {(data) => <StoredMetricsView data={data} />}
       </ResourceView>
     </>
+  )
+}
+
+/** Reached from the live draft page (?from=live-draft&event=…): the way back, top left. The router state the live page
+ * attached (its selected tile and scroll position) is handed back, so this link and the browser's back button restore
+ * the same board. */
+function BackToLiveDraft() {
+  const [search] = useSearchParams()
+  const location = useLocation()
+  const event = search.get('event')
+  if (search.get('from') !== FROM_LIVE_DRAFT || !event) return null
+  return (
+    <p className="back-link">
+      <Link to={liveDraftPath(event)} state={location.state as unknown}>← Back to live alliance selection</Link>
+    </p>
   )
 }
 
@@ -124,22 +142,7 @@ export function StrengthView({ view, compact = false, level = 2 }: { view: TeamS
 }
 
 function HistoryView({ data, team }: { data: EventMatchesResponse; team: number }) {
-  const mine = data.matches.filter((m) => m.red_team_numbers.includes(team) || m.blue_team_numbers.includes(team))
-  const points: ChartPoint[] = mine.map((m) => {
-    const red = m.red_team_numbers.includes(team)
-    return {
-      label: matchLabel(m),
-      value: m.result ? (red ? m.result.score_red : m.result.score_blue) : null,
-      note: m.result_withheld_reason?.replaceAll('_', ' '),
-      tone: red ? 'red' : 'blue',
-    }
-  })
-  const played = mine.filter((m) => m.result)
-  const ownColour = (m: typeof mine[number]) => (m.red_team_numbers.includes(team) ? 'red' : 'blue')
-  const wins = played.filter((m) => m.result?.winning_alliance === ownColour(m)).length
-  const ties = played.filter((m) => m.result?.winning_alliance === 'tie').length
-  const losses = played.filter((m) => m.result?.winning_alliance === (ownColour(m) === 'red' ? 'blue' : 'red')).length
-  const noWinner = played.length - wins - ties - losses // a result without a recorded winner is not a loss
+  const { mine, played, wins, ties, losses, noWinner, points } = teamResults(data, team)
   return (
     <section className="card" aria-labelledby="history-heading">
       <div className="card-head">
