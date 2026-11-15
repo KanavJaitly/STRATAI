@@ -13,6 +13,7 @@ from ml.playoffs.service import PlayoffModelsNotAccepted
 from scripts import phase11_replay as harness
 from tests.test_phase11_draft_log import setup
 from workspaces import draft_recommendations as rec
+from tests.test_phase11_recommendations import fake_fb2
 
 
 def alliances(n: int = 4, picks: int = 2, declines: tuple[int, ...] = ()) -> list[Alliance]:
@@ -38,6 +39,7 @@ def faked(monkeypatch):
     monkeypatch.setattr(rec, "event_ordering", lambda *a, **k: rec.Ordering(
         tuple(range(15, 0, -1)), "raw_epa", "validated", {}, datetime(2030, 1, 1, tzinfo=timezone.utc),
         "selection_moment", ()))
+    monkeypatch.setattr(rec, "fb2_context", fake_fb2)  # FB2's estimates follow the fake ordering
     return s
 
 
@@ -55,10 +57,24 @@ def test_a_clean_replay_passes_every_check(faked):
     assert result["passed"], result["problems"]
     assert result["overridden"] == []
     sources = result["recommendation_sources"]
-    assert sources["fallback_p11_fb1"] > 0
+    assert sources["fallback_p11_fb2"] > 0
     # A later captain is "not selecting" until the team projected ahead of it is picked (e.g. 3 before 2 is taken).
-    assert set(sources) <= {"fallback_p11_fb1", "withheld:no_remaining_turn", "withheld:team_not_selecting"}
+    assert set(sources) <= {"fallback_p11_fb2", "withheld:no_remaining_turn", "withheld:team_not_selecting"}
     assert result["recommend_seconds"]["count"] > 0
+    # The FB1/FB2 comparison: one row per real pick, each rule's position classified.
+    picks = result["pick_positions"]
+    assert len(picks) == sum(1 for a in harness.reconstruct(alliances(), faked.rules)[0] if a[0] == "pick")
+    assert all(p["fb1"] == "primary" or p["fb1"].startswith(("backup_", "unlisted", "withheld:")) for p in picks)
+    assert all(p["fb2"] == "primary" or p["fb2"].startswith(("backup_", "unlisted", "withheld:")) for p in picks)
+    summary = harness.summarize_positions(picks)
+    assert summary["overall"]["fb2"]["picks"] == len(picks) and set(summary["by_season"]) == {2030}
+
+
+def test_positions_are_classified_from_the_list():
+    assert harness.position([5, 6, 7], 5) == "primary"
+    assert harness.position([5, 6, 7], 7) == "backup_2"
+    assert harness.position([5, 6, 7], 9) == "unlisted"
+    assert harness.position(None, 9, "team_not_selecting") == "withheld:team_not_selecting"
 
 
 def test_declines_are_recorded_and_documented_as_unreconstructible(faked):

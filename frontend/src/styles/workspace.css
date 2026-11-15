@@ -127,3 +127,10 @@ a.button.button-secondary { background: transparent; color: var(--accent); font-
   .profile-drawer { animation: profile-drawer-in 160ms ease-out; }
 }
 @keyframes profile-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* P11-FB2 cards: rank, projected score, decline flag, and the fixed-template reasons. */
+.recommended-row p { margin: 2px 0; }
+.recommended-row .reasons { margin: 2px 0 8px 0; }
+.recommended-row ul.reasons, .recommended-row .reasons ul { padding-left: 1.1rem; margin: 2px 0; }
+.recommended-row details.reasons summary { min-height: 32px; display: inline-flex; align-items: center; cursor: pointer; }
+.decline-flag { color: var(--warn-fg, inherit); }

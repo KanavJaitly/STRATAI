@@ -3433,6 +3433,18 @@
    "operations_added": [],
    "operations_removed": [],
    "reason": "P11 follow-up Part A: additive optional HistoryOut.team_number and HistoryOut.seed, for the live page's team profile links"
+  },
+  {
+   "added_leaves": 22,
+   "changed": [
+    "/schemas/RecommendationsOut/properties/source/anyOf"
+   ],
+   "command": "relock",
+   "date": "2026-11-15",
+   "decision": ".agent/phase11/decisions/P11_FU_CONTRACT_2026-11-14.md and .agent/phase11/decisions/P11_FB2_DECISION_2026-11-14.md, decided by Kanav 2026-11-14",
+   "operations_added": [],
+   "operations_removed": [],
+   "reason": "P11-FB2 served as the live draft's fallback: source gains fallback_p11_fb2 (approved changed leaf); additive optional RecommendedOut projection/fit/rank/decline/reasons fields and RecommendationsOut.candidate_projections"
   }
  ],
  "schemas": {
@@ -4505,6 +4517,33 @@
    "required": [
     "odds",
     "strategy"
+   ],
+   "type": "object"
+  },
+  "ComponentFitOut": {
+   "properties": {
+    "component": {
+     "type": "string"
+    },
+    "effective": {
+     "type": "number"
+    },
+    "estimate": {
+     "type": "number"
+    },
+    "filled": {
+     "type": "number"
+    },
+    "gap": {
+     "type": "number"
+    }
+   },
+   "required": [
+    "component",
+    "effective",
+    "estimate",
+    "filled",
+    "gap"
    ],
    "type": "object"
   },
@@ -6298,6 +6337,36 @@
    ],
    "type": "object"
   },
+  "ProjectedScoreOut": {
+   "properties": {
+    "fouls_included": {
+     "type": "boolean"
+    },
+    "method": {
+     "type": "string"
+    },
+    "robots": {
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "validation": {
+     "$ref": "#/components/schemas/Validation"
+    },
+    "value": {
+     "type": "number"
+    }
+   },
+   "required": [
+    "fouls_included",
+    "method",
+    "robots",
+    "validation",
+    "value"
+   ],
+   "type": "object"
+  },
   "QualificationForecastResponse": {
    "properties": {
     "as_of": {
@@ -6628,6 +6697,19 @@
      },
      "type": "array"
     },
+    "candidate_projections": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/components/schemas/RecommendedOut"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
     "computed_at": {
      "format": "date-time",
      "type": "string"
@@ -6703,7 +6785,8 @@
       {
        "enum": [
         "engine_p6_m7",
-        "fallback_p11_fb1"
+        "fallback_p11_fb1",
+        "fallback_p11_fb2"
        ],
        "type": "string"
       },
@@ -6804,6 +6887,29 @@
       }
      ]
     },
+    "decline_flag": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    },
+    "fit": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/components/schemas/ComponentFitOut"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
     "ordering_position": {
      "anyOf": [
       {
@@ -6824,10 +6930,56 @@
       }
      ]
     },
+    "projected_alliance_score": {
+     "anyOf": [
+      {
+       "$ref": "#/components/schemas/ProjectedScoreOut"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "projection_members": {
+     "anyOf": [
+      {
+       "items": {
+        "type": "integer"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "qualification_rank": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
     "reach_finals": {
      "anyOf": [
       {
        "$ref": "#/components/schemas/StrategyOdds"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "reasons": {
+     "anyOf": [
+      {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
       },
       {
        "type": "null"

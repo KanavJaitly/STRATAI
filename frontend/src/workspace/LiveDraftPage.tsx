@@ -312,7 +312,7 @@ function profileInfo(team: number, draft: DraftRecord, recs: RecState, stale: bo
     : unavailable ? `${REASON_LABEL[unavailable.reason]}${unavailable.seed !== null ? ` (alliance ${unavailable.seed})` : ''}`
       : 'not in the record’s pool'
   return { rank, standing, why: whyLines(team, draft, recs, stale, available !== undefined),
-    projection: <ProjectionPart recs={recs} /> }
+    projection: <ProjectionPart team={team} recs={recs} /> }
 }
 
 function whyLines(team: number, draft: DraftRecord, recs: RecState, stale: boolean, available: boolean): string[] {
@@ -323,7 +323,12 @@ function whyLines(team: number, draft: DraftRecord, recs: RecState, stale: boole
   else {
     const listed = [data.primary, ...data.backups].filter((t): t is RecommendedTeam => t !== null)
     const index = listed.findIndex((t) => t.team_number === team)
-    if (index >= 0) {
+    const card = data.candidate_projections?.find((t) => t.team_number === team)
+    if (data.source === 'fallback_p11_fb2' && card) {
+      lines.push(index === 0 ? 'Your primary pick.' : index > 0 ? `Backup ${index}.`
+        : 'Not in your current primary and backups.')
+      lines.push(...(card.reasons ?? []))
+    } else if (index >= 0) {
       const pick = listed[index]
       lines.push(index === 0 ? 'Your primary pick.' : `Backup ${index}.`)
       if (data.source === 'fallback_p11_fb1' && pick.ordering_position !== null) {
@@ -346,13 +351,41 @@ function whyLines(team: number, draft: DraftRecord, recs: RecState, stale: boole
   return lines
 }
 
-function ProjectionPart({ recs }: { recs: RecState }) {
+function ProjectionPart({ team, recs }: { team: number; recs: RecState }) {
   const data = recs.data
+  const card = data?.status === 'current' ? data.candidate_projections?.find((t) => t.team_number === team) : undefined
+  const projected = card?.projected_alliance_score
+  if (data?.source === 'fallback_p11_fb2' && card && projected) {
+    return (
+      <div className="small">
+        <p><strong>{projected.value.toFixed(1)}</strong> points with teams {projected.robots.join(', ')}
+          {' '}<span className="badge badge-warn">{projected.validation.status.replaceAll('_', ' ')}</span></p>
+        <p className="muted">Assumes your alliance as it stands ({(card.projection_members ?? []).join(', ')}) plus
+          this team, and no later pick. {projected.method}; {projected.fouls_included ? 'fouls included'
+            : 'fouls excluded'}. {projected.validation.reasons.join(' ')}</p>
+        {card.fit && card.fit.length > 0 && (
+          <div className="table-scroll">
+            <table className="grid compact">
+              <caption className="visually-hidden">Team {team}: estimate and gap filled per component</caption>
+              <thead><tr><th scope="col">Component</th><th scope="col">Estimate</th><th scope="col">Counted</th>
+                <th scope="col">Your gap</th><th scope="col">Filled</th></tr></thead>
+              <tbody>{card.fit.map((f) => (
+                <tr key={f.component}><th scope="row">{f.component}</th><td>{f.estimate.toFixed(1)}</td>
+                  <td>{f.effective.toFixed(1)}</td><td>{f.gap.toFixed(1)}</td><td>{f.filled.toFixed(1)}</td></tr>))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    )
+  }
   const text = !data ? 'Not available yet: the picks are still being calculated.'
     : data.status !== 'current' ? `Not available: there are no picks right now (${data.withheld?.message ?? 'withheld'}).`
-      : data.source === 'fallback_p11_fb1' ? 'Not available: the fallback rule in use, P11-FB1, orders teams by '
-        + 'strength and does not project alliance scores.'
-        : 'Not available: the alliance selection engine reports P(win event), not a projected score.'
+      : data.source === 'fallback_p11_fb2' ? (card ? `Not available: ${card.reasons?.[0] ?? 'no estimate'}`
+        : 'Not available: this team is not available to pick, so it has no projection.')
+        : data.source === 'fallback_p11_fb1' ? 'Not available: the fallback rule in use, P11-FB1, orders teams by '
+          + 'strength and does not project alliance scores.'
+          : 'Not available: the alliance selection engine reports P(win event), not a projected score.'
   return <p className="small">{text}</p>
 }
 
@@ -463,8 +496,7 @@ function RecommendationPanel({ draft, recs }: { draft: DraftRecord; recs: RecSta
       {data?.status === 'current' && (
         <>
           <p className="small">
-            {data.source === 'engine_p6_m7' ? 'From the alliance selection engine' : 'Fallback rule P11-FB1: '
-              + 'available teams in team-strength order'} for alliance {data.seed}
+            {SOURCE_TEXT[data.source ?? ''] ?? data.source} for alliance {data.seed}
             {data.selecting_as === 'projected_captain' ? ' (your projected alliance)' : ''} ·{' '}
             <span className="badge badge-warn">{data.validation?.status.replaceAll('_', ' ')}</span>
             {data.turns_before ? ` · ${data.turns_before} pick${data.turns_before === 1 ? '' : 's'} before your turn` : ' · your turn'}
@@ -472,10 +504,11 @@ function RecommendationPanel({ draft, recs }: { draft: DraftRecord; recs: RecSta
           {data.primary && <RecommendedRow label="Primary" team={data.primary} primary />}
           {data.backups.length > 0 && (
             <ol className="backup-list" aria-label="Backup picks">
-              {data.backups.map((t) => <li key={t.team_number}><RecommendedRow label="Backup" team={t} /></li>)}
+              {data.backups.map((t, i) => <li key={t.team_number}>
+                <RecommendedRow label={`Backup ${i + 1}`} team={t} /></li>)}
             </ol>)}
           {data.movement.length > 0 && <ul className="movement small">{data.movement.map((m) => <li key={m}>{m}</li>)}</ul>}
-          {data.source === 'fallback_p11_fb1' && (
+          {(data.source === 'fallback_p11_fb1' || data.source === 'fallback_p11_fb2') && (
             <details className="small"><summary>Why this is not validated</summary>
               <ul>{data.validation?.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
               {data.unranked_available.length > 0 && <p>Not in the ordering (never recommended):{' '}
@@ -488,13 +521,33 @@ function RecommendationPanel({ draft, recs }: { draft: DraftRecord; recs: RecSta
   )
 }
 
+const SOURCE_TEXT: Record<string, string> = {
+  engine_p6_m7: 'From the alliance selection engine',
+  fallback_p11_fb2: 'Fallback rule P11-FB2: available teams ranked by what each adds to your alliance',
+  fallback_p11_fb1: 'Fallback rule P11-FB1: available teams in team-strength order',
+}
+
 function RecommendedRow({ label, team, primary = false }: { label: string; team: RecommendedTeam; primary?: boolean }) {
+  const projected = team.projected_alliance_score
+  const reasons = team.reasons ?? []
   return (
-    <p className={primary ? 'primary-pick' : undefined}>
-      <span className="muted small">{label}</span> <strong><TeamButton team={team.team_number} touch /></strong>
-      {team.ordering_position !== null && <span className="muted small"> · strength order #{team.ordering_position}</span>}
-      {team.win_event?.display && <span className="small"> · P(win event) {team.win_event.display}</span>}
-    </p>
+    <div className={`recommended-row${primary ? ' primary-pick' : ''}`}>
+      <p>
+        <span className="muted small">{label}</span> <strong><TeamButton team={team.team_number} touch /></strong>
+        {team.qualification_rank != null && <span className="small"> · rank {team.qualification_rank}</span>}
+        {projected && <span className="small"> · projected {projected.value.toFixed(0)} with{' '}
+          {projected.robots.join(', ')}{' '}
+          <span className="badge badge-warn">{projected.validation.status.replaceAll('_', ' ')}</span></span>}
+        {!projected && team.ordering_position !== null
+          && <span className="muted small"> · strength order #{team.ordering_position}</span>}
+        {team.win_event?.display && <span className="small"> · P(win event) {team.win_event.display}</span>}
+      </p>
+      {team.decline_flag && <p className="small decline-flag">{team.decline_flag}</p>}
+      {reasons.length > 0 && (primary
+        ? <ul className="reasons small" aria-label={`Why team ${team.team_number}`}>{reasons.map((r) => <li key={r}>{r}</li>)}</ul>
+        : <details className="reasons small"><summary>Why {team.team_number}</summary>
+          <ul>{reasons.map((r) => <li key={r}>{r}</li>)}</ul></details>)}
+    </div>
   )
 }
 
