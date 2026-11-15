@@ -24,6 +24,7 @@ from database.connection import Database, DatabaseConfig
 from tests.test_live_epa import _isolated_db_name
 from tests.test_workspaces_api import CSRF, browser, code, join, make_app, workspace
 from workspaces import draft_recommendations, passwords
+from tests.test_phase11_recommendations import fake_fb2
 
 pytestmark = pytest.mark.skipif(_isolated_db_name() is None, reason="needs an isolated stratai_* database copy")
 
@@ -317,13 +318,21 @@ def test_the_fallback_never_recommends_an_unavailable_team(team, monkeypatch):
     monkeypatch.setattr(draft_recommendations, "event_ordering", lambda *a, **k: draft_recommendations.Ordering(
         tuple(strength), "raw_epa", "validated", {}, datetime(2026, 3, 1, tzinfo=timezone.utc), "selection_moment",
         ()))
+    monkeypatch.setattr(draft_recommendations, "fb2_context", fake_fb2)  # P11-FB2's estimates follow the ordering
     app.dependency_overrides[get_epa_source] = lambda: type("Epa", (), {"provider": object()})()
     act(admin, record, "captain", TEAM_A, 1)
     act(admin, record, "decline", strength[0], 1)
     out = admin.get(f"{BASE}/{record}/recommendations").json()
-    assert out["status"] == "current" and out["source"] == "fallback_p11_fb1"
+    assert out["status"] == "current" and out["source"] == "fallback_p11_fb2"
     assert out["validation"]["status"] == "not_validated"
     assert out["primary"]["team_number"] == strength[1] and out["primary"]["win_event"] is None
+    primary = out["primary"]
+    assert primary["projected_alliance_score"]["validation"]["status"] == "not_validated"
+    assert primary["projection_members"] == [TEAM_A] and primary["reasons"][0].startswith("Projected alliance score")
+    assert {f["component"] for f in primary["fit"]} == {"auto", "teleop", "endgame"}
+    assert {c["team_number"] for c in out["candidate_projections"]} == {
+        a["team_number"] for a in admin.get(f"{BASE}/{record}").json()["available"]}
+    assert out["provenance"]["selection_moment"] is not None
     board = admin.get(f"{BASE}/{record}").json()
     unavailable = {u["team_number"] for u in board["unavailable"]}
     listed = {out["primary"]["team_number"], *(b["team_number"] for b in out["backups"])}

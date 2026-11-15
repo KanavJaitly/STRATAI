@@ -1,18 +1,23 @@
-"""Phase 11: the team's primary and backup picks for the live draft record's current state (P11-Q1, P11-FB1).
+"""Phase 11: the team's primary and backup picks for the live draft record's current state (P11-Q1, P11-FB2).
 
-The decision record `.agent/phase11/decisions/P11_Q1_Q4_DECISIONS_2026-11-04.md` freezes the rule this module
-implements. It has two sources, tried in a fixed order and never mixed:
+The decision record `.agent/phase11/decisions/P11_Q1_Q4_DECISIONS_2026-11-04.md` freezes P11-Q1 and the first fallback
+rule, P11-FB1. Since 2026-11-14 the served fallback is P11-FB2 (`workspaces.draft_fb2`; frozen in
+`.agent/phase11/decisions/P11_FB2_DECISION_2026-11-14.md`), which ranks teams by what they add to the alliance being
+built. FB1 stays here as a pure function (`fallback_lists`) for the tests and the FB1/FB2 comparison; it is no longer
+served. The two sources are tried in a fixed order and never mixed:
 
 1. **The P6-M7 engine, unchanged** (`ml.playoffs.service.pick_list`).
    - It runs at the record's state, for the alliance the team is on (or is projected to captain), with the served
      models.
    - When it returns, its ranking is served with the engine's own status.
    - Today it refuses at every event: the PX-1 gate failed, and the PX-2 and PX-4 records do not exist.
-2. **P11-FB1, used only when the engine refuses.**
-   - It ranks the available pool by the P5-M4 event-analysis ordering at the selection moment.
+2. **P11-FB2, used only when the engine refuses.**
+   - It ranks the available pool, for the alliance being advised, by its projected contribution (per-robot component
+     estimates, gap filling, reliability and consistency), at the selection moment.
    - Primary: the first available team. Backups: the next max(3, m), where m is the other alliances' picks before
-     this alliance's next turn.
-   - It is served `not_validated`, with the engine's refusal beside it, and it shows no probability.
+     this alliance's next turn (as FB1).
+   - It is served `not_validated`, with the engine's refusal beside it, and it shows no probability. Every card
+     carries fixed-template reasons.
 
 **Which teams are excluded.** Every unavailable team, the alliance's own members, and the projected captains of
 alliances that act before this alliance's next round-1 turn. A team with no ordering position is listed as
@@ -28,8 +33,9 @@ unranked, never recommended.
 The previous recommendation is never presented as current. Every response carries the record sequence it reflects.
 
 **Determinism and speed (P11-Q3).**
-- The ordering and profiles at the selection moment are computed once per (event, moment, models, EPA source) and
-  cached in process. A recorded action only re-filters the pool, so the warm path stays far under the 2 s target.
+- The ordering and profiles at the selection moment, and FB2's event estimates, are computed once per (event, moment,
+  models, EPA source) and cached in process. A recorded action only re-ranks the pool, so the warm path stays far
+  under the 2 s target.
 - The cache holds a few events and expires its entries after `CACHE_SECONDS`, so a data correction (e.g. late
   ranks) is picked up.
 - Every response reports its timings.
@@ -42,7 +48,7 @@ from __future__ import annotations
 
 import threading
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -67,16 +73,24 @@ from ml.views.event_analysis import (
     M5V2Required,
     analyze_event,
 )
+from workspaces import draft_fb2 as fb2
 from workspaces import draft_log as dl
 
 RULE = "P11-FB1"
 SOURCE_ENGINE, SOURCE_FALLBACK = "engine_p6_m7", "fallback_p11_fb1"
+SOURCE_FB2 = fb2.SOURCE
 NOT_VALIDATED = "not_validated"
 MIN_BACKUPS = 3
 CACHE_SECONDS = 600
 CACHE_ENTRIES = 8
 FALLBACK_REASON = (f"{RULE}: ranks available teams by the P5-M4 team-strength ordering; it is not validated as a pick "
                    "recommendation and gives no P(win event) (decision P11-Q1, 2026-11-04)")
+FB2_REASON = (f"{fb2.RULE}: ranks available teams by what each adds to your alliance (per-robot component estimates, "
+              "gap filling, reliability and consistency); it is not validated as a pick recommendation and gives no "
+              "P(win event) (decision P11-FB2, 2026-11-14)")
+FB2_ESTIMATOR_REASON = ("estimates: P11A A3 estimator (p11a-a3-v1), current-event population prior; not validated, "
+                        "because only alliance totals are observed; the prior and component independence are open "
+                        "questions")
 
 
 @dataclass(frozen=True)
@@ -87,6 +101,7 @@ class Candidate:
     p_win_event: float | None = None  # engine only
     p_reach_finals: float | None = None  # engine only
     configuration: tuple[int, ...] | None = None  # engine only
+    fb2: fb2.Card | None = None  # P11-FB2 only: projection, fit, rank, decline flag, reasons
 
 
 @dataclass
@@ -110,6 +125,7 @@ class Recommendation:
     provenance: dict[str, Any] = field(default_factory=dict)
     timing_ms: dict[str, float] = field(default_factory=dict)
     engine_result: PickListResult | None = None
+    projections: list[Candidate] = field(default_factory=list)  # P11-FB2: every available team's card
 
 
 @dataclass(frozen=True)
@@ -123,6 +139,8 @@ class Ordering:
     as_of: datetime
     as_of_source: str
     epa_states: tuple[str | None, ...]
+    features: Mapping[int, Any] = field(default_factory=dict)  # team -> TeamFeatures at as_of (P11-FB2's inputs)
+    switch_passed: bool | None = None  # the P5-M4 switch rule at as_of
 
 
 # --- whose turn ----------------------------------------------------------------------------------------------------
@@ -206,6 +224,7 @@ _cache_lock = threading.Lock()
 def clear_cache() -> None:
     with _cache_lock:
         _cache.clear()
+        _fb2_cache.clear()
 
 
 def event_ordering(database: Database, event_key: str, now: datetime, *, epa_source: Any,
@@ -226,12 +245,40 @@ def event_ordering(database: Database, event_key: str, now: datetime, *, epa_sou
         tuple(o.team_number for o in analysis.ordering), analysis.model,
         VALIDATED_AS_MEASURED if analysis.model == POLICY_M5V2 else VALIDATED_RAW_EPA,
         {f.team_number: candidate_profile(f) for f in analysis.features}, as_of, source,
-        tuple(f.epa_source_state for f in analysis.features))
+        tuple(f.epa_source_state for f in analysis.features), {f.team_number: f for f in analysis.features},
+        analysis.switch.passed)
     with _cache_lock:
         if len(_cache) >= CACHE_ENTRIES:
             _cache.pop(min(_cache, key=lambda k: _cache[k][0]))
         _cache[key] = (time.monotonic() + CACHE_SECONDS, ordering)
     return ordering
+
+
+_fb2_cache: dict[tuple, tuple[float, fb2.Fb2Context]] = {}
+
+
+def fb2_context(database: Database, event_key: str, ordering: Ordering) -> fb2.Fb2Context:
+    """P11-FB2's event estimates and Phase 3 inputs at the ordering's moment, cached like the ordering."""
+    key = (event_key, ordering.as_of, ordering.policy, ordering.teams)
+    with _cache_lock:
+        hit = _fb2_cache.get(key)
+        if hit is not None and hit[0] > time.monotonic():
+            return hit[1]
+    started = time.perf_counter()
+    inputs = fb2.TeamInputs(ordering.profiles)
+    epa = {t: (f.epa_auto, f.epa_teleop, f.epa_endgame) for t, f in ordering.features.items()}
+    try:
+        estimates = fb2.estimate_event(fb2.load_rows(database, event_key, ordering.as_of),
+                                       switch_passed=ordering.switch_passed is not False, epa=epa)
+        context = fb2.Fb2Context(estimates, inputs,
+                                 timing_ms={"estimate": round((time.perf_counter() - started) * 1000, 1)})
+    except fb2.Fb2Unavailable as exc:
+        context = fb2.Fb2Context(None, inputs, str(exc))
+    with _cache_lock:
+        if len(_fb2_cache) >= CACHE_ENTRIES:
+            _fb2_cache.pop(min(_fb2_cache, key=lambda k: _fb2_cache[k][0]))
+        _fb2_cache[key] = (time.monotonic() + CACHE_SECONDS, context)
+    return context
 
 
 # --- the recommendation ----------------------------------------------------------------------------------------------
@@ -313,30 +360,49 @@ def recommend(database: Database, event_key: str, view: dl.DraftView, previous: 
 
     out.engine_refusal = refusal
     if epa_source is None:
-        return withhold("epa_source_not_loaded", "the EPA source is not loaded, so the team-strength ordering the "
-                                                 f"fallback rule {RULE} uses cannot be computed")
+        return withhold("epa_source_not_loaded", "the EPA source is not loaded, so the point-in-time features the "
+                                                 f"fallback rule {fb2.RULE} uses cannot be computed")
     try:
         ordering = event_ordering(database, event_key, at, epa_source=epa_source, ranking=ranking)
     except (M5V2Required, SilentFallbackError, SelectionTimeUnavailable) as exc:
         code, message = _refusal(exc)
-        return withhold(code, f"the team-strength ordering {RULE} uses is unavailable: {message}")
+        return withhold(code, f"the point-in-time analysis {fb2.RULE} uses is unavailable: {message}")
     out.timing_ms["ordering"] = round((time.perf_counter() - started) * 1000, 1)
-    ranked, unranked, excluded = fallback_lists(view, seed, team_number, ordering.teams)
+    context = fb2_context(database, event_key, ordering)
+    out.timing_ms["estimates"] = round((time.perf_counter() - started) * 1000, 1)
+    if context.estimates is None:
+        return withhold(fb2.Fb2Unavailable.code, f"{fb2.RULE} cannot project at this event: {context.unavailable}")
+    estimates = context.estimates
+    lists = fb2.rank_for_alliance(view, seed, team_number, estimates, context.inputs,
+                                  _excluded(view, seed, team_number))
     position = {t: i for i, t in enumerate(ordering.teams, start=1)}
-    candidates = [Candidate(t, position[t], ordering.profiles.get(t)) for t in ranked]
+
+    def candidate(card: fb2.Card) -> Candidate:
+        return Candidate(card.team_number, position.get(card.team_number), ordering.profiles.get(card.team_number),
+                         fb2=card)
+
+    candidates = [candidate(c) for c in lists.ranked]
     if previous is not None and previous.setup is not None and not previous.flagged:
         prev_seed, _ = selecting_seed(previous, team_number)
-        before = fallback_lists(previous, prev_seed, team_number, ordering.teams)[0] if prev_seed == seed else []
-        out.movement = movement(previous, view, before, ranked)
-    out.status, out.source, out.validation_status = "current", SOURCE_FALLBACK, NOT_VALIDATED
-    out.validation_reasons = [FALLBACK_REASON,
-                              f"ordering: {ordering.policy}, served as {ordering.status} as a team-strength ordering",
+        before = ([c.team_number for c in fb2.rank_for_alliance(
+            previous, prev_seed, team_number, estimates, context.inputs,
+            _excluded(previous, prev_seed, team_number)).ranked] if prev_seed == seed else [])
+        out.movement = movement(previous, view, before, [c.team_number for c in lists.ranked])
+    out.status, out.source, out.validation_status = "current", SOURCE_FB2, NOT_VALIDATED
+    mode = {fb2.MODE_COMPONENTS: "per-robot auto, teleop and endgame estimates (fouls excluded)",
+            fb2.MODE_TOTAL: f"per-robot total-score estimates (fouls included): {estimates.mode_reason}",
+            fb2.MODE_EPA: f"EPA components: {estimates.mode_reason}"}[estimates.mode]
+    out.validation_reasons = [FB2_REASON, FB2_ESTIMATOR_REASON, f"projection: {mode}",
                               f"engine_refused: {refusal[0]}: {refusal[1]}"]
     out.primary, out.backups = (candidates[0] if candidates else None), candidates[1:]
-    out.unranked_available, out.excluded = unranked, excluded
-    out.provenance = {"rule": RULE, "decision": ".agent/phase11/decisions/P11_Q1_Q4_DECISIONS_2026-11-04.md",
-                      "ordering_policy": ordering.policy, "ordering_as_of": ordering.as_of.isoformat(),
-                      "ordering_as_of_source": ordering.as_of_source,
+    out.unranked_available, out.excluded = lists.unranked, lists.excluded
+    out.projections = [candidate(c) for c in lists.projections]
+    out.provenance = {"rule": fb2.RULE, "decision": fb2.DECISION, "estimator_version": estimates.estimator_version,
+                      "mode": estimates.mode, "mode_reason": estimates.mode_reason, "alliance_rows": estimates.rows,
+                      "benchmark": {c: round(v, 3) for c, v in estimates.benchmark.items()},
+                      "members": list(lists.members), "gaps": {c: round(v, 3) for c, v in lists.gaps.items()},
+                      "notes": list(estimates.notes), "selection_moment": ordering.as_of.isoformat(),
+                      "switch_passed": ordering.switch_passed, "ordering_policy": ordering.policy,
                       "ranking_model_sha256": getattr(ranking, "sha256", None) if ordering.policy == POLICY_M5V2
                       else None, "record_seq": view.record_seq}
     if not candidates:
@@ -345,5 +411,16 @@ def recommend(database: Database, event_key: str, view: dl.DraftView, previous: 
     return out
 
 
-__all__ = ["Candidate", "Ordering", "RULE", "Recommendation", "SOURCE_ENGINE", "SOURCE_FALLBACK", "clear_cache",
-           "event_ordering", "fallback_lists", "movement", "recommend", "selecting_seed"]
+def fb1_lists_at(database: Database, event_key: str, view: dl.DraftView, team_number: int, now: datetime, *,
+                 epa_source: Any, ranking: Any) -> list[int] | None:
+    """P11-FB1's primary + backups for the team at this state (no longer served; for the FB1/FB2 comparison)."""
+    seed, _ = selecting_seed(view, team_number)
+    if seed is None or view.setup is None or view.flagged or view.turns_before(seed) is None:
+        return None
+    ordering = event_ordering(database, event_key, now, epa_source=epa_source, ranking=ranking)
+    return fallback_lists(view, seed, team_number, ordering.teams)[0]
+
+
+__all__ = ["Candidate", "Ordering", "RULE", "Recommendation", "SOURCE_ENGINE", "SOURCE_FALLBACK", "SOURCE_FB2",
+           "clear_cache", "event_ordering", "fallback_lists", "fb1_lists_at", "fb2_context", "movement", "recommend",
+           "selecting_seed"]

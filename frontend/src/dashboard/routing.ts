@@ -39,3 +39,18 @@ export function matchLabel(match: { match_key: string; competition_level: string
 export function currentSeason(now: Date = new Date()): number {
   return now.getUTCFullYear()
 }
+
+/** The `from` value a team page reached from the live draft page carries, so it can offer the way back. */
+export const FROM_LIVE_DRAFT = 'live-draft'
+
+/** The live alliance-selection page for one event. */
+export function liveDraftPath(eventKey: string): string {
+  return `/alliance-selection/live?event=${encodeURIComponent(eventKey)}`
+}
+
+/** A team page reached from the live draft page: the return target is in the URL, never in browser storage. */
+export function teamPathFromLiveDraft(eventKey: string, team: number, asOf: string | null): string {
+  const query = new URLSearchParams({ from: FROM_LIVE_DRAFT, event: eventKey })
+  if (asOf) query.set('as_of', asOf)
+  return `${teamPath(eventKey, team)}?${query.toString()}`
+}
