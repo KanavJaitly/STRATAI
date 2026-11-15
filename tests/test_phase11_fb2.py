@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RECORD = ROOT / ".agent" / "phase11" / "decisions" / "P11_FB2_DECISION_2026-11-14.md"
 # sha256 of ml/alliance/estimator.py as copied from p11a/recommendation-intelligence (git blob adb688c3)
 ESTIMATOR_SHA256 = "47b6ccac4d931edae9b266f599f9f10573b936ee3a57a784fa030897b1bb8153"
+CRLF, LF = bytes([13, 10]), bytes([10])
 
 
 # --- synthetic events ------------------------------------------------------------------------------------------------
@@ -83,9 +84,7 @@ def test_the_frozen_weights_are_the_records():
 
 
 def test_the_estimator_is_the_unchanged_p11a_copy():
-    data = (ROOT / "ml" / "alliance" / "estimator.py").read_bytes().replace(b"
-", b"
-")  # any checkout's endings
+    data = (ROOT / "ml" / "alliance" / "estimator.py").read_bytes().replace(CRLF, LF)  # any checkout's endings
     assert hashlib.sha256(data).hexdigest() == ESTIMATOR_SHA256
 
 
