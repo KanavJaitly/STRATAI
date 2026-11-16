@@ -33,6 +33,35 @@ describe('EventsPage (P8-M2 a)', () => {
     expect(await screen.findByText(/StratAI has no events for 2099/)).toBeInTheDocument()
   })
 
+  it('opens on the current year, and moves once to the previous year when the current year has no events', async () => {
+    const year = new Date().getUTCFullYear()
+    const api = mockApi({ 'GET /events': (request: { query: URLSearchParams }) =>
+      (request.query.get('season') === String(year) ? { ...EVENTS, events: [] } : EVENTS) })
+    renderAt('/', '/', <EventsPage />)
+    expect(await screen.findByRole('link', { name: 'Synthetic Test Event' })).toBeInTheDocument()
+    expect(currentUrl()).toBe(`/?season=${year - 1}`)
+    expect(screen.getByRole('heading', { name: `${year - 1} season` })).toBeInTheDocument()
+    expect(api.calls.filter((c) => c.path === '/events').map((c) => c.query.get('season')))
+      .toEqual([String(year), String(year - 1)]) // one step back, no further
+  })
+
+  it('stays on the current year when it has events', async () => {
+    const year = new Date().getUTCFullYear()
+    mockApi({ 'GET /events': EVENTS })
+    renderAt('/', '/', <EventsPage />)
+    expect(await screen.findByRole('link', { name: 'Synthetic Test Event' })).toBeInTheDocument()
+    expect(currentUrl()).toBe('/')
+    expect(screen.getByRole('heading', { name: `${year} season` })).toBeInTheDocument()
+  })
+
+  it('never moves away from a season named in the URL, even an empty one', async () => {
+    const api = mockApi({ 'GET /events': { ...EVENTS, events: [] } })
+    renderAt('/', '/?season=2099', <EventsPage />)
+    expect(await screen.findByText(/StratAI has no events for 2099/)).toBeInTheDocument()
+    expect(currentUrl()).toBe('/?season=2099')
+    expect(api.calls.filter((c) => c.path === '/events')).toHaveLength(1)
+  })
+
   it('keeps the chosen season in the URL', async () => {
     mockApi({ 'GET /events': EVENTS })
     renderAt('/', '/?season=2099', <EventsPage />)

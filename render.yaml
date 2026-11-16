@@ -28,6 +28,23 @@ services:
         value: statbotics
       - key: BRIEFING_LLM_ENABLED
         value: "false"
+      # The trained models, committed under deploy/ml_registry (docs/DEPLOYMENT.md section 5). Each is pinned to the
+      # sha256 of its model.json; the API refuses to load a file that does not match. tests/test_hosted_models.py checks
+      # these pins against the committed files. The playoff models (ML_PX1_*, ML_PX2_*) stay unset: PX-1 failed its gate.
+      - key: ML_REGISTRY_DIR
+        value: deploy/ml_registry
+      - key: ML_RANKING_MODEL_VERSION_TAG
+        value: d18
+      - key: ML_RANKING_MODEL_SHA256
+        value: 1f0fe5aae90244e2736950928a88e733c85214b8def547b399b87c0cdd136312
+      - key: ML_WIN_PROB_MODEL_VERSION_TAG
+        value: d18
+      - key: ML_WIN_PROB_MODEL_SHA256
+        value: c76d329918e1667ae6f641ae6023e0649f34feb7c35064dea8b3db5cd1a8b0a2
+      - key: ML_STRATEGY_MODEL_VERSION_TAG
+        value: p6m10-v1
+      - key: ML_STRATEGY_MODEL_SHA256
+        value: aded2c829a1f2edbd1ddb50e099b0e88df8a5cc4033efe0fa7270dae235fbf5f
       # Settings requires TBA_API_KEY, but only the sync pipeline (data/clients/tba.py) uses it. The API never calls
       # TBA, and this deployment runs no sync, so a non-secret placeholder is enough.
       - key: TBA_API_KEY
