@@ -1,7 +1,7 @@
-"""Secret tokens (sessions, invitations, password resets) and how they are stored.
+"""Secret tokens (sessions) and how they are stored.
 
 A token is 32 random bytes (256 bits), URL-safe. Only its SHA-256 is stored, so a copy of the database does not
-hold a single usable session, invitation or reset link. SHA-256 without a salt is enough here because the token is
+hold a single usable session. SHA-256 without a salt is enough here because the token is
 itself uniformly random and long: there is nothing to guess or precompute.
 """
 
@@ -22,5 +22,5 @@ def token_hash(token: str) -> str:
 
 
 def subject_hash(scope: str, subject: str) -> str:
-    """The stored form of a rate-limit subject (an IP address, or a team number and email)."""
+    """The stored form of a rate-limit subject (an IP address or an email)."""
     return hashlib.sha256(f"{scope}\x00{subject}".encode("utf-8")).hexdigest()

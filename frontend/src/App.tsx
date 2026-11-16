@@ -2,17 +2,17 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 
 import {
-  AcceptInvitationPage,
   AccountPage,
   AuthLandingPage,
   ForgotPasswordPage,
   LoginPage,
-  RegisterTeamPage,
   ResetPasswordPage,
+  SignupPage,
 } from './auth/AuthPages'
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/authState'
 import { RequirePermission, RequireSignedIn } from './auth/guards'
+import { pageAllowed } from './auth/roles'
 import { SessionProvider, useSession } from './state/session'
 import { DriveTeamDashboardPage, HomeRedirect, ScoutingDashboardPage } from './workspace/RoleDashboards'
 import { LiveDraftPage } from './workspace/LiveDraftPage'
@@ -38,7 +38,6 @@ import { ExplorerPage } from './pages/ExplorerPage'
 import { EventPage as ExplorerEventPage } from './pages/EventPage'
 import { TeamPage as ExplorerTeamPage } from './pages/TeamPage'
 import { SUPPORTED_SEASONS } from './lib/format'
-import Velaris from './components/ui/velaris'
 
 // Three areas share one shell: the dashboard (Phase 8); the human-input pages (Phase 5, under /inputs; the old paths
 // redirect); and the season pages (game manuals, rulesets, readiness, the historical explorer), each read for one
@@ -46,8 +45,11 @@ import Velaris from './components/ui/velaris'
 const SEASON_AREA = /^\/(manuals|rulesets|readiness|explorer)(\/|$)/
 
 function SessionBar() {
-  const { actor, setActor, token, setToken, access, season, setSeason } = useSession()
+  const { actor, setActor, token, setToken, access, season, setSeason, refreshAccess } = useSession()
   const { pathname } = useLocation()
+  // The bar shows only to a signed-in administrator. The app's first write-access check can run before sign-in,
+  // when a members-only API refuses it, so check again now that someone allowed is here.
+  useEffect(() => { void refreshAccess() }, [refreshAccess])
   const inInputs = pathname.startsWith('/inputs')
   const inSeasonArea = SEASON_AREA.test(pathname)
   let accessText = 'API unreachable'
@@ -113,86 +115,70 @@ function useFocusMainOnNavigation(pathname: string) {
 
 const EVENTS_AREA = /^\/($|events\/|matches\/|report\/)/
 
-// The sign-in pages, and the team-workspace pages, which have their own sign-in rules.
-const AUTH_AREA = /^\/auth(\/|$)/
+// The only pages open without signing in: /auth (which forwards to sign-in), sign-in, sign-up and password reset.
+// Every other page needs a signed-in member (Shell), whatever the API's ACCESS_POLICY.
+const AUTH_AREA = /^\/auth(\/(login|signup|forgot|reset))?\/?$/
 // The live alliance-selection page (Phase 11) is a team page too: the team header, not the public pages' session bar.
 const WORKSPACE_AREA = /^\/(auth|account|home|team|drive-team|scouting|alliance-selection\/live)(\/|$)/
 
-/** Sign in / register when nobody is signed in; otherwise who is signed in, to which team, with sign-out. */
+/** A sign-in link when nobody is signed in; otherwise who is signed in, with their account and sign-out. */
 function AccountArea() {
   const { ready, signedIn, session, signOut } = useAuth()
   const navigate = useNavigate()
   if (!ready) return null
   if (!signedIn) {
-    return <Link className="button auth-cta" to="/auth">Login / Register to Your Team&apos;s StratAI</Link>
+    return <Link className="button auth-cta" to="/auth/login">Log in</Link>
   }
   return (
     <div className="account-area">
-      <span><strong>{session.user?.name}</strong> · team {session.workspace?.team_number} · {session.role_label}</span>
+      <span><strong>{session.user?.name}</strong> · {session.role_label}</span>
       <Link to="/account">Account</Link>
-      <button type="button" className="link" onClick={async () => { await signOut(); navigate('/auth', { replace: true }) }}>
+      <button type="button" className="link" onClick={async () => { await signOut(); navigate('/auth/login', { replace: true }) }}>
         Log out</button>
     </div>
-  )
-}
-
-// The hero's animated gradient: burnt amber, dusk violet and cobalt over the black canvas, dark enough that the
-// white text on it stays readable.
-const HERO_COLORS = ['#9a3412', '#4c3a9e', '#1e3a8a', '#0a0a0a']
-
-/** The landing page's invitation to the team workspaces, for anyone not signed in. */
-function TeamWorkspaceCallout() {
-  return (
-    <section className="auth-callout no-print" aria-labelledby="team-workspace-callout">
-      <Velaris bg="#0a0a0a" colors={HERO_COLORS} speed={1.2} grain={0.25} />
-      <div>
-        <h2 id="team-workspace-callout">Your team&apos;s own StratAI</h2>
-        <p>Give every member of your FRC team their own account, with roles for administrators, the drive team and
-          scouters, and keep your team&apos;s scouting private to your team.</p>
-      </div>
-      <Link className="button auth-cta" to="/auth">Login / Register to Your Team&apos;s StratAI</Link>
-    </section>
   )
 }
 
 export function Shell() {
   const { pathname, search } = useLocation()
   const { season } = useSession()
-  const { ready, signedIn, role, can, session } = useAuth()
+  const { ready, signedIn, role, can } = useAuth()
   const inInputs = pathname.startsWith('/inputs')
   const inEvents = EVENTS_AREA.test(pathname)
   const inSeasonArea = SEASON_AREA.test(pathname)
   const inWorkspace = WORKSPACE_AREA.test(pathname)
   useFocusMainOnNavigation(pathname)
-  // Signed-in members see the existing features their role may use; the platform-wide human-input and season tools
-  // stay visible to visitors (as before) and to administrators. The API enforces all of this on its own.
-  const showPublic = !signedIn || can('team_info')
-  const showPlatformTools = !signedIn || role === 'admin'
-  const showDriveTeam = signedIn && ['event_analysis', 'match_predictions', 'strategy_tools', 'scouting_view',
-    'alliance_selection'].some(can)
-  // Under ACCESS_POLICY=members nothing but the sign-in pages is open to a visitor.
-  const membersOnly = ready && !signedIn && session.access_policy === 'members' && !AUTH_AREA.test(pathname)
+  // Each nav item shows only to a member whose role may use it: a base member sees Events alone (and their account).
+  // The API enforces all of this on its own; hiding a link is a convenience, not a control.
+  const isAdmin = role === 'admin'
+  const showDriveTeam = ['match_predictions', 'strategy_tools', 'scouting_view', 'alliance_selection'].some(can)
+  // The whole site is behind sign-in: a visitor is sent to sign in (and back afterwards), and a member only sees the
+  // pages their role may open. Until the session is known, no page renders, so none starts a request.
+  const onAuthPage = AUTH_AREA.test(pathname)
+  const waiting = !ready && !onAuthPage
+  const needsSignIn = ready && !signedIn && !onAuthPage
+  const blocked = ready && signedIn && !onAuthPage && pathname !== '/home' && !pageAllowed(role, pathname)
   return (
     <div className="app">
       <a href="#main" className="skip-link">Skip to content</a>
       <header className="top no-print">
         <div className="brand">
           <strong>STRATAI</strong>
-          <span>{inWorkspace ? (signedIn ? `Team ${session.workspace?.team_number} workspace` : 'Team workspaces')
+          <span>{inWorkspace ? 'Team 11 (MORT)'
             : inInputs ? 'Human inputs'
             : inSeasonArea ? 'Game manuals, season rulesets, readiness and historical seasons' : 'Strategy dashboard'}</span>
         </div>
         <nav aria-label="Main">
-          {showPublic && (
+          {can('team_info') && (
             <Link to="/" className={inEvents ? 'active' : undefined} aria-current={inEvents ? 'page' : undefined}>
               Events</Link>
           )}
           {can('team_management') && <NavLink to="/team">Team Management</NavLink>}
           {showDriveTeam && <NavLink to="/drive-team">Drive team</NavLink>}
           {can('scouting_forms') && <NavLink to="/scouting">Scouting</NavLink>}
-          <NavLink to="/status">System status</NavLink>
-          {showPublic && <NavLink to="/explorer">Historical seasons</NavLink>}
-          {showPlatformTools && (
+          {isAdmin && <NavLink to="/status">System status</NavLink>}
+          {can('season_explorer') && <NavLink to="/explorer">Historical seasons</NavLink>}
+          {can('platform_inputs') && (
             <>
               <span className="nav-sep" aria-hidden="true" />
               <NavLink to="/inputs" end>Inputs overview</NavLink>
@@ -206,20 +192,25 @@ export function Shell() {
           )}
         </nav>
         <AccountArea />
-        {!inWorkspace && <SessionBar />}
+        {!inWorkspace && isAdmin && <SessionBar />}
       </header>
       {/* A season change remounts the page: no state from another season survives. */}
       <main id="main" tabIndex={-1} key={season}>
-        {/* Members-only and signed out: only the redirect renders, so no page starts a request the API would refuse. */}
-        {membersOnly ? <Navigate to={`/auth/login?next=${encodeURIComponent(pathname + search)}`} replace /> : (<>
-        {pathname === '/' && ready && !signedIn && <TeamWorkspaceCallout />}
+        {waiting ? <p className="muted" role="status">Checking your sign-in…</p>
+          : needsSignIn ? <Navigate to={`/auth/login?next=${encodeURIComponent(pathname + search)}`} replace />
+          : blocked ? (
+            <div className="notice notice-warn" role="alert">
+              <p><strong>Your role does not include this page.</strong> Ask one of the team&apos;s administrators if
+                you need it.</p>
+              <p><Link to="/">Go to the events</Link></p>
+            </div>
+          ) : (<>
         <Routes>
           <Route path="/auth" element={<AuthLandingPage />} />
-          <Route path="/auth/register" element={<RegisterTeamPage />} />
           <Route path="/auth/login" element={<LoginPage />} />
+          <Route path="/auth/signup" element={<SignupPage />} />
           <Route path="/auth/forgot" element={<ForgotPasswordPage />} />
           <Route path="/auth/reset" element={<ResetPasswordPage />} />
-          <Route path="/auth/invite" element={<AcceptInvitationPage />} />
           <Route path="/account" element={<RequireSignedIn><AccountPage /></RequireSignedIn>} />
           <Route path="/home" element={<HomeRedirect />} />
           <Route path="/team" element={<RequirePermission permission="team_management"><TeamManagementPage /></RequirePermission>} />

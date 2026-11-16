@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Annotated, Literal, Any
 
 from dotenv import load_dotenv
-from pydantic import ConfigDict, Field, PostgresDsn, field_validator, model_validator
+from pydantic import ConfigDict, Field, PostgresDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode
 
 
@@ -163,27 +163,31 @@ class Settings(BaseSettings):
     # on every request.
     epa_source_retry_seconds: float = Field(default=30.0, ge=0)
 
-    # Team workspaces: individual accounts, roles and team-private data (workspaces/, docs/team_workspaces.md).
-    # - access_policy: who may read the public analytics routes (events, predictions, analysis, ...).
-    #   "open" keeps today's behaviour, anyone may read them, and the locked contract (docs/api_contract_lock.json)
-    #   unchanged. "members" requires a signed-in member holding the route's permission (401/403 otherwise); turning
-    #   it on adds those responses to locked operations, so it is a deliberate deployment decision. Team-private
-    #   routes (/workspace/...) always require a session, whatever this says.
+    # Team accounts for FRC Team 11 (MORT): one team, two roles (workspaces/, docs/team_workspaces.md).
+    # - access_policy: who may read the analytics routes (events, predictions, analysis, ...). "members" requires a
+    #   signed-in member holding the route's permission (401/403 otherwise). "open" lets anyone read them, as before
+    #   accounts existed. Unset, it is "members" when ENV is production or staging and "open" in development (where
+    #   the API test suite runs without signing in). Team-private routes (/workspace/...) always need a session.
+    # - team_join_code: the code a new base member types to sign up. A secret: set it only in the environment,
+    #   never in the repository. Unset, base members cannot sign up.
+    # - team_admin_join_code: the code that signs someone up as an administrator. A secret, as above; it must differ
+    #   from team_join_code. Unset, nobody signs up as an administrator by code. With neither code, sign-up is closed.
+    # - admin_emails: comma-separated emails that sign up as administrators whichever code they use (any case).
+    #   `python -m scripts.set_role` changes a role later.
     # - session_cookie_secure: send the session cookie only over HTTPS. None means "secure unless ENV=development".
     # - session_ttl_hours / session_idle_hours: a session ends at the first of these limits.
-    # - invitation_ttl_hours / password_reset_ttl_minutes: how long an invitation or reset link works.
-    # - public_app_url: the web app's base URL, for links in emails (invitations, password resets).
-    # - smtp_*: outgoing email. Unset means no email is sent: an administrator copies the invitation link, and
-    #   self-service password reset is unavailable (an administrator can issue a reset link instead).
+    # - public_app_url: the web app's base URL, mentioned in password-reset emails when set.
+    # - smtp_*: outgoing email (password-reset codes). Unset means no email is sent, so "forgot password" cannot work.
     # - dev_outbox_dir: in development only, emails are written here as files instead of being sent.
     # - auth_trusted_proxy_hops: how many reverse proxies (Vercel, Render) sit in front of the API, so the client
     #   address for rate limiting is read from X-Forwarded-For. 0 trusts no header.
-    access_policy: Literal["open", "members"] = "open"
+    access_policy: Literal["open", "members"] | None = None
+    team_join_code: SecretStr | None = None
+    team_admin_join_code: SecretStr | None = None
+    admin_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
     session_cookie_secure: bool | None = None
     session_ttl_hours: int = Field(default=336, ge=1)
     session_idle_hours: int = Field(default=72, ge=1)
-    invitation_ttl_hours: int = Field(default=168, ge=1)
-    password_reset_ttl_minutes: int = Field(default=60, ge=5)
     public_app_url: str | None = None
     smtp_host: str | None = None
     smtp_port: int = Field(default=587, ge=1, le=65535)
@@ -241,6 +245,38 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @field_validator("admin_emails", mode="before")
+    def parse_admin_emails(cls, value: Any) -> Any:
+        """ADMIN_EMAILS is comma-separated in the environment; compared case-insensitively, so stored lowercased."""
+        if isinstance(value, str):
+            value = value.split(",")
+        if isinstance(value, (list, tuple)):
+            return [str(email).strip().lower() for email in value if str(email).strip()]
+        return value
+
+    @field_validator("team_join_code", "team_admin_join_code", mode="before")
+    def blank_join_code_is_unset(cls, value: Any) -> Any:
+        """An empty join code is unset, rather than making the empty string a valid code."""
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    @model_validator(mode="after")
+    def admin_and_member_join_codes_differ(self) -> "Settings":
+        """The same code for both would make every sign-up an administrator."""
+        if (self.team_join_code is not None and self.team_admin_join_code is not None
+                and self.team_join_code.get_secret_value().strip()
+                == self.team_admin_join_code.get_secret_value().strip()):
+            raise ValueError("TEAM_ADMIN_JOIN_CODE must differ from TEAM_JOIN_CODE")
+        return self
+
+    @model_validator(mode="after")
+    def default_access_policy_by_environment(self) -> "Settings":
+        """Members-only is the default wherever the API is deployed; "open" only by default in development."""
+        if self.access_policy is None:
+            self.access_policy = "open" if self.env == "development" else "members"
+        return self
 
     @model_validator(mode="after")
     def reject_wildcard_cors_in_production(self) -> "Settings":

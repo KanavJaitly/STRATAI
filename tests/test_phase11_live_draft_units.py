@@ -57,12 +57,11 @@ def test_the_service_refusal_codes_are_declared_too():
         assert f'"{code}"' in source, code
 
 
-def test_recording_is_configurable_and_off_by_default_for_every_non_admin_role():
-    assert "alliance_selection_record" in permissions.CONFIGURABLE_PERMISSIONS  # P11-Q2: delegable
-    for role in permissions.CONFIGURABLE_ROLES:
-        assert "alliance_selection_record" not in permissions.effective_permissions(role, {})
-    assert "alliance_selection_record" in permissions.effective_permissions("admin", {})
-    assert "alliance_selection" in permissions.effective_permissions("strategy", {})  # P11-Q4: the board
+def test_administrators_record_and_a_base_member_neither_views_nor_records():
+    # P11-Q2/Q4 under the single-team model (2026-11-11): grants are fixed in code; the board and recording are
+    # administrator-only until a role that needs them is added to ROLE_GRANTS.
+    assert {"alliance_selection", "alliance_selection_record"} <= permissions.effective_permissions("admin")
+    assert not {"alliance_selection", "alliance_selection_record"} & permissions.effective_permissions("base")
 
 
 def test_every_activity_action_the_service_writes_is_in_the_vocabulary():

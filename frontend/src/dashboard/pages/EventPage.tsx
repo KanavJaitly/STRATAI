@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import { dashboardApi } from '../../api/dashboard'
 import type { EventAnalysisResponse, EventMatchesResponse, EventTeamsResponse, LabelledTeams, Measure, QualificationForecastResponse, TeamStrengthView } from '../../api/generated'
 import { useResource } from '../../components/useResource'
 import { AsOfControl } from '../asOf'
+import { PageLink } from '../../auth/guards'
 import { AllianceTeams, PageHeader, TabPanel, Tabs, TeamChip } from '../common'
 import { Absent, CalibratedProbabilityView, EpaSourceNote, MeasureValue, ResourceView, ValidationBadge, When } from '../display'
 import { useAsOf } from '../asOfParams'
@@ -52,8 +53,8 @@ export function EventPage() {
         subtitle={<><code>{eventKey}</code>{event?.start_date && <> · {event.start_date}{event.end_date && event.end_date !== event.start_date ? ` – ${event.end_date}` : ''}</>}
           {event && [event.city, event.state_province, event.country].some(Boolean) && <> · {[event.city, event.state_province, event.country].filter(Boolean).join(', ')}</>}</>}
         actions={<span className="header-actions">
-          <Link className="button-link" to={`/events/${encodeURIComponent(eventKey)}/alliance-selection`}>Alliance selection</Link>
-          <Link className="button-link" to={`/events/${encodeURIComponent(eventKey)}/strategy-lab`}>Strategy lab</Link>
+          <PageLink hideWhenBlocked className="button-link" to={`/events/${encodeURIComponent(eventKey)}/alliance-selection`}>Alliance selection</PageLink>
+          <PageLink hideWhenBlocked className="button-link" to={`/events/${encodeURIComponent(eventKey)}/strategy-lab`}>Strategy lab</PageLink>
         </span>}
       />
       <AsOfControl defaultNote="Default: now (each part is computed from data available before the moment)." />
@@ -130,7 +131,7 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
               {ordering.teams.map((t) => (
                 <tr key={t.team_number}>
                   <td>{t.rank}</td>
-                  <th scope="row"><Link to={teamPath(eventKey, t.team_number)}>{t.team_number}</Link></th>
+                  <th scope="row"><PageLink to={teamPath(eventKey, t.team_number)}>{t.team_number}</PageLink></th>
                   <td>{t.score === null ? <Absent reason="no score (no EPA)" /> : formatNumber(t.score, 2)}</td>
                   <td className="small">{t.epa_value_source ? epaText(t.epa_value_source) : <Absent />}{t.epa_source_event_key ? ` · ${t.epa_source_event_key}` : ''}
                     {t.epa_source_state ? ` · ${epaText(t.epa_source_state)}` : ''}</td>
@@ -175,7 +176,7 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
             <tbody>
               {sorted.map((v) => (
                 <tr key={v.team_number}>
-                  <th scope="row"><Link to={teamPath(eventKey, v.team_number)}>{v.team_number}</Link></th>
+                  <th scope="row"><PageLink to={teamPath(eventKey, v.team_number)}>{v.team_number}</PageLink></th>
                   {columns.map((c) => <td key={c.name}><MeasureValue measure={c.of(v)} digits={c.digits} hideReason={!!shared[c.name]} /></td>)}
                 </tr>
               ))}
@@ -214,7 +215,7 @@ function TeamsView({ data }: { data: EventTeamsResponse }) {
             <tbody>
               {shown.map((t) => (
                 <tr key={t.team_number}>
-                  <th scope="row"><Link to={teamPath(data.event_key, t.team_number)}>{t.team_number}</Link></th>
+                  <th scope="row"><PageLink to={teamPath(data.event_key, t.team_number)}>{t.team_number}</PageLink></th>
                   <td>{t.name ?? <Absent reason="no details" />}</td>
                   <td>{[t.city, t.state_province, t.country].filter(Boolean).join(', ') || <Absent />}</td>
                   <td>{t.rookie_year ?? <Absent />}</td>
@@ -257,12 +258,12 @@ function MatchesView({ data, asOf }: { data: EventMatchesResponse; asOf: string 
             <tbody>
               {shown.map((m) => (
                 <tr key={m.match_key}>
-                  <th scope="row"><Link to={matchPath(m.match_key)}>{matchLabel(m)}</Link></th>
+                  <th scope="row"><PageLink to={matchPath(m.match_key)}>{matchLabel(m)}</PageLink></th>
                   <td><When value={m.scheduled_time} /></td>
                   <td><AllianceTeams teams={m.red_team_numbers} eventKey={data.event_key} tone="red" /></td>
                   <td><AllianceTeams teams={m.blue_team_numbers} eventKey={data.event_key} tone="blue" /></td>
                   <td><ResultCell match={m} /></td>
-                  <td><Link to={reportPath(m.match_key, asOf)} aria-label={`Pre-match report for ${matchLabel(m)}`}>Report</Link></td>
+                  <td><PageLink hideWhenBlocked to={reportPath(m.match_key, asOf)} aria-label={`Pre-match report for ${matchLabel(m)}`}>Report</PageLink></td>
                 </tr>
               ))}
             </tbody>
@@ -289,7 +290,7 @@ function ForecastView({ data }: { data: QualificationForecastResponse }) {
             <tbody>
               {data.teams.map((t) => (
                 <tr key={t.team_number}>
-                  <th scope="row"><Link to={teamPath(data.event_key, t.team_number)}>{t.team_number}</Link></th>
+                  <th scope="row"><PageLink to={teamPath(data.event_key, t.team_number)}>{t.team_number}</PageLink></th>
                   <td>{t.qualification_matches}</td>
                   <td>{formatNumber(t.expected_wins, 1)}</td>
                   <td>{t.range80_low}–{t.range80_high}</td>
@@ -310,7 +311,7 @@ function ForecastView({ data }: { data: QualificationForecastResponse }) {
             <tbody>
               {data.matches.map((m) => (
                 <tr key={m.match_key}>
-                  <th scope="row"><Link to={matchPath(m.match_key)}>{m.match_key.split('_')[1] ?? m.match_key}</Link></th>
+                  <th scope="row"><PageLink to={matchPath(m.match_key)}>{m.match_key.split('_')[1] ?? m.match_key}</PageLink></th>
                   <td><When value={m.scheduled_time} /></td>
                   <td><AllianceTeams teams={m.red_team_numbers} eventKey={data.event_key} tone="red" /></td>
                   <td><AllianceTeams teams={m.blue_team_numbers} eventKey={data.event_key} tone="blue" /></td>

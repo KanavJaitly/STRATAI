@@ -3,12 +3,6 @@
 // These are the shapes the Phase 7 contract lock pins (docs/api_contract_lock.json).
 /* eslint-disable */
 
-export interface AcceptInvitationBody {
-  full_name?: string | null
-  password: string
-  token: string
-}
-
 export interface ActionBody {
   /** A client-created UUID: a retry with the same id and content is idempotent. */
   action_id?: string | null
@@ -518,7 +512,6 @@ export interface FlagOut {
 
 export interface ForgotPasswordBody {
   email: string
-  team_number: number
 }
 
 /** Liveness payload. */
@@ -583,24 +576,6 @@ export interface HypotheticalRecommendBody {
   side: "red" | "blue"
 }
 
-export interface InitialAdminBody {
-  email: string
-  full_name: string
-  password: string
-  setup_password: string
-  team_number: number
-}
-
-export interface InvitationTokenBody {
-  token: string
-}
-
-export interface InviteBody {
-  email: string
-  full_name: string
-  role: "admin" | "strategy" | "scouter"
-}
-
 export interface LabelledTeams {
   evidence: string
   team_numbers: number[]
@@ -610,7 +585,6 @@ export interface LabelledTeams {
 export interface LoginBody {
   email: string
   password: string
-  team_number: number
 }
 
 /** The event's rules, entered from the event, when no approved ruleset covers it (stored as manual_entry). */
@@ -681,11 +655,6 @@ export interface NotProducedItems {
   key_success_factors: NotProduced
   predicted_flow: NotProduced
   strengths_and_weaknesses: NotProduced
-}
-
-export interface PermissionsBody {
-  grants: Record<string, boolean>
-  role: "strategy" | "scouter"
 }
 
 export interface PickListProvenance {
@@ -900,12 +869,6 @@ export interface RecommendedOut {
   win_event: StrategyOdds | null
 }
 
-export interface RegisterTeamBody {
-  setup_password: string
-  team_name: string
-  team_number: number
-}
-
 export interface ReplacementBody {
   seed?: number | null
   team_number: number
@@ -922,8 +885,9 @@ export interface ReportBody {
 }
 
 export interface ResetPasswordBody {
+  code: string
+  email: string
   new_password: string
-  token: string
 }
 
 export interface ResolveBody {
@@ -948,7 +912,7 @@ export interface RobotPlan {
 }
 
 export interface RoleBody {
-  role: "admin" | "strategy" | "scouter"
+  role: "admin" | "base"
 }
 
 export interface RosterTeamOut {
@@ -1049,6 +1013,13 @@ export interface SettingsBody {
 export interface SetupBody {
   action_id?: string | null
   manual_rules?: ManualRulesBody | null
+}
+
+export interface SignupBody {
+  email: string
+  full_name: string
+  join_code: string
+  password: string
 }
 
 export interface SpecDraftBody {

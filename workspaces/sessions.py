@@ -1,12 +1,10 @@
 """Server-side sessions.
 
-A session is bound to one membership (one person in one team's workspace). The browser holds only the random token,
+A session is bound to one membership (one person in the team's workspace; there is exactly one workspace, team 11). The browser holds only the random token,
 in an HttpOnly cookie; the database holds only its hash. Every request re-resolves the session against current
-state, so suspending or removing a member, rejecting a workspace, disabling a user, changing a role or changing a
-role's permissions takes effect on that member's very next request, not at the session's expiry.
+state, so suspending or removing a member, disabling a user or changing a role takes effect on that member's very next request, not at the session's expiry.
 
-A session ends at the first of: logout, revocation (suspension, removal, password change or reset, workspace
-rejection), its absolute lifetime (SESSION_TTL_HOURS), or SESSION_IDLE_HOURS without a request.
+A session ends at the first of: logout, revocation (suspension, removal, password change or reset), its absolute lifetime (SESSION_TTL_HOURS), or SESSION_IDLE_HOURS without a request.
 """
 
 from __future__ import annotations
@@ -68,12 +66,6 @@ def create_session(cursor: Any, membership_id: int, settings: Settings) -> str:
     return token
 
 
-def role_grants(cursor: Any, workspace_id: int, role: str) -> dict[str, bool]:
-    cursor.execute("SELECT permission, granted FROM workspace_role_permissions WHERE workspace_id = %s AND role = %s",
-                   (workspace_id, role))
-    return {permission: granted for permission, granted in cursor.fetchall()}
-
-
 _RESOLVE_SQL = """
 SELECT s.id, s.last_seen_at, m.id, m.role, u.id, u.email, COALESCE(m.display_name, u.full_name),
        w.id, w.team_number, w.team_name, w.verification_status
@@ -92,11 +84,11 @@ WHERE s.token_hash = %s
 
 
 def accounts_schema_present(database: Database) -> bool:
-    """Whether this database holds the team-account tables (migration 0012). Checked live, so applying the
-    migration to a running server's database takes effect without a restart."""
+    """Whether this database holds the team-account tables (migrations 0012 and 0015). Checked live, so applying
+    the migrations to a running server's database takes effect without a restart."""
     with database.cursor() as cursor:
         cursor.execute("SELECT to_regclass('public.workspaces') IS NOT NULL AND to_regclass('public.auth_sessions') "
-                       "IS NOT NULL")
+                       "IS NOT NULL AND to_regclass('public.password_reset_codes') IS NOT NULL")
         return bool(cursor.fetchone()[0])
 
 
@@ -114,11 +106,10 @@ def resolve_session(database: Database, token: str | None, settings: Settings) -
          workspace_id, team_number, team_name, status) = row
         if datetime.now(timezone.utc) - last_seen > TOUCH_INTERVAL:
             cursor.execute("UPDATE auth_sessions SET last_seen_at = NOW() WHERE id = %s", (session_id,))
-        grants = role_grants(cursor, workspace_id, role) if role != ADMIN else {}
     return SessionContext(session_id=session_id, membership_id=membership_id, user_id=user_id,
                           workspace_id=workspace_id, team_number=team_number, team_name=team_name,
                           verification_status=status, role=role, email=email, name=name,
-                          permissions=effective_permissions(role, grants))
+                          permissions=effective_permissions(role))
 
 
 def revoke_token(database: Database, token: str | None) -> None:
@@ -136,7 +127,7 @@ def revoke_membership_sessions(cursor: Any, membership_id: int) -> None:
 
 
 def revoke_user_sessions(cursor: Any, user_id: int, *, except_session_id: int | None = None) -> None:
-    """End every session the person holds, in every team, except optionally the one making the request."""
+    """End every session the person holds, except optionally the one making the request."""
     cursor.execute(
         "UPDATE auth_sessions SET revoked_at = NOW() WHERE revoked_at IS NULL AND id <> %s "
         "AND membership_id IN (SELECT id FROM team_memberships WHERE user_id = %s)",

@@ -1,6 +1,6 @@
-"""Team workspaces: the rules that need no database -- password hashing and policy, tokens, the permission model,
-and the agreement between the code's permission list and the workspace_role_permissions CHECK constraint (defined by
-0012, redefined by 0013)."""
+"""Team accounts: the rules that need no database -- password hashing and policy, tokens, the two-role permission
+model and its agreement with the role CHECK constraint of migration 0015, the join code, ADMIN_EMAILS, reset codes,
+and the access-policy default."""
 
 from __future__ import annotations
 
@@ -8,13 +8,14 @@ import re
 from pathlib import Path
 
 import pytest
+from pydantic import SecretStr
 
-from workspaces import passwords, permissions
+from data.config import Settings
+from workspaces import accounts, passwords, permissions, rate_limit
 from workspaces.errors import WorkspaceError
 from workspaces.tokens import new_token, subject_hash, token_hash
 
 MIGRATIONS = Path(__file__).resolve().parents[1] / "database" / "migrations"
-CHECK_PATTERN = r"workspace_role_permissions_permission_check CHECK \(permission IN \((.*?)\)\)"
 
 
 @pytest.fixture(autouse=True)
@@ -46,19 +47,22 @@ def test_a_hash_made_with_other_parameters_is_flagged_for_rehash(monkeypatch):
     assert not passwords.needs_rehash(passwords.hash_password("a long enough password"))
 
 
-@pytest.mark.parametrize("weak", ["short", "elevenchars", "password1234", "aaaaaaaaaaaaaa", "abababababab"])
-def test_the_policy_refuses_short_common_or_trivial_passwords(weak):
+@pytest.mark.parametrize("short", ["", "a", "seven77"])
+def test_the_policy_refuses_passwords_shorter_than_eight_characters(short):
     with pytest.raises(WorkspaceError) as refused:
-        passwords.check_password_policy(weak)
+        passwords.check_password_policy(short)
     assert refused.value.code == "invalid_input"
+    assert "at least 8 characters" in refused.value.message
 
 
-def test_the_policy_refuses_the_email_as_password_and_overlong_passwords():
+@pytest.mark.parametrize("ok", ["eight888", "aaaaaaaa", "password", "12345678"])
+def test_the_policy_has_no_rule_but_the_length(ok):
+    passwords.check_password_policy(ok)  # common, repetitive or all-digit: allowed, by decision (2026-11-11)
+
+
+def test_the_policy_still_bounds_the_length_so_hashing_stays_bounded():
     with pytest.raises(WorkspaceError):
-        passwords.check_password_policy("someone@team.example", email="someone@team.example")
-    with pytest.raises(WorkspaceError):
-        passwords.check_password_policy("x1" * 200)
-    passwords.check_password_policy("a reasonable passphrase")
+        passwords.check_password_policy("x" * (passwords.MAX_PASSWORD_LENGTH + 1))
 
 
 def test_tokens_are_long_random_and_stored_only_as_sha256():
@@ -69,39 +73,100 @@ def test_tokens_are_long_random_and_stored_only_as_sha256():
     assert subject_hash("login_ip", "1.2.3.4") != subject_hash("login_account", "1.2.3.4")
 
 
-def test_administrators_hold_every_permission_and_others_only_configurable_ones():
-    assert permissions.effective_permissions("admin", {}) == frozenset(permissions.ALL_PERMISSIONS)
-    for role in permissions.CONFIGURABLE_ROLES:
-        held = permissions.effective_permissions(role, {p: True for p in permissions.ALL_PERMISSIONS})
-        assert not held & set(permissions.ADMIN_ONLY_PERMISSIONS), role
-    assert permissions.effective_permissions("nobody", {}) == frozenset()
+def test_two_roles_and_an_administrator_holds_every_permission():
+    assert permissions.ROLES == ("admin", "base")
+    assert permissions.effective_permissions("admin") == frozenset(permissions.ALL_PERMISSIONS)
+    assert permissions.effective_permissions("strategy") == frozenset()  # an old or unknown role holds nothing
 
 
-def test_the_default_grants_match_the_documented_role_defaults():
-    strategy = permissions.effective_permissions("strategy", {})
-    scouter = permissions.effective_permissions("scouter", {})
-    for permission in ("match_predictions", "team_analytics", "event_analysis", "alliance_selection",
-                       "qualification_forecast", "strategy_tools", "scouting_view"):
-        assert permission in strategy
-    assert "scouting_submit" not in strategy  # configurable for strategy, off by default
-    assert {"scouting_forms", "scouting_submit", "team_info"} <= scouter
-    for permission in ("match_predictions", "alliance_selection", "team_analytics", "scouting_view"):
-        assert permission not in scouter  # configurable for scouters, off by default
+def test_a_base_member_holds_exactly_the_events_list_and_event_page_permissions():
+    assert permissions.effective_permissions("base") == {"team_info", "event_analysis", "qualification_forecast"}
+    # The explorer, platform inputs and the team overview are separate permissions precisely so base lacks them.
+    for withheld in ("season_explorer", "platform_inputs", "team_overview", "team_management", "match_predictions",
+                     "strategy_tools", "alliance_selection", "scouting_forms"):
+        assert withheld not in permissions.effective_permissions("base")
 
 
-def test_a_stored_grant_overrides_the_default_and_a_missing_one_falls_back():
-    assert "match_predictions" in permissions.effective_permissions("scouter", {"match_predictions": True})
-    assert "scouting_submit" not in permissions.effective_permissions("scouter", {"scouting_submit": False})
-    assert "scouting_submit" in permissions.effective_permissions("scouter", {})
+def test_every_granted_permission_is_a_known_permission():
+    for grants in permissions.ROLE_GRANTS.values():
+        assert grants <= set(permissions.ALL_PERMISSIONS)
 
 
-def test_the_migration_check_lists_exactly_the_configurable_permissions():
-    # The constraint in force is the one the last migration to define it leaves (migrations apply in name order).
-    defining = [path for path in sorted(MIGRATIONS.glob("*.sql"))
-                if re.search(CHECK_PATTERN, path.read_text(encoding="utf-8"), re.S)]
-    assert [path.name for path in defining][:1] == ["0012_team_workspaces.sql"]
-    block = re.search(CHECK_PATTERN, defining[-1].read_text(encoding="utf-8"), re.S)
-    assert block is not None
-    in_sql = set(re.findall(r"'([a-z_]+)'", block.group(1)))
-    assert in_sql == set(permissions.CONFIGURABLE_PERMISSIONS)
-    assert not in_sql & set(permissions.ADMIN_ONLY_PERMISSIONS)
+def test_the_role_check_constraint_lists_exactly_the_roles():
+    sql = (MIGRATIONS / "0015_single_team_auth.sql").read_text(encoding="utf-8")
+    match = re.search(r"team_memberships_role_check CHECK \(role IN \((.*?)\)\)", sql)
+    assert match is not None
+    assert tuple(re.findall(r"'([a-z_]+)'", match.group(1))) == permissions.ROLES
+
+
+def _settings(**values) -> Settings:
+    return Settings(tba_api_key="unused", **values)
+
+
+def test_the_join_code_is_compared_exactly_and_never_matches_when_unset():
+    settings = _settings(team_join_code=SecretStr("Mort-2026"))
+    assert accounts.join_code_matches(settings, "Mort-2026")
+    assert accounts.join_code_matches(settings, "  Mort-2026  ")  # surrounding spaces from a paste are forgiven
+    for wrong in ("mort-2026", "Mort-202", "Mort-20266", "", None, 123):
+        assert not accounts.join_code_matches(settings, wrong)
+    assert not accounts.join_code_matches(_settings(), "anything")
+    assert _settings(team_join_code="   ").team_join_code is None  # blank closes sign-up, never matches ""
+
+
+def test_the_join_code_is_a_secret_that_never_prints():
+    settings = _settings(team_join_code="Mort-2026")
+    assert "Mort-2026" not in repr(settings) and "Mort-2026" not in str(settings.team_join_code)
+
+
+def test_admin_emails_are_comma_separated_and_case_insensitive(monkeypatch):
+    monkeypatch.setenv("ADMIN_EMAILS", " Ada@Example.test, ,bo@example.TEST ")
+    settings = Settings()
+    assert settings.admin_emails == ["ada@example.test", "bo@example.test"]
+    assert accounts.role_for_email(settings, "ADA@example.test") == "admin"
+    assert accounts.role_for_email(settings, "cy@example.test") == "base"
+
+
+@pytest.mark.parametrize(("env", "expected"), [("development", "open"), ("staging", "members"),
+                                               ("production", "members")])
+def test_members_only_is_the_default_access_policy_wherever_deployed(monkeypatch, env, expected):
+    monkeypatch.delenv("ACCESS_POLICY", raising=False)
+    assert _settings(env=env).access_policy == expected
+    assert _settings(env=env, access_policy="members").access_policy == "members"
+
+
+def test_reset_codes_are_six_digits_and_stored_only_as_a_salted_hash():
+    codes = {accounts.new_reset_code() for _ in range(200)}
+    assert all(re.fullmatch(r"\d{6}", code) for code in codes) and len(codes) > 150
+    first, second = accounts.reset_code_hash("a" * 32, "012345"), accounts.reset_code_hash("b" * 32, "012345")
+    assert re.fullmatch(r"[0-9a-f]{64}", first) and first != second  # the salt changes the stored value
+    assert accounts.RESET_CODE_TTL.total_seconds() == 15 * 60 and accounts.RESET_CODE_MAX_ATTEMPTS == 5
+
+
+def test_the_rate_limits_named_in_the_requirements():
+    assert rate_limit.LIMITS["signup_code_ip"].count_all is False  # only wrong codes count
+    assert rate_limit.LIMITS["signup_code_global"].attempts == 50
+    assert rate_limit.LIMITS["signup_code_global"].window.total_seconds() == 3600
+    per_email = rate_limit.LIMITS["reset_request_account"]
+    assert (per_email.attempts, per_email.window.total_seconds(), per_email.count_all) == (3, 3600, True)
+
+
+def test_the_admin_join_code_makes_an_administrator_and_the_member_code_a_base_member():
+    settings = _settings(team_join_code="member-code", team_admin_join_code="admin-code")
+    assert accounts.join_code_role(settings, "admin-code") == "admin"
+    assert accounts.join_code_role(settings, " member-code ") == "base"
+    for wrong in ("Admin-Code", "admin-cod", "member-codeadmin-code", "", None):
+        assert accounts.join_code_role(settings, wrong) is None
+    assert accounts.signup_open(settings)
+
+
+def test_either_code_alone_opens_sign_up_for_its_role_only():
+    admin_only = _settings(team_admin_join_code="admin-code")
+    assert accounts.signup_open(admin_only) and accounts.join_code_role(admin_only, "admin-code") == "admin"
+    assert accounts.join_code_role(admin_only, "member-code") is None
+    assert not accounts.signup_open(_settings())
+
+
+def test_the_two_join_codes_must_differ():
+    with pytest.raises(ValueError, match="TEAM_ADMIN_JOIN_CODE must differ"):
+        _settings(team_join_code="same-code", team_admin_join_code=" same-code ")
+    assert _settings(team_admin_join_code="  ").team_admin_join_code is None

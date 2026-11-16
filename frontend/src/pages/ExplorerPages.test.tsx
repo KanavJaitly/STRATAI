@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import { Shell } from '../App'
+import { SignedInAs } from '../test/auth'
 import { preEventAsOf } from '../lib/format'
 import { SessionProvider } from '../state/session'
 import { WRITE_OFF, apiError, mockApi } from '../test/mockApi'
@@ -54,7 +55,7 @@ function renderAt(path: string, routes = true) {
             <Route path="/explorer/events/:eventKey" element={<EventPage />} />
             <Route path="/explorer/teams/:teamNumber" element={<TeamPage />} />
           </Routes>
-        ) : <Shell />}
+        ) : <SignedInAs><Shell /></SignedInAs>}
       </MemoryRouter>
     </SessionProvider>,
   )

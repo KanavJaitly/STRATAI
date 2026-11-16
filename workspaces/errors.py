@@ -31,10 +31,9 @@ def forbidden(code: str, message: str) -> WorkspaceError:
     return WorkspaceError(HTTPStatus.FORBIDDEN, code, message)
 
 
-# Login failures all read the same, whatever was wrong, so the response never says which team numbers or emails
-# have accounts.
+# Login failures all read the same, whatever was wrong, so the response never says which emails have accounts.
 INVALID_CREDENTIALS = "invalid_credentials"
-INVALID_CREDENTIALS_MESSAGE = "The team number, email or password is not correct."
+INVALID_CREDENTIALS_MESSAGE = "The email or password is not correct."
 
 
 def invalid_credentials() -> WorkspaceError:
