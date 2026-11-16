@@ -3,11 +3,11 @@
 **One team.** StratAI serves one team. Migration 0015 creates its one workspace (team 11), and every account is a
 membership in it. Nobody types a team number anywhere.
 
-**Sign-up.** A new member gives their name, email, a password and the team join code (TEAM_JOIN_CODE, an
-environment secret, compared in constant time). The code is checked before anything else, so only people who
+**Sign-up.** A new member gives their name, email, a password and a team join code: TEAM_JOIN_CODE for a base
+member, TEAM_ADMIN_JOIN_CODE for an administrator (environment secrets, compared in constant time). The code is checked before anything else, so only people who
 already have it learn anything (for example that an email is taken). Wrong codes are rate-limited per client
-address and across all addresses at once. New accounts are base members, unless their email is in ADMIN_EMAILS,
-and are signed in at once.
+address and across all addresses at once. An email in ADMIN_EMAILS also signs up as an administrator, whichever
+code it uses. New accounts are signed in at once.
 
 **Password reset by code.** "Forgot password" emails a 6-digit code. Only a salted hash is stored. A code works
 once, for RESET_CODE_TTL, and dies after RESET_CODE_MAX_ATTEMPTS wrong tries; asking for a new code retires the old
@@ -27,6 +27,7 @@ from http import HTTPStatus
 from typing import Any
 
 import psycopg
+from pydantic import SecretStr
 
 from data.config import Settings
 from database.connection import Database
@@ -91,22 +92,43 @@ def role_for_email(settings: Settings, email: str) -> str:
 # --- sign-up --------------------------------------------------------------------------------------------------
 
 
-def join_code_matches(settings: Settings, supplied: Any) -> bool:
-    """Whether supplied is the team join code, compared in constant time. False when no code is configured."""
-    if settings.team_join_code is None or not isinstance(supplied, str):
+def _code_matches(expected: SecretStr | None, supplied: Any) -> bool:
+    """Whether supplied equals expected, compared in constant time. False when expected is unset."""
+    if expected is None or not isinstance(supplied, str):
         return False
-    expected = settings.team_join_code.get_secret_value().strip().encode("utf-8")
-    return hmac.compare_digest(supplied.strip().encode("utf-8"), expected)
+    return hmac.compare_digest(supplied.strip().encode("utf-8"),
+                               expected.get_secret_value().strip().encode("utf-8"))
+
+
+def join_code_role(settings: Settings, supplied: Any) -> str | None:
+    """The role a join code signs someone up as: admin for TEAM_ADMIN_JOIN_CODE, base for TEAM_JOIN_CODE, None for
+    anything else. Both codes are always compared, so the time taken does not say which one was close."""
+    is_admin = _code_matches(settings.team_admin_join_code, supplied)
+    is_member = _code_matches(settings.team_join_code, supplied)
+    return ADMIN if is_admin else BASE if is_member else None
+
+
+def join_code_matches(settings: Settings, supplied: Any) -> bool:
+    """Whether supplied is either team join code."""
+    return join_code_role(settings, supplied) is not None
+
+
+def signup_open(settings: Settings) -> bool:
+    return settings.team_join_code is not None or settings.team_admin_join_code is not None
 
 
 def signup(database: Database, settings: Settings, *, full_name: str, email: str, password: str, join_code: str,
            client_ip: str) -> str:
-    """Create a member account with the team join code and sign it in. Returns the new session token."""
-    if settings.team_join_code is None:
+    """Create an account with a team join code and sign it in. Returns the new session token.
+
+    The admin join code makes an administrator; the member join code makes a base member, unless the email is in
+    ADMIN_EMAILS."""
+    if not signup_open(settings):
         raise forbidden("signup_closed", "Sign-up is not open on this server: no team join code is configured.")
     rate_limit.check(database, "signup_code_global", rate_limit.GLOBAL_SUBJECT)
     rate_limit.check(database, "signup_code_ip", client_ip)
-    if not join_code_matches(settings, join_code):
+    code_role = join_code_role(settings, join_code)
+    if code_role is None:
         rate_limit.record(database, "signup_code_ip", client_ip, succeeded=False)
         rate_limit.record(database, "signup_code_global", rate_limit.GLOBAL_SUBJECT, succeeded=False)
         raise forbidden("invalid_join_code",
@@ -114,7 +136,7 @@ def signup(database: Database, settings: Settings, *, full_name: str, email: str
     full_name = clean_name(full_name)
     email = normalize_email(email)
     check_password_policy(password)
-    role = role_for_email(settings, email)
+    role = ADMIN if code_role == ADMIN else role_for_email(settings, email)
     password_hash = hash_password(password)
     try:
         with database.connection() as conn, conn.cursor() as cursor:

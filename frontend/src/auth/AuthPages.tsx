@@ -128,7 +128,7 @@ export function SignupPage() {
             <input type="password" value={form.confirm} required autoComplete="new-password"
               onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
           </Field>
-          <Field label="Team join code" hint="Ask one of the team's administrators for it.">
+          <Field label="Team join code" hint="The member code, or the admin code if you are an administrator. Ask one of the team's administrators.">
             <input value={form.code} required autoComplete="off" spellCheck={false}
               onChange={(e) => setForm({ ...form, code: e.target.value })} />
           </Field>

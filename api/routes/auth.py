@@ -81,7 +81,7 @@ def _session_payload(context: SessionContext | None, settings: Settings, *,
                      accounts_available: bool = True) -> dict[str, Any]:
     base = {"access_policy": settings.access_policy,
             "email_delivery_configured": mailer.email_channel(settings) is not None,
-            "signup_open": settings.team_join_code is not None,
+            "signup_open": accounts.signup_open(settings),
             "accounts_available": accounts_available}
     if context is None:
         return {"authenticated": False, **base}
@@ -108,7 +108,7 @@ def get_session(request: Request, database: Database = Depends(get_database),
 
 
 @router.post("/signup", status_code=HTTPStatus.CREATED, dependencies=[Depends(require_csrf)],
-             summary="Create your account with the team join code, and sign in",
+             summary="Create your account with a team join code (member or admin), and sign in",
              responses=error_responses({403: ["invalid_join_code", "signup_closed", "csrf_check_failed"],
                                         409: ["email_already_registered", "team_workspace_missing"],
                                         422: ["invalid_input"], 429: ["rate_limited"]}))

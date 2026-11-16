@@ -38,6 +38,7 @@ SEASON, EVENT = 9988, "9988zzzscout"
 TEAMS = [998801, 998802, 998803, 998804, 998805, 998806]
 MATCHES = {f"{EVENT}_qm{n}": (TEAMS[:3], TEAMS[3:]) if n % 2 else (TEAMS[3:], TEAMS[:3]) for n in (1, 2, 3)}
 JOIN_CODE, PASSWORD = "sentinel-join-code-9988", "member pass 1"
+ADMIN_JOIN_CODE = "sentinel-admin-code-9988"
 DOMAIN = "@workspaces.test.invalid"
 ADMIN_EMAILS_ENV = f"ADA{DOMAIN.upper()}"  # ada signs up as an administrator; matched in any case
 CSRF = {"X-StratAI-CSRF": "1"}
@@ -95,6 +96,7 @@ def _environment(monkeypatch, canonical) -> Iterator[None]:
     monkeypatch.setenv("ENV", "development")
     monkeypatch.setenv("TEAM_JOIN_CODE", JOIN_CODE)
     monkeypatch.setenv("ADMIN_EMAILS", ADMIN_EMAILS_ENV)
+    monkeypatch.delenv("TEAM_ADMIN_JOIN_CODE", raising=False)
     for name in ("ACCESS_POLICY", "PUBLIC_APP_URL", "DEV_OUTBOX_DIR", "SMTP_HOST", "SMTP_FROM",
                  "AUTH_TRUSTED_PROXY_HOPS"):
         monkeypatch.delenv(name, raising=False)
@@ -199,6 +201,24 @@ def test_an_email_in_admin_emails_signs_up_as_an_administrator_in_any_case():
     assert response.status_code == 201
     assert response.json()["role"] == "admin" and "team_management" in response.json()["permissions"]
     assert response.json()["user"]["email"] == email("ada")  # stored lowercased
+
+
+def test_the_admin_join_code_signs_up_an_administrator_and_the_member_code_a_base_member(monkeypatch):
+    app = make_app(monkeypatch, TEAM_ADMIN_JOIN_CODE=ADMIN_JOIN_CODE)
+    admin = sign_up(browser(app), "cy", join_code=ADMIN_JOIN_CODE)
+    assert admin.status_code == 201 and admin.json()["role"] == "admin"
+    base = sign_up(browser(app), "di", join_code=JOIN_CODE)
+    assert base.status_code == 201 and base.json()["role"] == "base"
+    wrong_case = sign_up(browser(app), "ed", join_code=ADMIN_JOIN_CODE.upper())
+    assert wrong_case.status_code == 403 and code(wrong_case) == "invalid_join_code"
+
+
+def test_the_admin_join_code_alone_opens_sign_up_for_administrators_only(monkeypatch):
+    monkeypatch.delenv("TEAM_JOIN_CODE")
+    app = make_app(monkeypatch, TEAM_ADMIN_JOIN_CODE=ADMIN_JOIN_CODE)
+    assert TestClient(app).get("/auth/session").json()["signup_open"] is True
+    assert sign_up(browser(app), "cy", join_code=JOIN_CODE).status_code == 403
+    assert sign_up(browser(app), "cy", join_code=ADMIN_JOIN_CODE).json()["role"] == "admin"
 
 
 def test_an_email_is_unique_whatever_its_case():
