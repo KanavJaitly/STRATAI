@@ -26,6 +26,7 @@ from datetime import datetime
 
 import numpy as np
 
+from database.connection import consistent_reads
 from ml.calibration.gate import poisson_binomial_pmf
 from ml.features.assembler import MatchFeatureRow, build_match_feature_row
 from ml.features.scale import ScaleLookup
@@ -182,13 +183,22 @@ class EventQualificationForecast:
     epa_source_states: list[str | None]
 
 
+@consistent_reads
 def forecast_event_qualification(
     database, event_key: str, as_of: datetime, *, epa_provider,
     predict_win_prob: Callable[[MatchFeatureRow], float],
 ) -> EventQualificationForecast:
     """Every qualification match's q, with features built at min(as_of, scheduled time) so a played match keeps its
-    pre-match forecast, plus each team's expected record. SilentFallbackError (EPA source) propagates."""
+    pre-match forecast, plus each team's expected record. SilentFallbackError (EPA source) propagates.
+
+    Every read through `database` comes from one snapshot on one connection (`consistent_reads`, as for the event
+    analysis, strength view and pre-match report). Without it each read opened its own connection: about 940 for one
+    district event, which took the hosted API past the web app's 30 s limit (2026-11-16)."""
     scales = ScaleLookup(database)
+    # An EPA source that reads the database reads through the same snapshot (the Statbotics source does; the D18 and
+    # STRATAI sources read their own artifacts and are used as they are).
+    if hasattr(epa_provider, "reading_through"):
+        epa_provider = epa_provider.reading_through(database)
     matches: list[ForecastMatch] = []
     states: list[str | None] = []
     for match_key, scheduled in qualification_matches(database, event_key):
