@@ -327,7 +327,7 @@ describe('team profiles on the live draft page', () => {
   })
 
   it('reads every view strictly before the record selection moment and says so', async () => {
-    const api = mockApi({ 'GET /auth/session': STRATEGY, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
+    const api = mockApi({ 'GET /auth/session': VIEWER, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
       [`GET ${BASE}/5`]: draft({ can_record: false }), [`GET ${BASE}/5/recommendations`]: RECS_WITH_MOMENT,
       ...profileRoutes(23) })
     renderAt(URL)
@@ -350,7 +350,7 @@ describe('team profiles on the live draft page', () => {
 
   it('opens from the alliances table, the unavailable chips and the history', async () => {
     const history = draft().history.map((h) => (h.type === 'captain' ? { ...h, team_number: 1, seed: 1 } : h))
-    mockApi({ 'GET /auth/session': STRATEGY, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
+    mockApi({ 'GET /auth/session': VIEWER, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
       [`GET ${BASE}/5`]: draft({ can_record: false, history }), [`GET ${BASE}/5/recommendations`]: RECS_WITH_MOMENT,
       ...profileRoutes(1) })
     renderAt(URL)
@@ -366,7 +366,7 @@ describe('team profiles on the live draft page', () => {
 
   it('keeps focus inside the drawer and keeps polling with the stale notice visible', async () => {
     let reads = 0
-    mockApi({ 'GET /auth/session': STRATEGY, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
+    mockApi({ 'GET /auth/session': VIEWER, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
       [`GET ${BASE}/5`]: () => { reads++; return draft({ can_record: false, record_seq: reads > 1 ? 3 : 2 }) },
       [`GET ${BASE}/5/recommendations`]: (r: { path: string }) => (reads > 1 ? new Promise(() => { void r })
         : RECS_WITH_MOMENT), ...profileRoutes(23) })
@@ -408,7 +408,7 @@ describe('team profiles on the live draft page', () => {
   })
 
   it('shows no back link on a team page reached any other way', async () => {
-    mockApi({ 'GET /auth/session': STRATEGY, 'GET /events': EVENTS, ...SEASON_EVENTS, ...profileRoutes(23) })
+    mockApi({ 'GET /auth/session': VIEWER, 'GET /events': EVENTS, ...SEASON_EVENTS, ...profileRoutes(23) })
     renderAt(`/events/${EVENT}/teams/23`)
     expect(await screen.findByRole('heading', { level: 1, name: 'Team 23' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Back to live alliance selection/ })).not.toBeInTheDocument()
@@ -455,7 +455,7 @@ const FB2_RECS = recs({ source: 'fallback_p11_fb2',
 
 describe('P11-FB2 on the live draft page', () => {
   it('labels FB2 not validated and shows each card’s rank, projection, decline flag and reasons', async () => {
-    mockApi({ 'GET /auth/session': STRATEGY, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
+    mockApi({ 'GET /auth/session': VIEWER, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
       [`GET ${BASE}/5`]: draft({ can_record: false }), [`GET ${BASE}/5/recommendations`]: FB2_RECS })
     renderAt(URL)
     const picks = await screen.findByRole('region', { name: 'Your picks' })
