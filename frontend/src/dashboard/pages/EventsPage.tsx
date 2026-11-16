@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { dashboardApi } from '../../api/dashboard'
@@ -19,14 +19,28 @@ function dates(event: EventOut) {
   return <>{event.start_date}{event.end_date && event.end_date !== event.start_date ? ` – ${event.end_date}` : ''}</>
 }
 
-/** P8-M2 (a): every event of a season (GET /events), searchable and sortable; the season is in the URL. */
+/** P8-M2 (a): every event of a season (GET /events), searchable and sortable; the season is in the URL.
+ *
+ * Without a season in the URL the page opens on the current year; if that year has no events yet (early January,
+ * before the new season's events exist), it moves once to the previous year, so it never opens on an empty season.
+ * A season named in the URL is always shown as asked. */
 export function EventsPage() {
   const [params, setParams] = useSearchParams()
-  const season = Number(params.get('season')) || currentSeason()
-  const [draftSeason, setDraftSeason] = useState(String(season))
+  const chosen = Number(params.get('season')) || null
+  const season = chosen ?? currentSeason()
+  // The season box's text, tied to the season it was typed for: when the season changes, the box shows the new one.
+  const [draft, setDraft] = useState<{ season: number; text: string }>({ season, text: String(season) })
+  const draftSeason = draft.season === season ? draft.text : String(season)
+  const setDraftSeason = (text: string) => setDraft({ season, text })
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortKey>('start_date')
   const events = useResource((signal) => dashboardApi.events(season, signal), `events:${season}`)
+
+  // No season asked for, and the current year has no events: show the previous year instead (once, in the URL).
+  const currentYearEmpty = chosen === null && events.data !== null && events.data.events.length === 0
+  useEffect(() => {
+    if (currentYearEmpty) setParams({ season: String(season - 1) }, { replace: true })
+  }, [currentYearEmpty, season, setParams])
 
   const shown = useMemo(() => {
     const needle = search.trim().toLowerCase()
