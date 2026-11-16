@@ -174,6 +174,11 @@ class StatboticsPointInTimeEpa:
     def __init__(self, database: Database) -> None:
         self._database = database
 
+    def reading_through(self, database: Database) -> "StatboticsPointInTimeEpa":
+        """The same selection, read through database (a caller's read snapshot), so a view's EPA reads share its one
+        connection and its one database version instead of opening a connection per team (docs/phase10.md P10-R4)."""
+        return StatboticsPointInTimeEpa(database)
+
     def point_in_time_epa(self, team: int, target_event_key: str, as_of: datetime) -> TeamEventEpa | Unavailable:
         with self._database.cursor() as cursor:
             cursor.execute(EPA_SOURCE_SQL, {"team": team, "target": target_event_key, "as_of": as_of})
