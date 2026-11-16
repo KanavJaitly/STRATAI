@@ -140,20 +140,14 @@ OPERATION_CLASSES = {
     # private scouting. All of it is account and membership bookkeeping, or a team's own recorded scouting; none
     # produces an engine output. The scouting summary is Phase 3's deterministic aggregation of the team's own
     # observations (data.metrics.aggregation), with no model and no LLM; every route needs a session.
-    "GET /auth/session": NOT_OUTPUT, "POST /auth/teams/register": NOT_OUTPUT,
-    "POST /auth/teams/initial-admin": NOT_OUTPUT, "POST /auth/login": NOT_OUTPUT, "POST /auth/logout": NOT_OUTPUT,
+    "GET /auth/session": NOT_OUTPUT, "POST /auth/signup": NOT_OUTPUT, "POST /auth/login": NOT_OUTPUT, "POST /auth/logout": NOT_OUTPUT,
     "POST /auth/password/change": NOT_OUTPUT, "POST /auth/password/forgot": NOT_OUTPUT,
-    "POST /auth/password/reset": NOT_OUTPUT, "POST /auth/invitations/preview": NOT_OUTPUT,
-    "POST /auth/invitations/accept": NOT_OUTPUT,
-    "GET /workspace": NOT_OUTPUT, "GET /workspace/members": NOT_OUTPUT, "POST /workspace/invitations": NOT_OUTPUT,
-    "POST /workspace/invitations/{invitation_id}/resend": NOT_OUTPUT,
-    "POST /workspace/invitations/{invitation_id}/revoke": NOT_OUTPUT,
+    "POST /auth/password/reset": NOT_OUTPUT,
+    "GET /workspace": NOT_OUTPUT, "GET /workspace/members": NOT_OUTPUT,
     "POST /workspace/members/{membership_id}/role": NOT_OUTPUT,
     "POST /workspace/members/{membership_id}/status": NOT_OUTPUT,
     "POST /workspace/members/{membership_id}/profile": NOT_OUTPUT,
     "POST /workspace/members/{membership_id}/remove": NOT_OUTPUT,
-    "POST /workspace/members/{membership_id}/password-reset": NOT_OUTPUT,
-    "GET /workspace/permissions": NOT_OUTPUT, "POST /workspace/permissions": NOT_OUTPUT,
     "GET /workspace/settings": NOT_OUTPUT, "POST /workspace/settings": NOT_OUTPUT,
     "GET /workspace/activity": NOT_OUTPUT, "GET /workspace/analytics": NOT_OUTPUT,
     "GET /workspace/scouting/scouts": NOT_OUTPUT,

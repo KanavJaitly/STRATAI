@@ -3,7 +3,7 @@ import { createContext, useContext } from 'react'
 import type { Role, SessionInfo } from './api'
 
 // Who is signed in, and what their role may do. AuthProvider (AuthContext.tsx) loads it from GET /auth/session when the
-// app starts and replaces it with the answer of every sign-in, sign-out, registration and invitation acceptance.
+// app starts and replaces it with the answer of every sign-up, sign-in, sign-out and password reset.
 //
 // This decides what the interface shows. It is never what protects anything: every permission is checked again by
 // the API on every request (api/session.py, workspaces/), so hiding a link is a convenience, not a control.
@@ -23,7 +23,7 @@ export interface Auth {
   signedIn: boolean
   role: Role | null
   can: (permission: string) => boolean
-  /** Replace the session with an answer the API just gave (sign-in, registration, invitation acceptance). */
+  /** Replace the session with an answer the API just gave (sign-up, sign-in, password reset). */
   setSession: (session: SessionInfo) => void
   refresh: () => Promise<void>
   signOut: () => Promise<void>

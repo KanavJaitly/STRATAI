@@ -11,6 +11,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import { Shell } from '../App'
+import { SignedInAs } from '../test/auth'
 import { setWriteToken } from '../api/client'
 import { SessionProvider } from '../state/session'
 
@@ -30,7 +31,7 @@ function record(entry: Record<string, unknown>) {
 function open(path: string, season: number) {
   window.localStorage.setItem('stratai.season', String(season))
   window.localStorage.setItem('stratai.actor', 'Live Test')
-  return render(<SessionProvider><MemoryRouter initialEntries={[path]}><Shell /></MemoryRouter></SessionProvider>)
+  return render(<SessionProvider><MemoryRouter initialEntries={[path]}><SignedInAs><Shell /></SignedInAs></MemoryRouter></SessionProvider>)
 }
 
 /** An explained "not available" or a rendered result; an unexplained error fails. */
