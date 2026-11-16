@@ -19,6 +19,10 @@
 DELETE FROM workspaces;
 DELETE FROM users;
 DELETE FROM auth_attempts;
+-- Run the deferred draft author checks now, not at commit: the cascade above has removed every row they refer to,
+-- so they pass, and PostgreSQL refuses to ALTER team_memberships (step 3) while their trigger events are pending.
+-- (Found 2026-11-16 applying 0015 to a copy that had draft history; a database with no accounts never hits it.)
+SET CONSTRAINTS ALL IMMEDIATE;
 
 -- 2. Drop what the single-team model no longer uses.
 DROP TABLE IF EXISTS invitations;
