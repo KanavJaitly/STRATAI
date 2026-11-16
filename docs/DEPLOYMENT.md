@@ -19,8 +19,8 @@ How the pieces connect:
   (`/human-inputs/write-access` reports `writes_enabled: false`).
 - **Data is public only:** TBA match results and Statbotics EPA. The dump has no scouting observations, no
   human inputs and no accounts (only team 11's empty workspace, which sign-up needs). Every defense and feeding metric is cleared, so those show as unavailable.
-- **No trained models are deployed.** Win probability, event analysis and qualification forecast answer
-  `model_not_loaded` until the d18 artifacts are installed and pinned.
+- **Three trained models are deployed** with the code (section 5): event rankings, win probability and the strategy
+  model. The playoff model is not (PX-1 failed its gate), so the pick list answers `model_not_loaded`.
 
 ## 1. Build the data dump (local)
 
@@ -79,6 +79,30 @@ If Render gives the service a name other than `stratai-api.onrender.com`, change
 
 **Promoting someone later:** in the web app's Team Management, or in the Render Shell for `stratai-api`:
 `python -m scripts.set_role someone@example.com admin`.
+
+## 5. Trained models
+
+Render's free plan has no persistent disk, so the models ship with the code, in `deploy/ml_registry/` (about 800 KB):
+
+| Model | Folder | Serves |
+|---|---|---|
+| `ranking_xgb_v2` `d18` | `deploy/ml_registry/ranking_xgb_v2/d18/` | event rankings and contenders |
+| `win_prob_xgb_calibrated` `d18` | `deploy/ml_registry/win_prob_xgb_calibrated/d18/` | match win probability |
+| `strategy_outcome_component` `p6m10-v1` | `deploy/ml_registry/strategy_outcome_component/p6m10-v1/` | the strategy lab |
+
+- **Pinned.** `render.yaml` sets `ML_REGISTRY_DIR=deploy/ml_registry` and each model's version tag and sha256. The
+  API loads a model only when its `model.json` matches the pin; otherwise that feature answers `model_not_loaded`.
+  `tests/test_hosted_models.py` checks the pins against the committed files and loads all three.
+- **Their source.** These are copies of the registered artifacts: the D18 registration
+  (`.agent/production/d18_model_registration.json`) for the two D18 models, and P6-M10
+  (`.agent/phase6/M10_ACCEPTANCE.md`) for the strategy model. The sha256 values are the recorded ones.
+- **EPA on the hosted API stays live Statbotics** (`EPA_SOURCE=statbotics`). The models were checked against it
+  locally on 2026-11-16 (event analysis served for `2026mrcmp` and `2026njfla`). The evaluated configuration,
+  `d18_statbotics_primary`, needs a 185 MB EPA chain that is not deployed.
+- **The models are public.** The repository is public, so anyone can download these files. They are trained only on
+  public TBA and Statbotics data.
+- **Replacing a model:** commit the new folder and change its version tag and sha256 in `render.yaml` in the same
+  commit. The test fails if they disagree.
 
 ## Caveats
 
