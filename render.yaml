@@ -38,5 +38,7 @@ services:
       # Secrets: set these in the Render dashboard, never here (the repository is public).
       - key: TEAM_JOIN_CODE
         sync: false
+      - key: TEAM_ADMIN_JOIN_CODE
+        sync: false
       - key: ADMIN_EMAILS
         sync: false

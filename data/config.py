@@ -168,10 +168,12 @@ class Settings(BaseSettings):
     #   signed-in member holding the route's permission (401/403 otherwise). "open" lets anyone read them, as before
     #   accounts existed. Unset, it is "members" when ENV is production or staging and "open" in development (where
     #   the API test suite runs without signing in). Team-private routes (/workspace/...) always need a session.
-    # - team_join_code: the code a new member types to sign up. A secret: set it only in the environment, never in
-    #   the repository. Unset, sign-up is closed.
-    # - admin_emails: comma-separated emails that get the admin role when they sign up (any case). Everyone else
-    #   signs up as a base member; `python -m scripts.set_role` changes a role later.
+    # - team_join_code: the code a new base member types to sign up. A secret: set it only in the environment,
+    #   never in the repository. Unset, base members cannot sign up.
+    # - team_admin_join_code: the code that signs someone up as an administrator. A secret, as above; it must differ
+    #   from team_join_code. Unset, nobody signs up as an administrator by code. With neither code, sign-up is closed.
+    # - admin_emails: comma-separated emails that sign up as administrators whichever code they use (any case).
+    #   `python -m scripts.set_role` changes a role later.
     # - session_cookie_secure: send the session cookie only over HTTPS. None means "secure unless ENV=development".
     # - session_ttl_hours / session_idle_hours: a session ends at the first of these limits.
     # - public_app_url: the web app's base URL, mentioned in password-reset emails when set.
@@ -181,6 +183,7 @@ class Settings(BaseSettings):
     #   address for rate limiting is read from X-Forwarded-For. 0 trusts no header.
     access_policy: Literal["open", "members"] | None = None
     team_join_code: SecretStr | None = None
+    team_admin_join_code: SecretStr | None = None
     admin_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
     session_cookie_secure: bool | None = None
     session_ttl_hours: int = Field(default=336, ge=1)
@@ -252,12 +255,21 @@ class Settings(BaseSettings):
             return [str(email).strip().lower() for email in value if str(email).strip()]
         return value
 
-    @field_validator("team_join_code", mode="before")
+    @field_validator("team_join_code", "team_admin_join_code", mode="before")
     def blank_join_code_is_unset(cls, value: Any) -> Any:
-        """An empty TEAM_JOIN_CODE closes sign-up rather than making the empty string a valid code."""
+        """An empty join code is unset, rather than making the empty string a valid code."""
         if isinstance(value, str) and not value.strip():
             return None
         return value
+
+    @model_validator(mode="after")
+    def admin_and_member_join_codes_differ(self) -> "Settings":
+        """The same code for both would make every sign-up an administrator."""
+        if (self.team_join_code is not None and self.team_admin_join_code is not None
+                and self.team_join_code.get_secret_value().strip()
+                == self.team_admin_join_code.get_secret_value().strip()):
+            raise ValueError("TEAM_ADMIN_JOIN_CODE must differ from TEAM_JOIN_CODE")
+        return self
 
     @model_validator(mode="after")
     def default_access_policy_by_environment(self) -> "Settings":

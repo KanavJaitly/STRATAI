@@ -148,3 +148,25 @@ def test_the_rate_limits_named_in_the_requirements():
     assert rate_limit.LIMITS["signup_code_global"].window.total_seconds() == 3600
     per_email = rate_limit.LIMITS["reset_request_account"]
     assert (per_email.attempts, per_email.window.total_seconds(), per_email.count_all) == (3, 3600, True)
+
+
+def test_the_admin_join_code_makes_an_administrator_and_the_member_code_a_base_member():
+    settings = _settings(team_join_code="member-code", team_admin_join_code="admin-code")
+    assert accounts.join_code_role(settings, "admin-code") == "admin"
+    assert accounts.join_code_role(settings, " member-code ") == "base"
+    for wrong in ("Admin-Code", "admin-cod", "member-codeadmin-code", "", None):
+        assert accounts.join_code_role(settings, wrong) is None
+    assert accounts.signup_open(settings)
+
+
+def test_either_code_alone_opens_sign_up_for_its_role_only():
+    admin_only = _settings(team_admin_join_code="admin-code")
+    assert accounts.signup_open(admin_only) and accounts.join_code_role(admin_only, "admin-code") == "admin"
+    assert accounts.join_code_role(admin_only, "member-code") is None
+    assert not accounts.signup_open(_settings())
+
+
+def test_the_two_join_codes_must_differ():
+    with pytest.raises(ValueError, match="TEAM_ADMIN_JOIN_CODE must differ"):
+        _settings(team_join_code="same-code", team_admin_join_code=" same-code ")
+    assert _settings(team_admin_join_code="  ").team_admin_join_code is None

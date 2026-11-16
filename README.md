@@ -24,8 +24,8 @@ backtest method, the models and their held-out results, the calibration evidence
 which predictions can and cannot be trusted. Phase 4's done-means is not met (M7 failed).
 
 **[docs/team_workspaces.md](docs/team_workspaces.md)** covers sign-in. StratAI serves FRC Team 11 (MORT) only:
-the whole site is behind sign-in, new members sign up with the team join code (`TEAM_JOIN_CODE`), and there are two
-roles, admin and base. Base members see only the events list and event pages.
+the whole site is behind sign-in, new members sign up with a team join code (`TEAM_JOIN_CODE` for base members,
+`TEAM_ADMIN_JOIN_CODE` for admins), and there are two roles, admin and base. Base members see only the events list and event pages.
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) lists the environment variables to set when hosted.
 
 [RUNNING_NOTES.md](RUNNING_NOTES.md) tracks milestone status and the design-decision log.

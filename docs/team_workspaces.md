@@ -70,14 +70,22 @@ refused, by the application and again by a database trigger.
 
 ## 3. Signing up, signing in, and roles
 
-- **Sign-up** (`/auth/signup`, `POST /auth/signup`): full name, email, password and the **team join code**.
-  - The join code is the `TEAM_JOIN_CODE` environment setting. It is compared in constant time and checked before
-    anything else, so only someone who already has it can learn whether an email is taken.
-  - A wrong code answers `403 invalid_join_code`. If no code is configured, sign-up is closed (`403 signup_closed`).
+- **Sign-up** (`/auth/signup`, `POST /auth/signup`): full name, email, password and a **team join code**. There
+  are two codes, both environment settings:
+  - `TEAM_JOIN_CODE` signs someone up as a **base** member;
+  - `TEAM_ADMIN_JOIN_CODE` signs someone up as an **admin**. It must differ from the member code, or the server
+    refuses to start. Anyone who has it can become an admin, so make it long and random, and share it only with
+    those who should be admins.
+
+  How the codes are checked:
+  - Both codes are compared in constant time, and they are checked before anything else, so only someone who
+    already has a code can learn whether an email is taken.
+  - A wrong code answers `403 invalid_join_code`. With neither code configured, sign-up is closed
+    (`403 signup_closed`).
   - Emails are unique in any case. They are stored lowercased (`409 email_already_registered`).
   - The password needs at least 8 characters. There is no other rule.
-  - A new account is a **base** member, unless its email is in `ADMIN_EMAILS` (comma-separated, any case), which
-    makes it an **admin**. The person is signed in at once.
+  - The role comes from the code. An email in `ADMIN_EMAILS` (optional, comma-separated, any case) is an
+    **admin** whichever code it used. The person is signed in at once.
 - **Sign-in** (`/auth/login`): email and password only. Failures all read `invalid_credentials` and take the same
   time.
 - **After sign-in:** an administrator lands on the Admin Dashboard (`/team`) and a base member on the events (`/`). A
@@ -206,8 +214,9 @@ Secrets go in the environment, never in a committed file (`data/config.py`, `.en
 | Variable | Default | Purpose |
 |---|---|---|
 | `ACCESS_POLICY` | `members` outside development, `open` in development | section 5 |
-| `TEAM_JOIN_CODE` (secret) | unset: sign-up closed | the code new members type |
-| `ADMIN_EMAILS` | empty | comma-separated emails that sign up as admin |
+| `TEAM_JOIN_CODE` (secret) | unset | the code that signs up a base member |
+| `TEAM_ADMIN_JOIN_CODE` (secret) | unset | the code that signs up an admin; must differ from `TEAM_JOIN_CODE` |
+| `ADMIN_EMAILS` | empty | optional: emails that sign up as admin whichever code they use |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` (secret), `SMTP_FROM`, `SMTP_STARTTLS` | unset, `587`, unset, unset, unset, `true` | outgoing email for reset codes |
 | `DEV_OUTBOX_DIR` | unset | development only: write emails to this folder instead of sending them |
 | `PUBLIC_APP_URL` | unset | the web app's address, mentioned in reset emails |
@@ -249,4 +258,5 @@ cd frontend && npx vitest run src/auth src/workspace
 - **No multi-factor authentication** and no single sign-on.
 - **The global wrong-code limit can be used to block sign-up for an hour.** Change the code if that happens.
 - **Per-address rate limits are coarse behind proxies** unless `AUTH_TRUSTED_PROXY_HOPS` is set.
-- **Changing `TEAM_JOIN_CODE` does not affect existing accounts.** It only gates new sign-ups.
+- **Changing either join code does not affect existing accounts.** It only gates new sign-ups. If the admin code
+  leaks, change it and check the members page for unexpected administrators.

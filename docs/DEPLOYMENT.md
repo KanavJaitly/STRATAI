@@ -50,8 +50,7 @@ What the script does:
    (section 4).
 5. Redeploy `stratai-api`, then open `https://<service>.onrender.com/ready`. It should answer
    `{"status":"ready",...}`.
-6. Open the web app, sign up with the join code using an email listed in `ADMIN_EMAILS`, and check that you land on
-   the Admin Dashboard.
+6. Open the web app, sign up with the admin join code, and check that you land on the Admin Dashboard.
 
 If Render gives the service a name other than `stratai-api.onrender.com`, change the rewrite destination in
 `frontend/vercel.json` to match.
@@ -69,8 +68,9 @@ If Render gives the service a name other than `stratai-api.onrender.com`, change
 | Variable | Value | Where it comes from |
 |---|---|---|
 | `ACCESS_POLICY` | `members` | `render.yaml` (also the default when `ENV=production`) |
-| `TEAM_JOIN_CODE` | a long random code you choose; share it only with the team | set by hand (`sync: false`), never committed |
-| `ADMIN_EMAILS` | the administrators' emails, comma-separated | set by hand (`sync: false`) |
+| `TEAM_JOIN_CODE` | a random code you choose; signs up base members; share it with the team | set by hand (`sync: false`), never committed |
+| `TEAM_ADMIN_JOIN_CODE` | a different, long random code; signs up admins; share it only with admins | set by hand (`sync: false`), never committed |
+| `ADMIN_EMAILS` | optional: emails that sign up as admin whichever code they use | set by hand (`sync: false`) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | your mail provider's SMTP settings | set by hand; without them "forgot password" cannot send a code |
 | `AUTH_TRUSTED_PROXY_HOPS` | `2` (Vercel, then Render) | set by hand; without it every request shares the proxy's address for rate limiting |
 | `PUBLIC_APP_URL` | `https://mortstratai.vercel.app` (optional) | set by hand; named in reset emails |
