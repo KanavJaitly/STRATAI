@@ -45,8 +45,11 @@ import { SUPPORTED_SEASONS } from './lib/format'
 const SEASON_AREA = /^\/(manuals|rulesets|readiness|explorer)(\/|$)/
 
 function SessionBar() {
-  const { actor, setActor, token, setToken, access, season, setSeason } = useSession()
+  const { actor, setActor, token, setToken, access, season, setSeason, refreshAccess } = useSession()
   const { pathname } = useLocation()
+  // The bar shows only to a signed-in administrator. The app's first write-access check can run before sign-in,
+  // when a members-only API refuses it, so check again now that someone allowed is here.
+  useEffect(() => { void refreshAccess() }, [refreshAccess])
   const inInputs = pathname.startsWith('/inputs')
   const inSeasonArea = SEASON_AREA.test(pathname)
   let accessText = 'API unreachable'

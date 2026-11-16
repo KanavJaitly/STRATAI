@@ -331,6 +331,28 @@ describe('administrators', () => {
   })
 })
 
+describe('the write-token bar after sign-in', () => {
+  it('checks write access again once an administrator has signed in, instead of showing the API as unreachable',
+    async () => {
+      let signedIn = false
+      mockApi({
+        'GET /auth/session': () => (signedIn ? ADMIN_SESSION : SIGNED_OUT),
+        'POST /auth/login': () => { signedIn = true; return ADMIN_SESSION },
+        // A members-only API refuses the check until someone allowed is signed in.
+        'GET /human-inputs/write-access': () => (signedIn ? { writes_enabled: false, token_accepted: false }
+          : apiError(401, 'not_authenticated', 'Sign in to StratAI to continue.')),
+        ...LANDING,
+      })
+      renderApp('/auth/login?next=%2F%3Fseason%3D2099')
+      const user = userEvent.setup()
+      await user.type(await screen.findByLabelText('Email address'), 'ada@example.test')
+      await user.type(screen.getByLabelText('Password'), 'member passphrase')
+      await user.click(screen.getByRole('button', { name: 'Log in' }))
+      expect(await screen.findByRole('heading', { name: 'Events' })).toBeInTheDocument()
+      await waitFor(() => expect(screen.getByTestId('access')).toHaveTextContent('writes disabled on server'))
+    })
+})
+
 describe('Team Management', () => {
   it('lists the members, filters them, and says how new members join', async () => {
     mockApi({ 'GET /auth/session': ADMIN_SESSION, 'GET /workspace/members': MEMBERS })
