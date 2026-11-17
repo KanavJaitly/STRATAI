@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 
 import {
@@ -17,7 +17,7 @@ import { SessionProvider, useSession } from './state/session'
 import { DriveTeamDashboardPage, HomeRedirect, ScoutingDashboardPage } from './workspace/RoleDashboards'
 import { LiveDraftPage } from './workspace/LiveDraftPage'
 import { TeamManagementPage } from './workspace/TeamManagementPage'
-import './styles/workspace.css'
+import { BrandMark, Icon } from './components/icons'
 import { OverviewPage } from './pages/OverviewPage'
 import { GameSpecPage } from './pages/GameSpecPage'
 import { ProfilesPage } from './pages/ProfilesPage'
@@ -100,6 +100,33 @@ function SessionBar() {
   )
 }
 
+// The admin pages (system status, historical seasons, the human-input pages) sit behind one "Admin" entry, so the
+// navigation shows a handful of choices. It closes on navigation, on Escape and on a click elsewhere.
+const ADMIN_AREA = /^\/(status|explorer|inputs|readiness|manuals|rulesets)(\/|$)/
+
+function AdminMenu({ pathname, children }: { pathname: string; children: ReactNode }) {
+  const ref = useRef<HTMLDetailsElement>(null)
+  useEffect(() => { if (ref.current) ref.current.open = false }, [pathname])
+  useEffect(() => {
+    const close = (event: Event) => {
+      const menu = ref.current
+      if (!menu?.open) return
+      if (event instanceof KeyboardEvent ? event.key === 'Escape' : !menu.contains(event.target as Node)) {
+        menu.open = false
+      }
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', close)
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', close) }
+  }, [])
+  return (
+    <details ref={ref} className={`nav-more${ADMIN_AREA.test(pathname) ? ' has-active' : ''}`}>
+      <summary><Icon name="admin" />Admin<Icon name="chevron-down" className="chevron" /></summary>
+      <div className="nav-menu">{children}</div>
+    </details>
+  )
+}
+
 /** After a client-side navigation to another page, move focus to the main region so keyboard and screen-reader
  * users start at the new page (not on the link they left). Search-parameter changes (tabs, as_of) keep focus. */
 function useFocusMainOnNavigation(pathname: string) {
@@ -125,13 +152,16 @@ const WORKSPACE_AREA = /^\/(auth|account|home|team|drive-team|scouting|alliance-
 function AccountArea() {
   const { ready, signedIn, session, signOut } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   if (!ready) return null
   if (!signedIn) {
+    // The sign-in pages carry their own form: a second "Log in" in the header would be a duplicate choice.
+    if (AUTH_AREA.test(pathname)) return null
     return <Link className="button auth-cta" to="/auth/login">Log in</Link>
   }
   return (
     <div className="account-area">
-      <span><strong>{session.user?.name}</strong> · {session.role_label}</span>
+      <span><strong>{session.user?.name}</strong><span className="account-role"> · {session.role_label}</span></span>
       <Link to="/account">Account</Link>
       <button type="button" className="link" onClick={async () => { await signOut(); navigate('/auth/login', { replace: true }) }}>
         Log out</button>
@@ -163,32 +193,40 @@ export function Shell() {
       <a href="#main" className="skip-link">Skip to content</a>
       <header className="top no-print">
         <div className="brand">
+          <BrandMark />
           <strong>STRATAI</strong>
           <span>{inWorkspace ? 'Team 11 (MORT)'
             : inInputs ? 'Human inputs'
             : inSeasonArea ? 'Game manuals, season rulesets, readiness and historical seasons' : 'Strategy dashboard'}</span>
         </div>
-        <nav aria-label="Main">
+        <nav aria-label="Main" className="main-nav">
           {can('team_info') && (
             <Link to="/" className={inEvents ? 'active' : undefined} aria-current={inEvents ? 'page' : undefined}>
-              Events</Link>
+              <Icon name="events" />Events</Link>
           )}
-          {can('team_management') && <NavLink to="/team">Team Management</NavLink>}
-          {showDriveTeam && <NavLink to="/drive-team">Drive team</NavLink>}
-          {can('scouting_forms') && <NavLink to="/scouting">Scouting</NavLink>}
-          {isAdmin && <NavLink to="/status">System status</NavLink>}
-          {can('season_explorer') && <NavLink to="/explorer">Historical seasons</NavLink>}
-          {can('platform_inputs') && (
-            <>
-              <span className="nav-sep" aria-hidden="true" />
-              <NavLink to="/inputs" end>Inputs overview</NavLink>
-              <NavLink to="/readiness">Readiness &amp; tasks</NavLink>
-              <NavLink to="/manuals">Game manual</NavLink>
-              <NavLink to="/rulesets">Season ruleset</NavLink>
-              <NavLink to="/inputs/game">Game manual &amp; spec</NavLink>
-              <NavLink to="/inputs/profiles">Team profiles</NavLink>
-              <NavLink to="/inputs/review">Human review</NavLink>
-            </>
+          {can('team_management') && (
+            <NavLink to="/team"><Icon name="team" /><span className="nav-long">Team Management</span>
+              <span className="nav-short" aria-hidden="true">Team</span></NavLink>
+          )}
+          {showDriveTeam && <NavLink to="/drive-team"><Icon name="drive" />Drive team</NavLink>}
+          {can('scouting_forms') && <NavLink to="/scouting"><Icon name="scouting" />Scouting</NavLink>}
+          {(isAdmin || can('season_explorer') || can('platform_inputs')) && (
+            <AdminMenu pathname={pathname}>
+              {isAdmin && <NavLink to="/status">System status</NavLink>}
+              {can('season_explorer') && <NavLink to="/explorer">Historical seasons</NavLink>}
+              {can('platform_inputs') && (
+                <>
+                  <span className="nav-sep" aria-hidden="true" />
+                  <NavLink to="/inputs" end>Inputs overview</NavLink>
+                  <NavLink to="/readiness">Readiness &amp; tasks</NavLink>
+                  <NavLink to="/manuals">Game manual</NavLink>
+                  <NavLink to="/rulesets">Season ruleset</NavLink>
+                  <NavLink to="/inputs/game">Game manual &amp; spec</NavLink>
+                  <NavLink to="/inputs/profiles">Team profiles</NavLink>
+                  <NavLink to="/inputs/review">Human review</NavLink>
+                </>
+              )}
+            </AdminMenu>
           )}
         </nav>
         <AccountArea />

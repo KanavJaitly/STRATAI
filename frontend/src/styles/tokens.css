@@ -1,0 +1,82 @@
+/* StratAI design tokens ("pit wall", 2026-11-17): the only place colours, type, spacing, radii and motion are
+   defined. Every other style reads these; nothing overrides them. Dark only (the arena and the pit are dark rooms on
+   bright screens); print has its own rules at the end of app.css.
+
+   Colour is OKLCH. Surfaces are one graphite ramp, and a raised surface is LIGHTER, never a heavier shadow. Borders
+   are white at low alpha. Red and blue mean the alliances and nothing else; they are the most saturated colours on
+   any screen. Status colours stay low-chroma so they never compete with the alliances, and always come with a word. */
+
+:root {
+  color-scheme: dark;
+
+  /* graphite ramp: the canvas, a card, a raised tile or input, a selected row */
+  --bg: oklch(0.16 0.006 255);
+  --surface: oklch(0.2 0.006 255);
+  --surface-raised: oklch(0.24 0.007 255);
+  --selected: oklch(0.28 0.008 255);
+
+  /* three text roles */
+  --text: oklch(0.96 0.003 255);
+  --text-2: oklch(0.8 0.006 255);
+  --muted: oklch(0.68 0.008 255);   /* >= 4.5:1 on --surface-raised */
+
+  /* hairlines: white at low alpha, never a solid grey */
+  --line: oklch(1 0 0 / 0.08);
+  --line-strong: oklch(1 0 0 / 0.16);
+  --input-border: oklch(1 0 0 / 0.34); /* >= 3:1 against a card (WCAG 1.4.11) */
+
+  /* the alliances: the clearest colours on the page, only ever for red and blue */
+  --red: oklch(0.67 0.2 25);
+  --blue: oklch(0.66 0.17 255);
+  --red-bg: oklch(0.67 0.2 25 / 0.14);
+  --blue-bg: oklch(0.66 0.17 255 / 0.14);
+  --field-none: oklch(0.42 0.006 255); /* a field bar with no validated prediction: neutral, never 50/50 */
+
+  /* our team (MORT, 11): one bright marker, reserved for us */
+  --ours: oklch(0.88 0.16 98);
+  --ours-bg: oklch(0.88 0.16 98 / 0.12);
+
+  /* status: low chroma, always paired with a word */
+  --ok-fg: oklch(0.82 0.09 155);   --ok-bg: oklch(0.82 0.09 155 / 0.12);
+  --warn-fg: oklch(0.82 0.09 65);  --warn-bg: oklch(0.82 0.09 65 / 0.12);
+  --bad-fg: oklch(0.78 0.08 15);   --bad-bg: oklch(0.78 0.08 15 / 0.12);
+  --wait-fg: var(--text-2);        --wait-bg: oklch(1 0 0 / 0.06);
+  --old-fg: var(--muted);          --old-bg: oklch(1 0 0 / 0.04);
+
+  /* the primary action is off-white on graphite, not a hue */
+  --accent: var(--text);
+  --accent-text: var(--bg);
+  --focus: oklch(0.9 0.02 255);
+  --chart-neutral: oklch(0.6 0.01 255);
+
+  /* type: one family, its mono for figures. Three sizes per screen: display, body, label. */
+  --font-ui: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-num: 'Geist Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --fs-display: 1.75rem;  /* 28px: the page title or the one number that matters */
+  --fs-body: 0.9375rem;   /* 15px */
+  --fs-label: 0.75rem;    /* 12px */
+
+  /* spacing: a 4px grid */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* radius: controls 8, cards 12. A box inside a padded box takes outer minus padding, never below 4. */
+  --r-control: 8px;
+  --r-card: 12px;
+  --r-inner: 4px;
+  --r-pill: 999px;
+
+  /* touch */
+  --tap: 44px;
+  --bottom-bar: 60px;
+
+  /* motion: one curve, short durations */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --d-fast: 150ms;
+  --d-base: 200ms;
+
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
