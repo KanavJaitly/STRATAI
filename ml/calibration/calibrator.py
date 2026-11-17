@@ -265,6 +265,16 @@ class SymmetricIsotonicCalibrator:
             raise RuntimeError("calibrate called before fit()")
         return 0.5 * (self._g(raw_probability) + 1.0 - self._g(1.0 - raw_probability))
 
+    def calibrate_many(self, raw_probabilities: Sequence[float]) -> list[float]:
+        """calibrate for many probabilities in one regressor call, value for value identical."""
+        if self._regressor is None:
+            raise RuntimeError("calibrate called before fit()")
+        if not raw_probabilities:
+            return []
+        n = len(raw_probabilities)
+        g = self._regressor.predict([*raw_probabilities, *(1.0 - p for p in raw_probabilities)])
+        return [0.5 * (float(g[i]) + 1.0 - float(g[n + i])) for i in range(n)]
+
     def save(self, path: Path) -> None:
         if self._regressor is None:
             raise RuntimeError("cannot save an unfit SymmetricIsotonicCalibrator -- call fit() first")
