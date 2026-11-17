@@ -121,7 +121,7 @@ function NextMatchCard({ eventKey }: { eventKey: string }) {
   if (!match) return null
   const robots = plan.data?.recommended?.strategy.robots ?? []
   return (
-    <section className="card next-match" aria-labelledby="next-match-heading">
+    <section className="card next-match instant" aria-labelledby="next-match-heading">
       <p className="next-match-kicker">{upcoming ? 'Next match' : 'Last match (every match is played)'}</p>
       <h2 id="next-match-heading" className="next-match-title">
         <Link to={matchPath(match.match_key)}>{dashboardMatchLabel(match)}</Link>

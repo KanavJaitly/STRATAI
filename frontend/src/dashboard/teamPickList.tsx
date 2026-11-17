@@ -4,7 +4,7 @@
 // "Import list" move it by text. Server syncing is a follow-up (docs/pick_list_sync.md). It only orders teams: every
 // value shown is the candidate profile's, as served.
 
-import { useEffect, useMemo, useState, type DragEvent, type FormEvent, type KeyboardEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type FormEvent, type KeyboardEvent } from 'react'
 
 import type { CandidateOut, CandidatesResponse, FactorOut } from '../api/generated'
 import { PageLink } from '../auth/guards'
@@ -125,6 +125,32 @@ export function TeamPickList({ data }: { data: CandidatesResponse }) {
   const [dragging, setDragging] = useState<number | null>(null)
   const [dropAt, setDropAt] = useState<number | null>(null)
   useEffect(() => { writeStored(data.event_key, order) }, [data.event_key, order])
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (!copied) return undefined
+    const timer = window.setTimeout(() => setCopied(false), 1500)
+    return () => window.clearTimeout(timer)
+  }, [copied])
+
+  // Reordering animates so you can see which team moved (FLIP): after the new order renders, each row that changed
+  // place starts at its old position and slides to the new one. The order itself is already final; the motion only
+  // shows it. Off for reduced motion.
+  const rows = useRef(new Map<number, HTMLLIElement>())
+  const tops = useRef(new Map<number, number>())
+  useLayoutEffect(() => {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true
+    const next = new Map<number, number>()
+    for (const [team, el] of rows.current) {
+      const top = el.getBoundingClientRect().top - (el.parentElement?.getBoundingClientRect().top ?? 0) // within the list
+      next.set(team, top)
+      const before = tops.current.get(team)
+      if (!reduce && before !== undefined && before !== top && typeof el.animate === 'function') {
+        el.animate([{ transform: `translateY(${before - top}px)` }, { transform: 'translateY(0)' }],
+          { duration: 250, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' })
+      }
+    }
+    tops.current = next
+  }, [order])
 
   const place = (from: number, to: number) => {
     if (from === to || to < 0 || to >= order.length) return
@@ -139,6 +165,7 @@ export function TeamPickList({ data }: { data: CandidatesResponse }) {
     const text = listText(data.event_key, order)
     try {
       await navigator.clipboard.writeText(text)
+      setCopied(true)
       setMessage('Copied. Paste it into Import list on the other device.')
     } catch {
       setImportText(text) // no clipboard access: show the text to copy by hand
@@ -183,7 +210,9 @@ export function TeamPickList({ data }: { data: CandidatesResponse }) {
       <div className="card-head">
         <h2 id="our-picklist-heading">Our pick list</h2>
         <div className="header-actions">
-          <button type="button" className="secondary" onClick={() => void copy()}>Copy list</button>
+          <button type="button" className="secondary" onClick={() => void copy()}>
+            <span className={`icon-swap${copied ? ' is-swapped' : ''}`} aria-hidden="true">
+              <Icon name="copy" className="icon-a" /><Icon name="check" className="icon-b" /></span>Copy list</button>
           <button type="button" className="secondary" aria-expanded={importing} onClick={() => setImporting(!importing)}>
             Import list</button>
           <button type="button" className="secondary" onClick={reset}>Reset to EPA order</button>
@@ -211,6 +240,7 @@ export function TeamPickList({ data }: { data: CandidatesResponse }) {
             dropAt === i && dragging !== null && dragging !== i ? (dragging < i ? 'drop-below' : 'drop-above') : '']
           return (
             <li key={team} className={classes.filter(Boolean).join(' ') || undefined} draggable
+              ref={(el) => { if (el) rows.current.set(team, el); else rows.current.delete(team) }}
               onDragStart={(e) => onDragStart(e, i)} onDragOver={(e) => onDragOver(e, i)} onDrop={(e) => onDrop(e, i)}
               onDragEnd={() => { setDragging(null); setDropAt(null) }}>
               <span className="pick-grip" aria-hidden="true"><Icon name="grip" /></span>

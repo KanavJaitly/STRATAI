@@ -71,10 +71,15 @@
   --tap: 44px;
   --bottom-bar: 60px;
 
-  /* motion: one curve, short durations */
+  /* motion: one curve (transitions.dev --ease-smooth-out), short durations. Motion explains a change; it never delays
+     a tap (press feedback starts at once) or a read. The live draft and the drive team's next match are .instant. */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --d-fast: 150ms;
-  --d-base: 200ms;
+  --ease-in-out: ease-in-out;
+  --d-press: 100ms;  /* press feedback */
+  --d-fast: 150ms;   /* hover, colour, close */
+  --d-base: 200ms;   /* a value cross-blur, a menu or a disclosure opening */
+  --d-move: 250ms;   /* something changing place: a reordered row, the field bar's split */
+  --blur-small: 2px;
 
   font-family: var(--font-ui);
   font-size: 15px;
