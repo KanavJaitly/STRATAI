@@ -2,7 +2,7 @@
 // styles/app.css). Decorative by default: every icon sits next to a word that names the action.
 
 type IconName = 'events' | 'team' | 'drive' | 'scouting' | 'admin' | 'chevron-down' | 'arrow-left' | 'arrow-right' | 'arrow-up'
-  | 'arrow-down' | 'check' | 'info'
+  | 'arrow-down' | 'check' | 'grip' | 'info'
 
 const PATHS: Record<IconName, string> = {
   events: 'M4 6.5A2 2 0 0 1 6 4.5h12a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM4 9.5h16M8.5 2.5v4M15.5 2.5v4',
@@ -16,6 +16,7 @@ const PATHS: Record<IconName, string> = {
   'arrow-up': 'M12 19V5M6 11l6-6 6 6',
   'arrow-down': 'M12 5v14M6 13l6 6 6-6',
   check: 'M5 12.5l4.5 4.5L19 7',
+  grip: 'M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01',
   info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v5M12 7.6v.4',
 }
 
