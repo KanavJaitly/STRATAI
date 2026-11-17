@@ -76,3 +76,18 @@ def test_prefetched_epa_refuses_a_team_it_did_not_read(database: Database) -> No
     assert not isinstance(provider.point_in_time_epa(base._TEAM_A, base._EVENT_TARGET, base._AS_OF), Unavailable)
     with pytest.raises(ValueError):
         provider.point_in_time_epa(base._TEAM_B, base._EVENT_TARGET, base._AS_OF)
+
+
+@requires_db
+def test_the_strength_view_is_the_same_with_the_history(database: Database) -> None:
+    # The event analysis (rankings) passes the history to every team's strength view too (2026-11-16).
+    from ml.views.strength import build_team_strength
+
+    history = EventHistory.read(database, base._EVENT_TARGET)
+    for as_of in _INSTANTS:
+        for team in base._ALL_TEAMS:
+            plain = build_team_strength(database, team, base._EVENT_TARGET, as_of,
+                                        epa_provider=StatboticsPointInTimeEpa(database))
+            fast = build_team_strength(database, team, base._EVENT_TARGET, as_of, history=history,
+                                       epa_provider=StatboticsPointInTimeEpa(database).prefetched(base._ALL_TEAMS))
+            assert fast == plain, (team, as_of)

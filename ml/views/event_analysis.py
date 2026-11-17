@@ -31,7 +31,7 @@ from datetime import datetime
 import numpy as np
 
 from ml.backtest.metrics import spearman_correlation
-from ml.features.assembler import TeamFeatures, build_team_features
+from ml.features.assembler import EventHistory, TeamFeatures, build_team_features
 from ml.features.roster import list_teams_at_event
 from ml.features.scale import ScaleLookup
 from ml.models.baselines import RawEpaRankingBaseline
@@ -181,9 +181,14 @@ def analyze_event(
     scales = ScaleLookup(database)
     epa_provider = through_snapshot(epa_provider, database)  # one connection, not one per EPA lookup
     teams = list_teams_at_event(database, event_key)
-    features = [build_team_features(database, t, event_key, as_of, epa_provider=epa_provider, scale_lookup=scales)
-                for t in teams]
-    views = [build_team_strength(database, t, event_key, as_of, epa_provider=epa_provider, scale_lookup=scales)
-             for t in teams]
+    # The event's rows (and, for the Statbotics source, the teams' EPA candidates) read once, as in the qualification
+    # forecast; every team's features and strength view apply as_of to them (2026-11-16, hosted rankings ~5-8 s).
+    history = EventHistory.read(database, event_key)
+    if hasattr(epa_provider, "prefetched"):
+        epa_provider = epa_provider.prefetched(teams)
+    features = [build_team_features(database, t, event_key, as_of, epa_provider=epa_provider, scale_lookup=scales,
+                                    history=history) for t in teams]
+    views = [build_team_strength(database, t, event_key, as_of, epa_provider=epa_provider, scale_lookup=scales,
+                                 history=history) for t in teams]
     score = m5v2_predict_rating if model == POLICY_M5V2 else RawEpaRankingBaseline().predict_rating
     return EventAnalysis(switch, model, features, views, order_teams(features, score))
