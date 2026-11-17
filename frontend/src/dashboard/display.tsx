@@ -98,12 +98,26 @@ function favoured(pRed: number): string {
   return pRed >= 0.5 ? `Red ${Math.round(pRed * 100)}%` : `Blue ${Math.round((1 - pRed) * 100)}%`
 }
 
+/** The field bar: red alliance on the left, blue on the right, as on the real field, split at the served P(red wins).
+ * Decorative (the number beside it says the same in words). Without a validated probability it is a neutral bar,
+ * never a 50/50 split, so an unvalidated value is never drawn as if it were one. The split is the served value as a
+ * width; nothing is computed or rounded for display. */
+export function FieldBar({ pRed }: { pRed: number | null }) {
+  if (pRed === null) return <span className="field-bar field-none" aria-hidden="true" />
+  return (
+    <span className="field-bar" aria-hidden="true">
+      <span className="field-red" style={{ width: `${pRed * 100}%` }} /><span className="field-blue" />
+    </span>
+  )
+}
+
 /** The M6/M7 win probability (P7-Q3): a validated value is a probability; an unvalidated value is not. */
 export function CalibratedProbabilityView({ value }: { value: CalibratedWinProbability }) {
   if (value.validated_value !== null) {
     return (
       <div className="calibrated">
-        <div><strong className="prob-value">{favoured(value.validated_value)}</strong>{' '}
+        <div className="prob-line"><strong className="prob-value">{favoured(value.validated_value)}</strong>
+          <FieldBar pRed={value.validated_value} />{' '}
           <span className="muted">chance to win</span></div>
         <ValidationBadge validation={value.validation} />
       </div>
@@ -111,6 +125,7 @@ export function CalibratedProbabilityView({ value }: { value: CalibratedWinProba
   }
   return (
     <div className="calibrated calibrated-unvalidated">
+      <FieldBar pRed={null} />
       <div>
         <span className="unvalidated-tag">Unvalidated model output</span>{' '}
         <span className="unvalidated-value">{value.unvalidated_value !== null

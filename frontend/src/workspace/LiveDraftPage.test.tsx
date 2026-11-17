@@ -117,7 +117,7 @@ describe('live alliance selection', () => {
       [`GET ${BASE}/5`]: draft({ can_record: false }), [`GET ${BASE}/5/recommendations`]: recs() })
     renderAt(URL)
     await screen.findByRole('region', { name: 'Your picks' })
-    expect(screen.getByText('Team 11 (MORT)')).toBeInTheDocument()
+    expect(screen.getByText('Team 1 · Synthetic Robotics')).toBeInTheDocument() // the signed-in team, from the session
     expect(screen.queryByLabelText('Write token')).not.toBeInTheDocument()
   })
 

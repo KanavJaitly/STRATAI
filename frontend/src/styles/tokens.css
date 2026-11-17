@@ -32,14 +32,15 @@
   --blue-bg: oklch(0.66 0.17 255 / 0.14);
   --field-none: oklch(0.42 0.006 255); /* a field bar with no validated prediction: neutral, never 50/50 */
 
-  /* our team (MORT, 11): one bright marker, reserved for us */
-  --ours: oklch(0.88 0.16 98);
-  --ours-bg: oklch(0.88 0.16 98 / 0.12);
+  /* our team: the team's own colour (MORT gold), reserved for marking us. Drawn as a rail and a diamond, never a round
+     dot, and no status colour is yellow, so it cannot be read as a status. */
+  --ours: oklch(0.86 0.15 92);
+  --ours-bg: oklch(0.86 0.15 92 / 0.1);
 
   /* status: low chroma, always paired with a word */
   --ok-fg: oklch(0.82 0.09 155);   --ok-bg: oklch(0.82 0.09 155 / 0.12);
-  --warn-fg: oklch(0.82 0.09 65);  --warn-bg: oklch(0.82 0.09 65 / 0.12);
-  --bad-fg: oklch(0.78 0.08 15);   --bad-bg: oklch(0.78 0.08 15 / 0.12);
+  --warn-fg: oklch(0.76 0.12 48);  --warn-bg: oklch(0.76 0.12 48 / 0.12); /* orange, clearly not MORT gold */
+  --bad-fg: oklch(0.74 0.09 12);   --bad-bg: oklch(0.74 0.09 12 / 0.12);
   --wait-fg: var(--text-2);        --wait-bg: oklch(1 0 0 / 0.06);
   --old-fg: var(--muted);          --old-bg: oklch(1 0 0 / 0.04);
 
@@ -49,9 +50,10 @@
   --focus: oklch(0.9 0.02 255);
   --chart-neutral: oklch(0.6 0.01 255);
 
-  /* type: one family, its mono for figures. Three sizes per screen: display, body, label. */
+  /* type: one family; figures are Geist with tabular (aligned) digits. Mono only for codes and keys.
+     Three sizes per screen: display, body, label. */
   --font-ui: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-num: 'Geist Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --font-code: 'Geist Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
   --fs-display: 1.75rem;  /* 28px: the page title or the one number that matters */
   --fs-body: 0.9375rem;   /* 15px */
   --fs-label: 0.75rem;    /* 12px */

@@ -57,7 +57,7 @@ export function EventsPage() {
 
   return (
     <>
-      <PageHeader title="Events" subtitle="Choose an event to see its teams, matches, predicted rankings and playoff contenders." />
+      <PageHeader title="Events" subtitle="Pick an event for its rankings, matches and forecasts" />
       <section className="card" aria-labelledby="events-heading">
         <div className="card-head">
           <h2 id="events-heading">{season} season</h2>
@@ -89,7 +89,7 @@ export function EventsPage() {
                 : shown.length === 0
                   ? <p className="empty">No event matches “{search}”.</p>
                   : (
-                    <div className="table-scroll">
+                    <div className="table-scroll stack-on-phone">
                       <table className="grid">
                         <caption className="visually-hidden">Events in {season}, {shown.length} shown</caption>
                         <thead><tr><th scope="col">Event</th><th scope="col">Key</th><th scope="col">Dates</th><th scope="col">Location</th></tr></thead>
@@ -97,7 +97,7 @@ export function EventsPage() {
                           {shown.map((e) => (
                             <tr key={e.event_key}>
                               <th scope="row"><Link to={`/events/${encodeURIComponent(e.event_key)}`}>{e.name ?? e.event_key}</Link></th>
-                              <td><code>{e.event_key}</code></td>
+                              <td className="phone-hide"><code>{e.event_key}</code></td>
                               <td className="nowrap">{dates(e)}</td>
                               <td>{location(e) || <Absent reason="no location" />}</td>
                             </tr>

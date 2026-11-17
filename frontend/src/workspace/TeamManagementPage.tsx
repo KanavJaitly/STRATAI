@@ -16,20 +16,20 @@ import { seasonOf } from './events'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
-  { id: 'members', label: 'Team Management' },
+  { id: 'members', label: 'Members' },
   { id: 'analytics', label: 'Analytics' },
-  { id: 'settings', label: 'Team Settings' },
-  { id: 'activity', label: 'Activity Log' },
+  { id: 'settings', label: 'Settings' },
+  { id: 'activity', label: 'Activity log' },
 ]
 
 export function TeamManagementPage() {
-  const { session } = useAuth()
   const [active, select] = useTab(TABS)
+  // One name per level: "Team" in the navigation and as the page title, then the sections as tabs. The team's own
+  // number and name show once, in the header.
   return (
     <div>
-      <PageHeader title="Admin Dashboard"
-        subtitle={`Team ${session.workspace?.team_number} · ${session.workspace?.team_name}`} />
-      <Tabs tabs={TABS} active={active} onSelect={select} label="Admin Dashboard sections" />
+      <PageHeader title="Team" />
+      <Tabs tabs={TABS} active={active} onSelect={select} label="Team sections" />
       <TabPanel id={active}>
         {active === 'overview' && <OverviewTab onOpen={select} />}
         {active === 'members' && <MembersTab />}
@@ -41,49 +41,50 @@ export function TeamManagementPage() {
   )
 }
 
-function Tile({ value, label }: { value: number | string; label: string }) {
-  return <div className="tile"><span className="tile-value">{value}</span><span className="tile-label">{label}</span></div>
+function Tile({ value, label, detail }: { value: number | string; label: string; detail?: string }) {
+  return (
+    <div className="tile"><span className="tile-value">{value}</span><span className="tile-label">{label}</span>
+      {detail && <span className="tile-detail">{detail}</span>}</div>
+  )
 }
 
 function OverviewTab({ onOpen }: { onOpen: (tab: string) => void }) {
   const overview = useLoad(() => workspace.overview(), [])
   const analytics = useLoad(() => workspace.analytics(), [])
   const data = overview.data
+  const byRole = analytics.data?.members_by_role
+  // One total, split by role, so the counts never read as two different numbers of "members".
+  const split = byRole ? ROLE_ORDER.map((role) => `${byRole[role].active} ${plural(ROLE_LABEL[role], byRole[role].active)}`)
+    .join(' · ') : undefined
   return (
     <>
       <LoadState loading={overview.loading} error={overview.error} />
       {data && (
-        <section className="card">
-          <h2>Team {data.team_number} · {data.team_name}</h2>
-          <dl className="facts">
-            <dt>Active members</dt><dd>{data.active_members}</dd>
-            <dt>Default event</dt><dd>{data.settings.default_event_key
-              ? <EventName eventKey={data.settings.default_event_key} /> : <span className="muted">not set</span>}</dd>
-          </dl>
+        <>
           <div className="actions">
             <button type="button" onClick={() => onOpen('members')}>Manage members</button>
-            <Link className="button button-secondary" to="/drive-team">Drive team dashboard</Link>
             <Link className="button button-secondary" to={data.settings.default_event_key
               ? `/alliance-selection/live?event=${encodeURIComponent(data.settings.default_event_key)}`
               : '/alliance-selection/live'}>Live alliance selection</Link>
-            <Link className="button button-secondary" to="/scouting">Scouting dashboard</Link>
-            <Link className="button button-secondary" to="/">All StratAI features</Link>
           </div>
-        </section>
-      )}
-      {analytics.data && (
-        <section className="card">
-          <h2>At a glance</h2>
           <div className="tiles">
-            {ROLE_ORDER.map((role) => (
-              <Tile key={role} value={analytics.data!.members_by_role[role].active} label={`${ROLE_LABEL[role]}s`} />
-            ))}
-            <Tile value={analytics.data.scouting.reports_last_7_days} label="Scouting reports, last 7 days" />
+            <Tile value={data.active_members} label="Active accounts" detail={split} />
+            {analytics.data && (
+              <Tile value={analytics.data.scouting.reports_last_7_days} label="Scouting reports" detail="Last 7 days" />
+            )}
           </div>
-        </section>
+          <p className="toolbar"><span className="muted">Default event</span>
+            {data.settings.default_event_key
+              ? <EventName eventKey={data.settings.default_event_key} />
+              : <button type="button" className="secondary" onClick={() => onOpen('settings')}>Set default event</button>}</p>
+        </>
       )}
     </>
   )
+}
+
+function plural(word: string, n: number): string {
+  return n === 1 ? word.toLowerCase() : `${word.toLowerCase()}s`
 }
 
 // --- members ----------------------------------------------------------------------------------------------------

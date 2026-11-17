@@ -18,6 +18,7 @@ import { DriveTeamDashboardPage, HomeRedirect, ScoutingDashboardPage } from './w
 import { LiveDraftPage } from './workspace/LiveDraftPage'
 import { TeamManagementPage } from './workspace/TeamManagementPage'
 import { BrandMark, Icon } from './components/icons'
+import { teamBranding } from './team/branding'
 import { OverviewPage } from './pages/OverviewPage'
 import { GameSpecPage } from './pages/GameSpecPage'
 import { ProfilesPage } from './pages/ProfilesPage'
@@ -148,6 +149,23 @@ const AUTH_AREA = /^\/auth(\/(login|signup|forgot|reset))?\/?$/
 // The live alliance-selection page (Phase 11) is a team page too: the team header, not the public pages' session bar.
 const WORKSPACE_AREA = /^\/(auth|account|home|team|drive-team|scouting|alliance-selection\/live)(\/|$)/
 
+/** The product name, with the signed-in team's logo and name when it has them (team branding is a per-team setting,
+ * src/team/branding.ts); the field mark otherwise. "Team 11 · MORT" appears here and nowhere else in the chrome. */
+function Brand() {
+  const { signedIn, session } = useAuth()
+  const team = signedIn ? session.workspace : null
+  const logo = teamBranding(team?.team_number)?.logo
+  return (
+    <div className="brand">
+      {logo
+        ? <img className="team-logo" src={logo.src} srcSet={logo.srcSet} width={logo.width} height={logo.height} alt={logo.alt} />
+        : <BrandMark />}
+      <strong>STRATAI</strong>
+      {team && <span>Team {team.team_number} · {team.team_name}</span>}
+    </div>
+  )
+}
+
 /** A sign-in link when nobody is signed in; otherwise who is signed in, with their account and sign-out. */
 function AccountArea() {
   const { ready, signedIn, session, signOut } = useAuth()
@@ -173,9 +191,7 @@ export function Shell() {
   const { pathname, search } = useLocation()
   const { season } = useSession()
   const { ready, signedIn, role, can } = useAuth()
-  const inInputs = pathname.startsWith('/inputs')
   const inEvents = EVENTS_AREA.test(pathname)
-  const inSeasonArea = SEASON_AREA.test(pathname)
   const inWorkspace = WORKSPACE_AREA.test(pathname)
   useFocusMainOnNavigation(pathname)
   // Each nav item shows only to a member whose role may use it: a base member sees Events alone (and their account).
@@ -192,21 +208,14 @@ export function Shell() {
     <div className="app">
       <a href="#main" className="skip-link">Skip to content</a>
       <header className="top no-print">
-        <div className="brand">
-          <BrandMark />
-          <strong>STRATAI</strong>
-          <span>{inWorkspace ? 'Team 11 (MORT)'
-            : inInputs ? 'Human inputs'
-            : inSeasonArea ? 'Game manuals, season rulesets, readiness and historical seasons' : 'Strategy dashboard'}</span>
-        </div>
+        <Brand />
         <nav aria-label="Main" className="main-nav">
           {can('team_info') && (
             <Link to="/" className={inEvents ? 'active' : undefined} aria-current={inEvents ? 'page' : undefined}>
               <Icon name="events" />Events</Link>
           )}
           {can('team_management') && (
-            <NavLink to="/team"><Icon name="team" /><span className="nav-long">Team Management</span>
-              <span className="nav-short" aria-hidden="true">Team</span></NavLink>
+            <NavLink to="/team"><Icon name="team" />Team</NavLink>
           )}
           {showDriveTeam && <NavLink to="/drive-team"><Icon name="drive" />Drive team</NavLink>}
           {can('scouting_forms') && <NavLink to="/scouting"><Icon name="scouting" />Scouting</NavLink>}
