@@ -32,6 +32,7 @@ import hashlib
 import json
 import logging
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -187,6 +188,74 @@ class StatboticsPointInTimeEpa:
             return Unavailable(EPA_WITHHELD_NO_PRIOR_EVENT, "no qualifying prior event in team_event_stats")
         event_key, total, auto, teleop, endgame = row
         return TeamEventEpa(team, event_key, total, auto, teleop, endgame, self.source, False, {})
+
+    def provenance(self) -> dict[str, Any]:
+        return {"source": self.source, "table": "team_event_stats", "selection": "D13 EPA_SOURCE_SQL"}
+
+    def prefetched(self, teams: Iterable[int]) -> "PrefetchedStatboticsEpa":
+        """The same D13 selection for these teams only, from one read of their candidates (see the class)."""
+        return PrefetchedStatboticsEpa.read(self._database, teams)
+
+
+# Every D13 candidate EPA_SOURCE_SQL could pick for these teams, with the facts it filters and orders on; the target
+# and as_of conditions move to PrefetchedStatboticsEpa.point_in_time_epa. The last completed match is EPA_SOURCE_SQL's
+# LATERAL MAX as one grouped join (an inner join, so a team-event with no completed match is not a candidate, as
+# there): the same rows, and a cold read in milliseconds rather than most of a second.
+EPA_CANDIDATES_SQL = """
+SELECT tes.team_number, tes.event_key, tes.epa_total, tes.epa_auto, tes.epa_teleop, tes.epa_endgame,
+       e.end_date::timestamptz, lm.last_completed_match
+FROM team_event_stats tes
+JOIN events e ON e.event_key = tes.event_key
+JOIN (
+    SELECT mt.team_number, m.event_key, MAX(m.scheduled_time) AS last_completed_match
+    FROM match_teams mt
+    JOIN matches m ON m.match_key = mt.match_key
+    WHERE mt.team_number = ANY(%(teams)s)
+      AND m.scheduled_time IS NOT NULL
+      AND (CASE WHEN mt.alliance_color = 'red' THEN m.score_red ELSE m.score_blue END) IS NOT NULL
+    GROUP BY mt.team_number, m.event_key
+) lm ON lm.team_number = tes.team_number AND lm.event_key = tes.event_key
+WHERE tes.team_number = ANY(%(teams)s)
+  AND e.end_date IS NOT NULL
+"""
+
+
+class PrefetchedStatboticsEpa:
+    """StatboticsPointInTimeEpa for a known set of teams, with D13 applied in Python to candidates read once.
+
+    For an event-wide view that asks about every team at many as_of instants (the qualification forecast: ~800
+    lookups, one query each). EPA_CANDIDATES_SQL is EPA_SOURCE_SQL without its target-event and as_of conditions;
+    point_in_time_epa applies exactly those (not the target event, end instant strictly before as_of, last completed
+    match strictly before as_of) and orders as EPA_SOURCE_SQL does, by _d13_order (end_date DESC, last completed
+    match DESC, event_key ASC). Asking about a team outside the set raises, never answers "no prior event".
+    """
+
+    source: EpaSource = "statbotics"
+
+    def __init__(self, candidates: dict[int, list[tuple[TeamEventFacts, tuple]]], teams: set[int]) -> None:
+        self._candidates = candidates
+        self._teams = teams
+
+    @classmethod
+    def read(cls, database: Database, teams: Iterable[int]) -> "PrefetchedStatboticsEpa":
+        wanted = sorted(set(teams))
+        candidates: dict[int, list[tuple[TeamEventFacts, tuple]]] = defaultdict(list)
+        with database.cursor() as cursor:
+            cursor.execute(EPA_CANDIDATES_SQL, {"teams": wanted})
+            for team, event_key, total, auto, teleop, endgame, end_instant, last in cursor.fetchall():
+                candidates[team].append((TeamEventFacts(event_key, end_instant, last), (total, auto, teleop, endgame)))
+        for items in candidates.values():
+            items.sort(key=lambda item: _d13_order(item[0]))
+        return cls(dict(candidates), set(wanted))
+
+    def point_in_time_epa(self, team: int, target_event_key: str, as_of: datetime) -> TeamEventEpa | Unavailable:
+        if team not in self._teams:
+            raise ValueError(f"team {team} was not prefetched")
+        for facts, (total, auto, teleop, endgame) in self._candidates.get(team, ()):
+            if facts.event_key != target_event_key and facts.end_instant < as_of \
+                    and facts.last_completed_match < as_of:  # type: ignore[operator]
+                return TeamEventEpa(team, facts.event_key, total, auto, teleop, endgame, self.source, False, {})
+        return Unavailable(EPA_WITHHELD_NO_PRIOR_EVENT, "no qualifying prior event in team_event_stats")
 
     def provenance(self) -> dict[str, Any]:
         return {"source": self.source, "table": "team_event_stats", "selection": "D13 EPA_SOURCE_SQL"}
