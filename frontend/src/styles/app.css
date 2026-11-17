@@ -20,13 +20,13 @@ strong { font-weight: 600; }
 a { color: var(--text); text-decoration: underline; text-decoration-color: oklch(1 0 0 / 0.3); text-underline-offset: 3px;
   transition: text-decoration-color var(--d-fast) var(--ease-out); }
 a:hover { text-decoration-color: currentColor; }
-code { font-family: var(--font-num); font-size: 0.875em; color: var(--text-2); overflow-wrap: anywhere; }
+code { font-family: var(--font-code); font-size: 0.875em; color: var(--text-2); overflow-wrap: anywhere; }
 table.grid td code { white-space: nowrap; overflow-wrap: normal; }
 .muted { color: var(--muted); }
 .small { font-size: var(--fs-label); }
 .center { text-align: center; }
 .nowrap { white-space: nowrap; }
-.sha { color: var(--muted); font-family: var(--font-num); }
+.sha { color: var(--muted); font-family: var(--font-code); }
 summary { cursor: pointer; }
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
@@ -50,6 +50,7 @@ main:focus { outline: none; }
 .brand strong { font-size: var(--fs-body); font-weight: 600; letter-spacing: 0.04em; }
 .brand span { color: var(--muted); font-size: var(--fs-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .brand-mark { width: 22px; height: 10px; flex: none; }
+.team-logo { display: block; flex: none; width: auto; height: 20px; }
 
 .main-nav { display: flex; align-items: center; gap: var(--s-1); flex: 1 1 auto; min-width: 0; }
 .main-nav:empty { display: none; }
@@ -61,7 +62,6 @@ main:focus { outline: none; }
 .main-nav > a:hover, .nav-more > summary:hover { color: var(--text); background: var(--surface); }
 .main-nav > a.active, .main-nav > a[aria-current='page'] { color: var(--text); background: var(--surface-raised); }
 .nav-more.has-active > summary { color: var(--text); }
-.nav-short { display: none; }
 .nav-more { position: relative; }
 .nav-more .chevron { width: 14px; height: 14px; transition: transform var(--d-fast) var(--ease-out); }
 .nav-more[open] .chevron { transform: rotate(180deg); }
@@ -87,7 +87,9 @@ main:focus { outline: none; }
 .session-bar input { width: 12rem; max-width: 100%; min-height: 32px; padding: var(--s-1) var(--s-2); }
 .session-bar input[type='number'] { width: 6rem; }
 .session-bar select { width: 7rem; min-height: 32px; padding: var(--s-1) var(--s-2); }
-.session-toggle { display: none; }
+.session-toggle { display: inline-flex; }
+.session-bar.collapsed .session-fields { display: none; }
+.session-bar:not(.collapsed) .session-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-2) var(--s-4); width: 100%; }
 .access { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 32px; font-size: var(--fs-label);
   color: var(--text-2); }
 .access::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
@@ -150,12 +152,14 @@ legend { font-weight: 500; padding: 0 var(--s-1); }
 .facts .fact-row { display: contents; }
 
 /* stat tiles: a label and a figure */
-.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--s-2); margin: var(--s-2) 0; }
-.tile { display: flex; flex-direction: column; gap: var(--s-1); padding: var(--s-3) var(--s-4);
-  background: var(--surface-raised); border-radius: var(--r-control); }
-.tile-value { font-family: var(--font-num); font-size: var(--fs-display); font-weight: 500; line-height: 1.1;
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--s-2); margin: var(--s-2) 0; }
+.tile { display: flex; flex-direction: column; gap: var(--s-1); padding: var(--s-4); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-card); }
+.card .tile { background: var(--surface-raised); border-radius: var(--r-control); }
+.tile-value { font-size: var(--fs-display); font-weight: 500; line-height: 1.1;
   font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.tile-label { font-size: var(--fs-label); color: var(--muted); }
+.tile-label { color: var(--text-2); }
+.tile-detail { font-size: var(--fs-label); color: var(--muted); }
 
 /* ---------- controls ---------- */
 
@@ -276,7 +280,7 @@ table.candidates td { white-space: nowrap; }
 .calibrated-unvalidated { border-left: 2px solid var(--warn-fg); padding-left: var(--s-3); }
 .absent, .odds-none { color: var(--muted); }
 .absent-reason { font-size: var(--fs-label); }
-.measure-value, .odds-value, .prob-value { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.measure-value, .odds-value, .prob-value { font-variant-numeric: tabular-nums; }
 .prob-value { font-size: var(--fs-display); font-weight: 500; letter-spacing: -0.02em; }
 .odds-value { font-weight: 500; }
 .epa-note { margin-top: var(--s-1); }
@@ -308,14 +312,14 @@ table.candidates td { white-space: nowrap; }
 @keyframes progress { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
 details.raw { margin: var(--s-2) 0; }
 details.raw pre, pre.page-text { max-height: 50dvh; overflow: auto; margin: var(--s-2) 0; padding: var(--s-3);
-  background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-control); font-family: var(--font-num);
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-control); font-family: var(--font-code);
   font-size: var(--fs-label); white-space: pre-wrap; }
 
 /* ---------- alliances and our team ---------- */
 
 .chip { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--s-2); margin: 1px 3px 1px 0;
   border-radius: var(--r-pill); border: 1px solid var(--line-strong); background: transparent; color: var(--text);
-  font-family: var(--font-num); font-variant-numeric: tabular-nums; text-decoration: none; }
+  font-variant-numeric: tabular-nums; text-decoration: none; }
 .chip-red { color: var(--text); background: var(--red-bg); border-color: transparent; box-shadow: inset 3px 0 0 var(--red); }
 .chip-blue { color: var(--text); background: var(--blue-bg); border-color: transparent; box-shadow: inset 3px 0 0 var(--blue); }
 .chips { display: flex; flex-wrap: wrap; gap: var(--s-1); }
@@ -323,8 +327,33 @@ details.raw pre, pre.page-text { max-height: 50dvh; overflow: auto; margin: var(
 .alliance-label { margin-right: var(--s-1); font-size: var(--fs-label); font-weight: 600; }
 .alliance-red, .score-red { color: var(--red); }
 .alliance-blue, .score-blue { color: var(--blue); }
-.score-red, .score-blue { font-family: var(--font-num); font-weight: 600; font-variant-numeric: tabular-nums; }
+.score-red, .score-blue { font-weight: 600; font-variant-numeric: tabular-nums; }
 .alliances-line { font-size: var(--fs-body); }
+
+/* The field bar: a match's win probability drawn like the field, red alliance on the left and blue on the right,
+   split at the served P(red wins). The number sits beside the bar, never inside it. With no validated probability the
+   bar is neutral grey, never a 50/50 split. */
+.prob-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
+.field-bar { display: flex; flex: 1 1 160px; max-width: 320px; height: 8px; gap: 2px; overflow: hidden; border-radius: 2px; }
+.field-bar > span { display: block; height: 100%; }
+.field-bar .field-red { background: var(--red); border-radius: 2px 0 0 2px; }
+.field-bar .field-blue { flex: 1 1 auto; background: var(--blue); border-radius: 0 2px 2px 0; }
+.field-bar.field-none { background: repeating-linear-gradient(90deg, var(--field-none) 0 6px, transparent 6px 8px); }
+table.grid .prob-line { flex-wrap: nowrap; }
+table.grid .field-bar { flex: 0 0 96px; height: 6px; }
+table.grid .prob-value { font-size: var(--fs-body); }
+
+/* Our team: a gold rail on its row and a gold diamond after its number, everywhere a team is listed */
+.ours-mark { display: inline-block; width: 7px; height: 7px; margin-left: 6px; vertical-align: 1px; background: var(--ours);
+  transform: rotate(45deg); }
+table.grid tr.row-ours > :first-child { box-shadow: inset 3px 0 0 var(--ours); }
+table.grid tr.row-ours > * { background: var(--ours-bg); }
+.table-scroll > table.grid tr.row-ours > :first-child { background: linear-gradient(var(--ours-bg), var(--ours-bg)), var(--surface); }
+.chip-ours { border-color: var(--ours); }
+.chip-ours::after { content: ''; width: 6px; height: 6px; margin-left: 6px; background: var(--ours); transform: rotate(45deg); }
+.team-tile.tile-ours { box-shadow: inset 3px 0 0 var(--ours); }
+.ours-tag { display: inline-flex; align-items: center; gap: 6px; margin-right: var(--s-3); color: var(--ours); font-weight: 500; }
+.ours-tag::before { content: ''; width: 7px; height: 7px; background: var(--ours); transform: rotate(45deg); }
 
 /* ---------- strategy ---------- */
 
@@ -334,7 +363,7 @@ details.raw pre, pre.page-text { max-height: 50dvh; overflow: auto; margin: var(
 .selection-note { margin-top: var(--s-2); }
 .strategy-editor .robot-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-3);
   padding: var(--s-2) 0; border-bottom: 1px solid var(--line); }
-.robot-team { min-width: 4rem; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.robot-team { min-width: 4rem; font-variant-numeric: tabular-nums; }
 .robot-row label { margin-bottom: 0; }
 .compare-label { font-weight: 500; }
 .side-choice { display: flex; flex-wrap: wrap; gap: var(--s-2); }
@@ -349,7 +378,7 @@ details.raw pre, pre.page-text { max-height: 50dvh; overflow: auto; margin: var(
 .chart-svg { display: block; width: 100%; min-width: 420px; max-width: 720px; height: auto; }
 .chart-grid { stroke: var(--line); stroke-width: 1; }
 .chart-axis { stroke: var(--line-strong); stroke-width: 1.5; }
-.chart-tick { fill: var(--muted); font-family: var(--font-num); font-size: 11px; }
+.chart-tick { fill: var(--muted); font-size: 11px; }
 .chart-missing { fill: var(--muted); font-size: 12px; }
 /* On a phone the chart is drawn at its 420 px minimum (a 640-unit viewBox), so 11 units render at about 7 px. These
    sizes render at about 11-12 px there (P8-R9). */
@@ -407,7 +436,7 @@ details.raw pre, pre.page-text { max-height: 50dvh; overflow: auto; margin: var(
   justify-content: center; gap: 2px; padding: var(--s-2); background: var(--surface-raised); color: var(--text);
   border: 1px solid var(--line); border-radius: var(--r-control); cursor: pointer; font: inherit; white-space: normal; }
 .team-tile:not(:disabled):hover { background: var(--selected); border-color: var(--line-strong); }
-.team-tile strong { font-family: var(--font-num); font-size: 1.125rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.team-tile strong { font-size: 1.125rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .team-tile.selected { background: var(--selected); border-color: var(--text); }
 .team-tile.recommended { border-color: var(--ok-fg); }
 .tile-info { flex: 0 0 var(--tap); min-height: 64px; padding: 0; background: var(--surface-raised); color: var(--muted);
@@ -415,7 +444,7 @@ details.raw pre, pre.page-text { max-height: 50dvh; overflow: auto; margin: var(
 .tile-info:not(:disabled):hover, .tile-info:focus-visible { background: var(--selected); color: var(--text); border-color: var(--line-strong); }
 .team-link { text-decoration: underline; text-underline-offset: 2px; }
 .team-link-touch { min-width: var(--tap); min-height: var(--tap); display: inline-flex; align-items: center; justify-content: center; }
-.primary-pick strong { font-family: var(--font-num); font-size: var(--fs-display); font-variant-numeric: tabular-nums; }
+.primary-pick strong { font-size: var(--fs-display); font-variant-numeric: tabular-nums; }
 .backup-list { margin: var(--s-1) 0 var(--s-2) var(--s-5); }
 .backup-list p { margin: 2px 0; }
 .history-list { list-style: none; padding: 0; }
@@ -461,19 +490,25 @@ details.raw pre, pre.page-text { max-height: 50dvh; overflow: auto; margin: var(
   .main-nav > a.active, .main-nav > a[aria-current='page'] { background: none; color: var(--text);
     box-shadow: inset 0 2px 0 var(--text); }
   .nav-more { flex: 1 1 0; display: flex; }
-  .nav-long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .nav-short { display: inline; }
   .nav-more .chevron { display: none; }
   .nav-menu { position: fixed; top: auto; left: var(--s-2); right: var(--s-2);
     bottom: calc(var(--bottom-bar) + env(safe-area-inset-bottom) + var(--s-2)); max-height: 70dvh; overflow-y: auto; }
   .nav-menu a { min-height: var(--tap); }
-  .session-toggle { display: inline-flex; }
-  .session-bar.collapsed .session-fields { display: none; }
-  .session-bar:not(.collapsed) .session-fields { display: flex; flex-wrap: wrap; gap: var(--s-3); width: 100%; }
   .card { padding: var(--s-4); }
   .facts { grid-template-columns: 1fr; }
   .facts dd { margin-bottom: var(--s-2); }
   .tabs { mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent); }
+  /* lists of events become stacked rows on a phone: the name, then the dates and place, no sideways scrolling */
+  .table-scroll.stack-on-phone { overflow: visible; background: none; }
+  .stack-on-phone > table.grid { display: block; min-width: 0; }
+  .stack-on-phone > table.grid thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .stack-on-phone > table.grid tbody { display: flex; flex-direction: column; }
+  .stack-on-phone > table.grid tr { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--s-3); padding: var(--s-3) 0;
+    border-bottom: 1px solid var(--line); }
+  .stack-on-phone > table.grid tr > * { display: block; padding: 0; border: none; background: none; position: static; }
+  .stack-on-phone > table.grid tr > :first-child { grid-column: 1 / -1; min-width: 0; position: static; background: none; }
+  .stack-on-phone > table.grid .phone-hide { display: none; }
+  .stack-on-phone > table.grid td { color: var(--text-2); font-size: var(--fs-label); }
 }
 
 /* ---------- reduced motion ---------- */

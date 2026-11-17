@@ -3,6 +3,7 @@ import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { dashboardApi } from '../../api/dashboard'
 import type { EventMatchesResponse, ScoutingView, TeamMetricsResponse, TeamStrengthView, Validation } from '../../api/generated'
 import { useResource } from '../../components/useResource'
+import { useOurTeam } from '../../team/ours'
 import { AsOfControl } from '../asOf'
 import { BarChart, type ChartPoint } from '../charts'
 import { teamResults } from '../teamResults'
@@ -23,6 +24,7 @@ export function TeamPage() {
   const metrics = useResource((s) => dashboardApi.teamMetrics(team, eventKey, s), `metrics:${team}:${eventKey}`, valid)
   const matches = useResource((s) => dashboardApi.eventMatches(eventKey, asOf, s), `matches:${eventKey}:${asOf}`, valid)
   const season = seasonOf(eventKey)
+  const ours = useOurTeam()
   const back = <BackToLiveDraft />
 
   if (!valid) return <>{back}<PageHeader title="Team not found" subtitle={`“${params.team}” is not a team number.`} /></>
@@ -32,7 +34,7 @@ export function TeamPage() {
       <PageHeader title={`Team ${team}`}
         crumbs={[{ to: season ? `/?season=${season}` : '/', label: season ? `${season} events` : 'Events' },
           { to: `/events/${encodeURIComponent(eventKey)}`, label: eventKey }]}
-        subtitle={<>At <Link to={`/events/${encodeURIComponent(eventKey)}`}><code>{eventKey}</code></Link></>} />
+        subtitle={<>{team === ours && <span className="ours-tag">Our team</span>}At <Link to={`/events/${encodeURIComponent(eventKey)}`}><code>{eventKey}</code></Link></>} />
       <AsOfControl defaultNote="Default: now. The strength view and match history use only data available before the moment." />
       <ResourceView resource={strength} what="strength view">
         {(data) => <><StrengthView view={data.strength} /><EpaSourceNote epa={data.epa} /></>}
