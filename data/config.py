@@ -178,6 +178,8 @@ class Settings(BaseSettings):
     # - session_ttl_hours / session_idle_hours: a session ends at the first of these limits.
     # - public_app_url: the web app's base URL, mentioned in password-reset emails when set.
     # - smtp_*: outgoing email (password-reset codes). Unset means no email is sent, so "forgot password" cannot work.
+    # - brevo_api_key: send through Brevo's HTTPS API instead of SMTP (Render's free plan blocks SMTP); the sender is
+    #   smtp_from, which must be verified in Brevo.
     # - dev_outbox_dir: in development only, emails are written here as files instead of being sent.
     # - auth_trusted_proxy_hops: how many reverse proxies (Vercel, Render) sit in front of the API, so the client
     #   address for rate limiting is read from X-Forwarded-For. 0 trusts no header.
@@ -195,6 +197,7 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_from: str | None = None
     smtp_starttls: bool = True
+    brevo_api_key: SecretStr | None = None
     dev_outbox_dir: str | None = None
     auth_trusted_proxy_hops: int = Field(default=0, ge=0, le=5)
 

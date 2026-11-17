@@ -120,8 +120,9 @@ refused, by the application and again by a database trigger.
 - **Storage:** only a salted SHA-256 of the code is stored (`password_reset_codes`).
 - **Requests are limited** to 3 codes per email per hour, so asking again cannot get around the 5-try limit. At most
   that is 15 guesses an hour against a million possible codes.
-- **Delivery** uses the existing mailer: SMTP when `SMTP_HOST` and `SMTP_FROM` are set, or, in development only,
-  files written to `DEV_OUTBOX_DIR`. Without either, no code can be sent. The page says so and suggests asking an
+- **Delivery** uses the existing mailer: Brevo's HTTPS API when `BREVO_API_KEY` and `SMTP_FROM` are set (the hosted
+  API: Render's free plan blocks outgoing SMTP), else SMTP when `SMTP_HOST` and `SMTP_FROM` are set, or, in
+  development only, files written to `DEV_OUTBOX_DIR`. Without any of these, no code can be sent. The page says so and suggests asking an
   administrator. There is no administrator-issued reset; an administrator can only change the person's role or remove
   them.
 
@@ -218,6 +219,7 @@ Secrets go in the environment, never in a committed file (`data/config.py`, `.en
 | `TEAM_ADMIN_JOIN_CODE` (secret) | unset | the code that signs up an admin; must differ from `TEAM_JOIN_CODE` |
 | `ADMIN_EMAILS` | empty | optional: emails that sign up as admin whichever code they use |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` (secret), `SMTP_FROM`, `SMTP_STARTTLS` | unset, `587`, unset, unset, unset, `true` | outgoing email for reset codes |
+| `BREVO_API_KEY` (secret) | unset | send through Brevo's HTTPS API instead of SMTP; the sender is `SMTP_FROM`, verified in Brevo |
 | `DEV_OUTBOX_DIR` | unset | development only: write emails to this folder instead of sending them |
 | `PUBLIC_APP_URL` | unset | the web app's address, mentioned in reset emails |
 | `AUTH_TRUSTED_PROXY_HOPS` | `0` | proxies in front of the API, so rate limits see the client address (hosted: Vercel then Render) |
@@ -254,7 +256,8 @@ cd frontend && npx vitest run src/auth src/workspace
 
 ## 10. Known limitations
 
-- **Email needs an SMTP account.** Without one, a forgotten password cannot be reset by email.
+- **Email needs a Brevo key or an SMTP account.** Without one, a forgotten password cannot be reset by email. Render's
+  free plan blocks SMTP, so the hosted API uses Brevo.
 - **No multi-factor authentication** and no single sign-on.
 - **The global wrong-code limit can be used to block sign-up for an hour.** Change the code if that happens.
 - **Per-address rate limits are coarse behind proxies** unless `AUTH_TRUSTED_PROXY_HOPS` is set.
