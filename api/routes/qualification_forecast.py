@@ -129,7 +129,8 @@ def qualification_forecast(
     model_info = ServedModelInfo(**served.identity())
     try:
         forecast = forecast_event_qualification(database, event_key, when, epa_provider=epa_source.provider,
-                                                predict_win_prob=served.model.predict_win_prob)
+                                                predict_win_prob=served.model.predict_win_prob,
+                                                predict_win_probs=getattr(served.model, "predict_win_probs", None))
     except SilentFallbackError as exc:
         raise epa_source_incomplete_error(exc) from exc
     out_matches = []

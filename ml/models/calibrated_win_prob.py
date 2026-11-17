@@ -60,6 +60,12 @@ class CalibratedWinProbModel:
             raise RuntimeError("predict_win_prob called before fit() or load()")
         return self.calibrator.calibrate(self.raw_win_prob(match_features))
 
+    def predict_win_probs(self, rows: Sequence[MatchFeatureRow]) -> list[float]:
+        """predict_win_prob for many matches at once (one booster and one calibrator call), value for value equal."""
+        if self.win_prob is None or self.calibrator is None:
+            raise RuntimeError("predict_win_probs called before fit() or load()")
+        return self.calibrator.calibrate_many(self.win_prob.predict_win_probs(rows))
+
     def predict_rating(self, team_features: TeamFeatures) -> float:
         raise NotImplementedError("CalibratedWinProbModel predicts match win probabilities, not team ratings")
 

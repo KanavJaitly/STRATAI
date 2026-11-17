@@ -35,6 +35,7 @@ from ml.features.assembler import TeamFeatures, build_team_features
 from ml.features.roster import list_teams_at_event
 from ml.features.scale import ScaleLookup
 from ml.models.baselines import RawEpaRankingBaseline
+from ml.ratings.provider import through_snapshot
 from ml.views.strength import TeamStrengthView, build_team_strength
 from database.connection import consistent_reads
 
@@ -178,6 +179,7 @@ def analyze_event(
     if model == POLICY_M5V2 and m5v2_predict_rating is None:
         raise M5V2Required(event_key)
     scales = ScaleLookup(database)
+    epa_provider = through_snapshot(epa_provider, database)  # one connection, not one per EPA lookup
     teams = list_teams_at_event(database, event_key)
     features = [build_team_features(database, t, event_key, as_of, epa_provider=epa_provider, scale_lookup=scales)
                 for t in teams]

@@ -30,6 +30,7 @@ from database.connection import consistent_reads
 from ml.calibration.gate import poisson_binomial_pmf
 from ml.features.assembler import MatchFeatureRow, build_match_feature_row
 from ml.features.scale import ScaleLookup
+from ml.ratings.provider import through_snapshot
 
 RANGE_LOWER, RANGE_UPPER = 0.10, 0.90
 COVERAGE_BAND = (0.75, 0.85)  # P5-D9
@@ -187,6 +188,7 @@ class EventQualificationForecast:
 def forecast_event_qualification(
     database, event_key: str, as_of: datetime, *, epa_provider,
     predict_win_prob: Callable[[MatchFeatureRow], float],
+    predict_win_probs: Callable[[Sequence[MatchFeatureRow]], list[float]] | None = None,
 ) -> EventQualificationForecast:
     """Every qualification match's q, with features built at min(as_of, scheduled time) so a played match keeps its
     pre-match forecast, plus each team's expected record. SilentFallbackError (EPA source) propagates.
@@ -195,22 +197,26 @@ def forecast_event_qualification(
     analysis, strength view and pre-match report). Without it each read opened its own connection: about 940 for one
     district event, which took the hosted API past the web app's 30 s limit (2026-11-16)."""
     scales = ScaleLookup(database)
-    # An EPA source that reads the database reads through the same snapshot (the Statbotics source does; the D18 and
-    # STRATAI sources read their own artifacts and are used as they are).
-    if hasattr(epa_provider, "reading_through"):
-        epa_provider = epa_provider.reading_through(database)
-    matches: list[ForecastMatch] = []
-    states: list[str | None] = []
+    epa_provider = through_snapshot(epa_provider, database)  # one connection, not one per EPA lookup
+    built = []
     for match_key, scheduled in qualification_matches(database, event_key):
         features_as_of = min(as_of, scheduled)
-        row = build_match_feature_row(database, match_key, features_as_of, epa_provider=epa_provider,
-                                      scale_lookup=scales)
+        built.append((match_key, scheduled, features_as_of,
+                      build_match_feature_row(database, match_key, features_as_of, epa_provider=epa_provider,
+                                              scale_lookup=scales)))
+    rows = [row for *_, row in built]
+    # One batched model call when the model offers it (the served model does; identical values): per-match calls
+    # cost seconds on the hosted API's small CPU.
+    qs = predict_win_probs(rows) if predict_win_probs is not None else [predict_win_prob(row) for row in rows]
+    matches: list[ForecastMatch] = []
+    states: list[str | None] = []
+    for (match_key, scheduled, features_as_of, row), q in zip(built, qs, strict=True):
         teams = [*row.red_teams, *row.blue_teams]
         states += [t.epa_source_state for t in teams]
         complete = bool(row.red_teams) and bool(row.blue_teams) and all(t.epa_total_present for t in teams)
         matches.append(ForecastMatch(match_key, scheduled, features_as_of,
                                      tuple(t.team_number for t in row.red_teams),
                                      tuple(t.team_number for t in row.blue_teams),
-                                     float(predict_win_prob(row)), complete))
+                                     float(q), complete))
     records = team_records(MatchForecast(m.match_key, m.red, m.blue, m.q, m.epa_complete) for m in matches)
     return EventQualificationForecast(matches, records, statbotics_event_week(database, event_key), states)
