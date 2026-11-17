@@ -28,7 +28,7 @@ import numpy as np
 
 from database.connection import consistent_reads
 from ml.calibration.gate import poisson_binomial_pmf
-from ml.features.assembler import MatchFeatureRow, build_match_feature_row
+from ml.features.assembler import EventHistory, MatchFeatureRow, build_match_feature_row
 from ml.features.scale import ScaleLookup
 from ml.ratings.provider import through_snapshot
 
@@ -198,12 +198,17 @@ def forecast_event_qualification(
     district event, which took the hosted API past the web app's 30 s limit (2026-11-16)."""
     scales = ScaleLookup(database)
     epa_provider = through_snapshot(epa_provider, database)  # one connection, not one per EPA lookup
+    # The event's rows (and, for the Statbotics source, every team's EPA candidates) read once; each match's features
+    # apply their own as_of to them. ~3,400 queries became ~270 for a district championship (2026-11-16).
+    history = EventHistory.read(database, event_key)
+    if hasattr(epa_provider, "prefetched"):
+        epa_provider = epa_provider.prefetched(history.teams())
     built = []
     for match_key, scheduled in qualification_matches(database, event_key):
         features_as_of = min(as_of, scheduled)
         built.append((match_key, scheduled, features_as_of,
                       build_match_feature_row(database, match_key, features_as_of, epa_provider=epa_provider,
-                                              scale_lookup=scales)))
+                                              scale_lookup=scales, history=history)))
     rows = [row for *_, row in built]
     # One batched model call when the model offers it (the served model does; identical values): per-match calls
     # cost seconds on the hosted API's small CPU.

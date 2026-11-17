@@ -84,6 +84,7 @@ from ml.ratings.provider import (
 
 __all__ = [
     "EPA_SOURCE_SQL",
+    "EventHistory",
     "EPA_WITHHELD_NO_PRIOR_EVENT",
     "MatchFeatureRow",
     "build_team_features",
@@ -346,8 +347,109 @@ class _EpaLookup:
     source_state: str | None = None
 
 
+class EventHistory:
+    """Every row the three per-team point-in-time reads below filter, for one event, read once.
+
+    An event-wide view (the qualification forecast) builds features for every team at every match, each at its own
+    as_of: about 800 (team, as_of) pairs for a district championship, four queries each. Reading the same rows once
+    and applying each read's own "strictly before as_of" conditions in Python gives the same rows in the same order
+    (verified value for value; tests/test_event_history.py) with three queries instead of ~2,400. Each query below
+    is its per-team counterpart with the team and as_of conditions moved into Python and an explicit tie-break added
+    to the order; nothing else differs. Read it inside the caller's snapshot so it is the same database version.
+    """
+
+    def __init__(self, event_key: str, scores: dict, auto: dict, observations: dict) -> None:
+        self.event_key = event_key
+        self._scores = scores  # team -> [(scheduled_time, alliance_color, score_red, score_blue)]
+        self._auto = auto  # team -> [(scheduled_time, season, breakdown)], completed matches only
+        self._observations = observations  # team -> [(match scheduled_time, submitted_at, observation row)]
+
+    @classmethod
+    def read(cls, database: Database, event_key: str) -> EventHistory:
+        scores: dict[int, list] = {}
+        auto: dict[int, list] = {}
+        observations: dict[int, list] = {}
+        with database.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT mt.team_number, m.scheduled_time, mt.alliance_color, m.score_red, m.score_blue
+                FROM match_teams mt
+                JOIN matches m ON m.match_key = mt.match_key
+                WHERE m.event_key = %s AND m.scheduled_time IS NOT NULL
+                ORDER BY mt.team_number, m.scheduled_time, m.match_key
+                """,
+                (event_key,),
+            )
+            for team, scheduled, color, red, blue in cursor.fetchall():
+                scores.setdefault(team, []).append((scheduled, color, red, blue))
+            cursor.execute(
+                """
+                SELECT mt.team_number, m.scheduled_time, m.season, raw.breakdown
+                FROM match_teams mt
+                JOIN matches m ON m.match_key = mt.match_key
+                LEFT JOIN LATERAL (
+                    SELECT r.payload_json->'score_breakdown'->mt.alliance_color AS breakdown
+                    FROM raw_source_payloads r
+                    WHERE r.source = 'tba' AND r.source_object_type = 'match'
+                      AND r.source_object_id = m.match_key AND r.is_current
+                    ORDER BY r.id DESC
+                    LIMIT 1
+                ) raw ON TRUE
+                WHERE m.event_key = %s AND m.scheduled_time IS NOT NULL
+                  AND (CASE WHEN mt.alliance_color = 'red' THEN m.score_red ELSE m.score_blue END) IS NOT NULL
+                ORDER BY mt.team_number, m.scheduled_time, m.match_key
+                """,
+                (event_key,),
+            )
+            for team, scheduled, season, breakdown in cursor.fetchall():
+                auto.setdefault(team, []).append((scheduled, season, breakdown))
+            cursor.execute(
+                """
+                SELECT m.scheduled_time,
+                       so.match_key, so.event_key, so.team_number, so.scout_identifier,
+                       so.defense_rating, so.feeding_rating, so.notes, so.source, so.submitted_at
+                FROM scouting_observations so
+                JOIN matches m ON m.match_key = so.match_key
+                WHERE so.event_key = %s AND m.scheduled_time IS NOT NULL
+                ORDER BY so.team_number, so.submitted_at, so.match_key, so.scout_identifier
+                """,
+                (event_key,),
+            )
+            for scheduled, *row in cursor.fetchall():
+                observations.setdefault(row[2], []).append((scheduled, row[8], tuple(row)))
+        return cls(event_key, scores, auto, observations)
+
+    def teams(self) -> list[int]:
+        """Every team on a scheduled match at the event."""
+        return sorted(self._scores)
+
+    def _check(self, event_key: str) -> None:
+        if event_key != self.event_key:
+            raise ValueError(f"EventHistory for {self.event_key!r} asked about {event_key!r}")
+
+    def score_rows(self, team_number: int, event_key: str, as_of: datetime) -> list[tuple]:
+        """_point_in_time_scores' rows: (alliance_color, score_red, score_blue), scheduled strictly before as_of."""
+        self._check(event_key)
+        return [(color, red, blue) for scheduled, color, red, blue in self._scores.get(team_number, ())
+                if scheduled < as_of]
+
+    def auto_rows(self, team_number: int, event_key: str, as_of: datetime) -> list[tuple]:
+        """_point_in_time_auto_points' rows: (season, breakdown), completed and scheduled strictly before as_of."""
+        self._check(event_key)
+        return [(season, breakdown) for scheduled, season, breakdown in self._auto.get(team_number, ())
+                if scheduled < as_of]
+
+    def observation_rows(self, team_number: int, event_key: str, as_of: datetime) -> list[tuple]:
+        """_point_in_time_observations' rows: both the match's scheduled time and submitted_at strictly before
+        as_of."""
+        self._check(event_key)
+        return [row for scheduled, submitted, row in self._observations.get(team_number, ())
+                if scheduled < as_of and submitted < as_of]
+
+
 def _point_in_time_scores(
     database: Database, team_number: int, event_key: str, as_of: datetime,
+    history: EventHistory | None = None,
 ) -> tuple[list[int], int]:
     """This team's own recorded scores at this event, restricted to matches
     with a known scheduled_time strictly before as_of.
@@ -367,19 +469,22 @@ def _point_in_time_scores(
     whether it had been played, mirroring ScoringProfile's own
     matches_scheduled/matches_used distinction.
     """
-    with database.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT mt.alliance_color, m.score_red, m.score_blue
-            FROM match_teams mt
-            JOIN matches m ON m.match_key = mt.match_key
-            WHERE mt.team_number = %s AND m.event_key = %s
-              AND m.scheduled_time IS NOT NULL AND m.scheduled_time < %s
-            ORDER BY m.scheduled_time
-            """,
-            (team_number, event_key, as_of),
-        )
-        rows = cursor.fetchall()
+    if history is not None:
+        rows = history.score_rows(team_number, event_key, as_of)
+    else:
+        with database.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT mt.alliance_color, m.score_red, m.score_blue
+                FROM match_teams mt
+                JOIN matches m ON m.match_key = mt.match_key
+                WHERE mt.team_number = %s AND m.event_key = %s
+                  AND m.scheduled_time IS NOT NULL AND m.scheduled_time < %s
+                ORDER BY m.scheduled_time
+                """,
+                (team_number, event_key, as_of),
+            )
+            rows = cursor.fetchall()
 
     scores: list[int] = []
     for alliance_color, score_red, score_blue in rows:
@@ -391,6 +496,7 @@ def _point_in_time_scores(
 
 def _point_in_time_auto_points(
     database: Database, team_number: int, event_key: str, as_of: datetime,
+    history: EventHistory | None = None,
 ) -> tuple[float | None, int]:
     """Milestone 11's cross-season feature: the mean auto-period points of this
     team's own alliance over its completed matches at this event strictly
@@ -410,6 +516,10 @@ def _point_in_time_auto_points(
     counted; if none contributes, the feature is absent. An unsupported
     season or a malformed breakdown raises -- it never becomes a 0.
     """
+    if history is not None:
+        rows = history.auto_rows(team_number, event_key, as_of)
+        values = [auto_points(season, breakdown) for season, breakdown in rows if breakdown is not None]
+        return average_score(values), len(values)
     with database.cursor() as cursor:
         cursor.execute(
             """
@@ -439,6 +549,7 @@ def _point_in_time_auto_points(
 
 def _point_in_time_observations(
     database: Database, team_number: int, event_key: str, as_of: datetime,
+    history: EventHistory | None = None,
 ) -> list[ScoutingObservation]:
     """This team's scouting observations at this event, known strictly
     before as_of -- gated on BOTH of two independent timestamps, not one.
@@ -462,21 +573,24 @@ def _point_in_time_observations(
     they did not actually submit their rating until later). Either check
     alone is insufficient; both together close both directions.
     """
-    with database.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT so.match_key, so.event_key, so.team_number, so.scout_identifier,
-                   so.defense_rating, so.feeding_rating, so.notes, so.source, so.submitted_at
-            FROM scouting_observations so
-            JOIN matches m ON m.match_key = so.match_key
-            WHERE so.team_number = %s AND so.event_key = %s
-              AND m.scheduled_time IS NOT NULL AND m.scheduled_time < %s
-              AND so.submitted_at < %s
-            ORDER BY so.submitted_at
-            """,
-            (team_number, event_key, as_of, as_of),
-        )
-        rows = cursor.fetchall()
+    if history is not None:
+        rows = history.observation_rows(team_number, event_key, as_of)
+    else:
+        with database.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT so.match_key, so.event_key, so.team_number, so.scout_identifier,
+                       so.defense_rating, so.feeding_rating, so.notes, so.source, so.submitted_at
+                FROM scouting_observations so
+                JOIN matches m ON m.match_key = so.match_key
+                WHERE so.team_number = %s AND so.event_key = %s
+                  AND m.scheduled_time IS NOT NULL AND m.scheduled_time < %s
+                  AND so.submitted_at < %s
+                ORDER BY so.submitted_at
+                """,
+                (team_number, event_key, as_of, as_of),
+            )
+            rows = cursor.fetchall()
 
     return [
         ScoutingObservation(
@@ -571,6 +685,7 @@ def _point_in_time_epa(
 def build_team_features(
     database: Database, team_number: int, event_key: str, as_of: datetime,
     *, epa_provider: PointInTimeEpaProvider | None = None, scale_lookup: ScaleLookup | None = None,
+    history: EventHistory | None = None,
 ) -> TeamFeatures:
     """Compose one team's point-in-time scoring, defense/feeding, and EPA
     features. Pure composition -- every actual number comes from Phase 3's
@@ -590,20 +705,23 @@ def build_team_features(
     stratai_epa_chain); see ml.ratings.provider.default_point_in_time_provider.
     scale_lookup (ml.features.scale) supplies D16's causal season scales; a fresh
     one is made per call when not given, so it never outlives the data it read.
+    history (EventHistory, optional) supplies this event's rows already read, for
+    event-wide callers; the result is the same as without it.
 
     All of this team's reads come from one consistent database snapshot (`read_snapshot`), so a sync committing
     mid-build can never make its counts disagree (P10-M2).
     """
     with read_snapshot(database) as snapshot:
         return _build_team_features(snapshot, team_number, event_key, as_of, epa_provider=epa_provider,
-                                    scale_lookup=scale_lookup)
+                                    scale_lookup=scale_lookup, history=history)
 
 
 def _build_team_features(
     database: Database, team_number: int, event_key: str, as_of: datetime,
     *, epa_provider: PointInTimeEpaProvider | None, scale_lookup: ScaleLookup | None,
+    history: EventHistory | None = None,
 ) -> TeamFeatures:
-    scores, matches_considered = _point_in_time_scores(database, team_number, event_key, as_of)
+    scores, matches_considered = _point_in_time_scores(database, team_number, event_key, as_of, history)
     matches_used = len(scores)
 
     average = average_score(scores)
@@ -611,7 +729,7 @@ def _build_team_features(
     consistency = consistency_rating(scores)
     reliability = reliability_score(matches_used, matches_considered)
 
-    observations = _point_in_time_observations(database, team_number, event_key, as_of)
+    observations = _point_in_time_observations(database, team_number, event_key, as_of, history)
     profile = aggregate_defense_feeding(observations)
 
     epa = _point_in_time_epa(database, team_number, event_key, as_of, epa_provider)
@@ -619,7 +737,7 @@ def _build_team_features(
     season = scales.event_season(event_key)
     score_scale, epa_scale = (None, None) if season is None else scales.feature_scales(
         season, as_of, epa.source_event_key)
-    average_auto, auto_matches = _point_in_time_auto_points(database, team_number, event_key, as_of)
+    average_auto, auto_matches = _point_in_time_auto_points(database, team_number, event_key, as_of, history)
 
     return TeamFeatures(
         team_number=team_number,
@@ -650,7 +768,7 @@ def _build_team_features(
 
 def build_match_feature_row(
     database: Database, match_key: str, as_of: datetime, *, epa_provider: PointInTimeEpaProvider | None = None,
-    scale_lookup: ScaleLookup | None = None,
+    scale_lookup: ScaleLookup | None = None, history: EventHistory | None = None,
 ) -> MatchFeatureRow:
     """Build one match's leakage-safe feature row, as knowable strictly
     before as_of.
@@ -710,9 +828,9 @@ def build_match_feature_row(
     provider = epa_provider or default_point_in_time_provider(database)
     scales = scale_lookup or ScaleLookup(database)
     red_teams = [build_team_features(database, team_number, event_key, as_of, epa_provider=provider,
-                                     scale_lookup=scales) for team_number in red_team_numbers]
+                                     scale_lookup=scales, history=history) for team_number in red_team_numbers]
     blue_teams = [build_team_features(database, team_number, event_key, as_of, epa_provider=provider,
-                                      scale_lookup=scales) for team_number in blue_team_numbers]
+                                      scale_lookup=scales, history=history) for team_number in blue_team_numbers]
 
     return MatchFeatureRow(
         match_key=match_key, as_of=as_of, event_key=event_key, season=season,
