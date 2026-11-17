@@ -839,16 +839,16 @@ def build_match_feature_row(
 
 
 def point_in_time_scores(
-    database: Database, team_number: int, event_key: str, as_of: datetime,
+    database: Database, team_number: int, event_key: str, as_of: datetime, history: EventHistory | None = None,
 ) -> tuple[list[int], int]:
     """Public name for the exact point-in-time score read build_team_features uses
     (Phase 5 views reuse it; see _point_in_time_scores for the contract)."""
-    return _point_in_time_scores(database, team_number, event_key, as_of)
+    return _point_in_time_scores(database, team_number, event_key, as_of, history)
 
 
 def point_in_time_auto_points(
-    database: Database, team_number: int, event_key: str, as_of: datetime,
+    database: Database, team_number: int, event_key: str, as_of: datetime, history: EventHistory | None = None,
 ) -> tuple[float | None, int]:
     """Public name for the exact Phase 4 auto-points feature build_team_features uses
     (Phase 5 views reuse it; see _point_in_time_auto_points for the contract)."""
-    return _point_in_time_auto_points(database, team_number, event_key, as_of)
+    return _point_in_time_auto_points(database, team_number, event_key, as_of, history)

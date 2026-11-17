@@ -33,6 +33,7 @@ from data.metrics.schemas import MIN_MATCHES_FOR_STDDEV, TeamMetrics
 from data.metrics.statistics import classify_match_days
 from database.connection import Database, consistent_reads
 from ml.features.assembler import (
+    EventHistory,
     TeamFeatures,
     build_team_features,
     point_in_time_auto_points,
@@ -215,13 +216,17 @@ def _scouting_view(score: float | None, agreement: float | None, count: int, sou
 def build_team_strength(
     database: Database, team_number: int, event_key: str, as_of: datetime,
     *, epa_provider: PointInTimeEpaProvider, scale_lookup: ScaleLookup | None = None,
+    history: EventHistory | None = None,
 ) -> TeamStrengthView:
-    """The P5-M3 view; every value equals what build_team_features computes."""
+    """The P5-M3 view; every value equals what build_team_features computes.
+
+    history (ml.features.assembler.EventHistory for event_key, optional) supplies the event's rows already read, for
+    event-wide callers (the event analysis); the view is the same without it."""
     scales = scale_lookup or ScaleLookup(database)
     epa_provider = through_snapshot(epa_provider, database)  # one connection, not one per EPA lookup
     features = build_team_features(database, team_number, event_key, as_of, epa_provider=epa_provider,
-                                   scale_lookup=scales)
-    scores, _ = point_in_time_scores(database, team_number, event_key, as_of)
+                                   scale_lookup=scales, history=history)
+    scores, _ = point_in_time_scores(database, team_number, event_key, as_of, history)
     season = scales.event_season(event_key)
     season_by_event: list[EventAutoPoints] = []
     if season is not None:
@@ -229,7 +234,8 @@ def build_team_strength(
             cursor.execute(_SEASON_EVENTS_SQL, {"team": team_number, "season": season, "as_of": as_of})
             event_keys = [row[0] for row in cursor.fetchall()]
         for key in event_keys:
-            mean, n = point_in_time_auto_points(database, team_number, key, as_of)
+            mean, n = point_in_time_auto_points(database, team_number, key, as_of,
+                                                history if key == event_key else None)
             season_by_event.append(EventAutoPoints(event_key=key, average_auto_points=_measure(
                 mean, n, _none(NONE_STAT), NO_BREAKDOWN)))
     return TeamStrengthView(
