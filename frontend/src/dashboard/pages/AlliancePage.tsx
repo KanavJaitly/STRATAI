@@ -11,6 +11,7 @@ import { useOnDemand } from '../../components/useOnDemand'
 import { useAsOf } from '../asOfParams'
 import { FACTORS, formatNumber, type FactorKey } from '../labels'
 import { seasonOf, teamPath } from '../routing'
+import { TeamPickList } from '../teamPickList'
 
 function parseTeams(value: string): number[] {
   return value.split(/[\s,]+/).map(Number).filter((n) => Number.isInteger(n) && n > 0)
@@ -51,10 +52,12 @@ export function AlliancePage() {
       <PageHeader title="Alliance selection"
         crumbs={[{ to: season ? `/?season=${season}` : '/', label: season ? `${season} events` : 'Events' },
           { to: `/events/${encodeURIComponent(eventKey)}`, label: eventKey }]}
-        subtitle={<>Candidate profiles and the pick list for <code>{eventKey}</code>.</>} />
+        subtitle={<>Our pick list, every candidate's profile and the engine's ranking for <code>{eventKey}</code></>} />
+      <AsOfControl defaultNote="Default: the event's selection moment (or now, while it is still ahead)." />
+      {/* Our own pick list comes first: it is the screen used during selection. */}
+      {candidates.data && <TeamPickList key={candidates.data.event_key} data={candidates.data} />}
       <section className="card" aria-labelledby="candidates-heading">
         <h2 id="candidates-heading">Candidate profiles</h2>
-        <AsOfControl defaultNote="Default: the event's selection moment (or now, while it is still ahead)." />
         <form className="inline-form" onSubmit={applyConfig} aria-label="Alliance configuration">
           <label className="inline">Three-team configuration (for synergy and role compatibility)
             <input value={configDraft} onChange={(e) => setConfigDraft(e.target.value)} placeholder="e.g. 11, 1923, 56" />
@@ -134,7 +137,7 @@ function PickListSection({ eventKey }: { eventKey: string }) {
   }
   return (
     <section className="card" aria-labelledby="picklist-heading">
-      <h2 id="picklist-heading">Pick list</h2>
+      <h2 id="picklist-heading">Engine ranking</h2>
       <p className="small">Enter the draft so far. The engine ranks every available pick for the seed whose turn it is, by
         P(the alliance wins the event), from the bracket simulator over the predicted field. It runs only with an
         approved season ruleset and passed playoff-model gates; otherwise it returns the real reason it cannot.</p>

@@ -50,7 +50,7 @@ main:focus { outline: none; }
 .brand strong { font-size: var(--fs-body); font-weight: 600; letter-spacing: 0.04em; }
 .brand span { color: var(--muted); font-size: var(--fs-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .brand-mark { width: 22px; height: 10px; flex: none; }
-.team-logo { display: block; flex: none; width: auto; height: 20px; }
+.team-logo { display: block; flex: none; width: auto; height: 24px; }
 
 .main-nav { display: flex; align-items: center; gap: var(--s-1); flex: 1 1 auto; min-width: 0; }
 .main-nav:empty { display: none; }
@@ -190,9 +190,9 @@ button:not(:disabled):hover, a.button:hover { background: oklch(1 0 0); border-c
 button:not(:disabled):active, a.button:active, .button-link:active { transform: scale(0.98); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 button[aria-disabled='true'] { opacity: 0.6; cursor: progress; }
-button.secondary, a.button.button-secondary, .button-link { background: transparent; color: var(--text);
+button.secondary, button.button-secondary, a.button.button-secondary, .button-link { background: transparent; color: var(--text);
   border: 1px solid var(--line-strong); }
-button.secondary:not(:disabled):hover, a.button.button-secondary:hover, .button-link:hover {
+button.secondary:not(:disabled):hover, button.button-secondary:not(:disabled):hover, a.button.button-secondary:hover, .button-link:hover {
   background: var(--surface-raised); border-color: oklch(1 0 0 / 0.3); color: var(--text); }
 button.link, .link-button { position: relative; min-height: 32px; padding: 0 var(--s-2); background: none; border: none;
   color: var(--text); font-weight: 400; text-decoration: underline; text-decoration-color: oklch(1 0 0 / 0.3);
@@ -339,6 +339,9 @@ details.raw pre, pre.page-text { max-height: 50dvh; overflow: auto; margin: var(
 .field-bar .field-red { background: var(--red); border-radius: 2px 0 0 2px; }
 .field-bar .field-blue { flex: 1 1 auto; background: var(--blue); border-radius: 0 2px 2px 0; }
 .field-bar.field-none { background: repeating-linear-gradient(90deg, var(--field-none) 0 6px, transparent 6px 8px); }
+/* the neutral bar stands alone in a vertical stack: a thin line, never a block */
+.calibrated > .field-bar { flex: none; width: 100%; max-width: 320px; height: 8px; }
+table.grid .calibrated > .field-bar { max-width: 96px; height: 6px; }
 table.grid .prob-line { flex-wrap: nowrap; }
 table.grid .field-bar { flex: 0 0 96px; height: 6px; }
 table.grid .prob-value { font-size: var(--fs-body); }
@@ -354,6 +357,29 @@ table.grid tr.row-ours > * { background: var(--ours-bg); }
 .team-tile.tile-ours { box-shadow: inset 3px 0 0 var(--ours); }
 .ours-tag { display: inline-flex; align-items: center; gap: 6px; margin-right: var(--s-3); color: var(--ours); font-weight: 500; }
 .ours-tag::before { content: ''; width: 7px; height: 7px; background: var(--ours); transform: rotate(45deg); }
+
+/* Our pick list: rank, team and three key figures readable at a glance; 44px move buttons within thumb reach */
+.pick-list { list-style: none; margin: var(--s-3) 0 0; padding: 0; }
+.pick-list li { display: grid; grid-template-columns: 2.5rem 5.5rem 1fr auto; align-items: center; gap: var(--s-3);
+  min-height: 56px; padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3); border-bottom: 1px solid var(--line); }
+.pick-list li:last-child { border-bottom: none; }
+.pick-list li.row-ours { background: var(--ours-bg); box-shadow: inset 3px 0 0 var(--ours); }
+.pick-list li.just-moved { background: var(--surface-raised); }
+.pick-rank { color: var(--muted); font-size: var(--fs-body); font-variant-numeric: tabular-nums; text-align: right; }
+.pick-team { font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pick-metrics { display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-5); }
+.pick-metric { display: flex; flex-direction: column; min-width: 3.5rem; }
+.pick-metric-value { font-size: var(--fs-body); font-weight: 500; font-variant-numeric: tabular-nums; }
+.pick-metric-label { font-size: var(--fs-label); color: var(--muted); }
+.pick-move { display: flex; gap: var(--s-1); }
+.icon-button { width: var(--tap); min-width: var(--tap); padding: 0; }
+@media (max-width: 720px) {
+  .pick-list li { grid-template-columns: 2rem 1fr auto; grid-template-areas: 'rank team move' 'rank metrics metrics'; row-gap: var(--s-1); }
+  .pick-rank { grid-area: rank; align-self: start; padding-top: 2px; }
+  .pick-team { grid-area: team; }
+  .pick-metrics { grid-area: metrics; gap: var(--s-4); }
+  .pick-move { grid-area: move; }
+}
 
 /* ---------- strategy ---------- */
 
@@ -456,6 +482,41 @@ table.grid tr.row-ours > * { background: var(--ours-bg); }
 .recommended-row ul.reasons, .recommended-row .reasons ul { padding-left: var(--s-5); margin: 2px 0; }
 .recommended-row details.reasons summary { min-height: 32px; display: inline-flex; align-items: center; }
 .decline-flag { color: var(--warn-fg); }
+
+/* Drive team: the next match first, in large type, read in a few seconds between matches */
+.next-match .next-match-kicker { margin: 0; font-size: var(--fs-label); color: var(--muted); }
+.next-match-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2) var(--s-4); margin: var(--s-1) 0;
+  font-size: var(--fs-display); font-weight: 600; line-height: 1.15; }
+.next-match-title a { text-decoration: none; }
+.next-match-side { font-size: var(--fs-body); font-weight: 600; }
+.next-match .calibrated { margin: var(--s-4) 0; }
+.next-match .field-bar, .next-match .calibrated > .field-bar { height: 12px; max-width: 420px; }
+.next-match-plan h3 { margin: var(--s-4) 0 var(--s-2); color: var(--text-2); }
+.robot-plan { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
+.robot-plan li { display: flex; align-items: baseline; gap: var(--s-3); font-size: 1.25rem; }
+.robot-plan li strong { min-width: 4.5rem; font-variant-numeric: tabular-nums; }
+.robot-plan li span:last-child { color: var(--text); }
+
+/* the live draft's event, folded to one line once chosen */
+.event-fold { padding: 0; }
+.event-fold > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); min-height: var(--tap);
+  padding: var(--s-2) var(--s-5); list-style: none; }
+.event-fold > summary::-webkit-details-marker { display: none; }
+.event-fold-change { margin-left: auto; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+.event-fold[open] > summary { border-bottom: 1px solid var(--line); }
+.event-fold > :not(summary) { padding: var(--s-4) var(--s-5); }
+
+/* Recording a pick: the result line appears as soon as the server confirms; the actions for the selected team sit
+   in a bar at the bottom of the screen, within thumb reach */
+.recorded { display: flex; align-items: center; gap: var(--s-2); min-height: 24px; margin: var(--s-1) 0 var(--s-2);
+  color: var(--ok-fg); font-weight: 500; }
+.recorder-actions { position: sticky; bottom: var(--s-3); z-index: 5; padding: var(--s-3); margin: var(--s-3) calc(-1 * var(--s-3));
+  background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: var(--r-card); }
+.team-tile .small { color: var(--muted); }
+@media (max-width: 720px) {
+  .recorder-actions { bottom: calc(var(--bottom-bar) + env(safe-area-inset-bottom) + var(--s-2)); }
+  .recorder-actions .big-button { flex: 1 1 100%; }
+}
 
 /* The profile drawer: a raised surface over the page, which stays mounted and keeps polling. */
 .profile-backdrop { position: fixed; inset: 0; z-index: 40; background: oklch(0 0 0 / 0.5); }
