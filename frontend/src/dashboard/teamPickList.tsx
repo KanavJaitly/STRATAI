@@ -135,31 +135,41 @@ export function TeamPickList({ data }: { data: CandidatesResponse }) {
   // Reordering animates so you can see which team moved (FLIP): after the new order renders, each row that changed
   // place starts at its old position and slides to the new one. The order itself is already final; the motion only
   // shows it. Off for reduced motion.
+  // Each move first records where every row is on screen right now (mid-slide included), so a quick second tap
+  // retargets from the current position instead of jumping.
   const rows = useRef(new Map<number, HTMLLIElement>())
   const tops = useRef(new Map<number, number>())
+  const topWithinList = (el: HTMLElement) =>
+    el.getBoundingClientRect().top - (el.parentElement?.getBoundingClientRect().top ?? 0)
+  const recordPositions = () => {
+    tops.current = new Map([...rows.current].map(([team, el]) => [team, topWithinList(el)]))
+  }
   useLayoutEffect(() => {
+    const before = tops.current
+    tops.current = new Map()
+    if (before.size === 0) return
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true
-    const next = new Map<number, number>()
     for (const [team, el] of rows.current) {
-      const top = el.getBoundingClientRect().top - (el.parentElement?.getBoundingClientRect().top ?? 0) // within the list
-      next.set(team, top)
-      const before = tops.current.get(team)
-      if (!reduce && before !== undefined && before !== top && typeof el.animate === 'function') {
-        el.animate([{ transform: `translateY(${before - top}px)` }, { transform: 'translateY(0)' }],
-          { duration: 250, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' })
+      if (typeof el.animate !== 'function') continue
+      el.getAnimations().forEach((a) => a.cancel())
+      const from = before.get(team)
+      const delta = from === undefined ? 0 : from - topWithinList(el)
+      if (!reduce && Math.abs(delta) > 0.5) {
+        el.animate([{ transform: `translateY(${delta}px)` }, { transform: 'translateY(0)' }],
+          { duration: 250, easing: 'cubic-bezier(0.77, 0, 0.175, 1)' })
       }
     }
-    tops.current = next
   }, [order])
 
   const place = (from: number, to: number) => {
     if (from === to || to < 0 || to >= order.length) return
+    recordPositions()
     const next = moved(order, from, to)
     setOrder(next)
     setLast(next[to])
     setMessage(`${next[to]} is now number ${to + 1}`)
   }
-  const reset = () => { setOrder(defaultOrder(data.candidates)); setLast(null); setMessage('Back to scoring EPA order') }
+  const reset = () => { recordPositions(); setOrder(defaultOrder(data.candidates)); setLast(null); setMessage('Back to scoring EPA order') }
 
   const copy = async () => {
     const text = listText(data.event_key, order)

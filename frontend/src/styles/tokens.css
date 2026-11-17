@@ -73,8 +73,9 @@
 
   /* motion: one curve (transitions.dev --ease-smooth-out), short durations. Motion explains a change; it never delays
      a tap (press feedback starts at once) or a read. The live draft and the drive team's next match are .instant. */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out: ease-in-out;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);        /* entering, opening, press feedback */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);   /* something moving or morphing on screen; a cross-blur */
+  --ease-hover: ease;                               /* hover and colour changes */
   --d-press: 100ms;  /* press feedback */
   --d-fast: 150ms;   /* hover, colour, close */
   --d-base: 200ms;   /* a value cross-blur, a menu or a disclosure opening */
