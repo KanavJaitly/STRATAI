@@ -272,6 +272,26 @@ class WinProbXGBModel:
         swapped = self._raw_predict(match_features.blue_teams, match_features.red_teams)
         return 0.5 * (forward + (1.0 - swapped))
 
+    def predict_win_probs(self, rows: Sequence[MatchFeatureRow]) -> list[float]:
+        """predict_win_prob for many matches in one booster call, value for value identical.
+
+        Each row's forward and swapped vectors go into one matrix; the booster scores rows independently, so every
+        output equals its single-row evaluation, and the same Python arithmetic combines them. One call instead of
+        two per match: the hosted API's qualification forecast spent seconds on per-call overhead (2026-11-16).
+        """
+        if self._booster is None:
+            raise RuntimeError("predict_win_probs called before fit()")
+        if not rows:
+            return []
+        vectors = [vector for row in rows for vector in (_match_input_vector(row.red_teams, row.blue_teams),
+                                                         _match_input_vector(row.blue_teams, row.red_teams))]
+        dmatrix = xgb.DMatrix(np.vstack(vectors), feature_names=list(FEATURE_NAMES), missing=np.nan)
+        if self.best_iteration is not None:
+            raw = self._booster.predict(dmatrix, iteration_range=(0, self.best_iteration + 1))
+        else:
+            raw = self._booster.predict(dmatrix)
+        return [0.5 * (float(raw[2 * i]) + (1.0 - float(raw[2 * i + 1]))) for i in range(len(rows))]
+
     def predict_rating(self, team_features: TeamFeatures) -> float:
         raise NotImplementedError(
             "WinProbXGBModel predicts match win probabilities, not team ratings -- "

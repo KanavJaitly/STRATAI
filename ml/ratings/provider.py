@@ -395,3 +395,13 @@ def default_point_in_time_provider(database: Database, settings: Any | None = No
         logger.info("loading STRATAI EPA chain %s", settings.stratai_epa_chain)
         _DEFAULT_CACHE[key] = StrataiPointInTimeEpa.from_chain_manifest(database, Path(settings.stratai_epa_chain))
     return _DEFAULT_CACHE[key]
+
+
+def through_snapshot(epa_provider, database):
+    """epa_provider reading through `database` (a caller's snapshot) when it reads the database at all.
+
+    The Statbotics source reads team_event_stats through the Database it was built with; inside a view's
+    consistent_reads that opened one connection per lookup (hundreds per event on the hosted API, 2026-11-16). The
+    D18 and STRATAI sources read their own artifacts and are returned as they are.
+    """
+    return epa_provider.reading_through(database) if hasattr(epa_provider, "reading_through") else epa_provider

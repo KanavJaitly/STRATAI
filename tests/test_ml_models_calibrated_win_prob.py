@@ -68,3 +68,11 @@ def test_unfit_model_refuses_to_predict_or_save(tmp_path: Path, rows):
         model.predict_win_prob(_match_features(rows[0]))
     with pytest.raises(RuntimeError):
         model.save(tmp_path / "x.json")
+
+
+def test_batched_predictions_equal_single_ones_exactly(rows, fitted):
+    # The hosted qualification forecast scores every match in one call (2026-11-16); it must not change a value.
+    features = [_match_features(row) for row in rows]
+    assert fitted.predict_win_probs(features) == [fitted.predict_win_prob(f) for f in features]
+    assert fitted.win_prob.predict_win_probs(features) == [fitted.win_prob.predict_win_prob(f) for f in features]
+    assert fitted.predict_win_probs([]) == []
