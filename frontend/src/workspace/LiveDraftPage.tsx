@@ -51,7 +51,7 @@ export function LiveDraftPage({ pollMs = POLL_MS }: { pollMs?: number }) {
   const choose = (key: string) => setParams(key ? { event: key } : {})
   const chooser = <EventChooser key={seasonOf(eventKey) ?? 'none'} value={eventKey} onChange={choose} />
   return (
-    <div className="live-draft">
+    <div className="live-draft instant">
       <PageHeader title="Live alliance selection" subtitle="Record each pick as it happens"
         crumbs={[{ to: '/drive-team', label: 'Drive team' }]} />
       {/* Once the event is set, the chooser folds to one line so the board starts on the first screen. */}

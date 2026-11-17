@@ -7,7 +7,7 @@
 //   `validated_playoff` are distinct labels and are never merged.
 // - An absent value is "—" with its reason, never 0.
 
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 
 import { ApiRequestError } from '../api/client'
 import type { CalibratedWinProbability, EpaSourceInfo, Measure, StrategyOdds, Validation } from '../api/generated'
@@ -85,7 +85,7 @@ export function OddsView({ odds }: { odds: StrategyOdds }) {
   return (
     <span className="odds">
       {odds.display !== null
-        ? <strong className="odds-value">{odds.display}</strong>
+        ? <strong className="odds-value"><SoftText text={odds.display} /></strong>
         : <span className="odds-none">No probability</span>}{' '}
       <ValidationBadge validation={odds.validation} />
     </span>
@@ -104,9 +104,33 @@ function favoured(pRed: number): string {
  * width; nothing is computed or rounded for display. */
 export function FieldBar({ pRed }: { pRed: number | null }) {
   if (pRed === null) return <span className="field-bar field-none" aria-hidden="true" />
+  // The blue track with the red share drawn over it from the left: when the prediction changes, the split slides
+  // (a transform, so it stays smooth) instead of jumping.
   return (
     <span className="field-bar" aria-hidden="true">
-      <span className="field-red" style={{ width: `${pRed * 100}%` }} /><span className="field-blue" />
+      <span className="field-red" style={{ transform: `scaleX(${pRed})` }} />
+    </span>
+  )
+}
+
+/** A value that cross-blurs into its new text when it changes in place (transitions.dev "text swap soft"): the old
+ * text blurs out while the new one blurs in, in the same spot. Nothing moves, nothing waits; the first render and
+ * a value that mounts fresh show at once. Inside .instant (live draft, drive team) the swap has no transition. */
+export function SoftText({ text }: { text: string }) {
+  const [state, setState] = useState<{ current: string; previous: string | null; swapping: boolean }>(
+    { current: text, previous: null, swapping: false })
+  if (text !== state.current) setState({ current: text, previous: state.current, swapping: false })
+  useEffect(() => {
+    if (state.previous === null) return undefined
+    const start = window.requestAnimationFrame(() => setState((s) => ({ ...s, swapping: true })))
+    const end = window.setTimeout(() => setState((s) => ({ ...s, previous: null, swapping: false })), 220)
+    return () => { window.cancelAnimationFrame(start); window.clearTimeout(end) }
+  }, [state.previous, state.current])
+  if (state.previous === null) return <>{text}</>
+  return (
+    <span className={`t-text-soft${state.swapping ? ' is-swapping' : ''}`}>
+      <span className="t-text-soft-old" aria-hidden="true">{state.previous}</span>
+      <span className="t-text-soft-new">{state.current}</span>
     </span>
   )
 }
@@ -116,7 +140,7 @@ export function CalibratedProbabilityView({ value }: { value: CalibratedWinProba
   if (value.validated_value !== null) {
     return (
       <div className="calibrated">
-        <div className="prob-line"><strong className="prob-value">{favoured(value.validated_value)}</strong>
+        <div className="prob-line"><strong className="prob-value"><SoftText text={favoured(value.validated_value)} /></strong>
           <FieldBar pRed={value.validated_value} />{' '}
           <span className="muted">chance to win</span></div>
         <ValidationBadge validation={value.validation} />

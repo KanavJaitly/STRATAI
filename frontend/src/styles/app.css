@@ -184,7 +184,7 @@ button, a.button, .button-link { display: inline-flex; align-items: center; just
   min-height: var(--tap); padding: 0 var(--s-4); border-radius: var(--r-control); font-weight: 500;
   text-decoration: none; cursor: pointer; white-space: nowrap;
   transition: background-color var(--d-fast) var(--ease-out), border-color var(--d-fast) var(--ease-out),
-    color var(--d-fast) var(--ease-out), transform var(--d-fast) var(--ease-out); }
+    color var(--d-fast) var(--ease-out), transform var(--d-press) var(--ease-out); }
 button, a.button { background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); }
 button:not(:disabled):hover, a.button:hover { background: oklch(1 0 0); border-color: oklch(1 0 0); }
 button:not(:disabled):active, a.button:active, .button-link:active { transform: scale(0.98); }
@@ -334,10 +334,10 @@ details.raw pre, pre.page-text { max-height: 50dvh; overflow: auto; margin: var(
    split at the served P(red wins). The number sits beside the bar, never inside it. With no validated probability the
    bar is neutral grey, never a 50/50 split. */
 .prob-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
-.field-bar { display: flex; flex: 1 1 160px; max-width: 320px; height: 8px; gap: 2px; overflow: hidden; border-radius: 2px; }
-.field-bar > span { display: block; height: 100%; }
-.field-bar .field-red { background: var(--red); border-radius: 2px 0 0 2px; }
-.field-bar .field-blue { flex: 1 1 auto; background: var(--blue); border-radius: 0 2px 2px 0; }
+.field-bar { position: relative; display: block; flex: 1 1 160px; max-width: 320px; height: 8px; overflow: hidden;
+  border-radius: 2px; background: var(--blue); }
+.field-bar .field-red { position: absolute; inset: 0; background: var(--red); transform-origin: left center;
+  transition: transform var(--d-move) var(--ease-out); }
 .field-bar.field-none { background: repeating-linear-gradient(90deg, var(--field-none) 0 6px, transparent 6px 8px); }
 /* the neutral bar stands alone in a vertical stack: a thin line, never a block */
 .calibrated > .field-bar { flex: none; width: 100%; max-width: 320px; height: 8px; }
@@ -385,7 +385,7 @@ table.grid tr.row-ours > * { background: var(--ours-bg); }
 .pick-metric-value { font-size: var(--fs-body); font-weight: 500; font-variant-numeric: tabular-nums; }
 .pick-metric-label { font-size: var(--fs-label); color: var(--muted); }
 .pick-move { display: flex; gap: var(--s-1); }
-.pick-message { min-height: 1.25em; margin: var(--s-1) 0; color: var(--text-2); }
+.pick-message { min-height: 1.5em; line-height: 1.5; margin: var(--s-1) 0; color: var(--text-2); }
 .pick-import { margin: var(--s-3) 0; padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-control); }
 .icon-button { width: var(--tap); min-width: var(--tap); padding: 0; }
 @media (max-width: 720px) {
@@ -547,9 +547,59 @@ table.grid tr.row-ours > * { background: var(--ours-bg); }
 .drawer-board-status p { margin: var(--s-1) 0; }
 .drawer-foot { margin-top: var(--s-5); }
 @media (prefers-reduced-motion: no-preference) {
-  .profile-drawer { animation: profile-drawer-in var(--d-base) var(--ease-out); }
+  .profile-drawer { animation: profile-drawer-in var(--d-fast) var(--ease-out); }
 }
 @keyframes profile-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- motion: explains a change, never delays a tap or a read ---------- */
+
+/* A value that changes in place cross-blurs (transitions.dev 34, text swap soft; the width easing is not used) */
+.t-text-soft {
+  display: inline-grid;
+  justify-items: var(--text-soft-align, start);
+}
+.t-text-soft > span {
+  grid-area: 1 / 1;
+  white-space: pre;
+  transition:
+    filter  var(--d-base) var(--ease-in-out),
+    opacity var(--d-base) var(--ease-in-out);
+}
+.t-text-soft-new {
+  opacity: 0;
+  filter: blur(var(--blur-small));
+}
+.t-text-soft.is-swapping .t-text-soft-old {
+  opacity: 0;
+  filter: blur(var(--blur-small));
+}
+.t-text-soft.is-swapping .t-text-soft-new {
+  opacity: 1;
+  filter: blur(0);
+}
+
+/* Two icons in one slot cross-fade with a short blur (copy -> check) */
+.icon-swap { display: inline-grid; }
+.icon-swap > .icon { grid-area: 1 / 1;
+  transition: opacity var(--d-base) var(--ease-in-out), filter var(--d-base) var(--ease-in-out),
+    transform var(--d-base) var(--ease-out); }
+.icon-swap > .icon-b, .icon-swap.is-swapped > .icon-a { opacity: 0; filter: blur(var(--blur-small)); transform: scale(0.8); }
+.icon-swap.is-swapped > .icon-b { opacity: 1; filter: blur(0); transform: none; }
+
+/* A card section that expands (details) grows to its height instead of jumping (where the browser supports it) */
+:root { interpolate-size: allow-keywords; }
+details::details-content { block-size: 0; overflow-y: clip;
+  transition: block-size var(--d-base) var(--ease-out), content-visibility var(--d-base) allow-discrete; }
+details[open]::details-content { block-size: auto; }
+.nav-more::details-content { transition: none; block-size: auto; overflow: visible; }
+
+/* The Admin menu opens from where it is anchored: top right on a laptop, the bottom bar on a phone */
+.nav-more[open] .nav-menu { transform-origin: top right; animation: menu-in var(--d-base) var(--ease-out); }
+@keyframes menu-in { from { opacity: 0; transform: scale(0.97); } }
+
+/* The live draft and the drive team's next match are read and tapped under time pressure: no motion at all there */
+.instant *, .instant *::before, .instant *::after, .instant::details-content, .instant *::details-content {
+  transition: none !important; animation: none !important; }
 
 /* ---------- phones ---------- */
 
@@ -571,6 +621,7 @@ table.grid tr.row-ours > * { background: var(--ours-bg); }
   .nav-menu { position: fixed; top: auto; left: var(--s-2); right: var(--s-2);
     bottom: calc(var(--bottom-bar) + env(safe-area-inset-bottom) + var(--s-2)); max-height: 70dvh; overflow-y: auto; }
   .nav-menu a { min-height: var(--tap); }
+  .nav-more[open] .nav-menu { transform-origin: bottom center; }
   .card { padding: var(--s-4); }
   .facts { grid-template-columns: 1fr; }
   .facts dd { margin-bottom: var(--s-2); }
@@ -591,8 +642,11 @@ table.grid tr.row-ours > * { background: var(--ours-bg); }
 /* ---------- reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important;
+  /* no movement: transforms, sizes and the spinner stop; the reordering slide is skipped in script */
+  *, *::before, *::after, ::details-content { transition-duration: 0ms !important; animation-duration: 0ms !important;
     animation-iteration-count: 1 !important; }
+  /* a value change may still fade, without blur or movement */
+  .t-text-soft > span { transition: opacity var(--d-fast) linear !important; filter: none !important; }
 }
 
 /* ---------- print: the shareable report on paper ---------- */
