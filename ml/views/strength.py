@@ -39,7 +39,7 @@ from ml.features.assembler import (
     point_in_time_scores,
 )
 from ml.features.scale import ScaleLookup
-from ml.ratings.provider import PointInTimeEpaProvider
+from ml.ratings.provider import PointInTimeEpaProvider, through_snapshot
 
 DESCRIPTIVE = "descriptive"
 DEFINITION_PENDING = "descriptive_definition_pending"  # Phase 3 M14: defense definition decision open
@@ -218,6 +218,7 @@ def build_team_strength(
 ) -> TeamStrengthView:
     """The P5-M3 view; every value equals what build_team_features computes."""
     scales = scale_lookup or ScaleLookup(database)
+    epa_provider = through_snapshot(epa_provider, database)  # one connection, not one per EPA lookup
     features = build_team_features(database, team_number, event_key, as_of, epa_provider=epa_provider,
                                    scale_lookup=scales)
     scores, _ = point_in_time_scores(database, team_number, event_key, as_of)

@@ -24,6 +24,7 @@ from database.connection import Database, consistent_reads
 from ml.features.assembler import MatchFeatureRow, build_match_feature_row
 from ml.features.roster import get_match_competition_level, get_match_event_and_scheduled_time
 from ml.features.scale import ScaleLookup
+from ml.ratings.provider import through_snapshot
 from ml.strategy.engine import Recommendation, StrategyEngine
 from ml.strategy.service import (
     MatchNotFound,
@@ -110,6 +111,7 @@ def pre_match_inputs(database: Database, match_key: str, as_of: datetime, *, epa
     if scheduled is None:
         raise MatchNotScheduled(match_key)
     moment = min(as_of, scheduled)
+    epa_provider = through_snapshot(epa_provider, database)  # one connection, not one per EPA lookup
     level = get_match_competition_level(database, match_key)
     scope = SCOPE_QUALIFICATION if level == "qualification" else (SCOPE_PLAYOFF if level else SCOPE_UNSPECIFIED)
     scales = ScaleLookup(database)
