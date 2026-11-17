@@ -72,6 +72,7 @@ If Render gives the service a name other than `stratai-api.onrender.com`, change
 | `TEAM_ADMIN_JOIN_CODE` | a different, long random code; signs up admins; share it only with admins | set by hand (`sync: false`), never committed |
 | `ADMIN_EMAILS` | optional: emails that sign up as admin whichever code they use | set by hand (`sync: false`) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | your mail provider's SMTP settings | set by hand; without them "forgot password" cannot send a code |
+| `BREVO_API_KEY` | a Brevo API key (SMTP & API → API keys) | set by hand. Render's free plan blocks outgoing SMTP, so set this there: email then goes through Brevo's HTTPS API, from `SMTP_FROM`, which must be a verified sender in Brevo |
 | `AUTH_TRUSTED_PROXY_HOPS` | `2` (Vercel, then Render) | set by hand; without it every request shares the proxy's address for rate limiting |
 | `PUBLIC_APP_URL` | `https://mortstratai.vercel.app` (optional) | set by hand; named in reset emails |
 
