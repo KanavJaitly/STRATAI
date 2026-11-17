@@ -87,7 +87,25 @@ function recs(overrides: Partial<DraftRecommendations> = {}): DraftRecommendatio
   }
 }
 
+// The board reads once on load. Tests that are not about polling switch the 2 s poll off, so the page cannot change
+// between a test's steps; every other page (the team page, the route guards) still renders through the real shell.
+const NO_POLL = 3_600_000
+function PageWithoutPolling() {
+  return (
+    <Routes>
+      <Route path="/alliance-selection/live" element={<LiveDraftPage pollMs={NO_POLL} />} />
+      <Route path="*" element={<Shell />} />
+    </Routes>
+  )
+}
+
 function renderAt(url: string) {
+  return render(<SessionProvider><AuthProvider><MemoryRouter initialEntries={[url]}><PageWithoutPolling /></MemoryRouter>
+  </AuthProvider></SessionProvider>)
+}
+
+/** The real shell (header, navigation, route guards), polling as in production. */
+function renderInShell(url: string) {
   return render(
     <SessionProvider><AuthProvider><MemoryRouter initialEntries={[url]}><Shell /></MemoryRouter></AuthProvider></SessionProvider>)
 }
@@ -115,7 +133,7 @@ describe('live alliance selection', () => {
   it('is shown as a team page: the team header, without the public pages\' name and write-token bar', async () => {
     mockApi({ 'GET /auth/session': VIEWER, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
       [`GET ${BASE}/5`]: draft({ can_record: false }), [`GET ${BASE}/5/recommendations`]: recs() })
-    renderAt(URL)
+    renderInShell(URL)
     await screen.findByRole('region', { name: 'Your picks' })
     expect(screen.getByText('Team 1 · Synthetic Robotics')).toBeInTheDocument() // the signed-in team, from the session
     expect(screen.queryByLabelText('Write token')).not.toBeInTheDocument()
@@ -260,7 +278,7 @@ describe('live alliance selection', () => {
 
   it('is refused to a base member', async () => {
     mockApi({ 'GET /auth/session': BASE_MEMBER, 'GET /events': EVENTS, ...SEASON_EVENTS })
-    renderAt(URL)
+    renderInShell(URL)
     expect(await screen.findByText(/Your role does not include this page/)).toBeInTheDocument()
   })
 })
