@@ -3,7 +3,7 @@
 // header shows the field mark for a team without one. It lives here until the API's team settings carry a logo.
 
 export interface TeamLogo {
-  /** 1x image, 20 px tall (the height of the STRATAI wordmark line), plus sharper copies for denser screens. */
+  /** 1x image, 24 px tall (checked on a phone: the detail holds at 24, not at 20), plus sharper copies for denser screens. */
   src: string
   srcSet: string
   width: number
@@ -18,10 +18,10 @@ export interface TeamBranding {
 const BRANDING: Record<number, TeamBranding> = {
   11: {
     logo: {
-      src: '/teams/11/logo-20.png',
-      srcSet: '/teams/11/logo-20.png 1x, /teams/11/logo-40.png 2x, /teams/11/logo-60.png 3x',
-      width: 26,
-      height: 20,
+      src: '/teams/11/logo-24.png',
+      srcSet: '/teams/11/logo-24.png 1x, /teams/11/logo-48.png 2x, /teams/11/logo-72.png 3x',
+      width: 31,
+      height: 24,
       alt: 'MORT logo',
     },
   },
