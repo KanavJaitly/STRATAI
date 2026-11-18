@@ -1,6 +1,7 @@
-// Each team's branding (its logo), looked up by the signed-in team's number. This is a per-team setting, not a
-// hardcoded header: another team using StratAI adds its own entry and files under public/teams/<number>/, and the
-// header shows the field mark for a team without one. It lives here until the API's team settings carry a logo.
+// Each team's branding (its logo), looked up by the signed-in team's number. StratAI is set up for MORT (Team 11), so
+// MORT's branding is the default: signed out (the login page) and for any team without its own entry. Another team
+// using StratAI adds its own entry and files under public/teams/<number>/ and gets its logo once signed in. It lives
+// here until the API's team settings carry a logo.
 
 export interface TeamLogo {
   /** 1x image, 24 px tall (checked on a phone: the detail holds at 24, not at 20), plus sharper copies for denser screens. */
@@ -13,12 +14,13 @@ export interface TeamLogo {
 
 export interface TeamBranding {
   logo: TeamLogo
-  /** Square copies of the logo for the browser tab, 32 px and 64 px (a sharp screen draws the tab icon at 32 px). */
+  /** Square tab icons, 32 px and a larger one for sharp screens (only used for a team other than the default: the
+   * default team's icons are index.html's favicons). */
   tabIcon: { src32: string; src64: string }
 }
 
-/** The tab icon when no team logo applies (signed out, or a team without one): the red/blue field mark. */
-export const DEFAULT_TAB_ICON = '/favicon.svg'
+/** The team whose branding is the default (index.html's favicons are its icons too). */
+export const DEFAULT_TEAM = 11
 
 const BRANDING: Record<number, TeamBranding> = {
   11: {
@@ -29,10 +31,16 @@ const BRANDING: Record<number, TeamBranding> = {
       height: 24,
       alt: 'MORT logo',
     },
-    tabIcon: { src32: '/teams/11/icon-32.png', src64: '/teams/11/icon-64.png' },
+    tabIcon: { src32: '/favicon-32.png', src64: '/favicon-48.png' },
   },
 }
 
-export function teamBranding(teamNumber: number | null | undefined): TeamBranding | undefined {
-  return teamNumber == null ? undefined : BRANDING[teamNumber]
+/** The branding for a team: its own entry, else the default team's (MORT). Never undefined. */
+export function teamBranding(teamNumber: number | null | undefined): TeamBranding {
+  return (teamNumber == null ? undefined : BRANDING[teamNumber]) ?? BRANDING[DEFAULT_TEAM]
+}
+
+/** Whether a team has branding of its own that differs from the default (so the tab icon should change). */
+export function hasOwnBranding(teamNumber: number | null | undefined): boolean {
+  return teamNumber != null && teamNumber !== DEFAULT_TEAM && teamNumber in BRANDING
 }
