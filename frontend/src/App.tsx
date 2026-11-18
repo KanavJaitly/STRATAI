@@ -63,9 +63,6 @@ function SessionBar() {
   const [expanded, setExpanded] = useState(false)
   return (
     <div className={`session-bar${expanded ? '' : ' collapsed'}`}>
-      <button type="button" className="session-toggle link" aria-expanded={expanded} aria-controls="session-fields"
-        onClick={() => setExpanded(!expanded)}>Session</button>
-      <div className="session-fields" id="session-fields">
       {inInputs && (
         <label>
           Season
@@ -83,6 +80,9 @@ function SessionBar() {
           </select>
         </label>
       )}
+      <button type="button" className="session-toggle link" aria-expanded={expanded} aria-controls="session-fields"
+        onClick={() => setExpanded(!expanded)}>Session</button>
+      <div className="session-fields" id="session-fields">
       <label>
         Your name
         <input value={actor} onChange={(e) => setActor(e.target.value)} placeholder="recorded on every change"
