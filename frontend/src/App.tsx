@@ -18,7 +18,7 @@ import { DriveTeamDashboardPage, HomeRedirect, ScoutingDashboardPage } from './w
 import { LiveDraftPage } from './workspace/LiveDraftPage'
 import { TeamManagementPage } from './workspace/TeamManagementPage'
 import { BrandMark, Icon } from './components/icons'
-import { teamBranding } from './team/branding'
+import { DEFAULT_TAB_ICON, teamBranding } from './team/branding'
 import { OverviewPage } from './pages/OverviewPage'
 import { GameSpecPage } from './pages/GameSpecPage'
 import { ProfilesPage } from './pages/ProfilesPage'
@@ -154,7 +154,9 @@ const WORKSPACE_AREA = /^\/(auth|account|home|team|drive-team|scouting|alliance-
 function Brand() {
   const { signedIn, session } = useAuth()
   const team = signedIn ? session.workspace : null
-  const logo = teamBranding(team?.team_number)?.logo
+  const branding = teamBranding(team?.team_number)
+  const logo = branding?.logo
+  useTabIcon(branding?.tabIcon)
   return (
     <div className="brand">
       {logo
@@ -164,6 +166,21 @@ function Brand() {
       {team && <span>Team {team.team_number} · {team.team_name}</span>}
     </div>
   )
+}
+
+/** The browser tab shows the signed-in team's logo when it has one, else the field mark (index.html's favicon). */
+function useTabIcon(icon: { src32: string; src64: string } | undefined) {
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+    if (!link) return
+    if (icon) {
+      link.type = 'image/png'
+      link.href = window.devicePixelRatio > 1 ? icon.src64 : icon.src32
+    } else {
+      link.type = 'image/svg+xml'
+      link.href = DEFAULT_TAB_ICON
+    }
+  }, [icon])
 }
 
 /** A sign-in link when nobody is signed in; otherwise who is signed in, with their account and sign-out. */
