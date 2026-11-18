@@ -13,7 +13,12 @@ export interface TeamLogo {
 
 export interface TeamBranding {
   logo: TeamLogo
+  /** Square copies of the logo for the browser tab, 32 px and 64 px (a sharp screen draws the tab icon at 32 px). */
+  tabIcon: { src32: string; src64: string }
 }
+
+/** The tab icon when no team logo applies (signed out, or a team without one): the red/blue field mark. */
+export const DEFAULT_TAB_ICON = '/favicon.svg'
 
 const BRANDING: Record<number, TeamBranding> = {
   11: {
@@ -24,6 +29,7 @@ const BRANDING: Record<number, TeamBranding> = {
       height: 24,
       alt: 'MORT logo',
     },
+    tabIcon: { src32: '/teams/11/icon-32.png', src64: '/teams/11/icon-64.png' },
   },
 }
 
