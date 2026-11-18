@@ -18,6 +18,7 @@ import { DriveTeamDashboardPage, HomeRedirect, ScoutingDashboardPage } from './w
 import { LiveDraftPage } from './workspace/LiveDraftPage'
 import { TeamManagementPage } from './workspace/TeamManagementPage'
 import { Icon } from './components/icons'
+import { WakingNotice } from './components/WakingNotice'
 import { hasOwnBranding, teamBranding } from './team/branding'
 import { OverviewPage } from './pages/OverviewPage'
 import { GameSpecPage } from './pages/GameSpecPage'
@@ -258,7 +259,7 @@ export function Shell() {
       </header>
       {/* A season change remounts the page: no state from another season survives. */}
       <main id="main" tabIndex={-1} key={season}>
-        {waiting ? <p className="muted" role="status">Checking your sign-in…</p>
+        {waiting ? <><p className="muted" role="status">Checking your sign-in…</p><WakingNotice /></>
           : needsSignIn ? <Navigate to={`/auth/login?next=${encodeURIComponent(pathname + search)}`} replace />
           : blocked ? (
             <div className="notice notice-warn" role="alert">
