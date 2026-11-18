@@ -149,6 +149,7 @@ OPERATION_CLASSES = {
     "POST /workspace/members/{membership_id}/profile": NOT_OUTPUT,
     "POST /workspace/members/{membership_id}/remove": NOT_OUTPUT,
     "GET /workspace/settings": NOT_OUTPUT, "POST /workspace/settings": NOT_OUTPUT,
+    "GET /workspace/team-events": NOT_OUTPUT,  # the team's event list and its current event, by date (2026-11-17)
     "GET /workspace/activity": NOT_OUTPUT, "GET /workspace/analytics": NOT_OUTPUT,
     "GET /workspace/scouting/scouts": NOT_OUTPUT,
     "GET /workspace/scouting/assignments": NOT_OUTPUT, "POST /workspace/scouting/assignments": NOT_OUTPUT,

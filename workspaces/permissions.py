@@ -1,18 +1,24 @@
 """Roles and permissions.
 
-Two roles. An administrator holds every permission, always. A base member holds exactly ROLE_GRANTS[BASE]: read-only
-access to the events list and an event's page (the routes those two pages call), and nothing else.
+Five roles (2026-11-17; migration 0016 added strategy, drive and scout). An administrator holds every permission,
+always; mentors are administrators. Every other role holds exactly its ROLE_GRANTS entry:
+- base (Member): the events list and an event's page, read-only;
+- scout: those, plus the scouting forms, their own assignments and submissions;
+- drive (Drive team): those, plus match win probability, team pages and the drive team page;
+- strategy (Strategy team): event data, match strategy tools and reports, alliance selection including recording the
+  live draft, every scouting report and assigning scouts.
+New sign-ups are members; an administrator changes a role in Team > Members.
 
 Grants are fixed in code, not configurable per team (migration 0015 dropped the stored role permissions), so no
-administrator action can widen what a base member sees. To add a role later: add its name to ROLES and ROLE_LABELS,
+administrator action can widen what a role sees. To add a role later: add its name to ROLES and ROLE_LABELS,
 give it an entry in ROLE_GRANTS, and extend the role CHECK constraint on team_memberships in a migration.
 """
 
 from __future__ import annotations
 
-ADMIN, BASE = "admin", "base"
-ROLES = (ADMIN, BASE)
-ROLE_LABELS = {ADMIN: "Administrator", BASE: "Member"}
+ADMIN, BASE, STRATEGY, DRIVE, SCOUT = "admin", "base", "strategy", "drive", "scout"
+ROLES = (ADMIN, BASE, STRATEGY, DRIVE, SCOUT)  # the order of migration 0016's role CHECK
+ROLE_LABELS = {ADMIN: "Administrator", BASE: "Member", STRATEGY: "Strategy team", DRIVE: "Drive team", SCOUT: "Scout"}
 
 # Every permission, with what it opens. api/app.py gates each router on one of these; the /workspace routes check
 # theirs directly.
@@ -38,8 +44,14 @@ ALL_PERMISSIONS: dict[str, str] = {
 }
 
 # What each role other than admin holds. Base is read-only: the events list (/) and an event's page (/events/:key).
+_EVENT_DATA = {"team_info", "event_analysis", "qualification_forecast"}
+
 ROLE_GRANTS: dict[str, frozenset[str]] = {
-    BASE: frozenset({"team_info", "event_analysis", "qualification_forecast"}),
+    BASE: frozenset(_EVENT_DATA),
+    SCOUT: frozenset(_EVENT_DATA | {"scouting_forms", "scouting_submit"}),
+    DRIVE: frozenset(_EVENT_DATA | {"match_predictions", "team_analytics"}),
+    STRATEGY: frozenset(_EVENT_DATA | {"match_predictions", "team_analytics", "strategy_tools", "alliance_selection",
+                                       "alliance_selection_record", "scouting_view", "scouting_assign"}),
 }
 
 
