@@ -13,8 +13,10 @@ import { CalibratedProbabilityView, OddsView } from '../dashboard/display'
 import { roleText } from '../dashboard/strategyModel'
 import { OursMark } from '../team/OursMark'
 import { useOurTeam } from '../team/ours'
+import { OurEventsSwitch } from '../team/OurEventsSwitch'
+import { useTeamEvents } from '../team/teamEvents'
 import { matchLabel as dashboardMatchLabel, matchPath, teamPath } from '../dashboard/routing'
-import { teamScouting, workspace, type Assignment } from '../auth/api'
+import { teamScouting, type Assignment } from '../auth/api'
 import { useAuth } from '../auth/authState'
 import { homeFor } from '../auth/roles'
 import { EventChooser, EventName } from './EventChooser'
@@ -26,20 +28,34 @@ export function HomeRedirect() {
   return <Navigate to={signedIn ? homeFor(role) : '/auth/login'} replace />
 }
 
-/** The event a dashboard works on: the one chosen on the page, else the team's default event. */
-function useEventKey(): [string, (key: string) => void, boolean] {
-  const overview = useLoad(() => workspace.overview(), [])
+/** The event a dashboard works on: the one chosen on the page, else the team's current event (Team > Settings > Our
+ * events: pinned, happening now, next or most recent). Every member can read it, not only administrators. */
+function useEventKey(): [string, (key: string) => void, boolean, ReturnType<typeof useTeamEvents>] {
+  const events = useTeamEvents()
   const [chosen, setChosen] = useState<string | null>(null)
-  return [chosen ?? overview.data?.settings.default_event_key ?? '', setChosen, overview.loading]
+  return [chosen ?? events.current_event_key ?? '', setChosen, events.loading, events]
 }
 
-/** The event chooser in a card. Keyed by the event's year, so it opens on the right year whenever the chosen event
- * changes from outside (the team's default event arriving, or "Scout this" on an assignment). */
-function EventSection({ eventKey, onChange }: { eventKey: string; onChange: (key: string) => void }) {
+/** Our events as one-tap buttons; any other event behind "Another event" (folded when the team has listed events).
+ * Keyed by the event's year, so the chooser opens on the right year when the event changes from outside. */
+function EventSection({ eventKey, onChange, events }: { eventKey: string; onChange: (key: string) => void;
+  events: ReturnType<typeof useTeamEvents> }) {
+  const chooser = <EventChooser key={seasonOf(eventKey) ?? 'none'} value={eventKey} onChange={onChange} />
+  if (events.team_events.length === 0) {
+    return (
+      <section className="card">
+        {chooser}
+        <p className="muted small">An administrator can list the team&apos;s events in Team &gt; Settings.</p>
+      </section>
+    )
+  }
   return (
-    <section className="card">
-      <EventChooser key={seasonOf(eventKey) ?? 'none'} value={eventKey} onChange={onChange} />
-      <p className="muted small">Your administrator can set the team&apos;s default event in Team Settings.</p>
+    <section className="card event-switch">
+      <OurEventsSwitch events={events} value={eventKey} onChange={onChange} />
+      <details className="event-fold-inline">
+        <summary>Another event</summary>
+        {chooser}
+      </details>
     </section>
   )
 }
@@ -54,7 +70,7 @@ function matchLabel(match: { competition_level: string | null; set_number: numbe
 
 export function DriveTeamDashboardPage() {
   const { can } = useAuth()
-  const [eventKey, setEventKey] = useEventKey()
+  const [eventKey, setEventKey, , teamEvents] = useEventKey()
   const eventName = useEventName(eventKey)
   const event = encodeURIComponent(eventKey)
   const tools = [
@@ -80,7 +96,7 @@ export function DriveTeamDashboardPage() {
       <PageHeader title="Drive team" />
       {/* Read between matches in a few seconds: our next match, its field bar and what each robot does, first. */}
       {eventKey && <NextMatchCard eventKey={eventKey} />}
-      <EventSection eventKey={eventKey} onChange={setEventKey} />
+      <EventSection eventKey={eventKey} onChange={setEventKey} events={teamEvents} />
       {!eventKey ? <p className="notice notice-info">Choose an event to open its tools.</p> : (
         <>
           <section className="card">
@@ -273,16 +289,15 @@ const RATINGS = [0, 1, 2, 3, 4, 5]
 
 export function ScoutingDashboardPage() {
   const { can, session } = useAuth()
-  const overview = useLoad(() => workspace.overview(), [])
-  const [eventKey, setEventKey] = useEventKey()
+  const [eventKey, setEventKey, , teamEvents] = useEventKey()
   const mine = useLoad(() => teamScouting.assignments({ mine: true }), [])
   const history = useLoad(() => teamScouting.reports({ mine: true }), [])
   const [selected, setSelected] = useState<Assignment | null>(null)
-  const instructions = overview.data?.settings.scouting_instructions
+  const instructions = teamEvents.scouting_instructions
 
   return (
     <div>
-      <PageHeader title="Scouting dashboard" subtitle={`Team ${session.workspace?.team_number} · ${session.user?.name}`} />
+      <PageHeader title="Scouting" subtitle={session.user?.name} />
       {instructions && <div className="notice notice-info"><strong>From your team:</strong> {instructions}</div>}
       <section className="card">
         <h2>Your upcoming assignments</h2>
@@ -301,7 +316,7 @@ export function ScoutingDashboardPage() {
           </ul>
         ))}
       </section>
-      <EventSection eventKey={eventKey} onChange={(key) => { setEventKey(key); setSelected(null) }} />
+      <EventSection eventKey={eventKey} onChange={(key) => { setEventKey(key); setSelected(null) }} events={teamEvents} />
       {eventKey && can('scouting_submit') && (
         <ScoutingForm eventKey={eventKey} assignment={selected} onSubmitted={async () => {
           setSelected(null)

@@ -34,7 +34,7 @@ class _Body(BaseModel):
 
 
 class RoleBody(_Body):
-    role: Literal["admin", "base"]
+    role: Literal["admin", "base", "strategy", "drive", "scout"]
 
 
 class StatusBody(_Body):
@@ -47,7 +47,9 @@ class MemberProfileBody(_Body):
 
 class SettingsBody(_Body):
     team_name: str | None = Field(default=None, max_length=512)
-    default_event_key: str | None = Field(default=None, max_length=64)
+    default_event_key: str | None = Field(default=None, max_length=64)  # the pin (kept for older clients)
+    pinned_event_key: str | None = Field(default=None, max_length=64)
+    team_event_keys: list[str] | None = Field(default=None, max_length=20)
     scouting_instructions: str | None = Field(default=None, max_length=4000)
 
 
@@ -108,6 +110,13 @@ def post_remove(membership_id: int = _member_id, database: Database = Depends(ge
 def get_team_settings(database: Database = Depends(get_database),
                       context: SessionContext = Depends(require_permission("team_settings"))) -> Any:
     return call(management.get_team_settings, database, context)
+
+
+@router.get("/team-events", summary="The team's events and its current event (pinned, happening now, next or most "
+            "recent)", responses=error_responses(_ADMIN, validates_input=False))
+def get_team_events(database: Database = Depends(get_database),
+                    context: SessionContext = Depends(require_permission("team_info"))) -> Any:
+    return call(management.team_events, database, context)
 
 
 @router.post("/settings", dependencies=[Depends(require_csrf)], summary="Change team settings",

@@ -66,7 +66,7 @@ export function AccountsUnavailableNotice() {
 
 /** Where to go after signing in: the requested page if this role may open it, otherwise the role's own landing. */
 function afterSignIn(session: SessionInfo, next: string | null): string {
-  return landingFor(session.role, next)
+  return landingFor(session.role, next, session.permissions ?? [])
 }
 
 // --- /auth ---------------------------------------------------------------------------------------------------------

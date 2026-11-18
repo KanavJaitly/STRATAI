@@ -1,3 +1,4 @@
+import { useTeamEvents } from '../../team/teamEvents'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
@@ -24,6 +25,8 @@ function dates(event: EventOut) {
  * Without a season in the URL the page opens on the current year; if that year has no events yet (early January,
  * before the new season's events exist), it moves once to the previous year, so it never opens on an empty season.
  * A season named in the URL is always shown as asked. */
+const OUR_STATUS: Record<string, string> = { happening: 'happening now', upcoming: 'upcoming', past: 'finished' }
+
 export function EventsPage() {
   const [params, setParams] = useSearchParams()
   const chosen = Number(params.get('season')) || null
@@ -55,9 +58,25 @@ export function EventsPage() {
     if (Number.isInteger(value) && value >= 1992) setParams({ season: String(value) })
   }
 
+  const teamEvents = useTeamEvents()
+  const ours = new Set(teamEvents.team_events.map((e) => e.event_key))
   return (
     <>
       <PageHeader title="Events" subtitle="Pick an event for its rankings, matches and forecasts" />
+      {teamEvents.team_events.length > 0 && (
+        <section className="card" aria-labelledby="our-events-heading">
+          <h2 id="our-events-heading">Our events</h2>
+          <ul className="our-events-list">
+            {teamEvents.team_events.map((e) => (
+              <li key={e.event_key} className={e.event_key === teamEvents.current_event_key ? 'is-current' : undefined}>
+                <Link to={`/events/${encodeURIComponent(e.event_key)}`}>{e.name ?? e.event_key}</Link>
+                <span className="small muted">{[e.start_date, e.event_key === teamEvents.current_event_key ? 'current'
+                  : e.status ? OUR_STATUS[e.status] : null].filter(Boolean).join(' · ')}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <section className="card" aria-labelledby="events-heading">
         <div className="card-head">
           <h2 id="events-heading">{season} season</h2>
@@ -95,7 +114,7 @@ export function EventsPage() {
                         <thead><tr><th scope="col">Event</th><th scope="col">Key</th><th scope="col">Dates</th><th scope="col">Location</th></tr></thead>
                         <tbody>
                           {shown.map((e) => (
-                            <tr key={e.event_key}>
+                            <tr key={e.event_key} className={ours.has(e.event_key) ? 'row-ours' : undefined}>
                               <th scope="row"><Link to={`/events/${encodeURIComponent(e.event_key)}`}>{e.name ?? e.event_key}</Link></th>
                               <td className="phone-hide"><code>{e.event_key}</code></td>
                               <td className="nowrap">{dates(e)}</td>

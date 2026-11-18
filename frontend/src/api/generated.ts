@@ -912,7 +912,7 @@ export interface RobotPlan {
 }
 
 export interface RoleBody {
-  role: "admin" | "base"
+  role: "admin" | "base" | "strategy" | "drive" | "scout"
 }
 
 export interface RosterTeamOut {
@@ -1006,7 +1006,9 @@ export interface ServedModelInfo {
 
 export interface SettingsBody {
   default_event_key?: string | null
+  pinned_event_key?: string | null
   scouting_instructions?: string | null
+  team_event_keys?: string[] | null
   team_name?: string | null
 }
 

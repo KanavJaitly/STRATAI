@@ -8,6 +8,7 @@ the caller's workspace_id as well as its own id.
 
 from __future__ import annotations
 
+from datetime import date, datetime, timezone
 from typing import Any
 
 import psycopg
@@ -52,8 +53,9 @@ def workspace_overview(database: Database, context: SessionContext) -> dict[str,
         cursor.execute("SELECT count(*) FROM team_memberships WHERE workspace_id = %s AND status = 'active'",
                        (context.workspace_id,))
         active_members = cursor.fetchone()[0]
+        settings_out = _public_settings(cursor, settings)
     return {"team_number": number, "team_name": name, "verification_status": status, "verified_at": verified_at,
-            "created_at": created_at, "settings": _public_settings(settings), "active_members": active_members,
+            "created_at": created_at, "settings": settings_out, "active_members": active_members,
             "role": context.role, "role_label": ROLE_LABELS[context.role], "permissions": sorted(context.permissions)}
 
 
@@ -207,11 +209,67 @@ def remove_member(database: Database, context: SessionContext, membership_id: in
 # --- settings -------------------------------------------------------------------------------------------------
 
 SETTINGS_KEYS = ("default_event_key", "scouting_instructions")
+MAX_TEAM_EVENTS = 20
+
+# The team's events live in workspaces.settings (JSONB, so no migration): "team_event_keys", the events the team is
+# going to, and "default_event_key", which since 2026-11-17 is the optional *pin*. The current event the dashboards
+# open on is computed: the pin when set, else the team event happening today, else the next one, else the most recent.
 
 
-def _public_settings(stored: dict[str, Any] | None) -> dict[str, Any]:
+def _today() -> date:
+    return datetime.now(timezone.utc).date()
+
+
+def _event_rows(cursor: Any, keys: list[str]) -> list[dict[str, Any]]:
+    if not keys:
+        return []
+    cursor.execute("SELECT event_key, name, start_date, end_date FROM events WHERE event_key = ANY(%s)", (keys,))
+    rows = {key: (name, start, end) for key, name, start, end in cursor.fetchall()}
+    today = _today()
+    out = []
+    for key in keys:
+        if key not in rows:
+            continue
+        name, start, end = rows[key]
+        status = None if start is None else ("upcoming" if start > today
+                                             else "past" if (end or start) < today else "happening")
+        out.append({"event_key": key, "name": name, "start_date": start, "end_date": end, "status": status})
+    # by date, undated last
+    return sorted(out, key=lambda e: (e["start_date"] is None, e["start_date"] or date.max, e["event_key"]))
+
+
+def current_team_event(events: list[dict[str, Any]], pinned: str | None) -> tuple[str | None, str | None]:
+    """(event_key, reason): the pin; else the team event happening today; else the next; else the most recent."""
+    if pinned:
+        return pinned, "pinned"
+    for status, pick in (("happening", min), ("upcoming", min)):
+        found = [e for e in events if e["status"] == status]
+        if found:
+            return pick(found, key=lambda e: e["start_date"])["event_key"], "happening" if status == "happening" else "next"
+    past = [e for e in events if e["status"] == "past"]
+    if past:
+        return max(past, key=lambda e: e["end_date"] or e["start_date"])["event_key"], "most_recent"
+    return None, None
+
+
+def _team_event_state(cursor: Any, stored: dict[str, Any] | None) -> dict[str, Any]:
     stored = stored or {}
-    return {key: stored.get(key) for key in SETTINGS_KEYS}
+    pinned = stored.get("default_event_key")
+    keys = list(dict.fromkeys([*(stored.get("team_event_keys") or []), *([pinned] if pinned else [])]))
+    events = _event_rows(cursor, keys)
+    current, reason = current_team_event(events, pinned)
+    return {"team_events": events, "pinned_event_key": pinned, "current_event_key": current, "current_reason": reason}
+
+
+def _public_settings(cursor: Any, stored: dict[str, Any] | None) -> dict[str, Any]:
+    state = _team_event_state(cursor, stored)
+    return {
+        # the event dashboards open on: the computed current event (the pin when one is set)
+        "default_event_key": state["current_event_key"],
+        "scouting_instructions": (stored or {}).get("scouting_instructions"),
+        "team_event_keys": [e["event_key"] for e in state["team_events"]],
+        **state,
+    }
 
 
 def get_team_settings(database: Database, context: SessionContext) -> dict[str, Any]:
@@ -219,13 +277,36 @@ def get_team_settings(database: Database, context: SessionContext) -> dict[str, 
     with database.cursor() as cursor:
         cursor.execute("SELECT team_number, team_name, settings FROM workspaces WHERE id = %s", (context.workspace_id,))
         number, name, settings = cursor.fetchone()
-    return {"team_number": number, "team_name": name, **_public_settings(settings)}
+        return {"team_number": number, "team_name": name, **_public_settings(cursor, settings)}
+
+
+def team_events(database: Database, context: SessionContext) -> dict[str, Any]:
+    """What every member reads from the team's settings: its events, its current event, and the instructions shown
+    to scouters (the events page and the dashboards; scouts are not administrators)."""
+    require(context, "team_info")
+    with database.cursor() as cursor:
+        cursor.execute("SELECT settings FROM workspaces WHERE id = %s", (context.workspace_id,))
+        stored = cursor.fetchone()[0]
+        return {**_team_event_state(cursor, stored), "scouting_instructions": (stored or {}).get("scouting_instructions")}
+
+
+def _known_event(cursor: Any, event_key: Any) -> str:
+    if not isinstance(event_key, str) or not event_key.strip():
+        raise invalid_input("An event key must be text.")
+    cursor.execute("SELECT 1 FROM events WHERE event_key = %s", (event_key,))
+    if cursor.fetchone() is None:
+        raise invalid_input(f"Event '{event_key}' is not known to StratAI.")
+    return event_key
 
 
 def update_team_settings(database: Database, context: SessionContext, changes: dict[str, Any]) -> dict[str, Any]:
-    """Change the team name, the default event, or the instructions scouters see. The team number never changes."""
+    """Change the team name, the team's events and pinned current event, or the instructions scouters see. The team
+    number never changes. `default_event_key` is still accepted, as the pin."""
     require(context, "team_settings")
-    unknown = set(changes) - {"team_name", *SETTINGS_KEYS}
+    if "default_event_key" in changes and "pinned_event_key" not in changes:
+        changes = {**changes, "pinned_event_key": changes["default_event_key"]}
+    changes = {k: v for k, v in changes.items() if k != "default_event_key"}
+    unknown = set(changes) - {"team_name", "scouting_instructions", "team_event_keys", "pinned_event_key"}
     if unknown:
         raise invalid_input(f"Unknown settings: {', '.join(sorted(unknown))}.")
     with database.cursor() as cursor:
@@ -237,15 +318,25 @@ def update_team_settings(database: Database, context: SessionContext, changes: d
             updated_name = clean_name(changes["team_name"], "Team name", 100)
             if updated_name != team_name:
                 diff["team_name"] = {"from": team_name, "to": updated_name}
-        if "default_event_key" in changes:
-            event_key = changes["default_event_key"] or None
-            if event_key is not None:
-                cursor.execute("SELECT 1 FROM events WHERE event_key = %s", (event_key,))
-                if cursor.fetchone() is None:
-                    raise invalid_input(f"Event '{event_key}' is not known to StratAI.")
-            if stored.get("default_event_key") != event_key:
-                diff["default_event_key"] = {"from": stored.get("default_event_key"), "to": event_key}
-            stored["default_event_key"] = event_key
+        if "team_event_keys" in changes:
+            keys = changes["team_event_keys"] or []
+            if not isinstance(keys, list):
+                raise invalid_input("team_event_keys must be a list of event keys.")
+            keys = list(dict.fromkeys(_known_event(cursor, k) for k in keys))
+            if len(keys) > MAX_TEAM_EVENTS:
+                raise invalid_input(f"A team can list at most {MAX_TEAM_EVENTS} events.")
+            if (stored.get("team_event_keys") or []) != keys:
+                diff["team_event_keys"] = {"from": stored.get("team_event_keys") or [], "to": keys}
+            stored["team_event_keys"] = keys
+        if "pinned_event_key" in changes:
+            pinned = changes["pinned_event_key"] or None
+            if pinned is not None:
+                _known_event(cursor, pinned)
+                if pinned not in (stored.get("team_event_keys") or []):  # a pinned event is one of the team's events
+                    stored["team_event_keys"] = [*(stored.get("team_event_keys") or []), pinned]
+            if stored.get("default_event_key") != pinned:
+                diff["pinned_event_key"] = {"from": stored.get("default_event_key"), "to": pinned}
+            stored["default_event_key"] = pinned
         if "scouting_instructions" in changes:
             text = changes["scouting_instructions"]
             if text is not None and (not isinstance(text, str) or len(text) > 2000):
@@ -259,7 +350,7 @@ def update_team_settings(database: Database, context: SessionContext, changes: d
         if diff:
             activity.record(cursor, workspace_id=context.workspace_id, actor_user_id=context.user_id,
                             actor_label=context.name, action="settings_changed", details=diff)
-    return {"team_number": context.team_number, "team_name": updated_name, **_public_settings(stored)}
+        return {"team_number": context.team_number, "team_name": updated_name, **_public_settings(cursor, stored)}
 
 
 # --- activity log and analytics -------------------------------------------------------------------------------

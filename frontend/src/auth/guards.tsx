@@ -33,8 +33,8 @@ export function RequirePermission({ permission, children }: { permission: string
  * nothing, with hideWhenBlocked), so a base member is never led to a page they cannot use. Anyone not signed in
  * (only possible in a page rendered on its own, as in a test) gets the plain link. */
 export function PageLink({ to, children, hideWhenBlocked, ...rest }: LinkProps & { to: string; hideWhenBlocked?: boolean }) {
-  const { signedIn, role } = useAuth()
-  if (!signedIn || pageAllowed(role, to)) return <Link to={to} {...rest}>{children}</Link>
+  const { signedIn, role, session } = useAuth()
+  if (!signedIn || pageAllowed(role, to, session.permissions ?? [])) return <Link to={to} {...rest}>{children}</Link>
   if (hideWhenBlocked) return null
   return <span className={rest.className}>{children}</span>
 }
