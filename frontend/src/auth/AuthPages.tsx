@@ -9,6 +9,7 @@ import { PageHeader } from '../dashboard/common'
 import { auth, type SessionInfo } from './api'
 import { useAuth } from './authState'
 import { landingFor } from './roles'
+import { WakingNotice } from '../components/WakingNotice'
 
 /** Matches the API's rule (workspaces/passwords.py MIN_PASSWORD_LENGTH): at least 8 characters, nothing else. */
 export const MIN_PASSWORD = 8
@@ -138,6 +139,7 @@ export function SignupPage() {
             <button type="submit" disabled={action.busy || closed}>
               {action.busy ? 'Creating…' : 'Create account'}
             </button>
+            {action.busy && <WakingNotice />}
           </div>
         </form>
       </AuthCard>
@@ -181,6 +183,7 @@ export function LoginPage() {
           <ErrorNotice error={action.error} />
           <div className="actions">
             <button type="submit" disabled={action.busy}>{action.busy ? 'Signing in…' : 'Log in'}</button>
+            {action.busy && <WakingNotice />}
             <Link to="/auth/forgot">Forgot your password?</Link>
           </div>
         </form>
@@ -232,6 +235,7 @@ export function ForgotPasswordPage() {
             <ErrorNotice error={action.error} />
             <div className="actions">
               <button type="submit" disabled={action.busy}>Send code</button>
+              {action.busy && <WakingNotice />}
               <Link to="/auth/reset">I already have a code</Link>
             </div>
           </form>
@@ -291,6 +295,7 @@ export function ResetPasswordPage() {
           <ErrorNotice error={action.error} />
           <div className="actions">
             <button type="submit" disabled={action.busy}>{action.busy ? 'Saving…' : 'Set new password'}</button>
+            {action.busy && <WakingNotice />}
             <Link to="/auth/forgot">Send a new code</Link>
           </div>
         </form>
