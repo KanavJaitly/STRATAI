@@ -12,6 +12,8 @@
 // in its URL; the selected tile and scroll position travel in router state (never browser storage) and are restored
 // on return, by its back link or the browser's back button.
 
+import { Icon } from '../components/icons'
+import { useOurTeam } from '../team/ours'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -46,16 +48,19 @@ export function LiveDraftPage({ pollMs = POLL_MS }: { pollMs?: number }) {
   const restore = readLiveDraftReturn(location.state)
   const eventKey = params.get('event') ?? ''
   const eventName = useEventName(eventKey)
-  const { session } = useAuth()
   const choose = (key: string) => setParams(key ? { event: key } : {})
+  const chooser = <EventChooser key={seasonOf(eventKey) ?? 'none'} value={eventKey} onChange={choose} />
   return (
-    <div className="live-draft">
-      <PageHeader title="Live alliance selection"
-        subtitle={`Team ${session.workspace?.team_number ?? ''} · record each pick as it happens`}
-        crumbs={[{ to: '/drive-team', label: 'Drive team dashboard' }]} />
-      <section className="card">
-        <EventChooser key={seasonOf(eventKey) ?? 'none'} value={eventKey} onChange={choose} />
-      </section>
+    <div className="live-draft instant">
+      <PageHeader title="Live alliance selection" subtitle="Record each pick as it happens"
+        crumbs={[{ to: '/drive-team', label: 'Drive team' }]} />
+      {/* Once the event is set, the chooser folds to one line so the board starts on the first screen. */}
+      {eventKey ? (
+        <details className="card event-fold">
+          <summary><span className="muted">Event</span> <strong>{eventName}</strong> <span className="event-fold-change">Change</span></summary>
+          {chooser}
+        </details>
+      ) : <section className="card">{chooser}</section>}
       {!eventKey ? <p className="notice notice-info">Choose the event where alliance selection is happening.</p>
         : <EventDraft key={eventKey} eventKey={eventKey} eventName={eventName} pollMs={pollMs} restore={restore} />}
     </div>
@@ -560,6 +565,9 @@ function Recorder({ draft, onChange, recommendation, selected, onSelect: setSele
   const action = useAction()
   const [pending, setPending] = useState<Pending | null>(null)
   const [reason, setReason] = useState('')
+  // What was just recorded, shown the moment the server confirms it (no animation to wait for).
+  const [recorded, setRecorded] = useState<string | null>(null)
+  const ours = useOurTeam()
   const turn = draft.turn
   const backupsOpen = draft.complete && draft.setup?.rules.backup_robots
 
@@ -579,7 +587,7 @@ function Recorder({ draft, onChange, recommendation, selected, onSelect: setSele
         throw caught
       }
     })
-    if (ok) { attempt.current = null; setSelected(null); setPending(null); setReason('') }
+    if (ok) { attempt.current = null; setSelected(null); setPending(null); setReason(''); setRecorded(recordedText(p)) }
     else if (refusal) setPending({ ...p, refusal })
   }
 
@@ -587,16 +595,20 @@ function Recorder({ draft, onChange, recommendation, selected, onSelect: setSele
   return (
     <section className="card recorder" aria-label="Record an action">
       <h2>Record</h2>
+      <p className="live-status recorded" role="status">{recorded && <><Icon name="check" />Recorded: {recorded}</>}</p>
       {turn && !turn.captain_named && (
         <div className="actions">
           {turn.expected_captain !== null && (
             <button type="button" className="big-button" disabled={action.busy}
               onClick={() => void submit({ type: 'captain', seed: turn.seed, team: turn.expected_captain! })}>
               Confirm alliance {turn.seed} captain: {turn.expected_captain}</button>)}
-          {selected !== null && (
-            <button type="button" className="big-button button-secondary" disabled={action.busy}
-              onClick={() => void submit({ type: 'captain', seed: turn.seed, team: selected })}>
-              Record {selected} as alliance {turn.seed}&apos;s captain</button>)}
+        </div>
+      )}
+      {turn && !turn.captain_named && selected !== null && (
+        <div className="actions recorder-actions">
+          <button type="button" className="big-button" disabled={action.busy}
+            onClick={() => void submit({ type: 'captain', seed: turn.seed, team: selected })}>
+            Record {selected} as alliance {turn.seed}&apos;s captain</button>
         </div>
       )}
       {(turn || backupsOpen) && (
@@ -607,7 +619,8 @@ function Recorder({ draft, onChange, recommendation, selected, onSelect: setSele
               <div key={t.team_number} className="team-tile-wrap">
                 <button type="button" aria-pressed={selected === t.team_number}
                   className={`team-tile${selected === t.team_number ? ' selected' : ''}${
-                    recommendation?.primary?.team_number === t.team_number ? ' recommended' : ''}`}
+                    recommendation?.primary?.team_number === t.team_number ? ' recommended' : ''}${
+                    t.team_number === ours ? ' tile-ours' : ''}`}
                   onClick={() => { setSelected(t.team_number); setPending(null); action.clear() }}>
                   <strong>{t.team_number}</strong>
                   <span className="small">{t.rank !== null ? `rank ${t.rank}` : 'unranked'}
@@ -621,7 +634,7 @@ function Recorder({ draft, onChange, recommendation, selected, onSelect: setSele
             hint={available.length === 0 ? 'The event\u2019s roster and ranks are not stored yet, so no team is listed: '
               + 'enter the team number.' : 'Not listed? Enter the team number.'} />
           {selected !== null && turn && turn.captain_named && (
-            <div className="actions">
+            <div className="actions recorder-actions">
               <button type="button" className="big-button" disabled={action.busy}
                 onClick={() => void submit({ type: 'pick', seed: turn.seed, team: selected })}>
                 Alliance {turn.seed} picks {selected}</button>
@@ -631,7 +644,7 @@ function Recorder({ draft, onChange, recommendation, selected, onSelect: setSele
             </div>
           )}
           {selected !== null && backupsOpen && (
-            <div className="actions">
+            <div className="actions recorder-actions">
               <button type="button" className="big-button" disabled={action.busy}
                 onClick={() => void submit({ type: 'backup', seed: null, team: selected })}>
                 {selected} is a backup robot</button>
@@ -654,6 +667,13 @@ function Recorder({ draft, onChange, recommendation, selected, onSelect: setSele
       ) : <ErrorNotice error={action.error} />}
     </section>
   )
+}
+
+function recordedText(p: Pending): string {
+  if (p.type === 'captain') return `alliance ${p.seed} captain is ${p.team}`
+  if (p.type === 'pick') return `alliance ${p.seed} picks ${p.team}`
+  if (p.type === 'decline') return `${p.team} declined alliance ${p.seed}`
+  return `${p.team} is a backup robot`
 }
 
 /** The tile's own profile button: separate from the tile (which selects) and touch-sized. */

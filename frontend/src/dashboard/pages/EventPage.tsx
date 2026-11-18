@@ -1,3 +1,5 @@
+import { OursMark } from '../../team/OursMark'
+import { ourRowClass, useOurTeam } from '../../team/ours'
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
@@ -88,6 +90,7 @@ function Labelled({ title, teams, eventKey }: { title: string; teams: LabelledTe
 
 export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; eventKey: string }) {
   const ordering = data.ordering
+  const ours = useOurTeam()
   const columns: { name: string; of: (v: TeamStrengthView) => Measure; digits?: number }[] = [
     { name: 'EPA total', of: (v) => v.epa.total }, { name: 'Average score', of: (v) => v.scoring.average_score },
     { name: 'Consistency', of: (v) => v.scoring.consistency_rating },
@@ -129,9 +132,10 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
             <thead><tr><th scope="col">Rank</th><th scope="col">Team</th><th scope="col">Score</th><th scope="col">EPA source</th></tr></thead>
             <tbody>
               {ordering.teams.map((t) => (
-                <tr key={t.team_number}>
+                <tr key={t.team_number} className={ourRowClass(t.team_number, ours)}>
                   <td>{t.rank}</td>
-                  <th scope="row"><PageLink to={teamPath(eventKey, t.team_number)}>{t.team_number}</PageLink></th>
+                  <th scope="row"><PageLink to={teamPath(eventKey, t.team_number)}>{t.team_number}</PageLink>
+                    <OursMark team={t.team_number} ours={ours} /></th>
                   <td>{t.score === null ? <Absent reason="no score (no EPA)" /> : formatNumber(t.score, 2)}</td>
                   <td className="small">{t.epa_value_source ? epaText(t.epa_value_source) : <Absent />}{t.epa_source_event_key ? ` · ${t.epa_source_event_key}` : ''}
                     {t.epa_source_state ? ` · ${epaText(t.epa_source_state)}` : ''}</td>
@@ -175,8 +179,9 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
               <th scope="col">Consistency</th><th scope="col">Reliability (estimate)</th><th scope="col">Defense</th></tr></thead>
             <tbody>
               {sorted.map((v) => (
-                <tr key={v.team_number}>
-                  <th scope="row"><PageLink to={teamPath(eventKey, v.team_number)}>{v.team_number}</PageLink></th>
+                <tr key={v.team_number} className={ourRowClass(v.team_number, ours)}>
+                  <th scope="row"><PageLink to={teamPath(eventKey, v.team_number)}>{v.team_number}</PageLink>
+                    <OursMark team={v.team_number} ours={ours} /></th>
                   {columns.map((c) => <td key={c.name}><MeasureValue measure={c.of(v)} digits={c.digits} hideReason={!!shared[c.name]} /></td>)}
                 </tr>
               ))}
@@ -194,6 +199,7 @@ export function AnalysisView({ data, eventKey }: { data: EventAnalysisResponse; 
 }
 
 function TeamsView({ data }: { data: EventTeamsResponse }) {
+  const ours = useOurTeam()
   const [search, setSearch] = useState('')
   const needle = search.trim().toLowerCase()
   const shown = data.teams.filter((t) => !needle || String(t.team_number).includes(needle)
@@ -214,8 +220,9 @@ function TeamsView({ data }: { data: EventTeamsResponse }) {
             <thead><tr><th scope="col">Team</th><th scope="col">Name</th><th scope="col">From</th><th scope="col">Rookie year</th></tr></thead>
             <tbody>
               {shown.map((t) => (
-                <tr key={t.team_number}>
-                  <th scope="row"><PageLink to={teamPath(data.event_key, t.team_number)}>{t.team_number}</PageLink></th>
+                <tr key={t.team_number} className={ourRowClass(t.team_number, ours)}>
+                  <th scope="row"><PageLink to={teamPath(data.event_key, t.team_number)}>{t.team_number}</PageLink>
+                    <OursMark team={t.team_number} ours={ours} /></th>
                   <td>{t.name ?? <Absent reason="no details" />}</td>
                   <td>{[t.city, t.state_province, t.country].filter(Boolean).join(', ') || <Absent />}</td>
                   <td>{t.rookie_year ?? <Absent />}</td>
@@ -230,6 +237,9 @@ function TeamsView({ data }: { data: EventTeamsResponse }) {
 }
 
 function MatchesView({ data, asOf }: { data: EventMatchesResponse; asOf: string | null }) {
+  const ours = useOurTeam()
+  const plays = (m: { red_team_numbers: number[]; blue_team_numbers: number[] }) =>
+    ours !== null && (m.red_team_numbers.includes(ours) || m.blue_team_numbers.includes(ours))
   const [level, setLevel] = useState('all')
   const levels = [...new Set(data.matches.map((m) => m.competition_level ?? 'unknown'))]
   const shown = data.matches.filter((m) => level === 'all' || (m.competition_level ?? 'unknown') === level)
@@ -257,7 +267,7 @@ function MatchesView({ data, asOf }: { data: EventMatchesResponse; asOf: string 
               <th scope="col">Result</th><th scope="col">Pre-match</th></tr></thead>
             <tbody>
               {shown.map((m) => (
-                <tr key={m.match_key}>
+                <tr key={m.match_key} className={plays(m) ? 'row-ours' : undefined}>
                   <th scope="row"><PageLink to={matchPath(m.match_key)}>{matchLabel(m)}</PageLink></th>
                   <td><When value={m.scheduled_time} /></td>
                   <td><AllianceTeams teams={m.red_team_numbers} eventKey={data.event_key} tone="red" /></td>
@@ -275,6 +285,7 @@ function MatchesView({ data, asOf }: { data: EventMatchesResponse; asOf: string 
 }
 
 function ForecastView({ data }: { data: QualificationForecastResponse }) {
+  const ours = useOurTeam()
   return (
     <>
       <section className="card" aria-labelledby="records-heading">
@@ -289,8 +300,9 @@ function ForecastView({ data }: { data: QualificationForecastResponse }) {
               <th scope="col">80% range</th><th scope="col">Record status</th><th scope="col">Range status</th></tr></thead>
             <tbody>
               {data.teams.map((t) => (
-                <tr key={t.team_number}>
-                  <th scope="row"><PageLink to={teamPath(data.event_key, t.team_number)}>{t.team_number}</PageLink></th>
+                <tr key={t.team_number} className={ourRowClass(t.team_number, ours)}>
+                  <th scope="row"><PageLink to={teamPath(data.event_key, t.team_number)}>{t.team_number}</PageLink>
+                    <OursMark team={t.team_number} ours={ours} /></th>
                   <td>{t.qualification_matches}</td>
                   <td>{formatNumber(t.expected_wins, 1)}</td>
                   <td>{t.range80_low}–{t.range80_high}</td>
@@ -310,7 +322,7 @@ function ForecastView({ data }: { data: QualificationForecastResponse }) {
             <thead><tr><th scope="col">Match</th><th scope="col">Scheduled</th><th scope="col">Red</th><th scope="col">Blue</th><th scope="col">Win probability</th></tr></thead>
             <tbody>
               {data.matches.map((m) => (
-                <tr key={m.match_key}>
+                <tr key={m.match_key} className={ours !== null && (m.red_team_numbers.includes(ours) || m.blue_team_numbers.includes(ours)) ? 'row-ours' : undefined}>
                   <th scope="row"><PageLink to={matchPath(m.match_key)}>{m.match_key.split('_')[1] ?? m.match_key}</PageLink></th>
                   <td><When value={m.scheduled_time} /></td>
                   <td><AllianceTeams teams={m.red_team_numbers} eventKey={data.event_key} tone="red" /></td>

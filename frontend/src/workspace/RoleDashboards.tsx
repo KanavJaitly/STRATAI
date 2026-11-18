@@ -8,8 +8,12 @@ import { Link, Navigate } from 'react-router-dom'
 import { dashboardApi } from '../api/dashboard'
 import type { ScheduledMatchOut } from '../api/generated'
 import { ErrorNotice, LoadState, SuccessNotice, useAction, useLoad, When } from '../components/common'
-import { PageHeader } from '../dashboard/common'
-import { matchPath, teamPath } from '../dashboard/routing'
+import { AllianceTeams, PageHeader } from '../dashboard/common'
+import { CalibratedProbabilityView, OddsView } from '../dashboard/display'
+import { roleText } from '../dashboard/strategyModel'
+import { OursMark } from '../team/OursMark'
+import { useOurTeam } from '../team/ours'
+import { matchLabel as dashboardMatchLabel, matchPath, teamPath } from '../dashboard/routing'
 import { teamScouting, workspace, type Assignment } from '../auth/api'
 import { useAuth } from '../auth/authState'
 import { homeFor } from '../auth/roles'
@@ -49,7 +53,7 @@ function matchLabel(match: { competition_level: string | null; set_number: numbe
 // --- drive team / strategy ---------------------------------------------------------------------------------------
 
 export function DriveTeamDashboardPage() {
-  const { can, session } = useAuth()
+  const { can } = useAuth()
   const [eventKey, setEventKey] = useEventKey()
   const eventName = useEventName(eventKey)
   const event = encodeURIComponent(eventKey)
@@ -73,7 +77,9 @@ export function DriveTeamDashboardPage() {
 
   return (
     <div>
-      <PageHeader title="Drive team dashboard" subtitle={`Team ${session.workspace?.team_number} · strategy tools`} />
+      <PageHeader title="Drive team" />
+      {/* Read between matches in a few seconds: our next match, its field bar and what each robot does, first. */}
+      {eventKey && <NextMatchCard eventKey={eventKey} />}
       <EventSection eventKey={eventKey} onChange={setEventKey} />
       {!eventKey ? <p className="notice notice-info">Choose an event to open its tools.</p> : (
         <>
@@ -93,6 +99,55 @@ export function DriveTeamDashboardPage() {
         </>
       )}
     </div>
+  )
+}
+
+/** Our team's next match at the event (the last one, once every match is played), its win probability as a field
+ * bar, and what each of our robots does in the strategy engine's recommendation, with the engine's own label. */
+function NextMatchCard({ eventKey }: { eventKey: string }) {
+  const { can } = useAuth()
+  const ours = useOurTeam()
+  const matches = useMatches(eventKey)
+  const ourMatches = (matches.data ?? []).filter((m) => ours !== null
+    && (m.red_team_numbers.includes(ours) || m.blue_team_numbers.includes(ours)))
+  const upcoming = ourMatches.find((m) => !m.result)
+  const match = upcoming ?? ourMatches[ourMatches.length - 1] ?? null
+  const side = match && ours !== null && match.red_team_numbers.includes(ours) ? 'red' : 'blue'
+  const key = match?.match_key ?? ''
+  const winProbability = useLoad(async () => (key && can('match_predictions')
+    ? dashboardApi.matchWinProbability(key) : null), [key])
+  const plan = useLoad(async () => (key && can('strategy_tools') ? dashboardApi.matchRecommend(key, { side }) : null), [key, side])
+  if (matches.loading) return <LoadState loading error={null} />
+  if (!match) return null
+  const robots = plan.data?.recommended?.strategy.robots ?? []
+  return (
+    <section className="card next-match instant" aria-labelledby="next-match-heading">
+      <p className="next-match-kicker">{upcoming ? 'Next match' : 'Last match (every match is played)'}</p>
+      <h2 id="next-match-heading" className="next-match-title">
+        <Link to={matchPath(match.match_key)}>{dashboardMatchLabel(match)}</Link>
+        <span className={`next-match-side alliance-${side}`}>{side === 'red' ? 'Red' : 'Blue'} alliance</span>
+      </h2>
+      <p className="muted"><When value={match.scheduled_time} />
+        {match.result && <> · result <span className="score-red">{match.result.score_red}</span> – <span className="score-blue">{match.result.score_blue}</span></>}</p>
+      <p className="alliances-line"><AllianceTeams teams={match.red_team_numbers} eventKey={eventKey} tone="red" />{' '}
+        <span className="muted">vs</span>{' '}<AllianceTeams teams={match.blue_team_numbers} eventKey={eventKey} tone="blue" /></p>
+      {winProbability.data && <CalibratedProbabilityView value={winProbability.data.win_probability} />}
+      {robots.length > 0 && plan.data?.recommended && (
+        <div className="next-match-plan">
+          <h3>What each robot does</h3>
+          <ol className="robot-plan">
+            {robots.map((r) => (
+              <li key={r.team_number}><strong>{r.team_number}</strong><OursMark team={r.team_number} ours={ours} />
+                <span>{roleText(r)}</span></li>
+            ))}
+          </ol>
+          <p className="small">AI recommendation · odds <OddsView odds={plan.data.recommended.odds} /></p>
+        </div>
+      )}
+      {plan.data && !plan.data.recommended && plan.data.unavailable_reasons.length > 0 && (
+        <p className="small muted">No strategy recommendation: {plan.data.unavailable_reasons.join('; ')}</p>
+      )}
+    </section>
   )
 }
 
