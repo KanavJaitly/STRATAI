@@ -674,6 +674,15 @@ def test_each_new_role_reaches_its_own_pages_and_nothing_more(monkeypatch):
             status = who.get(path).status_code
             assert (status not in (401, 403)) == ok, (path, ok, status)
     assert strategy.get("/workspace/alliance-selection/drafts", params={"event_key": EVENT}).status_code == 200
+    # the drive team reads the engine's plan for a scheduled match, and nothing else of the strategy tools
+    plan = f"/strategy/matches/{EVENT}_qm1/recommend"
+    assert drive.post(plan, json={"side": "red"}).status_code not in (401, 403)
+    assert scout.post(plan, json={"side": "red"}).status_code == 403
+    for path, body in ((f"/strategy/matches/{EVENT}_qm1/assess", {"side": "red", "strategy": {}}),
+                       (f"/strategy/matches/{EVENT}_qm1/compare", {"side": "red", "first": {}, "second": {}}),
+                       ("/strategy/hypothetical/recommend", {"side": "red"})):
+        assert drive.post(path, json=body).status_code == 403, path
+        assert strategy.post(path, json=body).status_code != 403, path
     for who in (strategy, drive, scout):  # nobody but an administrator manages members
         assert who.post(f"/workspace/members/{member_id(admin, 'sky')}/role", json={"role": "admin"}).status_code == 403
 

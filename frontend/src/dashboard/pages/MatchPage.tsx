@@ -2,6 +2,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { dashboardApi, type Side } from '../../api/dashboard'
 import type { WinProbabilityResponse } from '../../api/generated'
+import { useAuth } from '../../auth/authState'
 import { useResource } from '../../components/useResource'
 import { RecordObservation, SaveCoachStrategy } from '../coachInputs'
 import { AllianceTeams, PageHeader } from '../common'
@@ -26,6 +27,10 @@ export function MatchPage() {
   const ours = side === 'red' ? red : blue
   const theirs = side === 'red' ? blue : red
   const season = seasonOf(eventKey)
+  // The strategy workbench and coach inputs are the strategy tools; a role with only the read-only match plan (the
+  // Drive team) sees the plan on the Drive team page instead. Signed out (open access, a page on its own): as before.
+  const { signedIn, can } = useAuth()
+  const tools = !signedIn || can('strategy_tools')
   const setSide = (next: Side) => {
     const nextParams = new URLSearchParams(params)
     nextParams.set('side', next)
@@ -52,23 +57,25 @@ export function MatchPage() {
           {(data) => <WinProbabilityView data={data} />}
         </ResourceView>
       </section>
-      <fieldset className="side-choice">
-        <legend>Plan for</legend>
-        {(['red', 'blue'] as Side[]).map((s) => (
-          <label key={s} className="inline">
-            <input type="radio" name="side" value={s} checked={side === s} onChange={() => setSide(s)} />
-            {s === 'red' ? 'Red alliance' : 'Blue alliance'}
-          </label>
-        ))}
-      </fieldset>
-      {ours.length === 3 || recommendation.loading || recommendation.error
+      {tools && (
+        <fieldset className="side-choice">
+          <legend>Plan for</legend>
+          {(['red', 'blue'] as Side[]).map((s) => (
+            <label key={s} className="inline">
+              <input type="radio" name="side" value={s} checked={side === s} onChange={() => setSide(s)} />
+              {s === 'red' ? 'Red alliance' : 'Blue alliance'}
+            </label>
+          ))}
+        </fieldset>
+      )}
+      {!tools ? null : ours.length === 3 || recommendation.loading || recommendation.error
         ? <StrategyWorkbench key={`${side}:${ours.join(',')}`} side={side} recommendation={recommendation} ours={ours} theirs={theirs}
             ops={{ compare: (body, signal) => dashboardApi.matchCompare(matchKey, body, signal) }}
             coachActions={(coach, valid) => ours.length === 3
               ? <SaveCoachStrategy eventKey={eventKey} matchKey={matchKey} strategy={coach} valid={valid} /> : null} />
         : matches.loading ? <p className="loading" role="status">Loading the match…</p>
           : <p className="notice notice-warn">This match does not have three teams per alliance at this moment, so no strategy can be built.</p>}
-      {red.length + blue.length > 0 && (
+      {tools && red.length + blue.length > 0 && (
         <section className="card" aria-labelledby="coach-heading">
           <h2 id="coach-heading">Coach inputs</h2>
           <RecordObservation eventKey={eventKey} teams={[...red, ...blue]} />
