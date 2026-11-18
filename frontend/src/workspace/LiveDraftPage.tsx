@@ -12,6 +12,8 @@
 // in its URL; the selected tile and scroll position travel in router state (never browser storage) and are restored
 // on return, by its back link or the browser's back button.
 
+import { OurEventsSwitch } from '../team/OurEventsSwitch'
+import { useTeamEvents } from '../team/teamEvents'
 import { Icon } from '../components/icons'
 import { useOurTeam } from '../team/ours'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
@@ -46,10 +48,16 @@ export function LiveDraftPage({ pollMs = POLL_MS }: { pollMs?: number }) {
   const [params, setParams] = useSearchParams()
   const location = useLocation()
   const restore = readLiveDraftReturn(location.state)
-  const eventKey = params.get('event') ?? ''
+  // The event in the link, else the team's current event (Team > Settings > Our events).
+  const teamEvents = useTeamEvents()
+  const eventKey = params.get('event') ?? teamEvents.current_event_key ?? ''
   const eventName = useEventName(eventKey)
   const choose = (key: string) => setParams(key ? { event: key } : {})
-  const chooser = <EventChooser key={seasonOf(eventKey) ?? 'none'} value={eventKey} onChange={choose} />
+  const chooser = <>
+    <OurEventsSwitch events={teamEvents} value={eventKey} onChange={choose} />
+    <EventChooser key={seasonOf(eventKey) ?? 'none'} value={eventKey} onChange={choose}
+      legend={teamEvents.team_events.length ? 'Another event' : 'Choose the event'} />
+  </>
   return (
     <div className="live-draft instant">
       <PageHeader title="Live alliance selection" subtitle="Record each pick as it happens"

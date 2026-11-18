@@ -28,6 +28,7 @@ export const WORKSPACE_ENDPOINTS = {
   removeMember: ['POST', '/workspace/members/{membership_id}/remove'],
   settings: ['GET', '/workspace/settings'],
   saveSettings: ['POST', '/workspace/settings'],
+  teamEvents: ['GET', '/workspace/team-events'],
   activity: ['GET', '/workspace/activity'],
   analytics: ['GET', '/workspace/analytics'],
   scouts: ['GET', '/workspace/scouting/scouts'],
@@ -51,7 +52,7 @@ export const WORKSPACE_ENDPOINTS = {
 
 type EndpointName = keyof typeof WORKSPACE_ENDPOINTS
 
-export type Role = 'admin' | 'base'
+export type Role = 'admin' | 'strategy' | 'drive' | 'scout' | 'base'
 export type VerificationStatus = 'pending_verification' | 'verified' | 'rejected'
 
 export interface SessionInfo {
@@ -95,11 +96,39 @@ export interface Member {
   is_self: boolean
 }
 
-export interface TeamSettings {
+/** One of the events the team is going to, with where it stands today. */
+export interface TeamEvent {
+  event_key: string
+  name: string | null
+  start_date: string | null
+  end_date: string | null
+  status: 'past' | 'happening' | 'upcoming' | null
+}
+
+/** The team's events and its current event: the pin when set, else happening now, else the next, else the latest. */
+export interface TeamEvents {
+  team_events: TeamEvent[]
+  pinned_event_key: string | null
+  current_event_key: string | null
+  current_reason: 'pinned' | 'happening' | 'next' | 'most_recent' | null
+  /** The instructions shown to scouters (only in the team-events answer every member reads). */
+  scouting_instructions?: string | null
+}
+
+export interface TeamSettings extends TeamEvents {
   team_number: number
   team_name: string
+  /** The current event (what the dashboards open on): computed, not set directly. */
   default_event_key: string | null
+  team_event_keys: string[]
   scouting_instructions: string | null
+}
+
+export interface TeamSettingsChange {
+  team_name?: string
+  team_event_keys?: string[]
+  pinned_event_key?: string | null
+  scouting_instructions?: string | null
 }
 
 export interface ActivityEntry {
@@ -235,7 +264,8 @@ export const workspace = {
   editMember: (id: number, name: string) => call<unknown>('editMember', { params: { membership_id: id }, body: { name } }),
   removeMember: (id: number) => call<unknown>('removeMember', { params: { membership_id: id } }),
   settings: () => call<TeamSettings>('settings'),
-  saveSettings: (body: Partial<Omit<TeamSettings, 'team_number'>>) => call<TeamSettings>('saveSettings', { body }),
+  saveSettings: (body: TeamSettingsChange) => call<TeamSettings>('saveSettings', { body }),
+  teamEvents: () => call<TeamEvents>('teamEvents'),
   activity: (query: { limit?: number; offset?: number; action?: string } = {}) =>
     call<ActivityPage>('activity', { query }),
   analytics: () => call<TeamAnalytics>('analytics'),

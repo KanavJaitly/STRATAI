@@ -94,8 +94,8 @@ describe('EventChooser', () => {
   })
 })
 
-describe('the default event in Team Settings', () => {
-  it('is chosen from the list and saved by its key', async () => {
+describe('our events in Team Settings', () => {
+  it('adds events from the list, pins one as current, and saves them by key', async () => {
     const { AuthProvider } = await import('../auth/AuthContext')
     const { MemoryRouter } = await import('react-router-dom')
     const { SessionProvider } = await import('../state/session')
@@ -103,26 +103,31 @@ describe('the default event in Team Settings', () => {
     const admin = { authenticated: true, access_policy: 'open', email_delivery_configured: false, accounts_available: true,
       user: { id: 1, name: 'Ada Admin', email: 'a@example.test' },
       workspace: { team_number: 9999, team_name: 'Synthetic', verification_status: 'verified' }, role: 'admin',
-      role_label: 'Administrator', permissions: ['team_management', 'team_settings', 'manage_permissions',
-        'activity_log', 'team_info'] }
+      role_label: 'Administrator', permissions: ['team_management', 'team_settings', 'activity_log', 'team_info'] }
     const api = mockApi({
       'GET /auth/session': admin,
       'GET /workspace/settings': { team_number: 9999, team_name: 'Synthetic', default_event_key: null,
+        team_event_keys: [], team_events: [], pinned_event_key: null, current_event_key: null, current_reason: null,
         scouting_instructions: null },
       'POST /workspace/settings': (request: Recorded) => ({ team_number: 9999, team_name: 'Synthetic',
-        scouting_instructions: null, ...(request.body as object) }),
+        default_event_key: null, team_event_keys: [], team_events: [], pinned_event_key: null, current_event_key: null,
+        current_reason: null, scouting_instructions: null, ...(request.body as object) }),
       'GET /explorer/seasons/2026/events': EVENTS_2026,
     })
     vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-04-01T12:00:00Z') })
     render(<SessionProvider><AuthProvider><MemoryRouter initialEntries={['/team?tab=settings']}><Shell /></MemoryRouter>
       </AuthProvider></SessionProvider>)
     const user = userEvent.setup()
+    expect(await screen.findByText(/none yet: add the events/)).toBeInTheDocument()
     await screen.findByRole('option', { name: 'FMA — FIRST Mid-Atlantic' })
     await user.type(screen.getByLabelText('Event'), 'robbinsville')
     await user.click(screen.getByRole('button', { name: /Robbinsville/ }))
+    const list = await screen.findByRole('list', { name: 'Our events' })
+    expect(within(list).getByText('not saved yet')).toBeInTheDocument()
+    await user.click(within(list).getByRole('button', { name: 'Pin as current' }))
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
     await waitFor(() => expect(api.writes()).toHaveLength(1))
-    expect(api.writes()[0].body).toMatchObject({ default_event_key: '2026njrob' })
+    expect(api.writes()[0].body).toMatchObject({ team_event_keys: ['2026njrob'], pinned_event_key: '2026njrob' })
     expect(screen.queryByPlaceholderText(/2026casj/)).not.toBeInTheDocument() // no event key to type anywhere
     vi.useRealTimers()
   })

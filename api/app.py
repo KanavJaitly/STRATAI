@@ -45,7 +45,7 @@ from api.routes.strength import router as strength_router
 from api.routes.live_draft import router as live_draft_router
 from api.routes.team_scouting import router as team_scouting_router
 from api.routes.workspace import router as workspace_router
-from api.session import permission_gate, platform_gate
+from api.session import permission_gate, platform_gate, strategy_gate
 from data.config import Settings
 from data.human_inputs import MAX_MANUAL_BYTES
 from database.connection import Database, DatabaseConfig
@@ -181,8 +181,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(human_inputs_router, prefix=settings.api_prefix, dependencies=[Depends(platform_gate)])
     app.include_router(discovery_router, prefix=settings.api_prefix,  # Phase 7 (P7-M4, P7-Q8)
                        dependencies=gated("team_info"))
-    app.include_router(strategy_router, prefix=settings.api_prefix,  # Phase 7 (P7-M5)
-                       dependencies=gated("strategy_tools"))
+    app.include_router(strategy_router, prefix=settings.api_prefix,  # Phase 7 (P7-M5); match_plan_view: one route
+                       dependencies=[Depends(strategy_gate)])
     app.include_router(alliance_selection_router, prefix=settings.api_prefix,  # Phase 7 (P7-M6)
                        dependencies=gated("alliance_selection"))
     app.include_router(pre_match_report_router, prefix=settings.api_prefix,  # Phase 7 (P7-M7)
