@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -114,7 +114,7 @@ const URL = `/alliance-selection/live?event=${EVENT}`
 const LISTED = { [`GET ${BASE}`]: [{ record_id: 5, record_uid: 'x', event_key: EVENT, created_at: '2099-03-03T16:00:00Z',
   created_by: 'Ada Admin', record_seq: 2, status: 'open', picks_made: 0, complete: false }] }
 
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); clearSeasonEvents() })
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); clearSeasonEvents() })
 
 describe('live alliance selection', () => {
   it('shows the board and the fallback picks labelled not validated, with no probability', async () => {
@@ -189,6 +189,7 @@ describe('live alliance selection', () => {
   })
 
   it('keeps the last recommendation, marked stale with the reason, when a refresh fails', async () => {
+    startPollClock()
     let calls = 0
     mockApi({ 'GET /auth/session': VIEWER, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
       [`GET ${BASE}/5`]: () => draft({ can_record: false, record_seq: calls > 0 ? 3 : 2 }),
@@ -199,7 +200,8 @@ describe('live alliance selection', () => {
       </AuthProvider></SessionProvider>)
     const picks = await screen.findByRole('region', { name: 'Your picks' })
     expect(await within(picks).findByText('24')).toBeInTheDocument()
-    expect(await within(picks).findByText(/refresh failed/, {}, { timeout: 3000 })).toBeInTheDocument()
+    await pollOnce()
+    expect(await within(picks).findByText(/refresh failed/)).toBeInTheDocument()
     expect(within(picks).getByText('Stale')).toBeInTheDocument()
     expect(within(picks).getByText('24')).toBeInTheDocument()
   })
@@ -214,6 +216,7 @@ describe('live alliance selection', () => {
   })
 
   it('keeps the last picks, marked stale, when a recalculation is withheld for a missing input', async () => {
+    startPollClock()
     let calls = 0
     mockApi({ 'GET /auth/session': VIEWER, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
       [`GET ${BASE}/5`]: () => draft({ can_record: false, record_seq: calls > 0 ? 3 : 2 }),
@@ -224,7 +227,9 @@ describe('live alliance selection', () => {
       <SessionProvider><AuthProvider><MemoryRouter initialEntries={[URL]}><ShellWithFastPoll /></MemoryRouter>
       </AuthProvider></SessionProvider>)
     const picks = await screen.findByRole('region', { name: 'Your picks' })
-    expect(await within(picks).findByText(/epa_source_not_loaded/, {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(await within(picks).findByText('24')).toBeInTheDocument()
+    await pollOnce()
+    expect(await within(picks).findByText(/epa_source_not_loaded/)).toBeInTheDocument()
     expect(within(picks).getByText('Stale')).toBeInTheDocument()
     expect(within(picks).getByText('24')).toBeInTheDocument()
   })
@@ -283,9 +288,20 @@ describe('live alliance selection', () => {
   })
 })
 
-// The page with a fast poll, for the refresh-failure test.
+// The page with a fast poll, for the tests about polling. Their poll interval is a fake timer (setInterval only: the
+// first read, user-event and Testing Library still use real setTimeout), so each poll happens exactly when the test
+// advances the clock, never between two of its steps.
 function ShellWithFastPoll() {
   return <Routes><Route path="/alliance-selection/live" element={<LiveDraftPage pollMs={150} />} /></Routes>
+}
+
+function startPollClock() {
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+}
+
+/** One poll of the board (advances the fake interval by one poll period). */
+async function pollOnce() {
+  await act(async () => { vi.advanceTimersByTime(150) })
 }
 
 // --- Phase 11 follow-up: team profiles on the live draft page ---------------------------------------------------------
@@ -383,6 +399,7 @@ describe('team profiles on the live draft page', () => {
   })
 
   it('keeps focus inside the drawer and keeps polling with the stale notice visible', async () => {
+    startPollClock()
     let reads = 0
     mockApi({ 'GET /auth/session': VIEWER, 'GET /events': EVENTS, ...SEASON_EVENTS, ...LISTED,
       [`GET ${BASE}/5`]: () => { reads++; return draft({ can_record: false, record_seq: reads > 1 ? 3 : 2 }) },
@@ -398,7 +415,9 @@ describe('team profiles on the live draft page', () => {
     expect(within(drawer).getByRole('link', { name: 'View full profile' })).toHaveFocus()
     await userEvent.tab()
     expect(within(drawer).getByRole('button', { name: 'Close' })).toHaveFocus()
-    await waitFor(() => expect(within(drawer).getByText(/Board: record #3/)).toBeInTheDocument(), { timeout: 3000 })
+    await pollOnce() // the board polls while the drawer is open
+    await waitFor(() => expect(within(drawer).getByText(/Board: record #3/)).toBeInTheDocument())
+    expect(within(drawer).getByRole('button', { name: 'Close' })).toHaveFocus()
     expect(within(drawer).getByText('(stale)')).toBeInTheDocument()
   })
 
