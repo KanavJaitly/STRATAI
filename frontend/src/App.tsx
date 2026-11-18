@@ -17,8 +17,8 @@ import { SessionProvider, useSession } from './state/session'
 import { DriveTeamDashboardPage, HomeRedirect, ScoutingDashboardPage } from './workspace/RoleDashboards'
 import { LiveDraftPage } from './workspace/LiveDraftPage'
 import { TeamManagementPage } from './workspace/TeamManagementPage'
-import { BrandMark, Icon } from './components/icons'
-import { DEFAULT_TAB_ICON, teamBranding } from './team/branding'
+import { Icon } from './components/icons'
+import { hasOwnBranding, teamBranding } from './team/branding'
 import { OverviewPage } from './pages/OverviewPage'
 import { GameSpecPage } from './pages/GameSpecPage'
 import { ProfilesPage } from './pages/ProfilesPage'
@@ -154,32 +154,30 @@ const WORKSPACE_AREA = /^\/(auth|account|home|team|drive-team|scouting|alliance-
 function Brand() {
   const { signedIn, session } = useAuth()
   const team = signedIn ? session.workspace : null
-  const branding = teamBranding(team?.team_number)
-  const logo = branding?.logo
-  useTabIcon(branding?.tabIcon)
+  const branding = teamBranding(team?.team_number) // MORT's when signed out, or for a team without its own
+  const logo = branding.logo
+  useTabIcon(hasOwnBranding(team?.team_number) ? branding.tabIcon : undefined)
   return (
     <div className="brand">
-      {logo
-        ? <img className="team-logo" src={logo.src} srcSet={logo.srcSet} width={logo.width} height={logo.height} alt={logo.alt} />
-        : <BrandMark />}
+      <img className="team-logo" src={logo.src} srcSet={logo.srcSet} width={logo.width} height={logo.height} alt={logo.alt} />
       <strong>STRATAI</strong>
       {team && <span>Team {team.team_number} · {team.team_name}</span>}
     </div>
   )
 }
 
-/** The browser tab shows the signed-in team's logo when it has one, else the field mark (index.html's favicon). */
+/** The browser tab shows index.html's icons (MORT's), unless the signed-in team has its own: then its icon, until it
+ * signs out. */
 function useTabIcon(icon: { src32: string; src64: string } | undefined) {
   useEffect(() => {
-    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-    if (!link) return
-    if (icon) {
+    if (!icon) return undefined
+    const links = [...document.querySelectorAll<HTMLLinkElement>('link[rel="icon"]')]
+    const saved = links.map((l) => [l.href, l.type] as const)
+    for (const link of links) {
       link.type = 'image/png'
       link.href = window.devicePixelRatio > 1 ? icon.src64 : icon.src32
-    } else {
-      link.type = 'image/svg+xml'
-      link.href = DEFAULT_TAB_ICON
     }
+    return () => links.forEach((link, i) => { link.href = saved[i][0]; link.type = saved[i][1] })
   }, [icon])
 }
 
