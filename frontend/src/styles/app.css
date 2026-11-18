@@ -49,7 +49,6 @@ main:focus { outline: none; }
 .brand { display: flex; align-items: center; gap: var(--s-2); min-width: 0; }
 .brand strong { font-size: var(--fs-body); font-weight: 600; letter-spacing: 0.04em; }
 .brand span { color: var(--muted); font-size: var(--fs-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.brand-mark { width: 22px; height: 10px; flex: none; }
 .team-logo { display: block; flex: none; width: auto; height: 24px; }
 
 .main-nav { display: flex; align-items: center; gap: var(--s-1); flex: 1 1 auto; min-width: 0; }

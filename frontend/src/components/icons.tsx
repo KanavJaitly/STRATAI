@@ -28,13 +28,3 @@ export function Icon({ name, className }: { name: IconName; className?: string }
     </svg>
   )
 }
-
-/** The StratAI mark: the field seen from above, red alliance on the left and blue on the right. */
-export function BrandMark() {
-  return (
-    <svg className="brand-mark" viewBox="0 0 22 10" aria-hidden="true" focusable="false">
-      <rect x="0" y="0" width="10" height="10" rx="2" fill="var(--red)" />
-      <rect x="12" y="0" width="10" height="10" rx="2" fill="var(--blue)" />
-    </svg>
-  )
-}
