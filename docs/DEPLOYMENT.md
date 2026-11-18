@@ -7,7 +7,7 @@ This deployment is for FRC Team 11 (MORT) only. Every page and every analytics r
 |---|---|---|
 | Web app (React/Vite) | Vercel | `frontend/vercel.json` |
 | API (FastAPI) | Render web service | `render.yaml` |
-| PostgreSQL | Render Postgres 17 | `render.yaml` |
+| PostgreSQL | Neon (PostgreSQL 17, AWS us-west-2) | `DATABASE_URL` on the Render API (section 2) |
 
 How the pieces connect:
 - The web app calls `/api/...` on its own origin, as it does in development.
@@ -34,20 +34,26 @@ What the script does:
 3. Writes `.deploy/stratai_public.dump`, which is gitignored and never committed.
 4. Drops the copy.
 
-## 2. Create the API and database on Render
+## 2. Create the database on Neon and the API on Render
 
-1. Push the branch that holds `render.yaml` to GitHub.
-2. In the Render dashboard, go to **New → Blueprint** and pick the repository. Render creates `stratai-db` and
-   `stratai-api`.
-3. Wait for `stratai-db` to become available. Then copy its **External Database URL** and load the dump:
+The database moved from Render Postgres to Neon on 2026-11-17 (Render's free databases expire after 30 days).
+
+1. **Neon:** create a project in the same region as the Render API (AWS us-west-2, Oregon), PostgreSQL 17, with a
+   database named `stratai`. Copy the **direct** connection string: the host has no `-pooler`, and it ends in
+   `sslmode=require`. Use the direct endpoint, not the pooler: the app opens a short connection per request, and
+   psycopg's automatic prepared statements are not safe through a transaction pooler.
+2. Load the dump into the empty database:
 
    ```bash
-   pg_restore --no-owner --no-privileges --dbname "<External Database URL>" .deploy/stratai_public.dump
+   pg_restore --no-owner --no-privileges --single-transaction --exit-on-error \
+     --dbname "<Neon direct connection string>" .deploy/stratai_public.dump
    ```
 
-   Never paste that URL into a file that is committed.
-4. In the `stratai-api` service's **Environment** tab, set the variables that `render.yaml` marks `sync: false`
-   (section 4).
+   Never paste a connection string into a file that is committed, or into a chat.
+3. **Render:** push the branch that holds `render.yaml`, then **New → Blueprint** and pick the repository. Render
+   creates `stratai-api` (it no longer creates a database).
+4. In the `stratai-api` service's **Environment** tab, set `DATABASE_URL` to the Neon direct connection string, and
+   the other variables that `render.yaml` marks `sync: false` (section 4).
 5. Redeploy `stratai-api`, then open `https://<service>.onrender.com/ready`. It should answer
    `{"status":"ready",...}`.
 6. Open the web app, sign up with the admin join code, and check that you land on the Admin Dashboard.
@@ -109,11 +115,19 @@ Render's free plan has no persistent disk, so the models ship with the code, in 
 
 - **Cold starts.** A Render free web service sleeps when idle. The first request after a sleep can take about a
   minute, and Vercel's rewrite may time out on it; retry after the API wakes.
-- **Free database expiry.** A Render free database expires after 30 days. Keeping it costs about $7 a month.
-- **Refreshing the data.** Rebuild the dump and run `pg_restore --clean --if-exists` again.
+- **Neon free plan.** 0.5 GB of storage (the hosted data was 229 MB on 2026-11-17, most of it raw source payloads that
+  grow during a season); the compute sleeps after about 5 minutes idle, so the first query after a pause is a little
+  slower; compute hours are limited per month (check Neon's current allowance).
+- **Refreshing the data** keeps the accounts: stage the public tables and swap them in a short transaction (the
+  2026-11-16 reload; RUNNING_NOTES). Never TRUNCATE the live tables inside one long transaction over the network.
+- **Backups.** Before any data change, `pg_dump --format=custom --no-owner --no-privileges` the live database into
+  `.deploy/` (gitignored). Neon also keeps a short point-in-time history (its restore window) for the free plan.
+- **Moving between hosts** (as from Render to Neon): dump, restore into the empty new database, compare every table's
+  row count, take a fresh dump at the moment of the switch, change `DATABASE_URL`, redeploy, and keep the old database
+  as the rollback until the new one is confirmed.
 - **An existing database needs migration 0015.** A database restored from an older dump lacks the account tables, and
   the sign-in pages say "Accounts are not set up on this server's database". Either restore a new dump (built from a
-  `stratai_test` that has 0015), or run `python database/migrate.py` against the Render database. 0015 deletes every
+  `stratai_test` that has 0015), or run `python database/migrate.py` against the hosted database. 0015 deletes every
   existing account.
 - **Per-address limits can be bypassed** by calling the Render URL directly with a forged `X-Forwarded-For`. The
   per-email limits and the global wrong-join-code limit do not depend on the address.
