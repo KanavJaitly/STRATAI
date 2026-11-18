@@ -77,7 +77,7 @@ describe('roles', () => {
   })
 
   it('opens each new role the pages its permissions allow, and nothing that manages the team', () => {
-    const drive = [...BASE_PERMISSIONS, 'match_predictions', 'team_analytics']
+    const drive = [...BASE_PERMISSIONS, 'match_predictions', 'team_analytics', 'match_plan_view']
     const scout = [...BASE_PERMISSIONS, 'scouting_forms', 'scouting_submit']
     const strategy = [...drive, 'strategy_tools', 'alliance_selection', 'alliance_selection_record', 'scouting_view',
       'scouting_assign']
@@ -443,7 +443,8 @@ describe('admin dashboards', () => {
 
 describe('our events and the new roles', () => {
   const DRIVE_SESSION: SessionInfo = { ...BASE_SESSION, user: { id: 3, name: 'Dee Drive', email: 'drive@example.test' },
-    role: 'drive', role_label: 'Drive team', permissions: [...BASE_PERMISSIONS, 'match_predictions', 'team_analytics'] }
+    role: 'drive', role_label: 'Drive team', permissions: [...BASE_PERMISSIONS, 'match_predictions', 'team_analytics',
+      'match_plan_view'] }
 
   it('lists our events first on the events page and marks them in the full list', async () => {
     mockApi({ 'GET /auth/session': BASE_SESSION, 'GET /events': EVENTS, 'GET /workspace/team-events': TEAM_EVENTS })

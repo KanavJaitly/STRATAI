@@ -82,7 +82,9 @@ def test_five_roles_and_an_administrator_holds_every_permission():
 def test_each_new_role_holds_what_the_team_chose():
     event_data = {"team_info", "event_analysis", "qualification_forecast"}
     assert permissions.effective_permissions("scout") == event_data | {"scouting_forms", "scouting_submit"}
-    assert permissions.effective_permissions("drive") == event_data | {"match_predictions", "team_analytics"}
+    assert permissions.effective_permissions("drive") == event_data | {"match_predictions", "team_analytics",
+                                                                       "match_plan_view"}
+    assert "strategy_tools" not in permissions.effective_permissions("drive")  # the plan only, read-only
     assert permissions.effective_permissions("strategy") == event_data | {
         "match_predictions", "team_analytics", "strategy_tools", "alliance_selection", "alliance_selection_record",
         "scouting_view", "scouting_assign"}

@@ -132,7 +132,8 @@ function NextMatchCard({ eventKey }: { eventKey: string }) {
   const key = match?.match_key ?? ''
   const winProbability = useLoad(async () => (key && can('match_predictions')
     ? dashboardApi.matchWinProbability(key) : null), [key])
-  const plan = useLoad(async () => (key && can('strategy_tools') ? dashboardApi.matchRecommend(key, { side }) : null), [key, side])
+  const plan = useLoad(async () => (key && (can('strategy_tools') || can('match_plan_view'))
+    ? dashboardApi.matchRecommend(key, { side }) : null), [key, side])
   if (matches.loading) return <LoadState loading error={null} />
   if (!match) return null
   const robots = plan.data?.recommended?.strategy.robots ?? []

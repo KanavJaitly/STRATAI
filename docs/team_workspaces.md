@@ -38,7 +38,7 @@ one role, and locally that role is a superuser.
 | | admin | strategy | drive | scout | base |
 |---|---|---|---|---|---|
 | Events list and an event's page (rankings, matches, forecast), their own account | yes | yes | yes | yes | yes |
-| Team pages, match win probability, the Drive team page | yes | yes | yes | no | no |
+| Team pages, match win probability, the Drive team page with the engine's match plan (read-only) | yes | yes | yes | no | no |
 | Match strategy tools, strategy lab, pre-match reports | yes | yes | no | no | no |
 | Alliance selection, our pick list, the live draft board including recording picks | yes | yes | no | no | no |
 | Every scouting report, the team's scouting summary, assigning scouts | yes | yes | no | no | no |
@@ -52,7 +52,9 @@ an administrator changes a role in Team > Members.
 What each role holds is fixed in code (`ROLE_GRANTS` in `workspaces/permissions.py`):
 - **base:** `team_info`, `event_analysis`, `qualification_forecast` (the routes the two event pages call);
 - **scout:** those, plus `scouting_forms`, `scouting_submit`;
-- **drive:** those, plus `match_predictions`, `team_analytics`;
+- **drive:** those, plus `match_predictions`, `team_analytics`, `match_plan_view` (the strategy engine's recommended
+  plan for a scheduled match, read-only: `POST /strategy/matches/{key}/recommend` and no other strategy route, enforced
+  by `strategy_gate` in `api/session.py`);
 - **strategy:** those, plus `match_predictions`, `team_analytics`, `strategy_tools`, `alliance_selection`,
   `alliance_selection_record`, `scouting_view`, `scouting_assign`.
 
