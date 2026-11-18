@@ -294,6 +294,7 @@ table.candidates td { white-space: nowrap; }
 .notice-ok { --tone: var(--ok-fg); }
 .notice-warn { --tone: var(--warn-fg); }
 .notice-info { --tone: var(--line-strong); }
+.waking { flex-basis: 100%; } /* on its own line, under the button that is waiting */
 .verdict { display: inline-flex; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-4);
   border-radius: var(--r-control); background: var(--surface-raised); font-size: var(--fs-body); font-weight: 600; }
 .verdict::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--tone, var(--muted)); }
