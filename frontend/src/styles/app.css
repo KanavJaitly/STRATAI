@@ -468,6 +468,32 @@ table.grid tr.row-ours > * { background: var(--ours-bg); }
 .event-option.selected { background: var(--selected); border-color: var(--text); }
 .event-option-name { font-weight: 500; }
 
+/* Our events: one-tap choices on the dashboards (big targets, read on the move), the settings list, the events page */
+.our-events { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-3); }
+.our-event { flex-direction: column; align-items: flex-start; gap: 0; min-height: 52px; padding: var(--s-2) var(--s-4);
+  background: var(--surface-raised); color: var(--text); border: 1px solid var(--line); text-align: left; white-space: normal; }
+.our-event:not(:disabled):hover { background: var(--selected); border-color: var(--line-strong); }
+.our-event[aria-pressed='true'] { background: var(--selected); border-color: var(--text); }
+.our-event-name { font-weight: 600; }
+.our-event-meta { font-size: var(--fs-label); color: var(--muted); }
+.our-event[aria-pressed='true'] .our-event-meta { color: var(--text-2); }
+.event-fold-inline > summary { min-height: var(--tap); display: inline-flex; align-items: center; color: var(--text-2);
+  text-decoration: underline; text-underline-offset: 3px; }
+.event-fold-inline[open] > summary { margin-bottom: var(--s-2); }
+.team-events .current-event { margin: 0 0 var(--s-1); font-size: var(--fs-body); }
+.team-event-list { list-style: none; margin: var(--s-3) 0; padding: 0; border-top: 1px solid var(--line); }
+.team-event-list li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-3); min-height: var(--tap);
+  padding: var(--s-2) 0; border-bottom: 1px solid var(--line); }
+.team-event-list li.is-pinned { box-shadow: inset 3px 0 0 var(--ours); padding-left: var(--s-3); }
+.team-event-name { font-weight: 500; }
+.team-event-actions { margin-left: auto; display: flex; gap: var(--s-2); }
+.our-events-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.our-events-list li { display: flex; flex-direction: column; gap: 2px; padding: var(--s-3) var(--s-4);
+  background: var(--surface-raised); border-radius: var(--r-control); box-shadow: inset 3px 0 0 var(--ours); }
+.our-events-list li.is-current { background: var(--selected); }
+.our-events-list a { font-weight: 600; text-decoration: none; }
+
 /* ---------- live alliance selection (tablet at the event: large targets) ---------- */
 
 .live-draft-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s-3); }

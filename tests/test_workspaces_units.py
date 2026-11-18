@@ -73,10 +73,24 @@ def test_tokens_are_long_random_and_stored_only_as_sha256():
     assert subject_hash("login_ip", "1.2.3.4") != subject_hash("login_account", "1.2.3.4")
 
 
-def test_two_roles_and_an_administrator_holds_every_permission():
-    assert permissions.ROLES == ("admin", "base")
+def test_five_roles_and_an_administrator_holds_every_permission():
+    assert permissions.ROLES == ("admin", "base", "strategy", "drive", "scout")
     assert permissions.effective_permissions("admin") == frozenset(permissions.ALL_PERMISSIONS)
-    assert permissions.effective_permissions("strategy") == frozenset()  # an old or unknown role holds nothing
+    assert permissions.effective_permissions("coach") == frozenset()  # an unknown role holds nothing
+
+
+def test_each_new_role_holds_what_the_team_chose():
+    event_data = {"team_info", "event_analysis", "qualification_forecast"}
+    assert permissions.effective_permissions("scout") == event_data | {"scouting_forms", "scouting_submit"}
+    assert permissions.effective_permissions("drive") == event_data | {"match_predictions", "team_analytics",
+                                                                       "match_plan_view"}
+    assert "strategy_tools" not in permissions.effective_permissions("drive")  # the plan only, read-only
+    assert permissions.effective_permissions("strategy") == event_data | {
+        "match_predictions", "team_analytics", "strategy_tools", "alliance_selection", "alliance_selection_record",
+        "scouting_view", "scouting_assign"}
+    for role in ("scout", "drive", "strategy"):  # only administrators manage the team
+        assert not permissions.effective_permissions(role) & {"team_management", "team_settings", "team_overview",
+                                                            "activity_log", "platform_inputs", "season_explorer"}
 
 
 def test_a_base_member_holds_exactly_the_events_list_and_event_page_permissions():
@@ -93,7 +107,7 @@ def test_every_granted_permission_is_a_known_permission():
 
 
 def test_the_role_check_constraint_lists_exactly_the_roles():
-    sql = (MIGRATIONS / "0015_single_team_auth.sql").read_text(encoding="utf-8")
+    sql = (MIGRATIONS / "0016_more_team_roles.sql").read_text(encoding="utf-8")
     match = re.search(r"team_memberships_role_check CHECK \(role IN \((.*?)\)\)", sql)
     assert match is not None
     assert tuple(re.findall(r"'([a-z_]+)'", match.group(1))) == permissions.ROLES

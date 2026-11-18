@@ -12,7 +12,6 @@ import { workspace, type ActivityPage, type Member, type Role } from '../auth/ap
 import { useAuth } from '../auth/authState'
 import { ROLE_LABEL, ROLE_ORDER } from '../auth/roles'
 import { EventChooser, EventName } from './EventChooser'
-import { seasonOf } from './events'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -90,7 +89,7 @@ function plural(word: string, n: number): string {
 // --- members ----------------------------------------------------------------------------------------------------
 
 type SortKey = 'role' | 'name' | 'last_login'
-const ROLE_RANK: Record<Role, number> = { admin: 0, base: 1 }
+const ROLE_RANK: Record<Role, number> = { admin: 0, strategy: 1, drive: 2, scout: 3, base: 4 }
 
 interface Row {
   key: string
@@ -276,20 +275,33 @@ function AnalyticsTab() {
   )
 }
 
+const REASON_TEXT: Record<string, string> = {
+  pinned: 'pinned', happening: 'happening now', next: 'next up', most_recent: 'most recent',
+}
+const STATUS_TEXT: Record<string, string> = { happening: 'Happening now', upcoming: 'Upcoming', past: 'Finished' }
+
+/** The team's settings. "Our events" is the list of events the team is going to; the current event (what the
+ * dashboards open on) follows the calendar: the one happening now, else the next, else the most recent. An
+ * administrator can pin one instead, and unpin to go back to automatic. */
 function SettingsTab() {
   const { refresh } = useAuth()
   const settings = useLoad(() => workspace.settings(), [])
   const action = useAction()
-  const [form, setForm] = useState<{ team_name: string; default_event_key: string; scouting_instructions: string } | null>(null)
-  const current = form ?? (settings.data ? {
-    team_name: settings.data.team_name, default_event_key: settings.data.default_event_key ?? '',
-    scouting_instructions: settings.data.scouting_instructions ?? '' } : null)
+  const [form, setForm] = useState<{ team_name: string; events: string[]; pinned: string | null;
+    scouting_instructions: string } | null>(null)
+  const [adding, setAdding] = useState(0) // remounts the chooser after each added event
+  const data = settings.data
+  const current = form ?? (data ? {
+    team_name: data.team_name, events: data.team_event_keys, pinned: data.pinned_event_key,
+    scouting_instructions: data.scouting_instructions ?? '' } : null)
+  const known = new Map((data?.team_events ?? []).map((e) => [e.event_key, e]))
+  const changed = form !== null
 
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (!current) return
     const ok = await action.run(() => workspace.saveSettings({ team_name: current.team_name.trim(),
-      default_event_key: current.default_event_key.trim() || null,
+      team_event_keys: current.events, pinned_event_key: current.pinned,
       scouting_instructions: current.scouting_instructions.trim() || null }), 'Settings saved.')
     if (ok) { setForm(null); await settings.reload(); await refresh() }
   }
@@ -298,28 +310,62 @@ function SettingsTab() {
     <section className="card">
       <h2>Team settings</h2>
       <LoadState loading={settings.loading} error={settings.error} />
-      {current && settings.data && (
+      {current && data && (
         <form onSubmit={submit}>
-          <p className="muted">Team number {settings.data.team_number} (fixed).</p>
+          <p className="muted">Team number {data.team_number} (fixed).</p>
           <label>Team name<input value={current.team_name} required maxLength={100}
             onChange={(e) => setForm({ ...current, team_name: e.target.value })} /></label>
-          <EventChooser key={seasonOf(current.default_event_key) ?? 'none'} legend="Default event"
-            value={current.default_event_key}
-            onChange={(eventKey) => setForm({ ...current, default_event_key: eventKey })} />
-          <div className="actions">
-            <span className="muted small">The event the drive team and scouting dashboards open on.</span>
-            {current.default_event_key && (
-              <button type="button" className="link" onClick={() => setForm({ ...current, default_event_key: '' })}>
-                Clear the default event</button>
+
+          <fieldset className="team-events">
+            <legend>Our events</legend>
+            <p className="current-event">
+              <span className="muted">Current event</span>{' '}
+              {data.current_event_key
+                ? <><strong><EventName eventKey={data.current_event_key} /></strong>
+                  <span className="muted"> · {REASON_TEXT[data.current_reason ?? ''] ?? ''}</span></>
+                : <span className="muted">none yet: add the events the team is going to</span>}
+            </p>
+            <p className="small muted">The drive team, scouting and live draft pages open on the current event. It moves
+              on by itself: the event happening now, else the next one, else the most recent. Pin one to override.</p>
+            {current.events.length > 0 && (
+              <ul className="team-event-list" aria-label="Our events">
+                {current.events.map((key) => {
+                  const info = known.get(key)
+                  const pinned = current.pinned === key
+                  return (
+                    <li key={key} className={pinned ? 'is-pinned' : undefined}>
+                      <span className="team-event-name"><EventName eventKey={key} /></span>
+                      <span className="small muted">{info
+                        ? [info.start_date, info.status ? STATUS_TEXT[info.status] : null].filter(Boolean).join(' · ')
+                        : 'not saved yet'}{pinned ? ' · pinned as current' : ''}</span>
+                      <span className="team-event-actions">
+                        <button type="button" className="link" aria-pressed={pinned}
+                          onClick={() => setForm({ ...current, pinned: pinned ? null : key })}>
+                          {pinned ? 'Unpin' : 'Pin as current'}</button>
+                        <button type="button" className="link danger"
+                          onClick={() => setForm({ ...current, events: current.events.filter((k) => k !== key),
+                            pinned: pinned ? null : current.pinned })}>Remove</button>
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
             )}
-          </div>
+            <EventChooser key={adding} legend="Add an event" value=""
+              onChange={(eventKey) => {
+                if (eventKey && !current.events.includes(eventKey)) setForm({ ...current, events: [...current.events, eventKey] })
+                setAdding((n) => n + 1)
+              }} />
+          </fieldset>
+
           <label>Instructions shown to scouters
             <textarea rows={4} maxLength={2000} value={current.scouting_instructions}
               onChange={(e) => setForm({ ...current, scouting_instructions: e.target.value })} />
           </label>
           <ErrorNotice error={action.error} />
           <SuccessNotice message={action.message} />
-          <div className="actions"><button type="submit" disabled={action.busy}>Save settings</button></div>
+          <div className="actions"><button type="submit" disabled={action.busy || !changed}>Save settings</button>
+            {changed && <span className="muted small">Unsaved changes</span>}</div>
         </form>
       )}
     </section>

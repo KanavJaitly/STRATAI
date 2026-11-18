@@ -1,20 +1,23 @@
 # Team accounts: FRC Team 11 (MORT)
 
 StratAI serves one team, FRC Team 11 (MORT). Everyone signs in with their own account, and the whole site is behind
-sign-in. There are two roles, **admin** and **base**.
+sign-in. There are five roles: **admin**, **strategy** (Strategy team), **drive** (Drive team), **scout** and
+**base** (Member).
 
 History:
 - **2026-11-02:** team workspaces for many teams, with migration `0012_team_workspaces.sql`. It covered registration
   with a setup password, operator verification, invitations, and three configurable roles.
 - **2026-11-11:** replaced by the single-team model here, with migration `0015_single_team_auth.sql`. The decision
   is in RUNNING_NOTES.md (Design Decisions Log, 2026-11-11).
+- **2026-11-17:** three more roles (Strategy team, Drive team, Scout; migration `0016_more_team_roles.sql`, which only
+  widens the role CHECK), and the team's events with an automatic current event (section 2.1).
 
 ## 1. Architecture
 
 | Part | Responsibility | Where |
 |---|---|---|
 | Accounts and sessions | Sign-up with the join code, sign-in, password hashing, sessions, password change, reset codes | `workspaces/accounts.py`, `workspaces/sessions.py`, `workspaces/passwords.py` |
-| Roles | The two roles and what each may do, fixed in code | `workspaces/permissions.py` |
+| Roles | The five roles and what each may do, fixed in code | `workspaces/permissions.py` |
 | Rate limits | Every credential check and every email-sending request | `workspaces/rate_limit.py` |
 | PostgreSQL | Users, memberships, sessions, reset codes, activity log, team scouting, live draft | migrations 0012-0015 |
 | FastAPI | Session verification and every authorization decision, on the server | `api/session.py`, `api/app.py`, `api/routes/auth.py`, `api/routes/workspace.py` |
@@ -32,38 +35,58 @@ one role, and locally that role is a superuser.
 
 ## 2. Roles
 
-| | admin | base |
-|---|---|---|
-| Events list (`/`) and an event's page (`/events/:eventKey`), read-only | yes | yes |
-| Their own account (`/account`): name, email, role, change password, log out | yes | yes |
-| Everything else: team, match and report pages, strategy lab, alliance selection, live draft, drive team and scouting dashboards, historical explorer, system status, game manuals, rulesets, human inputs | yes | no |
-| Members page: see members, change a role, suspend, remove | yes | no |
+| | admin | strategy | drive | scout | base |
+|---|---|---|---|---|---|
+| Events list and an event's page (rankings, matches, forecast), their own account | yes | yes | yes | yes | yes |
+| Team pages, match win probability, the Drive team page with the engine's match plan (read-only) | yes | yes | yes | no | no |
+| Match strategy tools, strategy lab, pre-match reports | yes | yes | no | no | no |
+| Alliance selection, our pick list, the live draft board including recording picks | yes | yes | no | no | no |
+| Every scouting report, the team's scouting summary, assigning scouts | yes | yes | no | no | no |
+| Scouting forms, their own assignments and submissions | yes | no | no | yes | no |
+| Team page: members, settings, activity log; historical explorer; system status; game manuals, rulesets, inputs | yes | no | no | no | no |
 
-What a base member holds is fixed in code (`ROLE_GRANTS` in `workspaces/permissions.py`): `team_info`,
-`event_analysis` and `qualification_forecast`. Those are exactly the routes the two event pages call:
-- `GET /events`
-- `GET /events/{key}/teams`
-- `GET /events/{key}/matches`
-- `GET /events/{key}/analysis`
-- `GET /events/{key}/qualification-forecast`
+Mentors are administrators. Each role lands on the page it uses most: admin on Team (`/team`), strategy and drive on
+Drive team (`/drive-team`), scout on Scouting (`/scouting`), base on Events (`/`). New sign-ups are base members;
+an administrator changes a role in Team > Members.
+
+What each role holds is fixed in code (`ROLE_GRANTS` in `workspaces/permissions.py`):
+- **base:** `team_info`, `event_analysis`, `qualification_forecast` (the routes the two event pages call);
+- **scout:** those, plus `scouting_forms`, `scouting_submit`;
+- **drive:** those, plus `match_predictions`, `team_analytics`, `match_plan_view` (the strategy engine's recommended
+  plan for a scheduled match, read-only: `POST /strategy/matches/{key}/recommend` and no other strategy route, enforced
+  by `strategy_gate` in `api/session.py`);
+- **strategy:** those, plus `match_predictions`, `team_analytics`, `strategy_tools`, `alliance_selection`,
+  `alliance_selection_record`, `scouting_view`, `scouting_assign`.
 
 An administrator holds every permission. Nothing is configurable per team, so no administrator action can widen what
-base sees.
+a role sees.
 
-Where base is refused:
-- **API.** Every other route answers base with `403 permission_denied`. `tests/test_workspaces_api.py` checks this
-  for every GET route in the live OpenAPI schema, so a route added later is covered automatically.
-- **Web app.**
-  - Base sees only *Events* in the navigation.
-  - Any other page shows "Your role does not include this page" and loads none of its data.
-  - On an event page, team, match and report entries appear as plain text, not links, and the alliance-selection and
-    strategy-lab buttons are hidden.
+Where a role is refused:
+- **API.** Every route outside a role's grants answers `403 permission_denied`. `tests/test_workspaces_api.py` checks
+  this for every GET route in the live OpenAPI schema for base, and route by route for the other roles.
+- **Web app.** The navigation shows only what the role may open; any other page shows "Your role does not include this
+  page" and loads none of its data. Page access is read from the session's permissions (`pageAllowed` in
+  `frontend/src/auth/roles.ts` maps each page to the permission it needs), so it follows `ROLE_GRANTS` without
+  repeating it.
+
+### 2.1 The team's events and the current event
+
+Team > Settings > **Our events** lists the events the team is going to. The **current event** is what the Drive team,
+Scouting and Live draft pages open on. It moves on by itself: the event happening today, else the next one, else the
+most recent. An administrator can **pin** one as current instead (for example an off-season event) and unpin it to go
+back to automatic.
+- Stored in `workspaces.settings` (JSONB, so no migration): `team_event_keys`, and `default_event_key`, which is now the
+  pin. `default_event_key` in API answers is the computed current event, so older readers keep working.
+- `GET /workspace/team-events` (every member, `team_info`): the events with their dates and status, the current event
+  and why (`pinned`, `happening`, `next`, `most_recent`), and the instructions shown to scouters.
+- The Events page lists our events first and marks them in the full list; the dashboards offer them as one-tap
+  buttons, with any other event behind "Another event". Dates are compared in UTC.
 
 **Adding a role later:**
 1. Add the role to `ROLES` and `ROLE_LABELS`.
 2. Give it an entry in `ROLE_GRANTS`.
 3. Extend the role CHECK constraint on `team_memberships` in a migration.
-4. Add its page allow-list to `pageAllowed` in `frontend/src/auth/roles.ts`.
+4. Add it to `Role`, `ROLE_HOME`, `ROLE_LABEL` and `ROLE_ORDER` in the frontend (`src/auth/api.ts`, `src/auth/roles.ts`).
 
 A team must keep at least one active administrator. A demotion, suspension or removal that would leave none is
 refused, by the application and again by a database trigger.
@@ -88,10 +111,10 @@ refused, by the application and again by a database trigger.
     **admin** whichever code it used. The person is signed in at once.
 - **Sign-in** (`/auth/login`): email and password only. Failures all read `invalid_credentials` and take the same
   time.
-- **After sign-in:** an administrator lands on the Admin Dashboard (`/team`) and a base member on the events (`/`). A
-  `?next=` target is followed only if that role may open it.
+- **After sign-in:** each role lands on its own page (section 2). A `?next=` target is followed only if that role may
+  open it.
 - **Changing a role:**
-  - In the web app: Team Management (`/team`, tab *Team Management*).
+  - In the web app: Team > Members (`/team?tab=members`).
   - From the command line, on a machine with the deployment's `DATABASE_URL`. On Render, use the API service's Shell:
 
     ```

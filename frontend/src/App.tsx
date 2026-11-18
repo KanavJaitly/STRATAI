@@ -207,7 +207,7 @@ function AccountArea() {
 export function Shell() {
   const { pathname, search } = useLocation()
   const { season } = useSession()
-  const { ready, signedIn, role, can } = useAuth()
+  const { ready, signedIn, role, can, session } = useAuth()
   const inEvents = EVENTS_AREA.test(pathname)
   const inWorkspace = WORKSPACE_AREA.test(pathname)
   useFocusMainOnNavigation(pathname)
@@ -220,7 +220,7 @@ export function Shell() {
   const onAuthPage = AUTH_AREA.test(pathname)
   const waiting = !ready && !onAuthPage
   const needsSignIn = ready && !signedIn && !onAuthPage
-  const blocked = ready && signedIn && !onAuthPage && pathname !== '/home' && !pageAllowed(role, pathname)
+  const blocked = ready && signedIn && !onAuthPage && pathname !== '/home' && !pageAllowed(role, pathname, session.permissions ?? [])
   return (
     <div className="app">
       <a href="#main" className="skip-link">Skip to content</a>

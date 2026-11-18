@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { Shell } from '../App'
 import { SessionProvider } from '../state/session'
-import { ADMIN_PERMISSIONS, ADMIN_SESSION, BASE_SESSION } from '../test/auth'
+import { ADMIN_PERMISSIONS, ADMIN_SESSION, BASE_PERMISSIONS, BASE_SESSION } from '../test/auth'
 import { axeViolations } from '../test/dashboard'
 import { EVENT, EVENTS, TEAMS } from '../test/dashboardFixtures'
 import { apiError, mockApi } from '../test/mockApi'
@@ -48,7 +48,12 @@ const MATCHES = { as_of: '2026-11-01T00:00:00Z', event_key: '2099synth', validat
     result: null, result_withheld_reason: 'not_played' },
 ] }
 // What the admin landing page (/team) and the events page (/) read.
-const LANDING = { 'GET /workspace': OVERVIEW, 'GET /workspace/analytics': ANALYTICS, 'GET /events': EVENTS,
+// What every member reads from the team's settings (Our events, the current event, the instructions for scouters).
+const TEAM_EVENTS = { team_events: [{ event_key: '2099synth', name: 'Synthetic Regional', start_date: '2099-03-01',
+  end_date: '2099-03-03', status: 'upcoming' }], pinned_event_key: null, current_event_key: '2099synth',
+  current_reason: 'next', scouting_instructions: 'Watch the defense closely.' }
+
+const LANDING = { 'GET /workspace': OVERVIEW, 'GET /workspace/team-events': TEAM_EVENTS, 'GET /workspace/analytics': ANALYTICS, 'GET /events': EVENTS,
   ...SEASON_EVENTS }
 
 function renderApp(url: string) {
@@ -62,20 +67,42 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); clearSeasonEvents
 describe('roles', () => {
   it('lets a base member open only the events list, an event page and their account', () => {
     for (const path of ['/', '/?season=2026', '/events/2026njfla', '/events/2026njfla?tab=teams', '/account']) {
-      expect(pageAllowed('base', path)).toBe(true)
+      expect(pageAllowed('base', path, BASE_PERMISSIONS)).toBe(true)
     }
     for (const path of ['/team', '/explorer', '/status', '/inputs', '/events/2026njfla/teams/11',
       '/events/2026njfla/alliance-selection', '/matches/2026njfla_qm1', '/report/2026njfla_qm1', '/drive-team']) {
-      expect(pageAllowed('base', path)).toBe(false)
+      expect(pageAllowed('base', path, BASE_PERMISSIONS)).toBe(false)
       expect(pageAllowed('admin', path)).toBe(true)
     }
   })
 
+  it('opens each new role the pages its permissions allow, and nothing that manages the team', () => {
+    const drive = [...BASE_PERMISSIONS, 'match_predictions', 'team_analytics', 'match_plan_view']
+    const scout = [...BASE_PERMISSIONS, 'scouting_forms', 'scouting_submit']
+    const strategy = [...drive, 'strategy_tools', 'alliance_selection', 'alliance_selection_record', 'scouting_view',
+      'scouting_assign']
+    for (const path of ['/drive-team', '/events/2026njfla/teams/11', '/matches/2026njfla_qm1']) {
+      expect(pageAllowed('drive', path, drive)).toBe(true)
+    }
+    for (const path of ['/events/2026njfla/alliance-selection', '/report/2026njfla_qm1', '/scouting', '/team']) {
+      expect(pageAllowed('drive', path, drive)).toBe(false)
+    }
+    expect(pageAllowed('scout', '/scouting', scout)).toBe(true)
+    expect(pageAllowed('scout', '/drive-team', scout)).toBe(false)
+    for (const path of ['/events/2026njfla/alliance-selection', '/alliance-selection/live', '/events/2026njfla/strategy-lab',
+      '/report/2026njfla_qm1', '/drive-team']) {
+      expect(pageAllowed('strategy', path, strategy)).toBe(true)
+    }
+    for (const path of ['/team', '/explorer', '/status', '/inputs']) expect(pageAllowed('strategy', path, strategy)).toBe(false)
+    expect(landingFor('drive', null, drive)).toBe('/drive-team')
+    expect(landingFor('scout', null, scout)).toBe('/scouting')
+  })
+
   it('follows next after sign-in only when the role may open it', () => {
     expect(landingFor('admin', null)).toBe('/team')
-    expect(landingFor('base', null)).toBe('/')
-    expect(landingFor('base', '/events/2099synth')).toBe('/events/2099synth')
-    expect(landingFor('base', '/team')).toBe('/')
+    expect(landingFor('base', null, BASE_PERMISSIONS)).toBe('/')
+    expect(landingFor('base', '/events/2099synth', BASE_PERMISSIONS)).toBe('/events/2099synth')
+    expect(landingFor('base', '/team', BASE_PERMISSIONS)).toBe('/')
     expect(landingFor('admin', '/explorer')).toBe('/explorer')
     expect(landingFor('admin', '//evil.example')).toBe('/team')
   })
@@ -374,7 +401,7 @@ describe('Team Management', () => {
     renderApp('/team?tab=members')
     const user = userEvent.setup()
     const roles = await screen.findByLabelText('Role of Bo Base')
-    expect(within(roles).getAllByRole('option').map((o) => o.textContent)).toEqual(['Administrator', 'Member'])
+    expect(within(roles).getAllByRole('option').map((o) => o.textContent)).toEqual(['Administrator', 'Strategy team', 'Drive team', 'Scout', 'Member'])
     await user.selectOptions(roles, 'admin')
     await waitFor(() => expect(api.writes().find((c) => c.path === '/workspace/members/2/role')!.body)
       .toEqual({ role: 'admin' }))
@@ -392,8 +419,8 @@ describe('admin dashboards', () => {
       team_number: 9002, alliance_color: 'red', assigned_user_id: 1, assigned_to: 'Ada Admin', status: 'assigned',
       created_at: '2026-11-01T00:00:00Z', report_submitted: false }
     const api = mockApi({
-      'GET /auth/session': ADMIN_SESSION, 'GET /workspace': OVERVIEW, ...SEASON_EVENTS,
-      'GET /workspace/scouting/assignments': [assignment], 'GET /workspace/scouting/reports': [],
+      'GET /auth/session': ADMIN_SESSION, 'GET /workspace': OVERVIEW, 'GET /workspace/team-events': TEAM_EVENTS,
+      ...SEASON_EVENTS, 'GET /workspace/scouting/assignments': [assignment], 'GET /workspace/scouting/reports': [],
       'GET /workspace/scouting/scouts': [], 'GET /workspace/scouting/summary': { event_key: '2099synth', teams: [],
         source: '', method: '' },
       'GET /events/2099synth/matches': MATCHES,
@@ -411,5 +438,32 @@ describe('admin dashboards', () => {
     await waitFor(() => expect(api.writes()).toHaveLength(1))
     expect(api.writes()[0].body).toEqual({ match_key: '2099synth_qm1', team_number: 9002, defense_rating: 4,
       feeding_rating: null, notes: null, assignment_id: 5 })
+  })
+})
+
+describe('our events and the new roles', () => {
+  const DRIVE_SESSION: SessionInfo = { ...BASE_SESSION, user: { id: 3, name: 'Dee Drive', email: 'drive@example.test' },
+    role: 'drive', role_label: 'Drive team', permissions: [...BASE_PERMISSIONS, 'match_predictions', 'team_analytics',
+      'match_plan_view'] }
+
+  it('lists our events first on the events page and marks them in the full list', async () => {
+    mockApi({ 'GET /auth/session': BASE_SESSION, 'GET /events': EVENTS, 'GET /workspace/team-events': TEAM_EVENTS })
+    renderApp('/?season=2099')
+    const ours = await screen.findByRole('region', { name: 'Our events' })
+    expect(within(ours).getByRole('link', { name: 'Synthetic Regional' })).toHaveAttribute('href', '/events/2099synth')
+    expect(within(ours).getByText(/current/)).toBeInTheDocument()
+  })
+
+  it('sends the drive team to their page, on the current event, with our events one tap away', async () => {
+    mockApi({ 'GET /auth/session': DRIVE_SESSION, 'GET /workspace/team-events': TEAM_EVENTS, ...SEASON_EVENTS,
+      'GET /events/2099synth/matches': MATCHES })
+    renderApp('/home')
+    expect(await screen.findByRole('heading', { name: 'Drive team' })).toBeInTheDocument()
+    const switcher = await screen.findByRole('group', { name: 'Our events' })
+    expect(within(switcher).getByRole('button', { name: /Synthetic Regional/ })).toHaveAttribute('aria-pressed', 'true')
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+    expect(within(nav).getByRole('link', { name: 'Drive team' })).toBeInTheDocument()
+    expect(within(nav).queryByRole('link', { name: 'Team' })).not.toBeInTheDocument()
+    expect(within(nav).queryByText('Admin')).not.toBeInTheDocument()
   })
 })

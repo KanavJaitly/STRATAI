@@ -144,7 +144,7 @@ def workspace(app, who: str = "ada") -> TestClient:
 
 
 def join(app, admin: TestClient, who: str, role: str = "base") -> TestClient:
-    """A new member with role (admin or base), signed in: signs up, then the administrator sets the role."""
+    """A new member with role, signed in: signs up, then the administrator sets the role."""
     c = member(app, who)
     if role != "base":
         response = admin.post(f"/workspace/members/{member_id(admin, who)}/role", json={"role": role})
@@ -315,7 +315,7 @@ def test_the_session_reports_a_database_without_the_account_tables(monkeypatch):
 
 # The only routes a base member may call: the events list and an event's page (plus their own session).
 BASE_ROUTES = {"/events", "/events/{event_key}/teams", "/events/{event_key}/matches", "/events/{event_key}/analysis",
-               "/events/{event_key}/qualification-forecast"}
+               "/events/{event_key}/qualification-forecast", "/workspace/team-events"}
 PUBLIC_ROUTES = {"/health", "/ready", "/auth/session"}
 PATH_VALUES = {"season": str(SEASON), "event_key": EVENT, "team_number": str(TEAMS[0]), "match_key": f"{EVENT}_qm1"}
 
@@ -400,7 +400,7 @@ def test_an_administrator_changes_roles_and_the_change_applies_on_the_next_reque
     bo = member_id(admin, "bo")
     assert admin.post(f"/workspace/members/{bo}/role", json={"role": "admin"}).json()["role"] == "admin"
     assert base.get("/explorer/seasons").status_code == 200  # no new sign-in needed
-    assert admin.post(f"/workspace/members/{bo}/role", json={"role": "strategy"}).status_code == 422  # old roles gone
+    assert admin.post(f"/workspace/members/{bo}/role", json={"role": "coach"}).status_code == 422  # unknown role
 
 
 def test_the_last_active_administrator_is_protected():
@@ -617,7 +617,7 @@ def test_the_activity_log_records_sign_ups_and_administrative_actions():
     created = [e for e in entries if e["action"] == "account_created"]
     assert {e["details"]["role"] for e in created} == {"admin", "base"}
     analytics = admin.get("/workspace/analytics").json()
-    assert set(analytics["members_by_role"]) == {"admin", "base"} and "pending_invitations" not in analytics
+    assert set(analytics["members_by_role"]) == {"admin", "base", "strategy", "drive", "scout"} and "pending_invitations" not in analytics
 
 
 def test_forgot_password_does_the_same_work_for_any_account_and_sends_after_answering(monkeypatch, tmp_path):
@@ -649,3 +649,115 @@ def test_a_failed_reset_email_never_reaches_the_caller(monkeypatch, tmp_path):
     monkeypatch.setattr(mailer_module, "send", broken)
     answer = browser(app).post("/auth/password/forgot", json={"email": email("bo")})
     assert answer.status_code == 202 and answer.json()["accepted"] is True
+
+
+# --- roles beyond admin and base (migration 0016) -------------------------------------------------------------
+
+def test_each_new_role_reaches_its_own_pages_and_nothing_more(monkeypatch):
+    app = make_app(monkeypatch, ACCESS_POLICY="members")
+    admin = member(app, "ada")
+    strategy, drive, scout = join(app, admin, "sol", "strategy"), join(app, admin, "dee", "drive"), join(app, admin, "sky", "scout")
+    labels = {m["email"]: m["role_label"] for m in admin.get("/workspace/members").json()["members"]}
+    assert labels[email("sol")] == "Strategy team" and labels[email("dee")] == "Drive team" and labels[email("sky")] == "Scout"
+    reach = {  # path -> which of (strategy, drive, scout) may read it
+        f"/events/{EVENT}/analysis": (True, True, True),
+        f"/predictions/matches/{EVENT}_qm1/win-probability": (True, True, False),
+        f"/teams/{TEAMS[0]}/events/{EVENT}/strength": (True, True, False),
+        f"/events/{EVENT}/alliance-selection/candidates": (True, False, False),
+        "/workspace/scouting/assignments": (False, False, True),
+        "/workspace/members": (False, False, False),
+        "/workspace/settings": (False, False, False),
+        "/explorer/seasons": (False, False, False),
+    }
+    for path, allowed in reach.items():
+        for who, ok in zip((strategy, drive, scout), allowed):
+            status = who.get(path).status_code
+            assert (status not in (401, 403)) == ok, (path, ok, status)
+    assert strategy.get("/workspace/alliance-selection/drafts", params={"event_key": EVENT}).status_code == 200
+    # the drive team reads the engine's plan for a scheduled match, and nothing else of the strategy tools
+    plan = f"/strategy/matches/{EVENT}_qm1/recommend"
+    assert drive.post(plan, json={"side": "red"}).status_code not in (401, 403)
+    assert scout.post(plan, json={"side": "red"}).status_code == 403
+    for path, body in ((f"/strategy/matches/{EVENT}_qm1/assess", {"side": "red", "strategy": {}}),
+                       (f"/strategy/matches/{EVENT}_qm1/compare", {"side": "red", "first": {}, "second": {}}),
+                       ("/strategy/hypothetical/recommend", {"side": "red"})):
+        assert drive.post(path, json=body).status_code == 403, path
+        assert strategy.post(path, json=body).status_code != 403, path
+    for who in (strategy, drive, scout):  # nobody but an administrator manages members
+        assert who.post(f"/workspace/members/{member_id(admin, 'sky')}/role", json={"role": "admin"}).status_code == 403
+
+
+def test_the_role_change_to_a_new_role_is_logged_and_counted(monkeypatch):
+    app = make_app(monkeypatch, ACCESS_POLICY="members")
+    admin = member(app, "ada")
+    join(app, admin, "sol", "strategy")
+    analytics = admin.get("/workspace/analytics").json()
+    assert set(analytics["members_by_role"]) == {"admin", "base", "strategy", "drive", "scout"}
+    assert analytics["members_by_role"]["strategy"]["active"] == 1
+
+
+# --- the team's events and its current event -------------------------------------------------------------------
+
+def _dated_events(today):
+    """Three sentinel events relative to today: one finished, one on now, one ahead."""
+    from datetime import timedelta
+    rows = {"9988zzzpast": (today - timedelta(days=30), today - timedelta(days=28)),
+            "9988zzznow": (today - timedelta(days=1), today + timedelta(days=1)),
+            "9988zzznext": (today + timedelta(days=20), today + timedelta(days=22))}
+    with _db().cursor() as c:
+        for key, (start, end) in rows.items():
+            c.execute("INSERT INTO events (event_key, season, name, start_date, end_date) VALUES (%s, %s, %s, %s, %s) "
+                      "ON CONFLICT (event_key) DO UPDATE SET start_date = EXCLUDED.start_date, end_date = EXCLUDED.end_date",
+                      (key, SEASON, key, start, end))
+    return list(rows)
+
+
+def _drop_dated_events(keys):
+    with _db().cursor() as c:
+        c.execute("DELETE FROM events WHERE event_key = ANY(%s)", (keys,))
+
+
+def test_the_current_event_follows_the_calendar_and_a_pin_overrides_it(monkeypatch):
+    from workspaces.management import _today
+    keys = _dated_events(_today())
+    try:
+        app = make_app(monkeypatch, ACCESS_POLICY="members")
+        admin, base = member(app, "ada"), member(app, "bo")
+        saved = admin.post("/workspace/settings", json={"team_event_keys": ["9988zzznext", "9988zzzpast", "9988zzznow"]})
+        assert saved.status_code == 200, saved.text
+        body = saved.json()
+        assert body["team_event_keys"] == ["9988zzzpast", "9988zzznow", "9988zzznext"]  # by date
+        assert body["current_event_key"] == "9988zzznow" and body["current_reason"] == "happening"
+        assert body["default_event_key"] == "9988zzznow"  # what the dashboards open on
+        assert [e["status"] for e in body["team_events"]] == ["past", "happening", "upcoming"]
+        # every member reads the team's events (not only administrators)
+        seen = base.get("/workspace/team-events").json()
+        assert seen["current_event_key"] == "9988zzznow" and len(seen["team_events"]) == 3
+        # without an event on now, the next one; without a next one, the most recent
+        admin.post("/workspace/settings", json={"team_event_keys": ["9988zzzpast", "9988zzznext"]})
+        assert base.get("/workspace/team-events").json()["current_reason"] == "next"
+        admin.post("/workspace/settings", json={"team_event_keys": ["9988zzzpast"]})
+        assert base.get("/workspace/team-events").json()["current_event_key"] == "9988zzzpast"
+        # a pin wins, joins the list, and unpinning goes back to automatic
+        pinned = admin.post("/workspace/settings", json={"pinned_event_key": EVENT}).json()
+        assert pinned["current_event_key"] == EVENT and pinned["current_reason"] == "pinned" and EVENT in pinned["team_event_keys"]
+        unpinned = admin.post("/workspace/settings", json={"pinned_event_key": None}).json()
+        assert unpinned["current_reason"] == "most_recent" and unpinned["pinned_event_key"] is None
+        # the overview the dashboards read carries the computed current event
+        assert admin.get("/workspace").json()["settings"]["default_event_key"] == "9988zzzpast"
+    finally:
+        _drop_dated_events(keys)
+
+
+def test_team_events_are_checked_and_only_administrators_change_them(monkeypatch):
+    app = make_app(monkeypatch, ACCESS_POLICY="members")
+    admin, base = member(app, "ada"), member(app, "bo")
+    unknown = admin.post("/workspace/settings", json={"team_event_keys": [EVENT, "1999nosuchevent"]})
+    assert unknown.status_code == 422 and code(unknown) == "invalid_input"
+    deduped = admin.post("/workspace/settings", json={"team_event_keys": [EVENT, EVENT]}).json()
+    assert deduped["team_event_keys"] == [EVENT]
+    assert base.post("/workspace/settings", json={"team_event_keys": []}).status_code == 403
+    legacy = admin.post("/workspace/settings", json={"default_event_key": EVENT}).json()  # an older client's pin
+    assert legacy["pinned_event_key"] == EVENT
+    log = admin.get("/workspace/activity").json()["entries"]
+    assert any("team_event_keys" in (e["details"] or {}) for e in log if e["action"] == "settings_changed")

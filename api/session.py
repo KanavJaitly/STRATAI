@@ -19,6 +19,7 @@ adds nothing to any locked operation's OpenAPI contract.
 from __future__ import annotations
 
 import hmac
+import re
 from http import HTTPStatus
 from typing import Any, Callable
 
@@ -107,6 +108,26 @@ def permission_gate(permission: str) -> Callable[[Request], None]:
 
     gate.__name__ = f"permission_gate_{permission}"
     return gate
+
+
+# The one strategy operation a member without the strategy tools may call: the engine's recommended plan for a
+# scheduled match, read-only (it computes and returns a plan; it writes nothing). The Drive team page shows it.
+_MATCH_PLAN_PATH = re.compile(r"/strategy/matches/[^/]+/recommend$")
+
+
+def strategy_gate(request: Request) -> None:
+    """The gate on the strategy router: strategy_tools for everything, or match_plan_view for a scheduled match's
+    recommended plan alone (POST /strategy/matches/{match_key}/recommend)."""
+    if request.app.state.settings.access_policy != "members":
+        return
+    context = require_session(request)
+    if context.can("strategy_tools"):
+        return
+    if (context.can("match_plan_view") and request.method == "POST"
+            and _MATCH_PLAN_PATH.search(request.url.path)):
+        return
+    raise ApiError(status_code=HTTPStatus.FORBIDDEN, code=CODE_PERMISSION_DENIED,
+                   message="Your role does not have permission to do this.")
 
 
 def platform_gate(request: Request) -> None:
