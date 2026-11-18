@@ -11,14 +11,7 @@ import type { AssessmentOut, CompareResponse, RecommendResponse, RobotPlan, Stra
 import type { Resource } from '../components/useResource'
 import { Absent, ActionStatus, EpaSourceNote, OddsView, RefusalNotice, ResourceView, When } from './display'
 import { useOnDemand } from '../components/useOnDemand'
-import { baselineStrategy, COMPONENTS, strategyProblems } from './strategyModel'
-
-function roleText(robot: RobotPlan): string {
-  const role = robot.role ?? 'scoring'
-  if (role === 'defense') return `Defense on ${robot.defense_target}`
-  if (role === 'feeding') return `Feeding ${robot.feed_target}`
-  return 'Scoring'
-}
+import { baselineStrategy, COMPONENTS, roleText, strategyProblems } from './strategyModel'
 
 /** One strategy as a table of role assignments and scoring priorities. */
 export function StrategyTable({ strategy, caption }: { strategy: Strategy; caption: string }) {

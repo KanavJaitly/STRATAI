@@ -29,3 +29,11 @@ export function strategyProblems(strategy: Strategy, allies: number[], opponents
   }
   return problems
 }
+
+/** A robot's teleop role in words. */
+export function roleText(robot: RobotPlan): string {
+  const role = robot.role ?? 'scoring'
+  if (role === 'defense') return `Defense on ${robot.defense_target}`
+  if (role === 'feeding') return `Feeding ${robot.feed_target}`
+  return 'Scoring'
+}

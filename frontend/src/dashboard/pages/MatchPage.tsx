@@ -44,6 +44,14 @@ export function MatchPage() {
         <p className="alliances-line"><AllianceTeams teams={red} eventKey={eventKey} tone="red" />{' '}
           <span className="muted">vs</span>{' '}<AllianceTeams teams={blue} eventKey={eventKey} tone="blue" /></p>
       )}
+      <section className="card" aria-labelledby="winprob-heading">
+        <h2 id="winprob-heading">Match win probability (statistical model, no strategy)</h2>
+        <p className="small muted">The statistical model's chance of each alliance winning, from both alliances' data. It is a separate model from
+          the strategy odds below and is never combined with them.</p>
+        <ResourceView resource={winProbability} what="win probability">
+          {(data) => <WinProbabilityView data={data} />}
+        </ResourceView>
+      </section>
       <fieldset className="side-choice">
         <legend>Plan for</legend>
         {(['red', 'blue'] as Side[]).map((s) => (
@@ -60,14 +68,6 @@ export function MatchPage() {
               ? <SaveCoachStrategy eventKey={eventKey} matchKey={matchKey} strategy={coach} valid={valid} /> : null} />
         : matches.loading ? <p className="loading" role="status">Loading the match…</p>
           : <p className="notice notice-warn">This match does not have three teams per alliance at this moment, so no strategy can be built.</p>}
-      <section className="card" aria-labelledby="winprob-heading">
-        <h2 id="winprob-heading">Match win probability (statistical model, no strategy)</h2>
-        <p className="small muted">The statistical model's chance of each alliance winning, from both alliances' data. It is a separate model from
-          the strategy odds above and is never combined with them.</p>
-        <ResourceView resource={winProbability} what="win probability">
-          {(data) => <WinProbabilityView data={data} />}
-        </ResourceView>
-      </section>
       {red.length + blue.length > 0 && (
         <section className="card" aria-labelledby="coach-heading">
           <h2 id="coach-heading">Coach inputs</h2>

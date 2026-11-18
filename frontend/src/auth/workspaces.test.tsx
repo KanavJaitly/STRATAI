@@ -158,11 +158,11 @@ describe('sign-up', () => {
     expect(signup.headers['X-StratAI-CSRF']).toBe('1')
   })
 
-  it('opens the Admin Dashboard when the API makes the account an administrator (ADMIN_EMAILS)', async () => {
+  it('opens the team page when the API makes the account an administrator (ADMIN_EMAILS)', async () => {
     mockApi({ 'GET /auth/session': SIGNED_OUT, 'POST /auth/signup': { status: 201, body: ADMIN_SESSION }, ...LANDING })
     renderApp('/auth/signup')
     await fill('the-code')
-    expect(await screen.findByRole('heading', { name: 'Admin Dashboard' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Team' })).toBeInTheDocument()
   })
 
   it('shows a clear error for a wrong join code', async () => {
@@ -199,7 +199,7 @@ describe('sign-in', () => {
   }
 
   it.each([
-    ['an administrator', ADMIN_SESSION, 'Admin Dashboard'],
+    ['an administrator', ADMIN_SESSION, 'Team'],
     ['a base member', BASE_SESSION, 'Events'],
   ])('sends %s to their home page, with email and password only', async (_who, session, heading) => {
     const api = mockApi({ 'GET /auth/session': SIGNED_OUT, 'POST /auth/login': session, ...LANDING })
@@ -310,12 +310,12 @@ describe('what a base member sees', () => {
 })
 
 describe('administrators', () => {
-  it('get the Admin Dashboard and the full navigation', async () => {
+  it('get the team page and the full navigation', async () => {
     mockApi({ 'GET /auth/session': ADMIN_SESSION, ...LANDING })
     renderApp('/team')
-    expect(await screen.findByRole('heading', { name: 'Admin Dashboard' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Team' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Main' })
-    for (const name of ['Events', 'Team Management', 'Drive team', 'Scouting', 'System status', 'Historical seasons',
+    for (const name of ['Events', 'Team', 'Drive team', 'Scouting', 'System status', 'Historical seasons',
       'Inputs overview']) {
       expect(within(nav).getByRole('link', { name })).toBeInTheDocument()
     }

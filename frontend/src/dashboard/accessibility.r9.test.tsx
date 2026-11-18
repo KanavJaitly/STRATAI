@@ -108,7 +108,7 @@ describe('busy actions keep focus and stay guarded (P8-R9)', () => {
 })
 
 // Read from disk: the test config sets `css: false`, which empties CSS imports, even `?raw` ones.
-const CSS = readFileSync(resolve(process.cwd(), 'src/styles/dashboard.css'), 'utf8') // vitest runs from frontend/
+const CSS = readFileSync(resolve(process.cwd(), 'src/styles/app.css'), 'utf8') // vitest runs from frontend/
 
 describe('layout rules a browser applies (P8-R9; measured in a real browser in the R9 record)', () => {
   it('keeps the first column of a scrolling table in view, and drops that for print', () => {
