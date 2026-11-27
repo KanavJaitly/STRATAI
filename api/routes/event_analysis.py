@@ -30,6 +30,7 @@ from http import HTTPStatus
 from fastapi import APIRouter, Depends, Path, Query
 from pydantic import BaseModel
 
+from ml.validation_scope import REASON_OUTSIDE_MEASURED_WINDOW, REASON_TRAINING_SEASON, is_training_season, season_of_event
 from api.contract import error_responses
 from api.dependencies import get_database, get_epa_source, get_ranking_model
 from api.ml_loading import ServedEpaSource, ServedModel
@@ -53,12 +54,22 @@ from ml.views.event_analysis import (
     CAPTAINS,
     DESCRIPTIVE,
     POLICY_M5V2,
+    NOT_VALIDATED,
     VALIDATED_AS_MEASURED,
     VALIDATED_RAW_EPA,
+    last_qualification_time,
+    ordering_validation,
     M5V2Required,
     analyze_event,
 )
 from ml.views.strength import TeamStrengthView
+
+# Why an element is not validated (ml/validation_scope.py; audit 2026-11-26, workstream 3).
+NOT_VALIDATED_NOTES = {
+    REASON_TRAINING_SEASON: "the ranking model was fit on this season, so this ordering is in-sample, not validated.",
+    REASON_OUTSIDE_MEASURED_WINDOW: "measured only after the switch point while qualification is in progress; not "
+                                    "validated at this moment.",
+}
 
 router = APIRouter(tags=["event analysis"])
 
@@ -154,16 +165,26 @@ def event_analysis(
                          epa_value_source=by_team[o.team_number].epa_value_source,
                          epa_source_state=by_team[o.team_number].epa_source_state,
                          epa_source_event_key=by_team[o.team_number].epa_source_event_key) for o in ordering]
-    status, evidence = ((VALIDATED_AS_MEASURED, EVIDENCE_M5V2) if model == POLICY_M5V2
-                        else (VALIDATED_RAW_EPA, EVIDENCE_RAW_EPA))
+    last_qualification = last_qualification_time(database, event_key)
+    status, reason = ordering_validation(model, event_key, when, switch.switch_time, last_qualification)
+    evidence = EVIDENCE_M5V2 if model == POLICY_M5V2 else EVIDENCE_RAW_EPA
+    if reason is not None:
+        evidence = f"{reason}: {NOT_VALIDATED_NOTES[reason]} {evidence}"
+    # Captain candidates: P5-M4 (c) was measured pre-event and at the switch, on 2026, so the label holds while
+    # qualification is in progress at an event of a season the ranking model was not fit on.
+    captains_reason = (REASON_TRAINING_SEASON if model == POLICY_M5V2 and is_training_season(season_of_event(event_key))
+                       else REASON_OUTSIDE_MEASURED_WINDOW if last_qualification is not None and when > last_qualification
+                       else None)
+    captains_evidence = EVIDENCE_CAPTAINS_SWITCH if switch.passed else EVIDENCE_CAPTAINS_PRE
+    if captains_reason is not None:
+        captains_evidence = f"{captains_reason}: {NOT_VALIDATED_NOTES[captains_reason]} {captains_evidence}"
     top = [o.team_number for o in ordering[:CAPTAINS]]
     return EventAnalysisResponse(
         event_key=event_key, as_of=when,
         ordering=EventOrdering(model=model, switch_point_passed=switch.passed, switch_time=switch.switch_time,
                                validation_status=status, evidence=evidence, teams=ranked),
-        captain_candidates=LabelledTeams(validation_status=VALIDATED_AS_MEASURED,
-                                         evidence=EVIDENCE_CAPTAINS_SWITCH if switch.passed else EVIDENCE_CAPTAINS_PRE,
-                                         team_numbers=top),
+        captain_candidates=LabelledTeams(validation_status=VALIDATED_AS_MEASURED if captains_reason is None
+                                         else NOT_VALIDATED, evidence=captains_evidence, team_numbers=top),
         strongest_teams=LabelledTeams(validation_status=status, evidence=f"{evidence} {STRONGEST_NOTE}",
                                       team_numbers=top),
         team_comparison=TeamComparison(validation_status=DESCRIPTIVE, teams=views),

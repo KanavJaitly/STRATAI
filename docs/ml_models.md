@@ -247,6 +247,24 @@ Every response carries `epa` (source, `evaluated_configuration`, snapshot proven
    - **What it does.** While a test runs, those rows can shift the causal season scale for served features.
    - **Observed.** It happened once during verification: run 2 of `scripts/verify_d18_production.py`, run concurrently with the suite, saw one transient feature mismatch. That match is identical on a quiet database.
 
+### Label scope (audit 2026-11-26)
+
+A validation label describes evidence measured somewhere. Since 2026-11-26 it is served only there
+(`ml/validation_scope.py`, `tests/test_validation_scope.py`).
+
+**Training seasons, 2024 and 2025.** Both served models were fit on them, so their outputs there are in-sample.
+- Every route serves them `not_validated` with reason `training_season`: match and ad-hoc win probability, the
+  qualification forecast's match values and records, the event analysis ordering, and the deprecated ranking route.
+- The value is still shown, as an unvalidated model output.
+
+**2026 and later.** Validated labels carry `evidence_retrospective_2026`.
+- The evidence is the 2026 evaluation, examined repeatedly since.
+- Only a pre-registered evaluation on 2027 can replace it.
+
+**`validated_as_measured`** (M5 v2's ordering, and the captain candidates) is served only where P5-M4 measured it:
+after the switch point, while qualification is in progress. Elsewhere, including the live draft's selection moment,
+it is `not_validated` with reason `outside_measured_window`.
+
 ## 10. What to trust
 
 | Output | Trust | How to present it |

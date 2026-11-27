@@ -27,6 +27,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from api.errors import INTERNAL_ERROR_CODE, VALIDATION_ERROR_CODE, ErrorResponse, error_code_for_status
 from ml.calibration.display import PROBABILITY_DISPLAY_MAX, PROBABILITY_DISPLAY_MIN, PROBABILITY_DISPLAY_STEP
+from ml.validation_scope import REASON_TRAINING_SEASON, evidence_qualifier, is_training_season
 
 STATUS_VALIDATED_QUALIFICATION = "approximately_calibrated_qualification"
 STATUS_NOT_VALIDATED = "not_validated"
@@ -34,7 +35,9 @@ STATUS_NOT_VALIDATED = "not_validated"
 REASON_PLAYOFF_SCOPE = "playoff_scope"
 REASON_UNSPECIFIED_CONTEXT = "unspecified_context"
 REASON_EPA_INCOMPLETE = "epa_incomplete"
-UNVALIDATED_REASONS = (REASON_PLAYOFF_SCOPE, REASON_UNSPECIFIED_CONTEXT, REASON_EPA_INCOMPLETE)
+# training_season (audit 2026-11-26): the served models were fit on 2024 and 2025, so their outputs there are
+# in-sample and never labelled calibrated (ml/validation_scope.py).
+UNVALIDATED_REASONS = (REASON_PLAYOFF_SCOPE, REASON_UNSPECIFIED_CONTEXT, REASON_EPA_INCOMPLETE, REASON_TRAINING_SEASON)
 CALIBRATION_STATUS_M7_FAILED = "m7_gate_failed"
 # The M6/M7 display rule's grid (ml.calibration.display): 0.05 steps within [0.05, 0.95].
 M6M7_DISPLAY_STEP = PROBABILITY_DISPLAY_STEP
@@ -81,10 +84,12 @@ class CalibratedWinProbability(BaseModel):
     """P(red wins) from the M6/M7 pair (win_prob_xgb_calibrated), keeping the M12 validated/unvalidated split.
 
     Exactly one of `validated_value` and `unvalidated_value` is set. `validated_value` is set only when the value is
-    inside M7's evaluated population (an EPA-complete qualification match); then `validation.status` is
-    approximately_calibrated_qualification and `unvalidated_reason` is null. Otherwise `validated_value` is null,
-    the model output is in `unvalidated_value`, and `unvalidated_reason` says why (playoff_scope,
-    unspecified_context or epa_incomplete). It must not be presented as a probability in that case.
+    inside M7's evaluated population (an EPA-complete qualification match of a season the model was not fit on);
+    then `validation.status` is approximately_calibrated_qualification, `unvalidated_reason` is null, and
+    `validation.reasons` carries evidence_retrospective_2026 (the evidence is the repeatedly examined 2026
+    evaluation). Otherwise `validated_value` is null, the model output is in `unvalidated_value`, and
+    `unvalidated_reason` says why (playoff_scope, unspecified_context, epa_incomplete, or training_season: the
+    model was fit on that season, so the value is in-sample). It must not be presented as a probability then.
     """
 
     validated_value: float | None = Field(
@@ -92,7 +97,7 @@ class CalibratedWinProbability(BaseModel):
     unvalidated_value: float | None = Field(
         ge=0.0, le=1.0, description="The rounded model output when not validated; null when validated.")
     unvalidated_reason: str | None = Field(
-        description="playoff_scope, unspecified_context or epa_incomplete; null when validated.")
+        description="playoff_scope, unspecified_context, epa_incomplete or training_season; null when validated.")
     rounding: float = Field(description="The display step both values are rounded to (0.05).")
     calibration_status: str = Field(description="m7_gate_failed: M7 did not pass its calibration gate.")
     validation: Validation
@@ -119,20 +124,24 @@ class CalibratedWinProbability(BaseModel):
         return self
 
 
-def m6m7_unvalidated_reason(scope: str, red_teams: Sequence[Any], blue_teams: Sequence[Any]) -> str | None:
+def m6m7_unvalidated_reason(scope: str, red_teams: Sequence[Any], blue_teams: Sequence[Any],
+                            season: int | None = None) -> str | None:
     """Why an M6/M7 value is outside M7's evaluated population, or None when it is inside: a qualification match
-    whose two non-empty alliances all have prior EPA (scripts/run_m4_baseline_backtest._team_epa_complete). `scope`
-    is qualification, playoff or unspecified. One rule for every route that serves the M6/M7 value."""
+    whose two non-empty alliances all have prior EPA (scripts/run_m4_baseline_backtest._team_epa_complete), in a
+    season the served pair was not fit on (ml/validation_scope.py; audit 2026-11-26). `scope` is qualification,
+    playoff or unspecified. One rule for every route that serves the M6/M7 value."""
     epa_complete = bool(red_teams) and bool(blue_teams) and all(t.epa_total_present for t in (*red_teams, *blue_teams))
     if scope == "playoff":
         return REASON_PLAYOFF_SCOPE
     if scope != "qualification":
         return REASON_UNSPECIFIED_CONTEXT
-    return None if epa_complete else REASON_EPA_INCOMPLETE
+    if not epa_complete:
+        return REASON_EPA_INCOMPLETE
+    return REASON_TRAINING_SEASON if is_training_season(season) else None
 
 
 def calibrated_win_probability(shown: float, unvalidated_reason: str | None,
-                               model: ServedModelInfo) -> CalibratedWinProbability:
+                               model: ServedModelInfo, season: int | None = None) -> CalibratedWinProbability:
     """The P7-Q3 object for one M6/M7 value already passed through the display rule: validated exactly when no
     reason excludes it from M7's evaluated population (the same decision the route's legacy fields carry)."""
     validated = unvalidated_reason is None
@@ -144,7 +153,8 @@ def calibrated_win_probability(shown: float, unvalidated_reason: str | None,
         calibration_status=CALIBRATION_STATUS_M7_FAILED,
         # The overall M7 calibration gate failed, so even a validated qualification value carries that qualifier.
         validation=Validation(status=STATUS_VALIDATED_QUALIFICATION if validated else STATUS_NOT_VALIDATED,
-                              reasons=([] if validated else [unvalidated_reason]) + [CALIBRATION_STATUS_M7_FAILED],
+                              reasons=([] if validated else [unvalidated_reason]) + [CALIBRATION_STATUS_M7_FAILED]
+                              + ([q] if validated and (q := evidence_qualifier(season)) else []),
                               evidence="docs/ml_models.md sections 7 and 10"),
         model=model,
     )

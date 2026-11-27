@@ -52,6 +52,7 @@ from database.connection import Database
 from ml.calibration.display import display_probability
 from ml.features.roster import event_exists
 from ml.ratings.statbotics_primary import SilentFallbackError
+from ml.validation_scope import REASON_TRAINING_SEASON, is_training_season, season_of_event
 from ml.views.qualification_forecast import LOW_CONFIDENCE_WEEKS, forecast_event_qualification
 
 router = APIRouter(tags=["qualification forecast"])
@@ -133,20 +134,24 @@ def qualification_forecast(
                                                 predict_win_probs=getattr(served.model, "predict_win_probs", None))
     except SilentFallbackError as exc:
         raise epa_source_incomplete_error(exc) from exc
+    # The served M6/M7 pair was fit on 2024 and 2025: a forecast for such an event is in-sample, so neither a match
+    # probability nor a record is labelled validated there (ml/validation_scope.py; audit 2026-11-26).
+    season = season_of_event(event_key)
+    training = is_training_season(season)
     out_matches = []
     for match in forecast.matches:
-        complete = match.epa_complete
+        reason = NOT_VALIDATED_EPA_INCOMPLETE if not match.epa_complete else REASON_TRAINING_SEASON if training else None
+        inside = reason is None
         shown = display_probability(match.q)
         out_matches.append(MatchForecastOut(
             match_key=match.match_key, scheduled_time=match.scheduled_time, features_as_of=match.features_as_of,
             red_team_numbers=list(match.red), blue_team_numbers=list(match.blue),
-            validation_status=VALIDATION_QUALIFICATION_APPROXIMATELY_CALIBRATED if complete
+            validation_status=VALIDATION_QUALIFICATION_APPROXIMATELY_CALIBRATED if inside
             else VALIDATION_NOT_VALIDATED,
-            not_validated_reason=None if complete else NOT_VALIDATED_EPA_INCOMPLETE,
-            red_win_probability=shown if complete else None,
-            unvalidated_red_win_probability=None if complete else shown,
-            win_probability=calibrated_win_probability(
-                shown, None if complete else NOT_VALIDATED_EPA_INCOMPLETE, model_info)))
+            not_validated_reason=reason,
+            red_win_probability=shown if inside else None,
+            unvalidated_red_win_probability=None if inside else shown,
+            win_probability=calibrated_win_probability(shown, reason, model_info, season)))
     records = forecast.records
     teams_out = []
     for team in sorted(records):
@@ -154,6 +159,10 @@ def qualification_forecast(
         low, high = record.range80
         record_status, record_reason = record.record_status()
         range_status, range_reason = record.range_status()
+        if training and record_reason is None:
+            record_status, record_reason = VALIDATION_NOT_VALIDATED, REASON_TRAINING_SEASON
+        if training and range_reason is None:
+            range_status, range_reason = VALIDATION_NOT_VALIDATED, REASON_TRAINING_SEASON
         teams_out.append(TeamRecordOut(
             team_number=team, qualification_matches=record.matches,
             expected_wins=round(record.expected_wins, EXPECTED_WINS_DECIMALS), range80_low=low, range80_high=high,

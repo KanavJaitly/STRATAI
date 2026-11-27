@@ -34,6 +34,13 @@ from ml.backtest.metrics import spearman_correlation
 from ml.features.assembler import EventHistory, TeamFeatures, build_team_features
 from ml.features.roster import list_teams_at_event
 from ml.features.scale import ScaleLookup
+from ml.validation_scope import (
+    REASON_OUTSIDE_MEASURED_WINDOW,
+    REASON_TRAINING_SEASON,
+    in_measured_window,
+    is_training_season,
+    season_of_event,
+)
 from ml.models.baselines import RawEpaRankingBaseline
 from ml.ratings.provider import through_snapshot
 from ml.views.strength import TeamStrengthView, build_team_strength
@@ -52,7 +59,38 @@ RECORD = ".agent/phase5/results/p5_m4_event_analysis.json"
 
 VALIDATED_RAW_EPA = "validated"  # the M4 raw-EPA baseline, pre-event included (0.5955)
 VALIDATED_AS_MEASURED = "validated_as_measured"
+NOT_VALIDATED = "not_validated"
 DESCRIPTIVE = "descriptive"
+
+LAST_QUALIFICATION_SQL = """
+SELECT MAX(scheduled_time) FROM matches
+WHERE event_key = %(event)s AND competition_level = 'qualification' AND scheduled_time IS NOT NULL
+"""
+
+
+def last_qualification_time(database, event_key: str) -> datetime | None:
+    """The event's last scheduled qualification match (the end of the window M5 v2's ordering was measured in)."""
+    with database.cursor() as cursor:
+        cursor.execute(LAST_QUALIFICATION_SQL, {"event": event_key})
+        row = cursor.fetchone()
+    return row[0] if row else None
+
+
+def ordering_validation(model: str, event_key: str, as_of: datetime, switch_time: datetime | None,
+                        last_qualification: datetime | None) -> tuple[str, str | None]:
+    """The ordering's (validation status, reason when not validated) (audit 2026-11-26, workstream 3).
+
+    Raw EPA (no fitted parameters) keeps `validated`. M5 v2 is `validated_as_measured` only where P5-M4 (b) measured
+    it: an event of a season it was not fit on, after the switch point, while qualification is still in progress
+    (ml/validation_scope.py). Elsewhere it is `not_validated`: `training_season` (2024/2025: in-sample) or
+    `outside_measured_window` (before the switch, or after the last scheduled qualification match)."""
+    if model != POLICY_M5V2:
+        return VALIDATED_RAW_EPA, None
+    if is_training_season(season_of_event(event_key)):
+        return NOT_VALIDATED, REASON_TRAINING_SEASON
+    if not in_measured_window(as_of, switch_time, last_qualification):
+        return NOT_VALIDATED, REASON_OUTSIDE_MEASURED_WINDOW
+    return VALIDATED_AS_MEASURED, None
 
 
 def midpoint_index(n: int) -> int:

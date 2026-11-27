@@ -170,14 +170,14 @@ export interface BriefingUsageOut {
   output_tokens?: number | null
 }
 
-/** P(red wins) from the M6/M7 pair (win_prob_xgb_calibrated), keeping the M12 validated/unvalidated split. Exactly one of `validated_value` and `unvalidated_value` is set. `validated_value` is set only when the value is inside M7's evaluated population (an EPA-complete qualification match); then `validation.status` is approximately_calibrated_qualification and `unvalidated_reason` is null. Otherwise `validated_value` is null, the model output is in `unvalidated_value`, and `unvalidated_reason` says why (playoff_scope, unspecified_context or epa_incomplete). It must not be presented as a probability in that case. */
+/** P(red wins) from the M6/M7 pair (win_prob_xgb_calibrated), keeping the M12 validated/unvalidated split. Exactly one of `validated_value` and `unvalidated_value` is set. `validated_value` is set only when the value is inside M7's evaluated population (an EPA-complete qualification match of a season the model was not fit on); then `validation.status` is approximately_calibrated_qualification, `unvalidated_reason` is null, and `validation.reasons` carries evidence_retrospective_2026 (the evidence is the repeatedly examined 2026 evaluation). Otherwise `validated_value` is null, the model output is in `unvalidated_value`, and `unvalidated_reason` says why (playoff_scope, unspecified_context, epa_incomplete, or training_season: the model was fit on that season, so the value is in-sample). It must not be presented as a probability then. */
 export interface CalibratedWinProbability {
   /** m7_gate_failed: M7 did not pass its calibration gate. */
   calibration_status: string
   model: ServedModelInfo
   /** The display step both values are rounded to (0.05). */
   rounding: number
-  /** playoff_scope, unspecified_context or epa_incomplete; null when validated. */
+  /** playoff_scope, unspecified_context, epa_incomplete or training_season; null when validated. */
   unvalidated_reason: string | null
   /** The rounded model output when not validated; null when validated. */
   unvalidated_value: number | null
@@ -1259,7 +1259,7 @@ export interface WinProbabilityResponse {
   model_type: string
   model_version: string
   model_version_tag: string
-  /** playoff_scope, unspecified_context or epa_incomplete; null when validated */
+  /** playoff_scope, unspecified_context, epa_incomplete or training_season (the served model was fit on that season); null when validated */
   not_validated_reason?: string | null
   probability_rounding: number
   /** qualification, playoff, or unspecified */

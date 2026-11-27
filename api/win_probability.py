@@ -44,9 +44,10 @@ class M6M7Value:
     shown: float
     unvalidated_reason: str | None
     model: ServedModelInfo
+    season: int | None = None  # the match's season: decides training_season and the evidence qualifier
 
     def calibrated(self) -> CalibratedWinProbability:
-        return calibrated_win_probability(self.shown, self.unvalidated_reason, self.model)
+        return calibrated_win_probability(self.shown, self.unvalidated_reason, self.model, self.season)
 
 
 def evaluate_m6m7(served: ServedModel, row: MatchFeatureRow, scope: str) -> M6M7Value:
@@ -56,7 +57,8 @@ def evaluate_m6m7(served: ServedModel, row: MatchFeatureRow, scope: str) -> M6M7
     if teams and all(team_features_fully_absent(team) for team in teams):
         raise NoFeatures()
     shown = display_probability(served.model.predict_win_prob(row))
-    return M6M7Value(shown, m6m7_unvalidated_reason(scope, row.red_teams, row.blue_teams), served_model_info(served))
+    return M6M7Value(shown, m6m7_unvalidated_reason(scope, row.red_teams, row.blue_teams, row.season),
+                     served_model_info(served), row.season)
 
 
 __all__ = ["M6M7Value", "NoFeatures", "evaluate_m6m7", "served_model_info", "team_features_fully_absent"]

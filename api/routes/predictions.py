@@ -54,6 +54,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic import BaseModel, Field
 from starlette.requests import Request
 
+from ml.validation_scope import REASON_TRAINING_SEASON, is_training_season, season_of_event
 from api.contract import (
     CALIBRATION_STATUS_M7_FAILED,
     M6M7_DISPLAY_MAX,
@@ -166,7 +167,8 @@ class WinProbabilityResponse(BaseModel):
     competition_level: str | None = Field(default=None, description="matches.competition_level for a real match")
     validation_status: str
     not_validated_reason: str | None = Field(
-        default=None, description="playoff_scope, unspecified_context or epa_incomplete; null when validated")
+        default=None, description="playoff_scope, unspecified_context, epa_incomplete or training_season (the "
+                                  "served model was fit on that season); null when validated")
     red_win_probability: float | None = Field(
         default=None, ge=0.0, le=1.0,
         description="Served only for qualification scope, rounded to probability_rounding; null otherwise.")
@@ -430,7 +432,12 @@ def event_team_ranking(
     scored = sorted(((served.model.predict_rating(team), team) for team in teams), key=lambda pair: -pair[0])
     identity = served.identity()
     return TeamRankingResponse(
-        event_key=event_key, as_of=as_of, validation_status=RANKING_VALIDATION_STATUS, evidence=RANKING_EVIDENCE,
+        event_key=event_key, as_of=as_of,
+        # A training-season event's ranking is in-sample (ml/validation_scope.py; audit 2026-11-26).
+        validation_status=STATUS_NOT_VALIDATED if is_training_season(season_of_event(event_key))
+        else RANKING_VALIDATION_STATUS,
+        evidence=(f"{REASON_TRAINING_SEASON}: the served model was fit on this season, so this ranking is in-sample. "
+                  if is_training_season(season_of_event(event_key)) else "") + RANKING_EVIDENCE,
         model_type=identity["model_type"], model_version=identity["model_version"],
         model_version_tag=identity["model_version_tag"], model=_model_info(served),
         epa=epa_info(epa_source, as_of, [team.epa_source_state for team in teams]),

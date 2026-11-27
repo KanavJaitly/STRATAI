@@ -81,6 +81,10 @@ const REASON_TEXT: Record<string, string> = {
   range_coverage_not_measured: 'how often the real result falls inside this range has not been measured',
   canonical_tba_record: 'the official result from The Blue Alliance',
   epa_incomplete: 'some teams have no EPA',
+  // Audit 2026-11-26 (workstream 3): where a validation label may be claimed (ml/validation_scope.py).
+  training_season: 'the model was trained on this season, so this is an in-sample output, not a validated prediction',
+  outside_measured_window: 'measured only after the switch point while qualification is in progress; not validated at this moment',
+  evidence_retrospective_2026: 'evidence from the 2026 evaluation, examined more than once; not yet confirmed on a new season',
   schedule_includes_epa_incomplete_match: 'the schedule includes a match where a team has no EPA',
   epa_source_incomplete: 'EPA data is incomplete for this event',
   epa_source_not_loaded: 'EPA data is not loaded',

@@ -70,6 +70,8 @@ from ml.views.event_analysis import (
     POLICY_M5V2,
     VALIDATED_AS_MEASURED,
     VALIDATED_RAW_EPA,
+    last_qualification_time,
+    ordering_validation,
     M5V2Required,
     analyze_event,
 )
@@ -243,7 +245,10 @@ def event_ordering(database: Database, event_key: str, now: datetime, *, epa_sou
                              m5v2_predict_rating=None if ranking is None else ranking.model.predict_rating)
     ordering = Ordering(
         tuple(o.team_number for o in analysis.ordering), analysis.model,
-        VALIDATED_AS_MEASURED if analysis.model == POLICY_M5V2 else VALIDATED_RAW_EPA,
+        # The same label rule as the event analysis (audit 2026-11-26): at the selection moment, after the last
+        # qualification match, M5 v2's ordering is outside its measured window, so not validated.
+        ordering_validation(analysis.model, event_key, as_of, analysis.switch.switch_time,
+                            last_qualification_time(database, event_key))[0],
         {f.team_number: candidate_profile(f) for f in analysis.features}, as_of, source,
         tuple(f.epa_source_state for f in analysis.features), {f.team_number: f for f in analysis.features},
         analysis.switch.passed)
