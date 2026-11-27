@@ -44,6 +44,7 @@ const PAGE_PERMISSIONS: [RegExp, string[]][] = [
   [/^\/alliance-selection\/live\/?$/, ['alliance_selection']],
   [/^\/drive-team\/?$/, ['match_predictions', 'strategy_tools', 'scouting_view', 'alliance_selection']],
   [/^\/scouting\/?$/, ['scouting_forms']],
+  [/^\/scouting\/import\/?$/, ['scouting_import']],
   [/^\/team\/?$/, ['team_management']],
   [/^\/explorer(\/|$)/, ['season_explorer']],
   [/^\/(inputs|readiness|manuals|rulesets)(\/|$)/, ['platform_inputs']],

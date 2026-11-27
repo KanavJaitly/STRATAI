@@ -23,6 +23,7 @@ ACTIONS: dict[str, str] = {
     "settings_changed": "Team settings changed",
     "scouting_assignment_created": "Scouting assignment created",
     "scouting_assignment_cancelled": "Scouting assignment cancelled",
+    "scouting_csv_imported": "Scouting CSV imported",
     # Phase 11: the live alliance-selection draft record (workspaces/live_draft.py).
     "draft_started": "Live alliance selection started",
     "draft_reconfigured": "Live alliance selection setup refreshed",

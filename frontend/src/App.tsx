@@ -13,9 +13,11 @@ import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/authState'
 import { RequirePermission, RequireSignedIn } from './auth/guards'
 import { pageAllowed } from './auth/roles'
-import { SessionProvider, useSession, useWriteAccess } from './state/session'
+import { SessionProvider, useSession } from './state/session'
+import { useWriteAccess } from './state/useWriteAccess'
 import { DriveTeamDashboardPage, HomeRedirect, ScoutingDashboardPage } from './workspace/RoleDashboards'
 import { LiveDraftPage } from './workspace/LiveDraftPage'
+import { ScoutingImportPage } from './workspace/ScoutingImportPage'
 import { TeamManagementPage } from './workspace/TeamManagementPage'
 import { Icon } from './components/icons'
 import { WakingNotice } from './components/WakingNotice'
@@ -238,6 +240,7 @@ export function Shell() {
           {(isAdmin || can('season_explorer') || can('platform_inputs')) && (
             <AdminMenu pathname={pathname}>
               {isAdmin && <NavLink to="/status">System status</NavLink>}
+              {can('scouting_import') && <NavLink to="/scouting/import">Import scouting CSV</NavLink>}
               {can('season_explorer') && <NavLink to="/explorer">Historical seasons</NavLink>}
               {can('platform_inputs') && (
                 <>
@@ -280,6 +283,7 @@ export function Shell() {
           <Route path="/drive-team" element={<RequireSignedIn><DriveTeamDashboardPage /></RequireSignedIn>} />
           <Route path="/alliance-selection/live" element={<RequirePermission permission="alliance_selection"><LiveDraftPage /></RequirePermission>} />
           <Route path="/scouting" element={<RequirePermission permission="scouting_forms"><ScoutingDashboardPage /></RequirePermission>} />
+          <Route path="/scouting/import" element={<RequirePermission permission="scouting_import"><ScoutingImportPage /></RequirePermission>} />
           <Route path="/" element={<EventsPage />} />
           <Route path="/events/:eventKey" element={<EventPage />} />
           <Route path="/events/:eventKey/teams/:team" element={<TeamPage />} />

@@ -336,6 +336,7 @@ SEASON_PAGES_PATHS: frozenset[str] = frozenset({
 WORKSPACE_PATHS: frozenset[str] = frozenset({
     "/auth/session", "/auth/signup", "/auth/login", "/auth/logout",
     "/auth/password/change", "/auth/password/forgot", "/auth/password/reset", "/auth/network-check",
+    "/workspace/scouting/imports/preview", "/workspace/scouting/imports",
     "/workspace", "/workspace/members", "/workspace/members/{membership_id}/role",
     "/workspace/members/{membership_id}/status", "/workspace/members/{membership_id}/profile",
     "/workspace/members/{membership_id}/remove", "/workspace/settings", "/workspace/team-events", "/workspace/activity", "/workspace/analytics",

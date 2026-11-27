@@ -39,6 +39,8 @@ export const WORKSPACE_ENDPOINTS = {
   reports: ['GET', '/workspace/scouting/reports'],
   submitReport: ['POST', '/workspace/scouting/reports'],
   scoutingSummary: ['GET', '/workspace/scouting/summary'],
+  previewScoutingImport: ['POST', '/workspace/scouting/imports/preview'],
+  importScouting: ['POST', '/workspace/scouting/imports'],
   drafts: ['GET', '/workspace/alliance-selection/drafts'],
   startDraft: ['POST', '/workspace/alliance-selection/drafts'],
   draft: ['GET', '/workspace/alliance-selection/drafts/{record_id}'],
@@ -296,6 +298,56 @@ export const teamScouting = {
     feeding_rating: number | null; notes: string | null; assignment_id?: number | null }) =>
     call<ScoutingReport>('submitReport', { body }),
   summary: (eventKey: string) => call<ScoutingSummary>('scoutingSummary', { query: { event_key: eventKey } }),
+}
+
+// --- Uploading a ScoutRadioz CSV export (audit 2026-11-26, workstream 8; api/routes/scouting_import.py) ------------
+
+export type ImportRowStatus = 'accepted' | 'rejected' | 'excluded' | 'duplicate' | 'already_imported' | 'conflict'
+
+export interface ImportRow {
+  row: number
+  status: ImportRowStatus
+  reason: string | null
+  match_key: string | null
+  team_number: number | null
+  defense_rating: number | null
+  feeding_rating: number | null
+  has_notes: boolean
+}
+
+export interface RatingMappingInfo {
+  column: string
+  source_min: number
+  source_max: number
+  not_a_rating: string[]
+  lowest_rating: number
+}
+
+export interface ScoutingImportPreview {
+  file_sha256: string
+  filename: string | null
+  event_key: string
+  season: number
+  mapping: { defense_rating: RatingMappingInfo | null; feeding_rating: RatingMappingInfo | null; notes_columns: string[] }
+  counts: { rows: number } & Record<ImportRowStatus, number>
+  rows: ImportRow[]
+}
+
+export interface ScoutingImportResult extends ScoutingImportPreview {
+  import: {
+    run_id: number | null
+    landed: number
+    loaded: number
+    not_loaded: { match_key: string; team_number: number | null; reason: string }[]
+    metrics_recomputed: boolean
+  }
+}
+
+export const scoutingImport = {
+  preview: (body: { filename: string | null; content: string }) =>
+    call<ScoutingImportPreview>('previewScoutingImport', { body }),
+  confirm: (body: { filename: string | null; content: string; file_sha256: string }) =>
+    call<ScoutingImportResult>('importScouting', { body: { ...body, confirm: true } }),
 }
 
 // --- Phase 11: the live alliance-selection draft record (docs/phase11.md) -----------------------------------------

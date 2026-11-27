@@ -9,8 +9,8 @@ import { AuthContext, makeAuth } from '../auth/authState'
 // Every permission an administrator holds (workspaces/permissions.py ALL_PERMISSIONS).
 export const ADMIN_PERMISSIONS = ['team_info', 'event_analysis', 'qualification_forecast', 'season_explorer',
   'match_predictions', 'team_analytics', 'alliance_selection', 'alliance_selection_record', 'strategy_tools',
-  'platform_inputs', 'scouting_forms', 'scouting_submit', 'scouting_view', 'scouting_assign', 'team_overview',
-  'team_management',
+  'platform_inputs', 'scouting_forms', 'scouting_submit', 'scouting_view', 'scouting_assign', 'scouting_import',
+  'team_overview', 'team_management',
   'team_settings', 'activity_log']
 // What a base member holds (workspaces/permissions.py ROLE_GRANTS["base"]).
 export const BASE_PERMISSIONS = ['event_analysis', 'qualification_forecast', 'team_info']

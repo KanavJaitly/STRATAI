@@ -44,6 +44,7 @@ one role, and locally that role is a superuser.
 | Every scouting report, the team's scouting summary, assigning scouts | yes | yes | no | no | no |
 | Scouting forms, their own assignments and submissions | yes | no | no | yes | no |
 | Team page: members, settings, activity log; historical explorer; system status; game manuals, rulesets, inputs | yes | no | no | no | no |
+| Importing a ScoutRadioz scouting CSV (`scouting_import`, section 6.1) | yes | no | no | no | no |
 
 Mentors are administrators. Each role lands on the page it uses most: admin on Team (`/team`), strategy and drive on
 Drive team (`/drive-team`), scout on Scouting (`/scouting`), base on Events (`/`). New sign-ups are base members;
@@ -195,6 +196,44 @@ read-only demo ends with it.
 Team scouting is stored in `workspace_scouting_reports`, never in the shared `scouting_observations`. It passes the
 same validation (`data.metrics.normalizer`) and uses the same summary method (`aggregate_defense_feeding`). Defense and
 feeding come only from what scouts recorded. Since 2026-11-11, scouting is an administrator tool.
+
+### 6.1 Importing a ScoutRadioz CSV export (audit 2026-11-26, workstream 8)
+
+Page: **Admin → Import scouting CSV** (`/scouting/import`). Permission: `scouting_import`, which only administrators
+hold. API: `POST /workspace/scouting/imports/preview`, then `POST /workspace/scouting/imports`
+(`api/routes/scouting_import.py`, `data/metrics/scoutradioz_upload.py`).
+
+Unlike the team reports above, an import writes the **shared** `scouting_observations`, the table the served defense
+ratings come from, through the same import as the script path (`import_scoutradioz_csv`): raw landing, staging,
+reference checks, lineage and a `pipeline_runs` record. Team metrics for the event are recomputed afterwards.
+
+1. **Choose the file.** The page checks the name (`.csv`), the size (at most 900,000 bytes) and the header
+   (ScoutRadioz's own columns) before sending it.
+2. **Preview** (writes nothing). The server repeats those checks and refuses the whole file for: an empty file, a
+   non-UTF-8 or binary file, repeated or missing columns, more than 5,000 rows, or a season with **no approved column
+   mapping**. Then every row gets one outcome, and one bad row never stops the others:
+   - *will import*: new and valid;
+   - *rejected*: with its reason (bad team key or time, no scout recorded, not a number, another event, another
+     team's ScoutRadioz organization, or a match or team StratAI does not have);
+   - *no rating*: the mapping says the form recorded none (2026: defense 0 means "played no defense");
+   - *duplicate*: the same match, team and scout as an earlier row;
+   - *already imported*: stored before with the same values;
+   - *conflict*: stored before with different values. An upload never overwrites a stored observation.
+3. **Confirm.** Tick the acknowledgement, then Import. The request carries the sha256 of the previewed file, so a
+   different file is refused (`409 file_changed`). Only the *will import* rows are passed to the import.
+4. **Retries are safe.** Importing the same file again finds every row *already imported* and writes nothing. A retry
+   after a failure partway through also completes without duplicates (checksum deduplication and the source
+   watermark).
+
+**Column mappings are not chosen at upload time.** They are recorded per season in
+`data/metrics/scoutradioz_mappings.py`. Only 2026 has one (`qDefenseQuality`, 1–10, "0" = no defense, lowest rating 1;
+no feeding column). A 2027 export is refused with `mapping_not_configured` until its form's mapping is established
+from a real export and added there.
+
+**Privacy.** Scouts' names (the `scouter` column) are used only to tell scouts apart (`scout_identifier`), as on the
+script path. No preview, result, activity-log entry or error message contains them. The file is held in a temporary
+file only for the length of the import. Only exports from the team's own ScoutRadioz organization (`frc11`) are
+accepted.
 
 ## 7. Security measures
 

@@ -576,6 +576,16 @@ export interface HypotheticalRecommendBody {
   side: "red" | "blue"
 }
 
+export interface ImportBody {
+  /** Must be true: the import writes to the shared scouting data */
+  confirm: true
+  /** The CSV file's text, exactly as exported */
+  content: string
+  /** The file_sha256 the preview returned */
+  file_sha256: string
+  filename?: string | null
+}
+
 export interface LabelledTeams {
   evidence: string
   team_numbers: number[]
@@ -719,6 +729,12 @@ export interface PreMatchTeam {
   team_number: number
   /** descriptive, with the INTERIM reliability caveat. */
   validation: Validation
+}
+
+export interface PreviewBody {
+  /** The CSV file's text, exactly as exported */
+  content: string
+  filename?: string | null
 }
 
 export interface ProcessBody {

@@ -39,6 +39,9 @@ ALL_PERMISSIONS: dict[str, str] = {
     "scouting_submit": "Submitting scouting reports",
     "scouting_view": "Every scouting report of the team, and the team's scouting summary",
     "scouting_assign": "Assigning scouts to matches",
+    # Audit 2026-11-26, workstream 8: writes the shared scouting_observations that defense ratings derive from, so it
+    # is an administrator's alone (no other role is granted it).
+    "scouting_import": "Importing a ScoutRadioz scouting CSV export into the shared scouting data",
     "team_overview": "The team overview: team settings, member count",
     "team_management": "Members: see them, change a role, remove someone",
     "team_settings": "Team settings",

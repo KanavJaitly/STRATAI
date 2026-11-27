@@ -43,6 +43,7 @@ from api.routes.qualification_forecast import router as qualification_forecast_r
 from api.routes.strategy import router as strategy_router
 from api.routes.strength import router as strength_router
 from api.routes.live_draft import router as live_draft_router
+from api.routes.scouting_import import router as scouting_import_router
 from api.routes.team_scouting import router as team_scouting_router
 from api.routes.workspace import router as workspace_router
 from api.session import permission_gate, platform_gate, strategy_gate
@@ -199,6 +200,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth_router, prefix=settings.api_prefix)
     app.include_router(workspace_router, prefix=settings.api_prefix)
     app.include_router(team_scouting_router, prefix=settings.api_prefix)
+    app.include_router(scouting_import_router, prefix=settings.api_prefix)  # audit 2026-11-26, workstream 8
     # Phase 11 (docs/phase11.md): each team's live alliance-selection draft record, under /workspace like the above.
     app.include_router(live_draft_router, prefix=settings.api_prefix)
 

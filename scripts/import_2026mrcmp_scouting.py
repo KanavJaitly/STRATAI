@@ -61,25 +61,16 @@ import logging
 from pathlib import Path
 
 from data.config import Settings
-from data.metrics.scoutradioz import (
-    ScoutRadiozFieldMapping,
-    ScoutRadiozRatingMapping,
-    import_scoutradioz_csv,
-)
+from data.metrics.scoutradioz import import_scoutradioz_csv
+from data.metrics.scoutradioz_mappings import MAPPING_2026
 from database.connection import Database, DatabaseConfig
 
 CSV_PATH = Path("data/imports/matchscouting_frc11_2026mrcmp_full.csv")
 EVENT_KEY = "2026mrcmp"
 
-FIELD_MAPPING = ScoutRadiozFieldMapping(
-    defense_rating=ScoutRadiozRatingMapping(
-        column="qDefenseQuality",
-        source_min=1,
-        source_max=10,
-        excluded_values=("0",),
-        target_min=1,
-    ),
-)
+# The recorded mapping (the docstring above is its evidence), kept in one place for the script and the in-app
+# uploader (audit 2026-11-26, workstream 8).
+FIELD_MAPPING = MAPPING_2026
 
 
 def print_mapping_preview(csv_path: Path) -> None:
