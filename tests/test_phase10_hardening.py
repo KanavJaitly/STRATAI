@@ -391,8 +391,9 @@ def test_the_413_is_declared_on_exactly_the_operations_that_take_a_body_and_matc
     # 2026-11-11): the 5 /auth writes with a body (signup, login, password change, forgot and reset; every /auth POST
     # but logout), and the 6 under /workspace (role, status, profile, settings, scouting assignment, scouting report);
     # plus 7 from Phase 11 (2026-11-04): the live draft record's start, actions, undo, corrections, close, reopen and
-    # setup.
-    assert declared == with_body and len(declared) == 42
+    # setup; plus 2 from the scouting CSV upload (audit 2026-11-26, workstream 8): its preview and its import.
+    assert declared == with_body
+    assert len(declared) == 44
     served = client.post("/predictions/win-probability", content=b"{" + b" " * (65 * 1024) + b"}",
                          headers={"content-type": "application/json"})
     assert served.status_code == 413 and served.json()["error"]["code"] == "payload_too_large"
