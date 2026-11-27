@@ -44,6 +44,11 @@ Usage:
 without touching the database at all, so the mapping can be checked before it
 lands anything.
 
+The export itself is NOT in the repository (it holds scouts' names; removed from
+history on 2026-11-26, see data/imports/README.md). The default path is where a
+local copy is expected; pass --csv for any other location. Administrators can
+also upload it in the app (/scouting/import).
+
 NOT idempotent in the way re-running a TBA sync is. import_scoutradioz_csv is
 idempotent for an *unchanged* file (checksum dedup plus the watermark mean a
 byte-identical re-run lands and loads nothing), but that same mechanism is why

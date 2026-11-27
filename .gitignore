@@ -12,3 +12,12 @@ graphify-out/
 
 # Public deployment dump (scripts/deploy_public_dump.py); never commit it.
 .deploy/
+
+# Scouting exports hold scouts' names and other people's personal information. They stay on the machine that imports
+# them (or are uploaded in the app: /scouting/import) and are never committed. Removed from history on 2026-11-26.
+# Only the README and the SYNTHETIC example are tracked.
+data/imports/*
+!data/imports/README.md
+!data/imports/example_scoutradioz_export.csv
+*.xlsx
+*.xls
