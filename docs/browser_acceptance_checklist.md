@@ -23,7 +23,7 @@ Use PowerShell, from `C:\Dev\StratAI`, with four terminals:
 
 | # | Command | Serves |
 |---|---|---|
-| T1 | `.venv\Scripts\python.exe -m scripts.local_test_env --serve` | API on **stratai_test** (2024-2026, 2027), http://127.0.0.1:8765 |
+| T1 | `.venv\Scripts\python.exe -m scripts.local_test_env --serve --database stratai_test` | API on **stratai_test** (2024-2026, 2027), http://127.0.0.1:8765 (since 2026-11-26, `--serve` alone uses `stratai_dev_fresh`) |
 | T2 | `.venv\Scripts\python.exe -m scripts.local_test_env --serve --database stratai_test_2023 --port 8766` | API on **stratai_test_2023** (2023 copy), http://127.0.0.1:8766 |
 | T3 | `cd frontend; $env:STRATAI_API_URL = 'http://127.0.0.1:8765'; npx vite --port 5173 --strictPort` | **UI A**, http://localhost:5173, on T1 |
 | T4 | `cd frontend; $env:STRATAI_API_URL = 'http://127.0.0.1:8766'; npx vite --port 5174 --strictPort` | **UI B**, http://localhost:5174, on T2 (2023 only) |

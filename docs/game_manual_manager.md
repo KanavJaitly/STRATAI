@@ -224,7 +224,7 @@ which is tested.
 
 ```
 # PowerShell, from the repository root; four terminals
-.venv\Scripts\python.exe -m scripts.local_test_env --serve                                           # API :8765 on stratai_test (2024-2026, 2027)
+.venv\Scripts\python.exe -m scripts.local_test_env --serve --database stratai_test                   # API :8765 on stratai_test (2024-2026, 2027); --serve alone: stratai_dev_fresh
 .venv\Scripts\python.exe -m scripts.local_test_env --serve --database stratai_test_2023 --port 8766  # API :8766 on stratai_test_2023 (2023)
 cd frontend; $env:STRATAI_API_URL = 'http://127.0.0.1:8765'; npx vite --port 5173 --strictPort    # UI http://localhost:5173
 cd frontend; $env:STRATAI_API_URL = 'http://127.0.0.1:8766'; npx vite --port 5174 --strictPort    # UI http://localhost:5174 (2023)

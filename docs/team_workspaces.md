@@ -251,8 +251,31 @@ Secrets go in the environment, never in a committed file (`data/config.py`, `.en
 
 ## 9. Running it locally
 
+**The quick way (audit 2026-11-26, workstream 6): the local development database `stratai_dev_fresh`.**
+
+```powershell
+.venv\Scripts\python.exe -m scripts.local_dev_db --create      # once: copy stratai_test, apply 0001-0016 (seconds)
+.venv\Scripts\python.exe -m scripts.local_test_env --serve     # API on http://127.0.0.1:8765, stratai_dev_fresh
+cd frontend; $env:STRATAI_API_URL = "http://127.0.0.1:8765"; npm run dev   # web app on http://localhost:5173
 ```
-python database/migrate.py            # applies every pending migration, through 0015, to DATABASE_URL's database
+
+- **It is a copy.** `stratai_dev_fresh` is a template copy of `stratai_test` (the 2024-2026 data and the D18 model
+  configuration), with every current migration applied to the copy only. `stratai_test` stays at 0014 with its
+  records (the 2024njfla live draft replay), and the serving `stratai` is never opened.
+- **Accounts start empty.** Sign up with join code `local-dev-admin` to be an administrator, or `local-dev-join` for a
+  base member. These local placeholders apply only to this copy, and only when `TEAM_JOIN_CODE` /
+  `TEAM_ADMIN_JOIN_CODE` are not already set. Password-reset codes are written to
+  `C:\Dev\StratAI-artifacts\local_test\outbox`. `ACCESS_POLICY` is `members`, as hosted.
+- **Start over:** `python -m scripts.local_dev_db --create --replace` drops and recopies `stratai_dev_fresh` (the only
+  database it can drop). `--serve` refuses to start on a copy that is missing a migration and says to run this.
+- **Tests never use it.** The test-database guard admits only `stratai_test` and `stratai_test_<suffix>`.
+- The older copies are still available, for example `--serve --database stratai_test`, but they are at 0014 and
+  cannot sign in.
+
+**By hand, against a database you choose:**
+
+```
+python database/migrate.py            # applies every pending migration, through 0016, to DATABASE_URL's database
 python -m api                         # the API on http://127.0.0.1:8000
 cd frontend && npm ci && npm run dev  # the web app on http://localhost:5173 (proxies /api to the API)
 ```

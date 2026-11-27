@@ -1,7 +1,8 @@
 """The local test configuration for exercising STRATAI end to end on historical seasons (2026-10-11).
 
     python -m scripts.local_test_env --print          # show the environment (no secrets)
-    python -m scripts.local_test_env --serve           # run the API on http://127.0.0.1:8765 against stratai_test
+    python -m scripts.local_test_env --serve           # run the API on http://127.0.0.1:8765 against stratai_dev_fresh
+    python -m scripts.local_test_env --serve --database stratai_test   # the 0014 copy (no sign-in: needs 0015/0016)
     python -m scripts.local_test_env --serve --database stratai_test_2023 --port 8766   # 2023, kept in its own copy
     python -m scripts.local_test_env --checklist-files DIR   # the SYNTHETIC PDFs docs/browser_acceptance_checklist.md uses
     python -m scripts.local_test_env --cleanup-checklist     # remove what that checklist created in stratai_test
@@ -11,6 +12,13 @@
 - an API instance pointed at the isolated `stratai_test` copy (the test-database guard's rule), with the evaluated
   D18 models pinned by sha256 and the frozen D18 EPA snapshot, so the analysis endpoints answer;
 - uploads and P6-M1 approval records go to a scratch directory, never into the repository or the real upload store.
+
+**Local development database (audit 2026-11-26, workstream 6):** `--serve` defaults to `stratai_dev_fresh`, a copy
+of `stratai_test` with every current migration applied (`python -m scripts.local_dev_db --create`), because the
+sign-in code needs migrations 0015 and 0016 and `stratai_test` is kept at 0014. On that copy only, sign-up uses the
+local join codes in `DEV_SIGNUP` unless TEAM_JOIN_CODE / TEAM_ADMIN_JOIN_CODE are already set, password-reset codes
+go to a scratch outbox, and ACCESS_POLICY is `members`, as on the hosted deployment. They are local placeholders,
+not secrets, and never reach a deployment.
 
 **Why 2023 has its own copy (2026-10-12):** ml.ratings.provider.read_team_event_facts reads every event in the
 database, so 2023 team-events in stratai_test would become D13 prior-event candidates for 2024-2026 targets and change
@@ -47,10 +55,18 @@ PINS = {
 }
 
 
-ALLOWED_DATABASES = ("stratai_test", "stratai_test_2023")
+DEV_DATABASE = "stratai_dev_fresh"
+ALLOWED_DATABASES = (DEV_DATABASE, "stratai_test", "stratai_test_2023")
+# Sign-up and reset on the development copy only (see the module docstring). Environment values take precedence.
+DEV_SIGNUP = {
+    "TEAM_JOIN_CODE": "local-dev-join",
+    "TEAM_ADMIN_JOIN_CODE": "local-dev-admin",
+    "DEV_OUTBOX_DIR": str(SCRATCH / "outbox"),
+    "ACCESS_POLICY": "members",
+}
 
 
-def environment(database: str = "stratai_test") -> dict[str, str]:
+def environment(database: str = DEV_DATABASE) -> dict[str, str]:
     """The test environment, with DATABASE_URL pointed at an isolated copy (refuses anything else)."""
     from data.config import Settings
     from scripts.phase5_isolated_db import isolated_url, serving_name
@@ -60,7 +76,8 @@ def environment(database: str = "stratai_test") -> dict[str, str]:
     url = isolated_url(str(Settings().database_url), database)
     if serving_name(url) != database:
         raise SystemExit(f"refusing: the local test API runs only against {database}")
-    return {**PINS, "DATABASE_URL": url}
+    extra = {k: v for k, v in DEV_SIGNUP.items() if not os.environ.get(k)} if database == DEV_DATABASE else {}
+    return {**PINS, **extra, "DATABASE_URL": url}
 
 
 CHECKLIST_ACTOR = "Checklist Tester"
@@ -85,6 +102,23 @@ def write_checklist_files(directory: Path) -> list[Path]:
         (directory / name).write_bytes(content)
         written.append(directory / name)
     return written
+
+
+def _require_current_migrations(url: str) -> None:
+    """Refuse to serve the development copy before it has every migration (the sign-in code needs 0015 and 0016)."""
+    import psycopg
+
+    from database.migrate import MIGRATIONS_DIR
+
+    latest = max(path.name for path in MIGRATIONS_DIR.glob("*.sql"))
+    try:
+        with psycopg.connect(url) as conn:
+            applied = conn.execute("SELECT max(migration_file) FROM migrations_applied").fetchone()[0]
+    except psycopg.OperationalError:
+        raise SystemExit(f"{DEV_DATABASE} does not exist: run python -m scripts.local_dev_db --create") from None
+    if applied != latest:
+        raise SystemExit(f"{DEV_DATABASE} is at {applied}, not {latest}: run python -m scripts.local_dev_db --create "
+                         "--replace (it never touches stratai or stratai_test)")
 
 
 def cleanup_checklist(actor: str = CHECKLIST_ACTOR) -> dict[str, int]:
@@ -116,7 +150,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--print", action="store_true", dest="show")
     parser.add_argument("--serve", action="store_true")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--database", choices=ALLOWED_DATABASES, default="stratai_test")
+    parser.add_argument("--database", choices=ALLOWED_DATABASES, default=DEV_DATABASE)
     parser.add_argument("--checklist-files", type=Path, metavar="DIR")
     parser.add_argument("--cleanup-checklist", action="store_true")
     parser.add_argument("--actor", default=CHECKLIST_ACTOR, choices=(CHECKLIST_ACTOR, "Checklist Automation"),
@@ -132,6 +166,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"DATABASE_NAME={args.database}")
         for key, value in env.items():
             print(f"{key}={'***' if key in ('DATABASE_URL', 'HUMAN_INPUTS_WRITE_TOKEN') else value}")
+    if args.serve and args.database == DEV_DATABASE:
+        _require_current_migrations(env["DATABASE_URL"])
     if args.serve:
         os.environ.update(env)
         for key in ("uploads", "approval_records"):
