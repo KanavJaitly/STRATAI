@@ -23,10 +23,18 @@ from fastapi import APIRouter, Depends, Path, Query
 from api.contract import error_responses
 from api.dependencies import get_database
 from api.errors import ApiError
+from api.session import permission_gate
 from data.readiness import SUPPORTED_SEASONS, data_coverage
 from database.connection import Database
 
 router = APIRouter(prefix="/explorer", tags=["historical season explorer (read-only)"])
+
+# Gates, per route (audit 2026-11-26). The explorer is administrators' (season_explorer), except the season's event
+# list: the event chooser on the Drive team, Scouting and live alliance selection pages reads it to list and name events
+# (frontend/src/workspace/events.ts), and every member may see the events list (team_info, as GET /events). Mounted
+# with no router-level gate (api/app.py), so each route carries its own.
+_EXPLORER = [Depends(permission_gate("season_explorer"))]
+_EVENT_LIST = [Depends(permission_gate("team_info"))]
 # Declared error responses (the P7-M1 (f) contract every route keeps), with the codes each route raises.
 _EVENT_ERRORS = error_responses({HTTPStatus.NOT_FOUND: ["event_not_found"],
                                  HTTPStatus.UNPROCESSABLE_ENTITY: ["invalid_input"]})
@@ -51,12 +59,12 @@ def _event(database: Database, event_key: str) -> dict[str, Any]:
     return rows[0]
 
 
-@router.get("/seasons", responses=error_responses({}, validates_input=False), summary="The supported seasons and the real data each has")
+@router.get("/seasons", dependencies=_EXPLORER, responses=error_responses({}, validates_input=False), summary="The supported seasons and the real data each has")
 def get_seasons(database: Database = Depends(get_database)) -> Any:
     return [{"season": s, "coverage": data_coverage(database, s)} for s in SUPPORTED_SEASONS]
 
 
-@router.get("/seasons/{season}/events", responses=error_responses({}),
+@router.get("/seasons/{season}/events", dependencies=_EVENT_LIST, responses=error_responses({}),
             summary="A season's events, with their district and team and match counts")
 def get_season_events(season: int = Path(ge=1992, le=2100), database: Database = Depends(get_database)) -> Any:
     # The district (e.g. "fma", "FIRST Mid-Atlantic") is not a canonical column; it is read from the event's current
@@ -78,7 +86,7 @@ def get_season_events(season: int = Path(ge=1992, le=2100), database: Database =
         return _rows(c)
 
 
-@router.get("/events/{event_key}/teams", responses=_EVENT_ERRORS,
+@router.get("/events/{event_key}/teams", dependencies=_EXPLORER, responses=_EVENT_ERRORS,
             summary="An event's teams with their synced EPA and record (absent values stay null)")
 def get_event_teams(event_key: str = Path(min_length=5, max_length=32), database: Database = Depends(get_database)
                     ) -> Any:
@@ -99,7 +107,7 @@ def get_event_teams(event_key: str = Path(min_length=5, max_length=32), database
             "epa_source": "Statbotics team_event_stats as synced (end-of-event values, not point-in-time)"}
 
 
-@router.get("/events/{event_key}/matches", responses=_EVENT_ERRORS, summary="An event's matches, alliances and scores")
+@router.get("/events/{event_key}/matches", dependencies=_EXPLORER, responses=_EVENT_ERRORS, summary="An event's matches, alliances and scores")
 def get_event_matches(event_key: str = Path(min_length=5, max_length=32), database: Database = Depends(get_database)
                       ) -> Any:
     event = _event(database, event_key)
@@ -114,7 +122,7 @@ def get_event_matches(event_key: str = Path(min_length=5, max_length=32), databa
         return {"event": event, "matches": _rows(c)}
 
 
-@router.get("/teams/{team_number}/seasons/{season}", responses=_TEAM_ERRORS,
+@router.get("/teams/{team_number}/seasons/{season}", dependencies=_EXPLORER, responses=_TEAM_ERRORS,
             summary="A team's events in a season, with synced EPA and record")
 def get_team_season(team_number: int = Path(ge=1), season: int = Path(ge=1992, le=2100),
                     database: Database = Depends(get_database)) -> Any:

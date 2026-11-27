@@ -560,6 +560,22 @@ def test_import_scoutradioz_csv_skips_malformed_rows_without_failing_the_batch(
 
 
 @requires_db
+def test_import_scoutradioz_csv_reports_a_row_failing_the_export_columns_without_failing_the_batch(
+    database: Database, tmp_path: Path,
+) -> None:
+    """Audit 2026-11-26: a row whose own export columns do not validate (here a match_number that is not a number)
+    used to raise inside read_rows, before any run was recorded, and lose every valid row with it."""
+    rows = [
+        *_valid_rows(),
+        f"frc11,2026,{_S_EVENT},{_S_MATCH},not-a-number,8/5/2026 3:15:00 PM,blue,frc{_S_TEAM_A},Carol,5,",
+    ]
+    result = import_scoutradioz_csv(_write_csv(tmp_path, rows), _DEFENSE_0_10, database=database)
+    assert result.rows_read == 3 and result.loaded == 2
+    assert [row for row, _ in result.malformed_rows] == [4]
+    assert "match_number" in result.malformed_rows[0][1]
+
+
+@requires_db
 def test_import_scoutradioz_csv_skips_a_truncated_row_without_failing_the_batch(
     database: Database, tmp_path: Path,
 ) -> None:

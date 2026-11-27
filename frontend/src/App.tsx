@@ -24,7 +24,6 @@ import { OverviewPage } from './pages/OverviewPage'
 import { GameSpecPage } from './pages/GameSpecPage'
 import { ProfilesPage } from './pages/ProfilesPage'
 import { ReviewPage } from './pages/ReviewPage'
-import { AlliancePage } from './dashboard/pages/AlliancePage'
 import { EventPage } from './dashboard/pages/EventPage'
 import { EventsPage } from './dashboard/pages/EventsPage'
 import { MatchPage } from './dashboard/pages/MatchPage'
@@ -283,7 +282,6 @@ export function Shell() {
           <Route path="/" element={<EventsPage />} />
           <Route path="/events/:eventKey" element={<EventPage />} />
           <Route path="/events/:eventKey/teams/:team" element={<TeamPage />} />
-          <Route path="/events/:eventKey/alliance-selection" element={<AlliancePage />} />
           <Route path="/events/:eventKey/strategy-lab" element={<StrategyLabPage />} />
           <Route path="/matches/:matchKey" element={<MatchPage />} />
           <Route path="/report/:matchKey" element={<ReportPage />} />

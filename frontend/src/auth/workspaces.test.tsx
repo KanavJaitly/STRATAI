@@ -70,10 +70,15 @@ describe('roles', () => {
       expect(pageAllowed('base', path, BASE_PERMISSIONS)).toBe(true)
     }
     for (const path of ['/team', '/explorer', '/status', '/inputs', '/events/2026njfla/teams/11',
-      '/events/2026njfla/alliance-selection', '/matches/2026njfla_qm1', '/report/2026njfla_qm1', '/drive-team']) {
+      '/alliance-selection/live', '/matches/2026njfla_qm1', '/report/2026njfla_qm1', '/drive-team']) {
       expect(pageAllowed('base', path, BASE_PERMISSIONS)).toBe(false)
       expect(pageAllowed('admin', path)).toBe(true)
     }
+  })
+
+  it('no longer has the old standalone alliance selection page (removed 2026-11-26; live alliance selection replaces it)', () => {
+    expect(pageAllowed('strategy', '/events/2026njfla/alliance-selection',
+      [...BASE_PERMISSIONS, 'alliance_selection', 'strategy_tools'])).toBe(false)
   })
 
   it('opens each new role the pages its permissions allow, and nothing that manages the team', () => {
@@ -84,12 +89,12 @@ describe('roles', () => {
     for (const path of ['/drive-team', '/events/2026njfla/teams/11', '/matches/2026njfla_qm1']) {
       expect(pageAllowed('drive', path, drive)).toBe(true)
     }
-    for (const path of ['/events/2026njfla/alliance-selection', '/report/2026njfla_qm1', '/scouting', '/team']) {
+    for (const path of ['/alliance-selection/live', '/report/2026njfla_qm1', '/scouting', '/team']) {
       expect(pageAllowed('drive', path, drive)).toBe(false)
     }
     expect(pageAllowed('scout', '/scouting', scout)).toBe(true)
     expect(pageAllowed('scout', '/drive-team', scout)).toBe(false)
-    for (const path of ['/events/2026njfla/alliance-selection', '/alliance-selection/live', '/events/2026njfla/strategy-lab',
+    for (const path of ['/alliance-selection/live', '/events/2026njfla/strategy-lab',
       '/report/2026njfla_qm1', '/drive-team']) {
       expect(pageAllowed('strategy', path, strategy)).toBe(true)
     }
@@ -354,7 +359,8 @@ describe('administrators', () => {
     renderApp(`/events/${EVENT}?tab=teams`)
     const team = String(TEAMS.teams[0].team_number)
     expect(await screen.findByRole('link', { name: team })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Alliance selection' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Live alliance selection' }))
+      .toHaveAttribute('href', `/alliance-selection/live?event=${EVENT}`)
   })
 })
 

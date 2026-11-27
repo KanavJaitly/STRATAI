@@ -8,17 +8,13 @@
 
 import { API_BASE, getWriteToken, WRITE_TOKEN_HEADER } from './client'
 import type {
-  AllianceSynergyRequestBody,
-  AllianceSynergyResponse,
   AssessBody,
   AssessResponse,
   BriefingResponse,
-  CandidatesResponse,
   CoachObservationStored,
   CoachStrategyStored,
   CompareBody,
   CompareResponse,
-  DraftStateBody,
   EventAnalysisResponse,
   EventMatchesResponse,
   EventTeamsResponse,
@@ -26,7 +22,6 @@ import type {
   HypotheticalAssessBody,
   HypotheticalCompareBody,
   HypotheticalRecommendBody,
-  PickListResponse,
   PreMatchReportResponse,
   QualificationForecastResponse,
   ReadinessResponse,
@@ -55,9 +50,6 @@ export const DASHBOARD_ENDPOINTS = {
   teamStrength: ['GET', '/teams/{team_number}/events/{event_key}/strength'],
   matchWinProbability: ['GET', '/predictions/matches/{match_key}/win-probability'],
   allianceWinProbability: ['POST', '/predictions/win-probability'],
-  allianceSynergy: ['POST', '/predictions/alliance-synergy'],
-  candidates: ['GET', '/events/{event_key}/alliance-selection/candidates'],
-  pickList: ['POST', '/events/{event_key}/alliance-selection/pick-list'],
   matchAssess: ['POST', '/strategy/matches/{match_key}/assess'],
   matchRecommend: ['POST', '/strategy/matches/{match_key}/recommend'],
   matchCompare: ['POST', '/strategy/matches/{match_key}/compare'],
@@ -76,7 +68,7 @@ export const DASHBOARD_ENDPOINTS = {
 export const DASHBOARD_QUERY_PARAMS: Record<keyof typeof DASHBOARD_ENDPOINTS, readonly string[]> = {
   health: [], ready: [], events: ['season'], eventTeams: [], eventMatches: ['as_of'], eventAnalysis: ['as_of'],
   qualificationForecast: ['as_of'], teamMetrics: [], teamStrength: ['as_of'], matchWinProbability: [],
-  allianceWinProbability: ['as_of'], allianceSynergy: ['as_of'], candidates: ['as_of', 'configuration'], pickList: [],
+  allianceWinProbability: ['as_of'], 
   matchAssess: [], matchRecommend: [], matchCompare: [], hypotheticalAssess: ['as_of'], hypotheticalRecommend: ['as_of'],
   hypotheticalCompare: ['as_of'], coachStrategy: [], coachObservation: [], preMatchReport: ['as_of'],
   briefing: ['as_of'],
@@ -84,6 +76,9 @@ export const DASHBOARD_QUERY_PARAMS: Record<keyof typeof DASHBOARD_ENDPOINTS, re
 
 /** Locked operations the dashboard deliberately does not call, with the reason (checked by the contract test). */
 export const NOT_CALLED = {
+  'GET /events/{event_key}/alliance-selection/candidates': 'the old standalone alliance selection page was removed (2026-11-26); live alliance selection (/alliance-selection/live) replaces it',
+  'POST /events/{event_key}/alliance-selection/pick-list': 'the old standalone alliance selection page was removed (2026-11-26); live alliance selection (/alliance-selection/live) replaces it',
+  'POST /predictions/alliance-synergy': 'the old standalone alliance selection page was removed (2026-11-26); live alliance selection (/alliance-selection/live) replaces it; the pre-match report carries synergy in its own response',
   'GET /predictions/events/{event_key}/ranking': 'deprecated (P7-Q2); the canonical ranking is the analysis ordering',
   'GET /workspace/alliance-selection/drafts': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
   'POST /workspace/alliance-selection/drafts': 'Phase 11: called by the team workspace client (src/auth/api.ts) with the session, not the dashboard',
@@ -151,7 +146,6 @@ function call<T>(name: EndpointName, options: CallOptions = {}): Promise<T> {
 
 export type Side = 'red' | 'blue'
 
-export type DraftState = DraftStateBody
 
 /** The pairing part every hypothetical body shares. */
 export type HypotheticalAlliances = Pick<HypotheticalRecommendBody, 'event_key' | 'red_team_numbers' | 'blue_team_numbers'
@@ -182,14 +176,7 @@ export const dashboardApi = {
     call<WinProbabilityResponse>('matchWinProbability', { params: { match_key: matchKey }, signal }),
   allianceWinProbability: (body: WinProbabilityByAlliancesRequestBody, asOf: string | null, signal?: AbortSignal) =>
     call<WinProbabilityResponse>('allianceWinProbability', { body, query: { as_of: asOf }, signal }),
-  allianceSynergy: (body: AllianceSynergyRequestBody, asOf: string | null, signal?: AbortSignal) =>
-    call<AllianceSynergyResponse>('allianceSynergy', { body, query: { as_of: asOf }, signal }),
 
-  candidates: (eventKey: string, asOf: string | null, configuration: number[] | null, signal?: AbortSignal) =>
-    call<CandidatesResponse>('candidates',
-      { params: { event_key: eventKey }, query: { as_of: asOf, configuration }, signal }),
-  pickList: (eventKey: string, draft: DraftState, signal?: AbortSignal) =>
-    call<PickListResponse>('pickList', { params: { event_key: eventKey }, body: draft, signal }),
 
   matchAssess: (matchKey: string, body: AssessBody, signal?: AbortSignal) => call<AssessResponse>('matchAssess', { params: { match_key: matchKey }, body, signal }),
   matchRecommend: (matchKey: string, body: RecommendBody, signal?: AbortSignal) =>

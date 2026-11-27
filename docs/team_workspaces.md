@@ -40,7 +40,7 @@ one role, and locally that role is a superuser.
 | Events list and an event's page (rankings, matches, forecast), their own account | yes | yes | yes | yes | yes |
 | Team pages, match win probability, the Drive team page with the engine's match plan (read-only) | yes | yes | yes | no | no |
 | Match strategy tools, strategy lab, pre-match reports | yes | yes | no | no | no |
-| Alliance selection, our pick list, the live draft board including recording picks | yes | yes | no | no | no |
+| Live alliance selection, including recording picks (the old alliance selection page and its browser-only pick list were removed 2026-11-26) | yes | yes | no | no | no |
 | Every scouting report, the team's scouting summary, assigning scouts | yes | yes | no | no | no |
 | Scouting forms, their own assignments and submissions | yes | no | no | yes | no |
 | Team page: members, settings, activity log; historical explorer; system status; game manuals, rulesets, inputs | yes | no | no | no | no |

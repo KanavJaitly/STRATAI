@@ -1,6 +1,11 @@
 # Follow-up: sync "Our pick list" through the server
 
-Status: **proposed, not started** (2026-11-17). The pick list ships browser-only; this page is what the backend would
+Status: **superseded (2026-11-26).** The old standalone alliance selection page, and "Our pick list" with it, were
+removed by the 2026-11-26 audit on the owner's instruction; live alliance selection replaces the page. The pick list
+code is in git history (`frontend/src/dashboard/teamPickList.tsx`, removed after `34cefb5`) if it is wanted again,
+for example on the live draft page. The rest of this page is the 2026-11-17 proposal, kept as written.
+
+Original status: **proposed, not started** (2026-11-17). The pick list ships browser-only; this page is what the backend would
 need to share it across the team's devices.
 
 ## Today

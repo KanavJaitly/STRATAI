@@ -56,7 +56,8 @@ describe('Game manual and spec workflow', () => {
     const bytes = '%PDF-1.7 synthetic'
     const sha = await sha256Hex(new TextEncoder().encode(bytes).buffer as ArrayBuffer)
     const mock = mockApi({ ...base(), 'POST /human-inputs/game-manuals':
-      { status: 200, body: { manual: { ...manual, content_sha256: sha }, created: false } } })
+      { status: 200, body: { manual: { ...manual, content_sha256: sha }, created: false } },
+      'POST /human-inputs/game-manuals/3/processing': { status: 202, body: { state: 'succeeded' } } })
     renderPage(<GameSpecPage />)
     await chooseAndUpload(bytes)
     expect(await screen.findByText(/already manual #3. Nothing was replaced or duplicated/)).toBeInTheDocument()
@@ -64,6 +65,17 @@ describe('Game manual and spec workflow', () => {
     expect(upload.headers['Content-Type']).toBe('application/pdf')
     expect(upload.query.get('uploaded_by')).toBe('Test Person')
     expect(upload.query.get('season')).toBe('2099')
+  })
+
+  it('checks the file before upload and starts processing after it, as the Game manual page does', async () => {
+    const user = userEvent.setup()
+    const mock = mockApi({ ...base(), 'POST /human-inputs/game-manuals': { status: 201, body: { manual, created: true } } })
+    renderPage(<GameSpecPage />)
+    await user.upload(await screen.findByLabelText('Manual PDF'), new File(['not a pdf'], 'manual.pdf', { type: 'application/pdf' }))
+    await user.type(screen.getByLabelText('Game name'), 'Synthetic')
+    expect(await screen.findByRole('alert')).toHaveTextContent(/not a PDF/)
+    expect(screen.getByRole('button', { name: 'Upload manual' })).toBeDisabled()
+    expect(mock.writes()).toHaveLength(0)
   })
 
   it("refuses to report success when the server's checksum differs from the file's", async () => {

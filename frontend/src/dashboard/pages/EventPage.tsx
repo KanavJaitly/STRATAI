@@ -55,7 +55,7 @@ export function EventPage() {
         subtitle={<><code>{eventKey}</code>{event?.start_date && <> · {event.start_date}{event.end_date && event.end_date !== event.start_date ? ` – ${event.end_date}` : ''}</>}
           {event && [event.city, event.state_province, event.country].some(Boolean) && <> · {[event.city, event.state_province, event.country].filter(Boolean).join(', ')}</>}</>}
         actions={<span className="header-actions">
-          <PageLink hideWhenBlocked className="button-link" to={`/events/${encodeURIComponent(eventKey)}/alliance-selection`}>Alliance selection</PageLink>
+          <PageLink hideWhenBlocked className="button-link" to={`/alliance-selection/live?event=${encodeURIComponent(eventKey)}`}>Live alliance selection</PageLink>
           <PageLink hideWhenBlocked className="button-link" to={`/events/${encodeURIComponent(eventKey)}/strategy-lab`}>Strategy lab</PageLink>
         </span>}
       />

@@ -1,0 +1,160 @@
+{
+ "events_scored": 591,
+ "alliances": 4714,
+ "skipped": {
+  "SelectionTimeUnavailable": 15,
+  "no_playoff_match_with_exactly_the_three_picks_or_no_estimate": 14
+ },
+ "2024": {
+  "fb2_vs_avg": {
+   "fb2": {
+    "n": 1477,
+    "mae": 10.18,
+    "bias": -6.55
+   },
+   "avg": {
+    "n": 1477,
+    "mae": 15.46,
+    "bias": -13.29
+   }
+  },
+  "epa_subset": {
+   "fb2": {
+    "n": 0
+   },
+   "avg": {
+    "n": 0
+   },
+   "epa": {
+    "n": 0
+   }
+  },
+  "within_event_spearman_fb2_vs_avg": {
+   "fb2": 0.6593,
+   "avg": 0.6182,
+   "events": 185,
+   "fb2_beats_avg": "102",
+   "avg_beats_fb2": "52"
+  },
+  "within_event_spearman_epa_subset": {
+   "fb2": null,
+   "avg": null,
+   "epa": null,
+   "events": 0
+  }
+ },
+ "2025": {
+  "fb2_vs_avg": {
+   "fb2": {
+    "n": 1581,
+    "mae": 16.1,
+    "bias": -10.02
+   },
+   "avg": {
+    "n": 1581,
+    "mae": 27.13,
+    "bias": -22.54
+   }
+  },
+  "epa_subset": {
+   "fb2": {
+    "n": 0
+   },
+   "avg": {
+    "n": 0
+   },
+   "epa": {
+    "n": 0
+   }
+  },
+  "within_event_spearman_fb2_vs_avg": {
+   "fb2": 0.744,
+   "avg": 0.694,
+   "events": 198,
+   "fb2_beats_avg": "106",
+   "avg_beats_fb2": "57"
+  },
+  "within_event_spearman_epa_subset": {
+   "fb2": null,
+   "avg": null,
+   "epa": null,
+   "events": 0
+  }
+ },
+ "2026": {
+  "fb2_vs_avg": {
+   "fb2": {
+    "n": 1656,
+    "mae": 36.82,
+    "bias": -1.77
+   },
+   "avg": {
+    "n": 1656,
+    "mae": 60.81,
+    "bias": -34.94
+   }
+  },
+  "epa_subset": {
+   "fb2": {
+    "n": 0
+   },
+   "avg": {
+    "n": 0
+   },
+   "epa": {
+    "n": 0
+   }
+  },
+  "within_event_spearman_fb2_vs_avg": {
+   "fb2": 0.776,
+   "avg": 0.7419,
+   "events": 208,
+   "fb2_beats_avg": "106",
+   "avg_beats_fb2": "57"
+  },
+  "within_event_spearman_epa_subset": {
+   "fb2": null,
+   "avg": null,
+   "epa": null,
+   "events": 0
+  }
+ },
+ "all": {
+  "fb2_vs_avg": {
+   "fb2": {
+    "n": 4714,
+    "mae": 21.52,
+    "bias": -6.03
+   },
+   "avg": {
+    "n": 4714,
+    "mae": 35.3,
+    "bias": -24.0
+   }
+  },
+  "epa_subset": {
+   "fb2": {
+    "n": 0
+   },
+   "avg": {
+    "n": 0
+   },
+   "epa": {
+    "n": 0
+   }
+  },
+  "within_event_spearman_fb2_vs_avg": {
+   "fb2": 0.7288,
+   "avg": 0.6871,
+   "events": 591,
+   "fb2_beats_avg": "314",
+   "avg_beats_fb2": "166"
+  },
+  "within_event_spearman_epa_subset": {
+   "fb2": null,
+   "avg": null,
+   "epa": null,
+   "events": 0
+  }
+ }
+}

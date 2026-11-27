@@ -1200,6 +1200,7 @@ DELETE FROM source_watermarks WHERE scope_key = '2024casj';
 | `0013_live_alliance_selection.sql` | Phase 11: creates `draft_records` and `draft_actions` (each team's append-only live alliance-selection log) and adds `alliance_selection_record` to the `workspace_role_permissions` CHECK constraint (section 4.5; `docs/phase11.md`) |
 | `0014_draft_author_fk_deferred.sql` | Phase 11 fix: checks `draft_records_author_fk` and `draft_actions_author_fk` at commit (`DEFERRABLE INITIALLY DEFERRED`), so deleting a workspace cascades through its draft history as 0013 intends; removing an author without its workspace is still refused |
 | `0015_single_team_auth.sql` | Single-team accounts for Team 11: deletes every account and team-private row; drops `invitations`, `password_reset_tokens`, `workspace_role_permissions` and `workspaces.setup_password_hash`; roles become admin and base; creates `password_reset_codes`; creates the one workspace (team 11) and allows no second (section 4.5) |
+| `0016_more_team_roles.sql` | Three more team roles: widens the `team_memberships` role CHECK to admin, base, strategy, drive and scout; changes no row. What each role may do is fixed in code (`workspaces/permissions.py` `ROLE_GRANTS`) |
 
 Migrations are plain SQL applied in filename order and recorded in `migrations_applied`.
 **There is no Alembic and none should be added.** To add one, create

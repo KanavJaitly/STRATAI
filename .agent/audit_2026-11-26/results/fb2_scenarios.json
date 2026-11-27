@@ -1,0 +1,826 @@
+{
+ "2024txbel": {
+  "mode": "components",
+  "teams_estimated": 42,
+  "benchmark": {
+   "auto": 4.12,
+   "teleop": 6.31,
+   "endgame": 1.08
+  },
+  "captain1": 3847,
+  "first_pick_list": [
+   5414,
+   418,
+   5892,
+   3679
+  ],
+  "first_pick_gaps": {
+   "auto": 0.0,
+   "teleop": 0.0,
+   "endgame": 0.0
+  },
+  "first_pick_same_as_individual_order": true,
+  "captain4": {
+   "team": 5414,
+   "list": [
+    3679,
+    3561,
+    9418,
+    8019
+   ],
+   "gaps": {
+    "auto": 0.0,
+    "teleop": 0.0,
+    "endgame": 0.22
+   }
+  },
+  "captain8": {
+   "team": 9121,
+   "list": [
+    3561,
+    5503,
+    6369,
+    8598,
+    8879,
+    8827,
+    8749,
+    3802
+   ],
+   "gaps": {
+    "auto": 0.0,
+    "teleop": 0.0,
+    "endgame": 0.16
+   }
+  },
+  "second_pick_by_first_pick": {
+   "5414": {
+    "top5": [
+     3561,
+     5503,
+     6369,
+     8598,
+     8879
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.09
+    }
+   },
+   "418": {
+    "top5": [
+     3561,
+     5503,
+     6369,
+     8598,
+     8879
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "5892": {
+    "top5": [
+     3561,
+     5503,
+     6369,
+     8598,
+     8879
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "3679": {
+    "top5": [
+     3561,
+     5503,
+     6369,
+     8598,
+     8879
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.4
+    }
+   },
+   "3561": {
+    "top5": [
+     5503,
+     6369,
+     8598,
+     8879,
+     8827
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "9418": {
+    "top5": [
+     3561,
+     5503,
+     6369,
+     8598,
+     8879
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   }
+  },
+  "second_pick_distinct_top5_lists": 2,
+  "second_pick_order_kendall_tau_mean": 0.9987,
+  "second_pick_gap_nonzero_share": 0.333,
+  "actual_alliance_1": [
+   3847,
+   5414,
+   9054
+  ]
+ },
+ "2025miket": {
+  "mode": "components",
+  "teams_estimated": 40,
+  "benchmark": {
+   "auto": 4.99,
+   "teleop": 18.74,
+   "endgame": 3.02
+  },
+  "captain1": null,
+  "first_pick_list": [
+   2137,
+   5460,
+   27,
+   494
+  ],
+  "first_pick_gaps": {
+   "auto": 0.0,
+   "teleop": 0.0,
+   "endgame": 0.0
+  },
+  "first_pick_same_as_individual_order": true,
+  "second_pick_by_first_pick": {
+   "2137": {
+    "top5": [
+     2137,
+     5460,
+     27,
+     494,
+     70
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "5460": {
+    "top5": [
+     2137,
+     5460,
+     27,
+     494,
+     70
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "27": {
+    "top5": [
+     2137,
+     5460,
+     27,
+     494,
+     70
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "494": {
+    "top5": [
+     2137,
+     5460,
+     27,
+     494,
+     70
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "70": {
+    "top5": [
+     2137,
+     5460,
+     27,
+     494,
+     70
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "2145": {
+    "top5": [
+     2137,
+     5460,
+     27,
+     494,
+     70
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   }
+  },
+  "second_pick_distinct_top5_lists": 1,
+  "second_pick_order_kendall_tau_mean": 1.0,
+  "second_pick_gap_nonzero_share": 0.0,
+  "actual_alliance_1": [
+   5460,
+   2137,
+   4998
+  ]
+ },
+ "2026onwat": {
+  "mode": "components",
+  "teams_estimated": 31,
+  "benchmark": {
+   "auto": 12.98,
+   "teleop": 33.61,
+   "endgame": 13.5
+  },
+  "captain1": 4946,
+  "first_pick_list": [
+   4678,
+   2200,
+   610,
+   9098
+  ],
+  "first_pick_gaps": {
+   "auto": 0.0,
+   "teleop": 0.0,
+   "endgame": 0.0
+  },
+  "first_pick_same_as_individual_order": true,
+  "captain4": {
+   "team": 4678,
+   "list": [
+    610,
+    3683,
+    2702,
+    5409
+   ],
+   "gaps": {
+    "auto": 0.0,
+    "teleop": 0.0,
+    "endgame": 0.0
+   }
+  },
+  "captain8": {
+   "team": 8089,
+   "list": [
+    2702,
+    4917,
+    4976,
+    2609,
+    11227,
+    1334,
+    772,
+    5870
+   ],
+   "gaps": {
+    "auto": 0.0,
+    "teleop": 5.95,
+    "endgame": 0.0
+   }
+  },
+  "second_pick_by_first_pick": {
+   "4678": {
+    "top5": [
+     4917,
+     4976,
+     2609,
+     11227,
+     1334
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "2200": {
+    "top5": [
+     4917,
+     4976,
+     2609,
+     11227,
+     1334
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "610": {
+    "top5": [
+     4917,
+     4976,
+     2609,
+     11227,
+     1334
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "9098": {
+    "top5": [
+     4917,
+     4976,
+     2609,
+     11227,
+     1334
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "3683": {
+    "top5": [
+     4917,
+     4976,
+     2609,
+     11227,
+     1334
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "2702": {
+    "top5": [
+     4917,
+     4976,
+     2609,
+     11227,
+     1334
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   }
+  },
+  "second_pick_distinct_top5_lists": 1,
+  "second_pick_order_kendall_tau_mean": 1.0,
+  "second_pick_gap_nonzero_share": 0.0,
+  "actual_alliance_1": [
+   4946,
+   4678,
+   4308
+  ]
+ },
+ "2024njfla": {
+  "mode": "components",
+  "teams_estimated": 34,
+  "benchmark": {
+   "auto": 4.3,
+   "teleop": 6.67,
+   "endgame": 1.69
+  },
+  "captain1": 1676,
+  "first_pick_list": [
+   8513,
+   219,
+   223,
+   222
+  ],
+  "first_pick_gaps": {
+   "auto": 0.0,
+   "teleop": 0.0,
+   "endgame": 0.0
+  },
+  "first_pick_same_as_individual_order": true,
+  "captain4": {
+   "team": 4361,
+   "list": [
+    8513,
+    219,
+    223,
+    1218
+   ],
+   "gaps": {
+    "auto": 0.0,
+    "teleop": 0.0,
+    "endgame": 0.0
+   }
+  },
+  "captain8": {
+   "team": 8117,
+   "list": [
+    223,
+    1218,
+    1811,
+    1279,
+    56,
+    6016,
+    1672,
+    75
+   ],
+   "gaps": {
+    "auto": 0.65,
+    "teleop": 0.0,
+    "endgame": 1.58
+   }
+  },
+  "second_pick_by_first_pick": {
+   "8513": {
+    "top5": [
+     1218,
+     1811,
+     1279,
+     56,
+     6016
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "219": {
+    "top5": [
+     1218,
+     1811,
+     1279,
+     56,
+     6016
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "223": {
+    "top5": [
+     1218,
+     1811,
+     1279,
+     56,
+     6016
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "222": {
+    "top5": [
+     1218,
+     1811,
+     1279,
+     56,
+     6016
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "1218": {
+    "top5": [
+     223,
+     1811,
+     1279,
+     56,
+     6016
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "1811": {
+    "top5": [
+     223,
+     1218,
+     1279,
+     56,
+     6016
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   }
+  },
+  "second_pick_distinct_top5_lists": 3,
+  "second_pick_order_kendall_tau_mean": 1.0,
+  "second_pick_gap_nonzero_share": 0.0,
+  "actual_alliance_1": [
+   1676,
+   222,
+   5438
+  ]
+ },
+ "2025casd": {
+  "mode": "components",
+  "teams_estimated": 51,
+  "benchmark": {
+   "auto": 7.05,
+   "teleop": 29.07,
+   "endgame": 5.44
+  },
+  "captain1": null,
+  "first_pick_list": [
+   3128,
+   9084,
+   3255,
+   1538
+  ],
+  "first_pick_gaps": {
+   "auto": 0.0,
+   "teleop": 0.0,
+   "endgame": 0.0
+  },
+  "first_pick_same_as_individual_order": true,
+  "second_pick_by_first_pick": {
+   "3128": {
+    "top5": [
+     3128,
+     9084,
+     3255,
+     1538,
+     4738
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "9084": {
+    "top5": [
+     3128,
+     9084,
+     3255,
+     1538,
+     4738
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "3255": {
+    "top5": [
+     3128,
+     9084,
+     3255,
+     1538,
+     4738
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "1538": {
+    "top5": [
+     3128,
+     9084,
+     3255,
+     1538,
+     4738
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "4738": {
+    "top5": [
+     3128,
+     9084,
+     3255,
+     1538,
+     4738
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "766": {
+    "top5": [
+     3128,
+     9084,
+     3255,
+     1538,
+     4738
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   }
+  },
+  "second_pick_distinct_top5_lists": 1,
+  "second_pick_order_kendall_tau_mean": 1.0,
+  "second_pick_gap_nonzero_share": 0.0,
+  "actual_alliance_1": [
+   1538,
+   3255,
+   8119
+  ]
+ },
+ "2026mibig": {
+  "mode": "components",
+  "teams_estimated": 41,
+  "benchmark": {
+   "auto": 10.01,
+   "teleop": 29.13,
+   "endgame": 11.09
+  },
+  "captain1": 1918,
+  "first_pick_list": [
+   7160,
+   288,
+   5535,
+   4004
+  ],
+  "first_pick_gaps": {
+   "auto": 0.0,
+   "teleop": 0.0,
+   "endgame": 0.0
+  },
+  "first_pick_same_as_individual_order": true,
+  "captain4": {
+   "team": 288,
+   "list": [
+    5535,
+    4004,
+    6077,
+    5982
+   ],
+   "gaps": {
+    "auto": 0.0,
+    "teleop": 0.0,
+    "endgame": 0.0
+   }
+  },
+  "captain8": {
+   "team": 4004,
+   "list": [
+    6077,
+    244,
+    3603,
+    9771,
+    9673,
+    8611,
+    6100,
+    6005
+   ],
+   "gaps": {
+    "auto": 0.03,
+    "teleop": 0.0,
+    "endgame": 0.0
+   }
+  },
+  "second_pick_by_first_pick": {
+   "7160": {
+    "top5": [
+     6077,
+     244,
+     9771,
+     9673,
+     8611
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "288": {
+    "top5": [
+     6077,
+     244,
+     9771,
+     9673,
+     8611
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "5535": {
+    "top5": [
+     6077,
+     244,
+     9771,
+     9673,
+     8611
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "4004": {
+    "top5": [
+     6077,
+     244,
+     9771,
+     9673,
+     8611
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "6077": {
+    "top5": [
+     244,
+     3603,
+     9771,
+     9673,
+     8611
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   },
+   "5982": {
+    "top5": [
+     6077,
+     244,
+     9771,
+     9673,
+     8611
+    ],
+    "gaps": {
+     "auto": 0.0,
+     "teleop": 0.0,
+     "endgame": 0.0
+    }
+   }
+  },
+  "second_pick_distinct_top5_lists": 2,
+  "second_pick_order_kendall_tau_mean": 1.0,
+  "second_pick_gap_nonzero_share": 0.0,
+  "actual_alliance_1": [
+   1918,
+   7160,
+   5213
+  ]
+ }
+}

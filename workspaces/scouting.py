@@ -185,6 +185,21 @@ def submit_report(database: Database, context: SessionContext, *, match_key: str
             if assignment[3] == "cancelled":
                 raise conflict("assignment_cancelled", "That assignment was cancelled.")
             cursor.execute("UPDATE scouting_assignments SET status = 'completed' WHERE id = %s", (assignment_id,))
+        # Idempotent resubmission (audit 2026-11-26): a retried or double-tapped submit of the same report by the same
+        # scout (same match, team, ratings and notes) returns the report already stored instead of a second row, which
+        # would otherwise count twice in the team's summary. A changed report is stored, and supersedes the earlier one
+        # in the summary (scouting_summary: each scout's latest report per match and team).
+        cursor.execute(
+            "SELECT id, submitted_at, assignment_id FROM workspace_scouting_reports WHERE workspace_id = %s "
+            "AND user_id = %s AND match_key = %s AND team_number = %s AND defense_rating IS NOT DISTINCT FROM %s "
+            "AND feeding_rating IS NOT DISTINCT FROM %s AND notes IS NOT DISTINCT FROM %s ORDER BY id DESC LIMIT 1",
+            (context.workspace_id, context.user_id, match_key, team_number, defense_rating, feeding_rating, notes))
+        existing = cursor.fetchone()
+        if existing is not None:
+            return {"report_id": existing[0], "event_key": event_key, "match_key": match_key,
+                    "team_number": team_number, "defense_rating": defense_rating, "feeding_rating": feeding_rating,
+                    "notes": notes, "assignment_id": existing[2] if assignment_id is None else assignment_id,
+                    "submitted_at": existing[1], "scout": context.name}
         cursor.execute(
             "INSERT INTO workspace_scouting_reports (workspace_id, user_id, event_key, match_key, team_number, "
             "defense_rating, feeding_rating, notes, assignment_id, submitted_at) "
@@ -223,9 +238,14 @@ def scouting_summary(database: Database, context: SessionContext, *, event_key: 
         cursor.execute("SELECT 1 FROM events WHERE event_key = %s", (event_key,))
         if cursor.fetchone() is None:
             raise not_found("event_not_found", f"Event '{event_key}' is not known to StratAI.")
+        # Each scout's latest report per (match, team): a corrected report supersedes the earlier one, as a resubmission
+        # does in the shared scouting_observations (natural key match, team, scout, source), so one observation is
+        # never counted twice (audit 2026-11-26).
         cursor.execute(
-            "SELECT match_key, team_number, user_id, defense_rating, feeding_rating, notes, submitted_at "
-            "FROM workspace_scouting_reports WHERE workspace_id = %s AND event_key = %s ORDER BY team_number, id",
+            "SELECT match_key, team_number, user_id, defense_rating, feeding_rating, notes, submitted_at FROM ("
+            "SELECT DISTINCT ON (user_id, match_key, team_number) * FROM workspace_scouting_reports "
+            "WHERE workspace_id = %s AND event_key = %s ORDER BY user_id, match_key, team_number, id DESC) latest "
+            "ORDER BY team_number, id",
             (context.workspace_id, event_key))
         rows = cursor.fetchall()
     by_team: dict[int, list[ScoutingObservation]] = {}

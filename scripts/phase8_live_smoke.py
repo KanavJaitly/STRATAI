@@ -163,7 +163,6 @@ PAGES = [
     ("team", "/events/{event}/teams/{team}", "Team {team}"),
     ("match", "/matches/{match}", None),
     ("strategy_lab", "/events/{event}/strategy-lab?red={red}&blue={blue}", "Strategy lab"),
-    ("alliance", "/events/{event}/alliance-selection", "Alliance selection"),
     ("report", "/report/{match}", "Pre-match report"),
     ("status", "/status", "System status"),
 ]

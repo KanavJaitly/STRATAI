@@ -38,9 +38,12 @@ export function ValidationBadge({ validation, compact = false, interactive = tru
       ) : <span className={tone} title={explanation} data-status={validation.status} aria-describedby={`${id}-x`}>{statusName(validation.status)}</span>}
       <span id={`${id}-x`} className={open ? 'label-explain' : 'visually-hidden'}>{explanation}</span>
       {!compact && reasons.length > 0 && (
-        <ul className="reasons" aria-label="Qualifiers">
-          {reasons.map((reason) => <li key={reason} data-reason={reason}>{reasonText(reason)}</li>)}
-        </ul>
+        // Phrasing elements with list semantics, not <ul>: a badge sits inside paragraphs (the odds line), where a
+        // <ul> is invalid HTML (React's validateDOMNesting warning on the match and report pages; audit 2026-11-26).
+        <span className="reasons" role="list" aria-label="Qualifiers">
+          {reasons.map((reason) => <span key={reason} role="listitem" className="reason" data-reason={reason}>
+            {reasonText(reason)}</span>)}
+        </span>
       )}
     </span>
   )

@@ -6,6 +6,7 @@ import {
   ErrorNotice, LoadState, Section, Sha, StateBadge, SuccessNotice, When, WriteGate, useAction, useLoad,
 } from '../components/common'
 import { RowsEditor } from '../components/RowsEditor'
+import { checkManualFile } from '../lib/manualChecks'
 import { sha256Hex } from '../lib/sha256'
 import { useSession } from '../state/session'
 import {
@@ -27,20 +28,28 @@ function ManualUpload({ season, onUploaded }: { season: number; onUploaded: () =
   const [gameName, setGameName] = useState('')
   const [localSha, setLocalSha] = useState<string | null>(null)
   const [result, setResult] = useState<{ manual: Manual; created: boolean } | null>(null)
+  const [problem, setProblem] = useState<string | null>(null)
   const action = useAction()
 
+  // The same checks and processing as the Game manual page (pages/ManualsPage.tsx), so a manual uploaded here is
+  // checked before it is sent and is processed, not left "not started" (audit 2026-11-26).
   const choose = async (chosen: File | null) => {
     setFile(chosen)
     setResult(null)
-    setLocalSha(chosen ? await sha256Hex(await chosen.arrayBuffer()) : null)
+    setLocalSha(null)
+    const found = chosen ? await checkManualFile(chosen) : null
+    setProblem(found)
+    if (chosen && !found) setLocalSha(await sha256Hex(await chosen.arrayBuffer()))
   }
 
   const upload = () => action.run(async () => {
-    if (!file) throw new Error('Choose the manual PDF first.')
-    const response = await api.uploadManual({ season, game_name: gameName, filename: file.name, uploaded_by: actor }, file)
+    if (!file || problem) throw new Error(problem ?? 'Choose the manual PDF first.')
+    const response = await api.uploadManual({ season, game_name: gameName.trim(), filename: file.name,
+      uploaded_by: actor }, file)
     if (localSha && response.manual.content_sha256 !== localSha) {
       throw new Error(`The server's checksum ${response.manual.content_sha256} does not match this file's ${localSha}.`)
     }
+    await api.startProcessing(response.manual.id, actor) // idempotent: an already-processed manual is not redone
     setResult(response)
     onUploaded()
   })
@@ -57,14 +66,15 @@ function ManualUpload({ season, onUploaded }: { season: number; onUploaded: () =
           Game name
           <input value={gameName} onChange={(e) => setGameName(e.target.value)} aria-label="Game name" required />
         </label>
-        <button type="submit" disabled={action.busy || !file || !gameName.trim()}>Upload manual</button>
+        <button type="submit" disabled={action.busy || !file || !!problem || !gameName.trim()}>Upload manual</button>
       </form>
+      {problem && <p className="notice notice-error" role="alert">{problem}</p>}
       {localSha && <p className="small">This file's sha256: <code>{localSha}</code></p>}
       <ErrorNotice error={action.error} />
       {result && (
         <div className={`notice ${result.created ? 'notice-ok' : 'notice-info'}`} role="status">
           {result.created
-            ? `Stored as manual #${result.manual.id} (sha256 ${result.manual.content_sha256.slice(0, 12)}…).`
+            ? `Stored as manual #${result.manual.id} (sha256 ${result.manual.content_sha256.slice(0, 12)}…); processing started.`
             : `This exact file is already manual #${result.manual.id}. Nothing was replaced or duplicated.`}
         </div>
       )}

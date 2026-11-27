@@ -1,0 +1,149 @@
+{
+ "first": {
+  "m5v2_served": {
+   "spearman": 0.5565,
+   "top8_recall": 0.6184,
+   "events": 208
+  },
+  "raw_epa": {
+   "spearman": 0.5955,
+   "top8_recall": 0.6472,
+   "events": 208
+  },
+  "in_event_avg": {
+   "spearman": -0.0477,
+   "top8_recall": 0.3221,
+   "events": 208
+  },
+  "blend": {
+   "spearman": 0.5977,
+   "top8_recall": 0.6496,
+   "events": 208
+  },
+  "m5v2_minus_raw_epa": {
+   "mean": -0.0391,
+   "ci95": [
+    -0.0527,
+    -0.0253
+   ],
+   "m5v2_better_events": 72,
+   "events": 208
+  },
+  "m5v2_minus_in_event_avg": {
+   "mean": 0.5863,
+   "ci95": [
+    0.5256,
+    0.6447
+   ],
+   "m5v2_better_events": 61,
+   "events": 61
+  },
+  "m5v2_minus_blend": {
+   "mean": -0.0412,
+   "ci95": [
+    -0.0552,
+    -0.0281
+   ],
+   "m5v2_better_events": 73,
+   "events": 208
+  }
+ },
+ "midpoint": {
+  "m5v2_served": {
+   "spearman": 0.6112,
+   "top8_recall": 0.6587,
+   "events": 208
+  },
+  "raw_epa": {
+   "spearman": 0.5955,
+   "top8_recall": 0.6472,
+   "events": 208
+  },
+  "in_event_avg": {
+   "spearman": 0.7017,
+   "top8_recall": 0.6869,
+   "events": 208
+  },
+  "blend": {
+   "spearman": 0.7166,
+   "top8_recall": 0.72,
+   "events": 208
+  },
+  "m5v2_minus_raw_epa": {
+   "mean": 0.0157,
+   "ci95": [
+    0.005,
+    0.0267
+   ],
+   "m5v2_better_events": 122,
+   "events": 208
+  },
+  "m5v2_minus_in_event_avg": {
+   "mean": -0.0905,
+   "ci95": [
+    -0.1088,
+    -0.0729
+   ],
+   "m5v2_better_events": 51,
+   "events": 208
+  },
+  "m5v2_minus_blend": {
+   "mean": -0.1054,
+   "ci95": [
+    -0.1186,
+    -0.0934
+   ],
+   "m5v2_better_events": 14,
+   "events": 208
+  }
+ },
+ "last": {
+  "m5v2_served": {
+   "spearman": 0.6314,
+   "top8_recall": 0.6743,
+   "events": 208
+  },
+  "raw_epa": {
+   "spearman": 0.5955,
+   "top8_recall": 0.6472,
+   "events": 208
+  },
+  "in_event_avg": {
+   "spearman": 0.8438,
+   "top8_recall": 0.7939,
+   "events": 208
+  },
+  "blend": {
+   "spearman": 0.7492,
+   "top8_recall": 0.7302,
+   "events": 208
+  },
+  "m5v2_minus_raw_epa": {
+   "mean": 0.0358,
+   "ci95": [
+    0.0241,
+    0.0479
+   ],
+   "m5v2_better_events": 144,
+   "events": 208
+  },
+  "m5v2_minus_in_event_avg": {
+   "mean": -0.2125,
+   "ci95": [
+    -0.2308,
+    -0.1943
+   ],
+   "m5v2_better_events": 2,
+   "events": 208
+  },
+  "m5v2_minus_blend": {
+   "mean": -0.1179,
+   "ci95": [
+    -0.1334,
+    -0.1029
+   ],
+   "m5v2_better_events": 25,
+   "events": 208
+  }
+ }
+}

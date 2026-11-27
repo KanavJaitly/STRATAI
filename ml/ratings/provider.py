@@ -56,11 +56,31 @@ EPA_WITHHELD_NO_PRIOR_EVENT = "no_prior_concluded_event_epa"
 
 # Decision D13 over Statbotics' team_event_stats. "Completed" = the team's own
 # alliance score is recorded, the same played test data.metrics.history applies.
+# Rule A1 (the D18 source's, ml/ratings/statbotics_primary.py; audit 2026-11-26). A team-event whose Statbotics record
+# has zero qualification matches carries Statbotics' SEASON-END rating, not the value at the end of that event
+# (docs/ratings/data_contract.md section 9: "after the season"). Before the season's last completed match it is
+# future information, so it is no candidate then. Only an explicit zero in the current Statbotics payload marks it: a
+# row without a payload is read as before. Measured on stratai_test: 28 / 57 / 101 team-events in 2024 / 2025 / 2026
+# took such a value as their "prior event" EPA through this selection.
+STATBOTICS_SEASON_END_SQL = """
+LEFT JOIN LATERAL (
+    SELECT (r.payload_json -> 'record' -> 'qual' ->> 'count') = '0' AS season_end
+    FROM raw_source_payloads r
+    WHERE r.source = 'statbotics' AND r.source_object_type = 'team_event' AND r.is_current
+      AND r.source_object_id = tes.team_number::text || '_' || tes.event_key
+    ORDER BY r.id DESC LIMIT 1
+) sb ON TRUE
+LEFT JOIN LATERAL (
+    SELECT MAX(m2.scheduled_time) AS season_end_instant FROM matches m2
+    WHERE COALESCE(sb.season_end, FALSE) AND m2.season = e.season AND m2.scheduled_time IS NOT NULL
+      AND m2.score_red IS NOT NULL AND m2.score_blue IS NOT NULL
+) se ON TRUE
+"""
+
 EPA_SOURCE_SQL = """
 SELECT tes.event_key, tes.epa_total, tes.epa_auto, tes.epa_teleop, tes.epa_endgame
 FROM team_event_stats tes
-JOIN events e ON e.event_key = tes.event_key
-JOIN LATERAL (
+JOIN events e ON e.event_key = tes.event_key""" + STATBOTICS_SEASON_END_SQL + """JOIN LATERAL (
     SELECT MAX(m.scheduled_time) AS last_completed_match
     FROM match_teams mt
     JOIN matches m ON m.match_key = mt.match_key
@@ -73,6 +93,7 @@ WHERE tes.team_number = %(team)s
   AND tes.event_key != %(target)s
   AND e.end_date IS NOT NULL
   AND e.end_date::timestamptz < %(as_of)s
+  AND (NOT COALESCE(sb.season_end, FALSE) OR se.season_end_instant < %(as_of)s)
 ORDER BY e.end_date DESC, lm.last_completed_match DESC, tes.event_key ASC
 LIMIT 1
 """
@@ -203,10 +224,10 @@ class StatboticsPointInTimeEpa:
 # there): the same rows, and a cold read in milliseconds rather than most of a second.
 EPA_CANDIDATES_SQL = """
 SELECT tes.team_number, tes.event_key, tes.epa_total, tes.epa_auto, tes.epa_teleop, tes.epa_endgame,
-       e.end_date::timestamptz, lm.last_completed_match
+       e.end_date::timestamptz, lm.last_completed_match,
+       CASE WHEN COALESCE(sb.season_end, FALSE) THEN COALESCE(se.season_end_instant, 'infinity'::timestamptz) END
 FROM team_event_stats tes
-JOIN events e ON e.event_key = tes.event_key
-JOIN (
+JOIN events e ON e.event_key = tes.event_key""" + STATBOTICS_SEASON_END_SQL + """JOIN (
     SELECT mt.team_number, m.event_key, MAX(m.scheduled_time) AS last_completed_match
     FROM match_teams mt
     JOIN matches m ON m.match_key = mt.match_key
@@ -242,8 +263,9 @@ class PrefetchedStatboticsEpa:
         candidates: dict[int, list[tuple[TeamEventFacts, tuple]]] = defaultdict(list)
         with database.cursor() as cursor:
             cursor.execute(EPA_CANDIDATES_SQL, {"teams": wanted})
-            for team, event_key, total, auto, teleop, endgame, end_instant, last in cursor.fetchall():
-                candidates[team].append((TeamEventFacts(event_key, end_instant, last), (total, auto, teleop, endgame)))
+            for team, event_key, total, auto, teleop, endgame, end_instant, last, season_end in cursor.fetchall():
+                candidates[team].append((TeamEventFacts(event_key, end_instant, last),
+                                         (total, auto, teleop, endgame, season_end)))
         for items in candidates.values():
             items.sort(key=lambda item: _d13_order(item[0]))
         return cls(dict(candidates), set(wanted))
@@ -251,9 +273,10 @@ class PrefetchedStatboticsEpa:
     def point_in_time_epa(self, team: int, target_event_key: str, as_of: datetime) -> TeamEventEpa | Unavailable:
         if team not in self._teams:
             raise ValueError(f"team {team} was not prefetched")
-        for facts, (total, auto, teleop, endgame) in self._candidates.get(team, ()):
+        for facts, (total, auto, teleop, endgame, season_end) in self._candidates.get(team, ()):
             if facts.event_key != target_event_key and facts.end_instant < as_of \
-                    and facts.last_completed_match < as_of:  # type: ignore[operator]
+                    and facts.last_completed_match < as_of \
+                    and (season_end is None or season_end < as_of):  # type: ignore[operator]  # rule A1
                 return TeamEventEpa(team, facts.event_key, total, auto, teleop, endgame, self.source, False, {})
         return Unavailable(EPA_WITHHELD_NO_PRIOR_EVENT, "no qualifying prior event in team_event_stats")
 

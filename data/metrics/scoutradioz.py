@@ -75,6 +75,7 @@ from typing import Any
 from data import pipeline
 from data.clients.schemas import ScoutRadiozMatchScoutingRow
 from data.clients.scoutradioz import ScoutRadiozCsvImporter
+from data.clients.source_connector import SourceResponse
 from data.landing.raw_writer import RawPayloadRecord, RawPayloadWriter
 from data.lineage import LineageStore
 from data.metrics.normalizer import normalize_scoutradioz_observation, scouting_observation_natural_key
@@ -427,10 +428,19 @@ def import_scoutradioz_csv(
     watermarks = watermarks or WatermarkStore(database)
     lineage = lineage or LineageStore(database)
 
+    # Rows that do not validate against the export's columns are reported per row (malformed_rows), never fatal to the
+    # whole file (audit 2026-11-26: one such row used to abort the import before any run was recorded).
     with ScoutRadiozCsvImporter(csv_path) as importer:
-        rows = list(importer.read_rows())
-    if not rows:
+        read = list(importer.read_rows_with_errors())
+    if not read:
         raise ValueError(f"{csv_path} contained no data rows")
+    unparseable = [(row_number, reason) for row_number, (_, parsed, reason) in enumerate(read, start=2)
+                   if parsed is None]
+    rows = [SourceResponse(raw, parsed) for raw, parsed, _ in read if parsed is not None]
+    row_numbers = [row_number for row_number, (_, parsed, _) in enumerate(read, start=2) if parsed is not None]
+    if not rows:
+        raise ValueError(f"{csv_path} contained no row that matches the ScoutRadioz export columns "
+                         f"(first problem, row {unparseable[0][0]}: {unparseable[0][1]})")
 
     event_key = rows[0].parsed.event_key
     for response in rows:
@@ -461,12 +471,12 @@ def import_scoutradioz_csv(
     try:
         after_raw_id = watermarks.get(SOURCE_SCOUTRADIOZ, pipeline.OBJECT_TYPE_SCOUTING_OBSERVATION, event_key)
 
-        malformed_rows: list[tuple[int, str]] = []
+        malformed_rows: list[tuple[int, str]] = list(unparseable)
         source_object_ids: list[str] = []
         landed_count = 0
         excluded_count = 0
         # Header is CSV row 1, so the first data row is row 2.
-        for row_number, response in enumerate(rows, start=2):
+        for row_number, response in zip(row_numbers, rows):
             # Checked before mapping, not after: an excluded row's ratings are
             # all None, and the shared validator rejects a payload with no
             # rating at all, so mapping it first would file a deliberate
@@ -512,13 +522,13 @@ def import_scoutradioz_csv(
         recorder.succeed(
             run_id, records_processed=len(staged.entities),
             stage_counts={
-                "rows_read": len(rows), "landed": landed_count, "loaded": len(staged.entities),
+                "rows_read": len(read), "landed": landed_count, "loaded": len(staged.entities),
                 "skipped": len(staged.skipped), "malformed": len(malformed_rows),
                 "excluded": excluded_count,
             },
         )
         return ScoutRadiozImportResult(
-            run_id=run_id, event_key=event_key, rows_read=len(rows), landed=landed_count,
+            run_id=run_id, event_key=event_key, rows_read=len(read), landed=landed_count,
             loaded=len(staged.entities), skipped=list(staged.skipped), malformed_rows=malformed_rows,
             excluded_rows=excluded_count,
         )

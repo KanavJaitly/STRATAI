@@ -31,8 +31,9 @@ function Upload({ season, onUploaded }: { season: number; onUploaded: (manual: M
     setFile(chosen)
     setOutcome(null)
     setLocalSha(null)
-    setProblem(chosen ? await checkManualFile(chosen) : null)
-    if (chosen && !(await checkManualFile(chosen))) setLocalSha(await sha256Hex(await chosen.arrayBuffer()))
+    const found = chosen ? await checkManualFile(chosen) : null
+    setProblem(found)
+    if (chosen && !found) setLocalSha(await sha256Hex(await chosen.arrayBuffer()))
   }
 
   const upload = () => action.run(async () => {

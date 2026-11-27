@@ -338,7 +338,7 @@ WORKSPACE_PATHS: frozenset[str] = frozenset({
     "/auth/password/change", "/auth/password/forgot", "/auth/password/reset",
     "/workspace", "/workspace/members", "/workspace/members/{membership_id}/role",
     "/workspace/members/{membership_id}/status", "/workspace/members/{membership_id}/profile",
-    "/workspace/members/{membership_id}/remove", "/workspace/settings", "/workspace/activity", "/workspace/analytics",
+    "/workspace/members/{membership_id}/remove", "/workspace/settings", "/workspace/team-events", "/workspace/activity", "/workspace/analytics",
     "/workspace/scouting/scouts", "/workspace/scouting/assignments",
     "/workspace/scouting/assignments/{assignment_id}/cancel",
     "/workspace/scouting/reports", "/workspace/scouting/summary",

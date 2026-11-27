@@ -1,7 +1,7 @@
 # STRATAI web app
 
 Two areas share this app:
-- **Strategy dashboard (Phase 8):** events, team profiles, match strategy, alliance selection and the shareable
+- **Strategy dashboard (Phase 8):** events, team profiles, match strategy, live alliance selection and the shareable
   pre-match report, built on the Phase 7 API. See `docs/phase8.md` for the views, the rules they follow and how to
   verify them.
 - **Human inputs (P5-M8 / P5-M9 / DM1):** described below. These pages now live under `/inputs`; the old paths

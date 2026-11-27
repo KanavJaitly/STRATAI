@@ -3,8 +3,8 @@
 // event "2099test" and the team numbers 9901-9906 exist nowhere, and no value here is a model output.
 
 import type {
-  CalibratedWinProbability, CandidateOut, CandidatesResponse, EpaSourceInfo, EventAnalysisResponse,
-  EventMatchesResponse, EventTeamsResponse, FactorOut, Measure, PickListResponse, PreMatchReportResponse,
+  CalibratedWinProbability, EpaSourceInfo, EventAnalysisResponse,
+  EventMatchesResponse, EventTeamsResponse, Measure, PreMatchReportResponse,
   RecommendResponse, SeasonEventsResponse, Strategy, StrategyContextOut, StrategyModelInfo, TeamMetricsResponse,
   TeamStrengthResponse, TeamStrengthView, WinProbabilityResponse,
 } from '../api/generated'
@@ -144,38 +144,6 @@ export const RECOMMEND: RecommendResponse = {
   candidates_evaluated: 21952,
   selection_note: 'The recommendation is the maximum of many model estimates, not an unbiased probability.',
   unavailable_reasons: [],
-}
-
-export const factor = (value: number | null, status = 'descriptive', reason?: string): FactorOut => ({
-  value, n: value === null ? null : 4, validation: { status, reasons: reason ? [reason] : [] },
-})
-
-export const candidate = (team: number, epa: number | null): CandidateOut => ({
-  team_number: team, scoring_epa: factor(epa), average_score: factor(50), reliability: factor(100, 'descriptive', 'reliability_score_interim: synthetic'),
-  consistency: factor(70), defense: factor(null, 'insufficient_data', 'too few observations'), feeding: factor(null, 'insufficient_data'),
-  synergy: factor(null, 'insufficient_data', 'alliance incomplete'), role_compatibility: factor(null, 'insufficient_data', 'alliance incomplete'),
-})
-
-export const CANDIDATES: CandidatesResponse = { event_key: EVENT, as_of: '2099-03-02T00:00:00Z', as_of_source: 'selection_moment',
-  configuration: null, epa: EPA, candidates: [candidate(RED[0], 30), candidate(RED[1], null), candidate(BLUE[0], 45)] }
-
-const playoffOdds = (display: string) => ({ display, validation: { status: 'validated_playoff_success',
-  reasons: ['px4_scope: synthetic', 'predicted_field_not_validated: synthetic'], evidence: '.agent/phase6/results/p6_m5_px4.json' } })
-
-export const PICK_LIST: PickListResponse = {
-  event_key: EVENT, seed: 1, as_of: '2099-03-02T00:00:00Z', probability_status: 'validated_playoff_success',
-  ranked: [
-    { team_number: BLUE[0], configuration: [RED[0], BLUE[0], BLUE[1]], win_event: playoffOdds('35%'), reach_finals: playoffOdds('50%'),
-      vs_next_label: 'indistinguishable at model resolution', vs_next_reach_finals_label: 'indistinguishable at model resolution',
-      vs_next_reason: null, profile: null },
-    { team_number: BLUE[1], configuration: [RED[0], BLUE[1], BLUE[2]], win_event: playoffOdds('30%'), reach_finals: playoffOdds('45%'),
-      vs_next_label: null, vs_next_reach_finals_label: null, vs_next_reason: 'last_candidate: no next-best candidate to compare with', profile: null },
-  ],
-  alternatives: [{ alliances: [[RED[0], BLUE[1], BLUE[2]], [RED[1], RED[2], BLUE[0]]], win_event: playoffOdds('30%'), reach_finals: playoffOdds('45%') }],
-  alternatives_note: 'only 1 distinct feasible alternative configuration(s) exist from this draft state',
-  evaluated_fields: 12, notes: ['objective: synthetic'],
-  models: { px1_sha256: '1'.repeat(64), px2_calibrator_sha256: '2'.repeat(64), ranking_model_sha256: null },
-  provenance: { ruleset_sha256: '3'.repeat(64), ruleset_variant: null, ordering_policy: 'raw_epa' }, epa: EPA,
 }
 
 const notProduced = (semantics: string) => ({ value: null, reason: 'not_produced_by_any_engine' as const, semantics })

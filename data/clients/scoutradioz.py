@@ -22,7 +22,9 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, Iterator
+from typing import Any, ClassVar, Iterator
+
+from pydantic import ValidationError
 
 from data.clients.schemas import ScoutRadiozMatchScoutingRow
 from data.clients.source_connector import SourceConnector, SourceResponse
@@ -59,3 +61,17 @@ class ScoutRadiozCsvImporter(SourceConnector):
             for raw_row in reader:
                 parsed = ScoutRadiozMatchScoutingRow.model_validate(raw_row)
                 yield SourceResponse(raw_row, parsed)
+
+    def read_rows_with_errors(self) -> Iterator[tuple[dict[str, Any], "ScoutRadiozMatchScoutingRow | None", str | None]]:
+        """Every data row as (raw, parsed, None), or (raw, None, reason) when the row does not validate.
+
+        The import uses this so one malformed row is reported per row instead of aborting the whole file
+        (audit 2026-11-26: read_rows raises on the first such row, before any run is recorded)."""
+        with open(self.csv_path, newline="", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle)
+            for raw_row in reader:
+                try:
+                    yield raw_row, ScoutRadiozMatchScoutingRow.model_validate(raw_row), None
+                except ValidationError as exc:
+                    reasons = "; ".join(f"{'.'.join(str(x) for x in e['loc'])}: {e['msg']}" for e in exc.errors())
+                    yield raw_row, None, reasons or "the row does not match the ScoutRadioz export columns"

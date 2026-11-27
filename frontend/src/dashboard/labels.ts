@@ -1,6 +1,6 @@
 // Plain-language labels and number formatting for API values (P8-Q4).
 
-import type { CandidateOut, Measure } from '../api/generated'
+import type { Measure } from '../api/generated'
 
 /** Plain names and explanations of the validation labels the API serves. The badge shows the name; the served label
  * stays on the element (data-status). An unknown label is shown with its underscores as spaces. */
@@ -54,19 +54,6 @@ export function epaText(code: string): string {
 export function formatNumber(value: number, digits = 1): string {
   return value.toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: 0 })
 }
-
-export type FactorKey = Exclude<keyof CandidateOut, 'team_number'>
-
-export const FACTORS: { key: FactorKey; label: string; digits: number }[] = [
-  { key: 'scoring_epa', label: 'Scoring EPA', digits: 1 },
-  { key: 'average_score', label: 'Average score', digits: 1 },
-  { key: 'reliability', label: 'Reliability (estimate)', digits: 1 },
-  { key: 'consistency', label: 'Consistency', digits: 1 },
-  { key: 'defense', label: 'Defense', digits: 2 },
-  { key: 'feeding', label: 'Feeding', digits: 2 },
-  { key: 'synergy', label: 'Synergy', digits: 2 },
-  { key: 'role_compatibility', label: 'Role compatibility', digits: 2 },
-]
 
 /** Plain text for the API's absence reasons. The raw reason stays on the element (title and data-reason); an unknown
  * reason is shown exactly as served. */

@@ -1,0 +1,116 @@
+{
+ "points": [
+  {
+   "blue": [
+    7444,
+    8584,
+    9231
+   ],
+   "cutoff": "2024-03-06T07:37:00-05:00",
+   "event_key": "2024tuis",
+   "red": [
+    4972,
+    8264,
+    8863
+   ],
+   "season": 2024,
+   "selection_moment": "2024-03-07T03:48:00-05:00",
+   "target_match": "2024tuis_qm39"
+  },
+  {
+   "blue": [
+    2583,
+    4364,
+    9034
+   ],
+   "cutoff": "2024-03-22T17:52:00-04:00",
+   "event_key": "2024txdal",
+   "red": [
+    4639,
+    5212,
+    6526
+   ],
+   "season": 2024,
+   "selection_moment": "2024-03-23T12:07:00-04:00",
+   "target_match": "2024txdal_qm44"
+  },
+  {
+   "blue": [
+    4765,
+    5171,
+    9125
+   ],
+   "cutoff": "2025-04-05T18:27:00-04:00",
+   "event_key": "2025cabe",
+   "red": [
+    3482,
+    6985,
+    9038
+   ],
+   "season": 2025,
+   "selection_moment": "2025-04-06T14:47:00-04:00",
+   "target_match": "2025cabe_qm42"
+  },
+  {
+   "blue": [
+    839,
+    2064,
+    6346
+   ],
+   "cutoff": "2025-03-08T16:56:00-05:00",
+   "event_key": "2025ctwat",
+   "red": [
+    3182,
+    8085,
+    10592
+   ],
+   "season": 2025,
+   "selection_moment": "2025-03-09T11:16:00-04:00",
+   "target_match": "2025ctwat_qm38"
+  },
+  {
+   "blue": [
+    815,
+    3568,
+    4838
+   ],
+   "cutoff": "2026-03-28T17:28:00-04:00",
+   "event_key": "2026misal",
+   "red": [
+    2834,
+    7660,
+    8899
+   ],
+   "season": 2026,
+   "selection_moment": "2026-03-29T12:31:00-04:00",
+   "target_match": "2026misal_qm40"
+  },
+  {
+   "blue": [
+    4455,
+    4959,
+    5041
+   ],
+   "cutoff": "2026-04-03T16:30:00-04:00",
+   "event_key": "2026mose",
+   "red": [
+    4624,
+    8112,
+    10453
+   ],
+   "season": 2026,
+   "selection_moment": "2026-04-04T13:01:00-04:00",
+   "target_match": "2026mose_qm34"
+  }
+ ],
+ "note": "cutoff-pinned outputs compared before/after corrupting every post-cutoff fact in a disposable clone (stratai_test_pit); D18 EPA source",
+ "earlier_events_run": {
+  "compared": 66,
+  "changed": 0
+ },
+ "later_events_run": {
+  "compared": 66,
+  "changed": 0
+ },
+ "selection_moment_outputs_changed_as_expected": 105
+}

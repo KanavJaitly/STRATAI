@@ -7,17 +7,16 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
 import type { CompareResponse } from '../api/generated'
 import type { Resource } from '../components/useResource'
 import { renderAt } from '../test/dashboard'
-import { CANDIDATES, CONTEXT, EPA, EVENT, MATCH, MATCHES, PICK_LIST, RECOMMEND, RED, STRATEGY_MODEL, WIN_PROBABILITY } from '../test/dashboardFixtures'
+import { CONTEXT, EPA, EVENT, MATCH, MATCHES, RECOMMEND, STRATEGY_MODEL, WIN_PROBABILITY } from '../test/dashboardFixtures'
 import { mockApi } from '../test/mockApi'
 import { ResourceView } from './display'
-import { AlliancePage } from './pages/AlliancePage'
 import { MatchPage } from './pages/MatchPage'
 
 function deferred<T>() {
@@ -66,44 +65,6 @@ describe('busy actions keep focus and stay guarded (P8-R9)', () => {
       second: { strategy: RECOMMEND.recommended!.strategy, odds: { display: '65%', validation: { status: 'not_validated', reasons: [] } } } })
     expect(await screen.findByText('Comparison ready.')).toBe(announcing)
     expect(container.querySelector('.comparison[aria-live]')).toBeNull() // the result is no longer its own live region
-  })
-
-  it('Rank picks: aria-disabled while busy, focus kept, one request, and the outcome is announced in a persistent region', async () => {
-    const pending = deferred<unknown>()
-    const api = mockApi({ [`GET /events/${EVENT}/alliance-selection/candidates`]: CANDIDATES,
-      [`POST /events/${EVENT}/alliance-selection/pick-list`]: () => pending.promise })
-    const { container } = renderAt('/events/:eventKey/alliance-selection', `/events/${EVENT}/alliance-selection`, <AlliancePage />)
-    const button = await screen.findByRole('button', { name: 'Rank picks' })
-    const regionsBefore = new Set(container.querySelectorAll('[role="status"]'))
-    await userEvent.click(button)
-    const busy = screen.getByRole('button', { name: 'Ranking picks…' })
-    expect(busy).toHaveAttribute('aria-disabled', 'true')
-    expect(busy).toBeEnabled()
-    expect(busy).toHaveFocus()
-    await userEvent.click(busy)
-    await userEvent.keyboard('{Enter}') // keyboard submit while busy is guarded too
-    expect(api.calls.filter((c) => c.path.endsWith('/pick-list'))).toHaveLength(1)
-    pending.resolve(PICK_LIST)
-    const done = await screen.findByText('Pick list ready.')
-    expect(regionsBefore.has(done)).toBe(true)
-    expect(container.querySelector('.picklist[aria-live]')).toBeNull()
-  })
-
-  it('Score synergy: aria-disabled while busy, focus kept, one request', async () => {
-    const pending = deferred<unknown>()
-    const api = mockApi({ [`GET /events/${EVENT}/alliance-selection/candidates`]: CANDIDATES,
-      'POST /predictions/alliance-synergy': () => pending.promise })
-    renderAt('/events/:eventKey/alliance-selection', `/events/${EVENT}/alliance-selection`, <AlliancePage />)
-    const form = await screen.findByRole('form', { name: 'Synergy teams' })
-    await userEvent.type(within(form).getByRole('textbox'), RED.join(', '))
-    await userEvent.click(within(form).getByRole('button', { name: 'Score synergy' }))
-    const busy = within(form).getByRole('button', { name: 'Score synergy' })
-    expect(busy).toHaveAttribute('aria-disabled', 'true')
-    expect(busy).toBeEnabled()
-    expect(busy).toHaveFocus()
-    await userEvent.click(busy)
-    expect(api.calls.filter((c) => c.path === '/predictions/alliance-synergy')).toHaveLength(1)
-    expect(screen.getByText('Scoring synergy…')).toBeInTheDocument()
   })
 })
 

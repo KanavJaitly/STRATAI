@@ -315,7 +315,8 @@ def test_the_session_reports_a_database_without_the_account_tables(monkeypatch):
 
 # The only routes a base member may call: the events list and an event's page (plus their own session).
 BASE_ROUTES = {"/events", "/events/{event_key}/teams", "/events/{event_key}/matches", "/events/{event_key}/analysis",
-               "/events/{event_key}/qualification-forecast", "/workspace/team-events"}
+               "/events/{event_key}/qualification-forecast", "/workspace/team-events",
+               "/explorer/seasons/{season}/events"}  # the members' event chooser (audit 2026-11-26)
 PUBLIC_ROUTES = {"/health", "/ready", "/auth/session"}
 PATH_VALUES = {"season": str(SEASON), "event_key": EVENT, "team_number": str(TEAMS[0]), "match_key": f"{EVENT}_qm1"}
 
@@ -601,6 +602,24 @@ def test_administrators_keep_team_scouting_and_base_members_cannot_use_it():
     with _db().cursor() as cursor:  # team scouting never reaches the shared scouting tables
         cursor.execute("SELECT count(*) FROM scouting_observations WHERE event_key = %s", (EVENT,))
         assert cursor.fetchone()[0] == 0
+
+
+def test_a_resubmitted_scouting_report_is_stored_once_and_a_correction_supersedes_it():
+    """Audit 2026-11-26: a retried or double-tapped submit used to add a second row, counted twice in the summary."""
+    app = make_app()
+    admin = member(app, "ada")
+    body = {"match_key": f"{EVENT}_qm1", "team_number": TEAMS[0], "defense_rating": 4, "notes": "held the lane"}
+    first = admin.post("/workspace/scouting/reports", json=body)
+    again = admin.post("/workspace/scouting/reports", json=body)
+    assert first.status_code == 201 and again.status_code == 201
+    assert again.json()["report_id"] == first.json()["report_id"]
+    team = admin.get("/workspace/scouting/summary", params={"event_key": EVENT}).json()["teams"][0]
+    assert team["reports"] == 1
+    corrected = admin.post("/workspace/scouting/reports", json={**body, "defense_rating": 2})
+    assert corrected.json()["report_id"] != first.json()["report_id"]
+    team = admin.get("/workspace/scouting/summary", params={"event_key": EVENT}).json()["teams"][0]
+    assert team["reports"] == 1  # the scout's latest report for this match and team, not both
+    assert len(admin.get("/workspace/scouting/reports", params={"mine": "true"}).json()) == 2  # both kept in history
 
 
 def test_the_activity_log_records_sign_ups_and_administrative_actions():

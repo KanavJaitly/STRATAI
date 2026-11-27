@@ -1,0 +1,522 @@
+{
+ "results": [
+  {
+   "role": "admin",
+   "step": "sign up with the admin join code",
+   "ok": true,
+   "detail": "201"
+  },
+  {
+   "role": "strategy",
+   "step": "sign up with the team join code",
+   "ok": true,
+   "detail": "201"
+  },
+  {
+   "role": "drive",
+   "step": "sign up with the team join code",
+   "ok": true,
+   "detail": "201"
+  },
+  {
+   "role": "scout",
+   "step": "sign up with the team join code",
+   "ok": true,
+   "detail": "201"
+  },
+  {
+   "role": "base",
+   "step": "sign up with the team join code",
+   "ok": true,
+   "detail": "201"
+  },
+  {
+   "role": "admin",
+   "step": "set strategy role",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "role": "admin",
+   "step": "set drive role",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "role": "admin",
+   "step": "set scout role",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "role": "admin",
+   "step": "open /",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /?season=2026",
+   "ok": true,
+   "detail": "search filters"
+  },
+  {
+   "role": "admin",
+   "step": "open /events/2026mose",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /events/2026mose?tab=teams",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /events/2026mose?tab=matches",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /events/2026mose?tab=forecast",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /events/2026mose/teams/757",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /events/2026mose/strategy-lab",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /matches/2026mose_qm1",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /report/2026mose_qm1",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /events/2026mose/alliance-selection",
+   "ok": true,
+   "detail": "old page gone (404 page)"
+  },
+  {
+   "role": "admin",
+   "step": "open /team",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /team?tab=members",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /team?tab=analytics",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /team?tab=settings",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /team?tab=activity",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /drive-team",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /scouting",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /alliance-selection/live?event=2026mose",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /status",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /explorer",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /inputs",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /readiness",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /manuals",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /rulesets",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /inputs/game",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /inputs/profiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /inputs/review",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "admin",
+   "step": "open /account",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "strategy",
+   "step": "open /drive-team",
+   "ok": true,
+   "detail": "event chooser loads"
+  },
+  {
+   "role": "strategy",
+   "step": "open /alliance-selection/live?event=2026mose",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "strategy",
+   "step": "open /events/2026mose/strategy-lab",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "strategy",
+   "step": "open /report/2026mose_qm1",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "strategy",
+   "step": "refused /events/2026mose/alliance-selection",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "strategy",
+   "step": "refused /team",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "strategy",
+   "step": "refused /explorer",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "drive",
+   "step": "open /drive-team",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "drive",
+   "step": "open /matches/2026mose_qm1",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "drive",
+   "step": "open /events/2026mose/teams/757",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "drive",
+   "step": "refused /report/2026mose_qm1",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "drive",
+   "step": "refused /alliance-selection/live?event=2026mose",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "drive",
+   "step": "refused /scouting",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "scout",
+   "step": "open /scouting",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "scout",
+   "step": "submit a scouting report (and the same again)",
+   "ok": true,
+   "detail": "201 201 ids 1 1"
+  },
+  {
+   "role": "scout",
+   "step": "an out-of-range rating is refused (422)",
+   "ok": true,
+   "detail": "422"
+  },
+  {
+   "role": "scout",
+   "step": "a team not in the match is refused",
+   "ok": true,
+   "detail": "422"
+  },
+  {
+   "role": "scout",
+   "step": "a write without the CSRF header is refused",
+   "ok": true,
+   "detail": "403"
+  },
+  {
+   "role": "strategy",
+   "step": "scouting summary counts the double submit once",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "role": "scout",
+   "step": "refused /drive-team",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "scout",
+   "step": "refused /matches/2026mose_qm1",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "scout",
+   "step": "open /events/2026mose",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "base",
+   "step": "open /",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "base",
+   "step": "open /events/2026mose",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "base",
+   "step": "refused /events/2026mose/teams/757",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "base",
+   "step": "refused /drive-team",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "base",
+   "step": "refused /scouting",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "base",
+   "step": "refused /team",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "role": "base",
+   "step": "API refuses /teams/757/events/2026mose/strength",
+   "ok": true,
+   "detail": "403"
+  },
+  {
+   "role": "base",
+   "step": "API refuses /workspace/members",
+   "ok": true,
+   "detail": "403"
+  },
+  {
+   "role": "base",
+   "step": "API refuses /predictions/matches/2026mose_qm1/win-probability",
+   "ok": true,
+   "detail": "403"
+  },
+  {
+   "role": "base",
+   "step": "API refuses /explorer/seasons",
+   "ok": true,
+   "detail": "403"
+  },
+  {
+   "role": "base",
+   "step": "API allows the season event list (event chooser)",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "role": "anonymous",
+   "step": "API refuses analysis without a session (401)",
+   "ok": true,
+   "detail": "401"
+  },
+  {
+   "role": "anonymous",
+   "step": "the app sends a signed-out visitor to log in",
+   "ok": true,
+   "detail": "/auth/login?next=%2Fevents%2F2026mose"
+  }
+ ],
+ "issues": {
+  "admin": {
+   "pageErrors": [],
+   "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <ul> p \n\n  ...\n    <Shell>\n      <div className=\"app\">\n        <a>\n        <header>\n        <main id=\"main\" tabIndex={-",
+    "<%s> cannot contain a nested %s.\nSee this log for the ancestor stack trace. p <ul>",
+    "In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <ul> p \n\n  ...\n    <Router basename={undefined} location={{pathname:\"...\", ...}} navigationType=\"POP\" navigator={{actio",
+    "<%s> cannot contain a nested %s.\nSee this log for the ancestor stack trace. p <ul>"
+   ],
+   "server": []
+  },
+  "strategy": {
+   "pageErrors": [],
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <ul> p \n\n  ...\n    <Router basename={undefined} location={{pathname:\"...\", ...}} navigationType=\"POP\" navigator={{actio",
+    "<%s> cannot contain a nested %s.\nSee this log for the ancestor stack trace. p <ul>",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "server": []
+  },
+  "drive": {
+   "pageErrors": [],
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "server": []
+  },
+  "scout": {
+   "pageErrors": [],
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "server": []
+  },
+  "base": {
+   "pageErrors": [],
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "server": []
+  }
+ }
+}

@@ -189,8 +189,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                        dependencies=gated("strategy_tools"))
     app.include_router(manual_manager_router, prefix=settings.api_prefix,  # game manuals, rulesets, readiness
                        dependencies=[Depends(platform_gate)])
-    app.include_router(explorer_router, prefix=settings.api_prefix,  # historical season explorer (read-only)
-                       dependencies=gated("season_explorer"))
+    # Historical season explorer (read-only): gated per route (api/routes/explorer.py), season_explorer except the
+    # season's event list, which the members' event chooser reads (team_info).
+    app.include_router(explorer_router, prefix=settings.api_prefix)
     briefing_router = _briefing_router()
     if briefing_router is not None:  # Phase 9 (P9-M4): optional and downstream only (P9-Q1)
         app.include_router(briefing_router, prefix=settings.api_prefix, dependencies=gated("strategy_tools"))

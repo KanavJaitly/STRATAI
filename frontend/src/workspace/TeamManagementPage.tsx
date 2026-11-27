@@ -53,7 +53,8 @@ function OverviewTab({ onOpen }: { onOpen: (tab: string) => void }) {
   const data = overview.data
   const byRole = analytics.data?.members_by_role
   // One total, split by role, so the counts never read as two different numbers of "members".
-  const split = byRole ? ROLE_ORDER.map((role) => `${byRole[role].active} ${plural(ROLE_LABEL[role], byRole[role].active)}`)
+  // A role the server does not report (an older server, or no member in it) counts as none, never a crash.
+  const split = byRole ? ROLE_ORDER.map((role) => `${byRole[role]?.active ?? 0} ${plural(ROLE_LABEL[role], byRole[role]?.active ?? 0)}`)
     .join(' · ') : undefined
   return (
     <>
@@ -248,7 +249,7 @@ function AnalyticsTab() {
           <h3>Members</h3>
           <div className="tiles">
             {ROLE_ORDER.map((role) => (
-              <Tile key={role} value={`${data.members_by_role[role].active} active · ${data.members_by_role[role].suspended} suspended`}
+              <Tile key={role} value={`${data.members_by_role[role]?.active ?? 0} active · ${data.members_by_role[role]?.suspended ?? 0} suspended`}
                 label={ROLE_LABEL[role]} />
             ))}
             <Tile value={data.active_last_7_days} label="Signed in, last 7 days" />

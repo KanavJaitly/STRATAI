@@ -38,7 +38,6 @@ const PAGE_PERMISSIONS: [RegExp, string[]][] = [
   [/^\/$/, ['team_info']],
   [/^\/events\/[^/]+\/?$/, ['team_info']],
   [/^\/events\/[^/]+\/teams\/[^/]+\/?$/, ['team_analytics']],
-  [/^\/events\/[^/]+\/alliance-selection\/?$/, ['alliance_selection']],
   [/^\/events\/[^/]+\/strategy-lab\/?$/, ['strategy_tools']],
   [/^\/matches\/[^/]+\/?$/, ['match_predictions', 'strategy_tools']],
   [/^\/report\/[^/]+\/?$/, ['strategy_tools']],
