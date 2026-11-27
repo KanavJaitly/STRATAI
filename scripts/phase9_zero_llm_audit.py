@@ -142,8 +142,8 @@ OPERATION_CLASSES = {
     # observations (data.metrics.aggregation), with no model and no LLM; every route needs a session.
     "GET /auth/session": NOT_OUTPUT, "POST /auth/signup": NOT_OUTPUT, "POST /auth/login": NOT_OUTPUT, "POST /auth/logout": NOT_OUTPUT,
     "POST /auth/password/change": NOT_OUTPUT, "POST /auth/password/forgot": NOT_OUTPUT,
-    "POST /auth/password/reset": NOT_OUTPUT,
-    "GET /workspace": NOT_OUTPUT, "GET /workspace/members": NOT_OUTPUT,
+    "POST /auth/password/reset": NOT_OUTPUT, "GET /auth/network-check": NOT_OUTPUT,
+    "GET /workspace":NOT_OUTPUT, "GET /workspace/members": NOT_OUTPUT,
     "POST /workspace/members/{membership_id}/role": NOT_OUTPUT,
     "POST /workspace/members/{membership_id}/status": NOT_OUTPUT,
     "POST /workspace/members/{membership_id}/profile": NOT_OUTPUT,

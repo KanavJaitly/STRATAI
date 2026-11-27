@@ -84,6 +84,42 @@ If Render gives the service a name other than `stratai-api.onrender.com`, change
 
 **Vercel:** none. The web app calls `/api` on its own origin and reads everything else from `GET /auth/session`.
 
+### 4.1 Setting and verifying `AUTH_TRUSTED_PROXY_HOPS` (audit 2026-11-26, workstream 5)
+
+The sign-in, sign-up and password-reset rate limits key on the caller's address (`workspaces/rate_limit.py`). Behind
+proxies the connecting peer is the last proxy, so without this setting every member shares one bucket, and one
+person's typos can lock the whole team out of signing in.
+
+**The chain.** browser → Vercel (the `/api` rewrite in `frontend/vercel.json`) → Render's load balancer → the app.
+Vercel sends the browser's address in `X-Forwarded-For`; Render appends the address that connected to it (Vercel's
+outbound address). The app counts `AUTH_TRUSTED_PROXY_HOPS` entries **from the right** (`api/session.py`,
+`client_ip`), so with `2` it uses the browser's address, and anything a client writes into its own header (left of
+those entries) is ignored. An entry that is not an IP address falls back to the connecting peer.
+
+This topology was reasoned from the two hosts' documented behaviour; it could not be observed from the development
+machine. Verify it after setting it:
+
+1. Render dashboard → `stratai-api` → **Environment** → **Add Environment Variable**: key `AUTH_TRUSTED_PROXY_HOPS`,
+   value `2`. Change nothing else. Save; Render redeploys the service.
+2. Sign in to the web app as an administrator, then open `https://mortstratai.vercel.app/api/auth/network-check`
+   in the same browser (the session cookie authorizes it; base members get 403).
+3. Expected: `"forwarded_entries": 2`, `"consistent": true`, `"address_source": "x_forwarded_for"`, and
+   `rate_limit_address` equal to your network's public address (compare with any "what is my IP" page).
+4. Repeat from a second network (for example a phone on mobile data). `rate_limit_address` must change to that
+   network's address. If both networks show the same address, the setting is wrong.
+
+If the check disagrees:
+- `forwarded_entries` is **3 or more** on every request: another proxy appends an entry. Set the value to
+  `forwarded_entries` and check again (step 4 is what proves it).
+- `forwarded_entries` is **1**: only one proxy appends. Set `1`, and check step 4 again.
+- `forwarded_entries` is **0**: no proxy sends the header. Remove the variable (the peer is then used).
+
+Known limit: a request sent straight to `https://stratai-api.onrender.com` (bypassing Vercel) passes through one
+proxy, not two, so the entry the app uses there is the one the client wrote itself. Such a client can pick its own
+rate-limit bucket on the per-address limits. The per-account limits (`login_account`, `reset_request_account`) and
+the global join-code limit (`signup_code_global`) do not depend on the address and still apply. Closing this fully
+needs Render to accept traffic only from Vercel, which the free plan does not offer.
+
 **Promoting someone later:** in the web app's Team Management, or in the Render Shell for `stratai-api`:
 `python -m scripts.set_role someone@example.com admin`.
 

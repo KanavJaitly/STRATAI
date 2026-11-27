@@ -26,6 +26,8 @@ from api.session import (
     clear_session_cookie,
     client_ip,
     current_session,
+    forwarded_chain,
+    require_permission,
     require_csrf,
     require_session,
     set_session_cookie,
@@ -173,3 +175,27 @@ def reset_password(body: ResetPasswordBody, request: Request, response: Response
     token = call(accounts.reset_password, database, settings, email=body.email, code=body.code,
                  new_password=body.new_password, client_ip=client_ip(request, settings))
     return _signed_in(response, token, database, settings)
+
+
+@router.get("/network-check", summary="How the server sees this request's address (administrators; to verify proxies)",
+            description="For verifying AUTH_TRUSTED_PROXY_HOPS after a deployment (docs/DEPLOYMENT.md): the number "
+                        "of X-Forwarded-For entries this request arrived with, the setting, and the address the rate "
+                        "limits use for this caller. Open it from two different networks: each should show that "
+                        "network's own public address, and forwarded_entries should equal trusted_proxy_hops. Shows "
+                        "only the caller's own request; no other header is returned.",
+            dependencies=[Depends(require_permission("team_management"))],
+            responses=error_responses({401: ["not_authenticated"], 403: ["permission_denied"]},
+                                      validates_input=False))
+def get_network_check(request: Request, settings: Settings = Depends(get_settings)) -> Any:
+    chain = forwarded_chain(request)
+    hops = settings.auth_trusted_proxy_hops
+    used = client_ip(request, settings)
+    return {"trusted_proxy_hops": hops, "forwarded_entries": len(chain),
+            "rate_limit_address": used,
+            "address_source": "x_forwarded_for" if hops and len(chain) >= hops and used == chain[-hops]
+            else "connecting_peer",
+            "consistent": hops == 0 or len(chain) == hops,
+            "note": "forwarded_entries > trusted_proxy_hops: another proxy appends an entry, or the client sent its "
+                    "own header (only the right-most hops entries are trusted). forwarded_entries < "
+                    "trusted_proxy_hops: fewer proxies than configured; the connecting peer is used."}
+

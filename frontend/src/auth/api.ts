@@ -20,6 +20,7 @@ export const WORKSPACE_ENDPOINTS = {
   changePassword: ['POST', '/auth/password/change'],
   forgotPassword: ['POST', '/auth/password/forgot'],
   resetPassword: ['POST', '/auth/password/reset'],
+  networkCheck: ['GET', '/auth/network-check'],
   workspace: ['GET', '/workspace'],
   members: ['GET', '/workspace/members'],
   changeRole: ['POST', '/workspace/members/{membership_id}/role'],
@@ -253,6 +254,17 @@ export const auth = {
     call<{ accepted: true; email_delivery_configured: boolean }>('forgotPassword', { body }),
   resetPassword: (body: { email: string; code: string; new_password: string }) =>
     call<SessionInfo>('resetPassword', { body }),
+  /** Administrator diagnostic: how the server derives the rate-limit address behind the hosting proxies. */
+  networkCheck: () => call<NetworkCheck>('networkCheck'),
+}
+
+export interface NetworkCheck {
+  trusted_proxy_hops: number
+  forwarded_entries: number
+  rate_limit_address: string | null
+  address_source: 'x_forwarded_for' | 'connecting_peer'
+  consistent: boolean
+  note: string
 }
 
 export const workspace = {

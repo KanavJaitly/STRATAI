@@ -19,6 +19,7 @@ adds nothing to any locked operation's OpenAPI contract.
 from __future__ import annotations
 
 import hmac
+import ipaddress
 import re
 from http import HTTPStatus
 from typing import Any, Callable
@@ -51,14 +52,29 @@ def call(function: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         raise api_error(exc) from None
 
 
+def forwarded_chain(request: Request) -> list[str]:
+    """X-Forwarded-For's entries, left (the origin as claimed) to right (the last proxy's peer)."""
+    return [part.strip() for part in request.headers.get("x-forwarded-for", "").split(",") if part.strip()]
+
+
 def client_ip(request: Request, settings: Settings) -> str:
     """The caller's address for rate limiting: X-Forwarded-For counted back AUTH_TRUSTED_PROXY_HOPS entries when
-    proxies are configured, else the connecting peer (forwarded headers are spoofable, so trusted only by setting)."""
+    proxies are configured, else the connecting peer (forwarded headers are spoofable, so trusted only by setting).
+
+    Counted from the right, so a client cannot choose its own address by sending a forged header: each trusted proxy
+    appends what connected to it, and entries left of the one chosen are ignored. The chosen entry must be an IP
+    address; anything else (a malformed or hostile header) falls back to the connecting peer (audit 2026-11-26,
+    workstream 5). The hosted chain is Vercel, then Render: AUTH_TRUSTED_PROXY_HOPS=2 (docs/DEPLOYMENT.md;
+    GET /auth/network-check shows what the server sees, to verify it)."""
     hops = settings.auth_trusted_proxy_hops
     if hops:
-        forwarded = [part.strip() for part in request.headers.get("x-forwarded-for", "").split(",") if part.strip()]
+        forwarded = forwarded_chain(request)
         if len(forwarded) >= hops:
-            return forwarded[-hops]
+            candidate = forwarded[-hops]
+            try:
+                return str(ipaddress.ip_address(candidate))
+            except ValueError:
+                pass
     return request.client.host if request.client else "unknown"
 
 

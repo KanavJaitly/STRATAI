@@ -780,3 +780,117 @@ def test_team_events_are_checked_and_only_administrators_change_them(monkeypatch
     assert legacy["pinned_event_key"] == EVENT
     log = admin.get("/workspace/activity").json()["entries"]
     assert any("team_event_keys" in (e["details"] or {}) for e in log if e["action"] == "settings_changed")
+
+
+# --- the trusted proxy chain (audit 2026-11-26, workstream 5) -------------------------------------------------------
+# The hosted chain is browser -> Vercel (rewrite) -> Render (load balancer) -> the app: Vercel's X-Forwarded-For entry
+# is the browser, Render appends Vercel's egress address, so AUTH_TRUSTED_PROXY_HOPS=2 and the rate limits key on the
+# entry two from the right. Whatever a client puts left of that is ignored.
+
+VERCEL_EGRESS = "76.76.21.21"  # documentation stand-in for Vercel's outbound address; any address works here
+
+
+def via_proxies(client_address: str, *, forged: str | None = None) -> dict[str, str]:
+    """The X-Forwarded-For the app receives for a browser at client_address behind both proxies; `forged` is what a
+    hostile client put in its own header first."""
+    chain = [forged] if forged else []
+    return {"X-Forwarded-For": ", ".join([*chain, client_address, VERCEL_EGRESS])}
+
+
+def _request(headers: dict[str, str], peer: str = "10.0.0.9"):
+    from starlette.requests import Request
+
+    return Request({"type": "http", "method": "GET", "path": "/", "query_string": b"", "client": (peer, 5000),
+                    "headers": [(k.lower().encode(), v.encode()) for k, v in headers.items()]})
+
+
+@pytest.mark.parametrize(("hops", "header", "expected"), [
+    ("2", "203.0.113.7, 76.76.21.21", "203.0.113.7"),  # the hosted chain
+    ("2", "6.6.6.6, 203.0.113.7, 76.76.21.21", "203.0.113.7"),  # a forged left entry is ignored
+    ("2", "1.1.1.1, 2.2.2.2, 203.0.113.7, 76.76.21.21", "203.0.113.7"),
+    ("2", "76.76.21.21", "10.0.0.9"),  # fewer entries than proxies: the connecting peer
+    ("2", "", "10.0.0.9"),
+    ("2", "not-an-address, 76.76.21.21", "10.0.0.9"),  # a malformed entry is never a rate-limit key
+    ("2", "2001:DB8::1, 76.76.21.21", "2001:db8::1"),  # IPv6, normalised so one address is one bucket
+    ("1", "203.0.113.7, 76.76.21.21", "76.76.21.21"),  # one hop configured: the last entry
+    ("0", "203.0.113.7, 76.76.21.21", "10.0.0.9"),  # no proxies configured: the header is never trusted
+])
+def test_the_rate_limit_address_counts_trusted_proxies_from_the_right(monkeypatch, hops, header, expected):
+    from api.session import client_ip
+
+    monkeypatch.setenv("AUTH_TRUSTED_PROXY_HOPS", hops)
+    headers = {"X-Forwarded-For": header} if header else {}
+    assert client_ip(_request(headers), Settings()) == expected
+
+
+def _small_limits(monkeypatch) -> None:
+    from workspaces import rate_limit
+
+    for scope in ("login_ip", "signup_code_ip", "reset_request_ip", "reset_code_ip"):
+        old = rate_limit.LIMITS[scope]
+        monkeypatch.setitem(rate_limit.LIMITS, scope, rate_limit.Limit(3, old.window, old.count_all))
+
+
+def test_behind_two_proxies_failed_sign_ins_are_limited_per_client_not_per_proxy(monkeypatch):
+    app = make_app(monkeypatch, AUTH_TRUSTED_PROXY_HOPS="2")
+    _small_limits(monkeypatch)
+    member(app, "bo")
+    for n in range(3):  # three different accounts, so only the per-address limit can trip; a new forgery each time
+        failed = login(browser(app, **via_proxies("203.0.113.7", forged=f"198.51.100.{n}")), f"nobody{n}")
+        assert failed.status_code == 401
+    limited = login(browser(app, **via_proxies("203.0.113.7", forged="192.0.2.99")), "bo")
+    assert limited.status_code == 429 and code(limited) == "rate_limited"  # forging the left entry does not help
+    # Another browser, arriving through the very same Vercel and Render addresses, is not affected.
+    assert login(browser(app, **via_proxies("203.0.113.8")), "bo").status_code == 200
+
+
+def test_behind_two_proxies_wrong_join_codes_are_limited_per_client(monkeypatch):
+    app = make_app(monkeypatch, AUTH_TRUSTED_PROXY_HOPS="2")
+    _small_limits(monkeypatch)
+    for n in range(3):
+        wrong = sign_up(browser(app, **via_proxies("203.0.113.7", forged=f"198.51.100.{n}")), "bo", join_code="guess")
+        assert wrong.status_code == 403
+    limited = sign_up(browser(app, **via_proxies("203.0.113.7")), "bo")
+    assert limited.status_code == 429 and code(limited) == "rate_limited"
+    assert sign_up(browser(app, **via_proxies("203.0.113.8")), "bo").status_code == 201
+
+
+def test_behind_two_proxies_reset_requests_and_codes_are_limited_per_client(monkeypatch, tmp_path):
+    outbox = tmp_path / "outbox"
+    app = make_app(monkeypatch, DEV_OUTBOX_DIR=str(outbox), AUTH_TRUSTED_PROXY_HOPS="2")
+    _small_limits(monkeypatch)
+    for who in ("bo", "cy", "di", "ed"):
+        member(app, who)
+    for n, who in enumerate(("bo", "cy", "di")):  # different accounts: only the per-address limit can trip
+        asked = browser(app, **via_proxies("203.0.113.7", forged=f"198.51.100.{n}")).post(
+            "/auth/password/forgot", json={"email": email(who)})
+        assert asked.status_code == 202
+    limited = browser(app, **via_proxies("203.0.113.7")).post("/auth/password/forgot", json={"email": email("ed")})
+    assert limited.status_code == 429 and code(limited) == "rate_limited"
+    assert browser(app, **via_proxies("203.0.113.8")).post(
+        "/auth/password/forgot", json={"email": email("ed")}).status_code == 202
+    # Wrong reset codes: three from one client, then that client is refused even with the right code; another is not.
+    bo_code, *_, ed_code = _codes(outbox)  # by write time: bo's first, ed's (asked from the second client) last
+    wrong = f"{(int(bo_code) + 1) % 1_000_000:06d}"
+    for n in range(3):
+        failed = _reset(browser(app, **via_proxies("203.0.113.9", forged=f"198.51.100.{n}")), "bo", wrong)
+        assert failed.status_code == 410
+    refused = _reset(browser(app, **via_proxies("203.0.113.9")), "ed", ed_code)
+    assert refused.status_code == 429 and code(refused) == "rate_limited"
+    assert _reset(browser(app, **via_proxies("203.0.113.10")), "ed", ed_code).status_code == 200
+
+
+def test_the_network_check_is_for_administrators_and_reports_the_chain(monkeypatch):
+    app = make_app(monkeypatch, AUTH_TRUSTED_PROXY_HOPS="2")
+    assert browser(app).get("/auth/network-check").status_code == 401
+    base = member(app, "bo")
+    denied = base.get("/auth/network-check", headers=via_proxies("203.0.113.7"))
+    assert denied.status_code == 403 and code(denied) == "permission_denied"
+    admin = member(app, "ada")
+    seen = admin.get("/auth/network-check", headers=via_proxies("203.0.113.7")).json()
+    assert seen["trusted_proxy_hops"] == 2 and seen["forwarded_entries"] == 2 and seen["consistent"] is True
+    assert seen["rate_limit_address"] == "203.0.113.7" and seen["address_source"] == "x_forwarded_for"
+    forged = admin.get("/auth/network-check", headers=via_proxies("203.0.113.7", forged="6.6.6.6")).json()
+    assert forged["rate_limit_address"] == "203.0.113.7" and forged["consistent"] is False
+    direct = admin.get("/auth/network-check").json()  # no proxies in front: the connecting peer
+    assert direct["address_source"] == "connecting_peer" and direct["consistent"] is False
