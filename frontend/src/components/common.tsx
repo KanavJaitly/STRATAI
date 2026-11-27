@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 
 import { ApiRequestError } from '../api/client'
 import { useAuth } from '../auth/authState'
-import { useSession, useWriteAccess } from '../state/session'
+import { useSession } from '../state/session'
+import { useWriteAccess } from '../state/useWriteAccess'
 
 export { useAction, useLoad } from './hooks'
 

@@ -9,7 +9,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { setWriteToken, WRITE_TOKEN_HEADER } from '../api/client'
 import { mockApi } from '../test/mockApi'
-import { SessionProvider, useSession, useWriteAccess } from './session'
+import { SessionProvider, useSession } from './session'
+import { useWriteAccess } from './useWriteAccess'
 
 afterEach(() => { setWriteToken(''); vi.unstubAllGlobals() })
 

@@ -1,6 +1,7 @@
 import { dashboardApi } from '../../api/dashboard'
 import { API_BASE } from '../../api/client'
-import { useSession, useWriteAccess } from '../../state/session'
+import { useSession } from '../../state/session'
+import { useWriteAccess } from '../../state/useWriteAccess'
 import { useResource } from '../../components/useResource'
 import { PageHeader } from '../common'
 import { ResourceView } from '../display'
