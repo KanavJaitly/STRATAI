@@ -265,6 +265,26 @@ A validation label describes evidence measured somewhere. Since 2026-11-26 it is
 after the switch point, while qualification is in progress. Elsewhere, including the live draft's selection moment,
 it is `not_validated` with reason `outside_measured_window`.
 
+### Research candidates (audit 2026-11-26, workstreams 1 and 2)
+
+Two candidates have frozen specs in `.agent/model_candidates/`. Neither is served or validated, and production is
+unchanged.
+- **WP-NORM-EPA-v1** (`ml/candidates/win_prob_norm_epa.py`): a one-parameter, no-intercept logistic on the EPA
+  difference, with each team's EPA divided by its own season's scale. It answers the diagnosis that M6's raw-point
+  features meet a 2026 scale 3.29 times the training seasons' mean.
+- **RANK-BLEND-v1** (`ml/candidates/ranking_blend.py`): the mean of prior EPA and the in-event per-robot average, at
+  the midpoint snapshot.
+
+`python -m scripts.evaluate_model_candidates --out <file>` reproduces their 2026 numbers in about two minutes
+(`.agent/model_candidates/results/evaluation_2026_retrospective.json`). Those numbers are **retrospective evidence
+only**. Each candidate can be approved only by its pre-registered 2027 run (the script refuses 2027 without
+`--pre-registered-2027-run`), followed by the owners' decision.
+
+Corrections made in this work:
+- The served model's 2026 qualification log loss is 0.539 with this project's metric (clamp 1e−15). The audit's 0.524
+  used a 1e−6 clamp.
+- The 2026 scale is 2.6× 2025's and 4.6× 2024's, not "2.5–3.8×".
+
 ## 10. What to trust
 
 | Output | Trust | How to present it |
