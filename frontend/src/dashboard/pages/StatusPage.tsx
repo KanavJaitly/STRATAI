@@ -1,6 +1,6 @@
 import { dashboardApi } from '../../api/dashboard'
 import { API_BASE } from '../../api/client'
-import { useSession } from '../../state/session'
+import { useSession, useWriteAccess } from '../../state/session'
 import { useResource } from '../../components/useResource'
 import { PageHeader } from '../common'
 import { ResourceView } from '../display'
@@ -10,6 +10,7 @@ export function StatusPage() {
   const health = useResource((signal) => dashboardApi.health(signal), 'health')
   const ready = useResource((signal) => dashboardApi.ready(signal), 'ready')
   const { access } = useSession()
+  useWriteAccess()
   return (
     <>
       <PageHeader title="System status" subtitle={<>The API at <code>{API_BASE}</code>, as its own probes report it.</>} />

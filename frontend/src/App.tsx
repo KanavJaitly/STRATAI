@@ -13,7 +13,7 @@ import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/authState'
 import { RequirePermission, RequireSignedIn } from './auth/guards'
 import { pageAllowed } from './auth/roles'
-import { SessionProvider, useSession } from './state/session'
+import { SessionProvider, useSession, useWriteAccess } from './state/session'
 import { DriveTeamDashboardPage, HomeRedirect, ScoutingDashboardPage } from './workspace/RoleDashboards'
 import { LiveDraftPage } from './workspace/LiveDraftPage'
 import { TeamManagementPage } from './workspace/TeamManagementPage'
@@ -51,6 +51,7 @@ function SessionBar() {
   // The bar shows only to a signed-in administrator. The app's first write-access check can run before sign-in,
   // when a members-only API refuses it, so check again now that someone allowed is here.
   useEffect(() => { void refreshAccess() }, [refreshAccess])
+  useWriteAccess() // keep it current while the bar is shown (a token typed here is checked again)
   const inInputs = pathname.startsWith('/inputs')
   const inSeasonArea = SEASON_AREA.test(pathname)
   let accessText = 'API unreachable'

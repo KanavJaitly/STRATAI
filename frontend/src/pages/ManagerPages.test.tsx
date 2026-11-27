@@ -210,7 +210,7 @@ describe('RulesetsPage', () => {
     setWriteToken('t')
     renderPage(<RulesetsPage />)
     const form = await screen.findByTestId('review-form')
-    const approve = within(form).getByRole('button', { name: 'Approve' })
+    const approve = await within(form).findByRole('button', { name: 'Approve' }) // shown once write access is known
     expect(approve).toBeDisabled()
     await userEvent.type(within(form).getByLabelText('Qualification'), 'SYNTHETIC qualification')
     for (let i = 1; i <= 14; i += 1) await userEvent.click(within(form).getByLabelText(`R${i}`))
@@ -232,7 +232,7 @@ describe('RulesetsPage', () => {
     setWriteToken('t')
     renderPage(<RulesetsPage />)
     expect(await screen.findByText(/cannot be approved/)).toBeInTheDocument()
-    expect(within(screen.getByTestId('review-form')).getByRole('button', { name: 'Approve' })).toBeDisabled()
+    expect(await within(screen.getByTestId('review-form')).findByRole('button', { name: 'Approve' })).toBeDisabled()
   })
 
   it('starts a draft from the worksheet and saves it under the person\'s name', async () => {

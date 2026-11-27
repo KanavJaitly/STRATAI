@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 
 import { ApiRequestError } from '../api/client'
-import { useSession } from '../state/session'
+import { useAuth } from '../auth/authState'
+import { useSession, useWriteAccess } from '../state/session'
 
 export { useAction, useLoad } from './hooks'
 
@@ -66,6 +67,16 @@ export function Section({ title, children, actions }: { title: string; children:
 /** Shown in place of write controls when this browser cannot write, with the reason. */
 export function WriteGate({ children }: { children: ReactNode }) {
   const { access, canWrite, actor } = useSession()
+  const { signedIn, role } = useAuth()
+  // A signed-in member who is not an administrator cannot enter the platform write token (only the administrators'
+  // session bar takes it), so the check is not asked for and the reason is said plainly. The API still refuses any
+  // write without the token, whatever this shows.
+  const memberWithoutToken = signedIn && role !== 'admin'
+  useWriteAccess(!memberWithoutToken)
+  if (memberWithoutToken) {
+    return <p className="notice notice-info">Changes here need the platform write token, which only an administrator
+      can enter.</p>
+  }
   if (canWrite) return <>{children}</>
   let reason = 'Checking write access…'
   if (access && !access.writes_enabled) reason = 'Writes are disabled on this server: no write token is configured. '

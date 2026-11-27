@@ -16,6 +16,8 @@ interface Session {
   setToken: (token: string) => void
   access: WriteAccess | null
   refreshAccess: () => Promise<void>
+  /** Start the write-access check (see useWriteAccess). */
+  requestAccess: () => void
   canWrite: boolean
   season: number
   setSeason: (season: number) => void
@@ -60,9 +62,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // The write-access check runs only once something on screen needs it (useWriteAccess): the administrators' session
+  // bar, the status page, or a write control's gate. It used to run on every app load, so every non-administrator's
+  // page load sent a request the API always refuses (403); audit 2026-11-26, workstream 9. Once requested, a changed
+  // token is checked again. The API's own checks on every write are unchanged.
+  const [accessRequested, setAccessRequested] = useState(false)
+  const requestAccess = useCallback(() => setAccessRequested(true), [])
   useEffect(() => {
-    void refreshAccess()
-  }, [refreshAccess, token])
+    if (accessRequested) void refreshAccess()
+  }, [refreshAccess, token, accessRequested])
 
   const value = useMemo<Session>(() => ({
     actor,
@@ -77,13 +85,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     },
     access,
     refreshAccess,
+    requestAccess,
     canWrite: Boolean(access?.writes_enabled && access.token_accepted && actor.trim()),
     season,
     setSeason: (next) => {
       setSeasonState(next)
       remember('stratai.season', String(next))
     },
-  }), [actor, token, access, refreshAccess, season])
+  }), [actor, token, access, refreshAccess, requestAccess, season])
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }
@@ -92,4 +101,13 @@ export function useSession(): Session {
   const session = useContext(SessionContext)
   if (!session) throw new Error('useSession outside SessionProvider')
   return session
+}
+
+/** Ask for the write-access check (once; again when the token changes). `enabled` false asks nothing, for a component
+ * that knows the check cannot help (a signed-in non-administrator cannot enter the platform write token). */
+export function useWriteAccess(enabled = true): void {
+  const { requestAccess } = useSession()
+  useEffect(() => {
+    if (enabled) requestAccess()
+  }, [enabled, requestAccess])
 }

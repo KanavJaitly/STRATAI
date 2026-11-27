@@ -9,11 +9,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { setWriteToken, WRITE_TOKEN_HEADER } from '../api/client'
 import { mockApi } from '../test/mockApi'
-import { SessionProvider, useSession } from './session'
+import { SessionProvider, useSession, useWriteAccess } from './session'
 
 afterEach(() => { setWriteToken(''); vi.unstubAllGlobals() })
 
 function Probe() {
+  useWriteAccess() // the check runs only once something asks for it (audit 2026-11-26, workstream 9)
   const { token, setToken, access } = useSession()
   const verdict = access === null ? 'unknown' : access.token_accepted ? 'accepted' : 'rejected'
   return <><input aria-label="token" value={token} onChange={(e) => setToken(e.target.value)} /><p>verdict: {verdict}</p></>
@@ -40,5 +41,21 @@ describe('session write-access probe (D1.4)', () => {
     expect(screen.getByText('verdict: accepted')).toBeInTheDocument()
     await act(async () => { pending.get('a')!(false) }) // …then the stale one for the partial token
     expect(screen.getByText('verdict: accepted')).toBeInTheDocument() // ignored
+  })
+})
+
+describe('the write-access check runs only when something asks for it (audit 2026-11-26, workstream 9)', () => {
+  it('sends nothing when no component asks, and one request once one does', async () => {
+    const api = mockApi({ 'GET /human-inputs/write-access': { writes_enabled: true, token_accepted: false } })
+    function Silent() { useSession(); return <p>no write controls here</p> }
+    function Asking() { useWriteAccess(); return <p>a write control</p> }
+    const { unmount } = render(<SessionProvider><Silent /></SessionProvider>)
+    await screen.findByText('no write controls here')
+    await act(async () => { await new Promise((r) => setTimeout(r, 30)) })
+    expect(api.calls.filter((c) => c.path === '/human-inputs/write-access')).toHaveLength(0)
+    unmount()
+    render(<SessionProvider><Asking /></SessionProvider>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 30)) })
+    expect(api.calls.filter((c) => c.path === '/human-inputs/write-access')).toHaveLength(1)
   })
 })

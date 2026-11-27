@@ -386,6 +386,25 @@ describe('the write-token bar after sign-in', () => {
     })
 })
 
+describe('the write-access check (audit 2026-11-26, workstream 9)', () => {
+  it('is not sent for a signed-in member who is not an administrator', async () => {
+    const api = mockApi({ 'GET /auth/session': BASE_SESSION, ...LANDING,
+      'GET /human-inputs/write-access': apiError(403, 'permission_denied', 'Administrators only.') })
+    renderApp('/?season=2099')
+    expect(await screen.findByRole('heading', { name: 'Events' })).toBeInTheDocument()
+    await new Promise((r) => setTimeout(r, 50))
+    expect(api.calls.filter((c) => c.path === '/human-inputs/write-access')).toHaveLength(0)
+  })
+
+  it('is still sent for an administrator, whose session bar shows the answer', async () => {
+    const api = mockApi({ 'GET /auth/session': ADMIN_SESSION, ...LANDING,
+      'GET /human-inputs/write-access': { writes_enabled: false, token_accepted: false } })
+    renderApp('/?season=2099')
+    await waitFor(() => expect(screen.getByTestId('access')).toHaveTextContent('writes disabled on server'))
+    expect(api.calls.filter((c) => c.path === '/human-inputs/write-access').length).toBeGreaterThan(0)
+  })
+})
+
 describe('Team Management', () => {
   it('lists the members, filters them, and says how new members join', async () => {
     mockApi({ 'GET /auth/session': ADMIN_SESSION, 'GET /workspace/members': MEMBERS })

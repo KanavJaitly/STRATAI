@@ -147,7 +147,7 @@ describe('MatchPage (P8-M4)', () => {
     setWriteToken('token')
     renderAt(PATTERN, `/matches/${MATCH}`, <MatchPage />)
     await screen.findByRole('heading', { name: 'AI recommendation' })
-    await userEvent.click(screen.getByRole('button', { name: 'Save as a coach strategy' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Save as a coach strategy' }))
     const editor = screen.getByRole('group', { name: /Coach strategy for red/ })
     await userEvent.selectOptions(within(editor).getByRole('combobox', { name: `Team ${RED[2]} role` }), 'feeding')
     const busy = screen.getByRole('button', { name: 'Saving…' }) // the same write is still in flight
